@@ -1,0 +1,7 @@
+#MAC OS files
+.DS_Store
+
+#Don't include build files
+build/
+install/
+log/
