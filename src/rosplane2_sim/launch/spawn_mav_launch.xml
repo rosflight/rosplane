@@ -1,0 +1,39 @@
+
+<launch>
+  <arg name="mav_name" default="fixedwing"/>
+  <arg name="model" default="$(find-pkg-share rosplane2_sim)/xacro/$(var mav_name).xacro"/>
+  <arg name="tf_prefix" default="$(env ROS_NAMESPACE)"/>
+  <arg name="x" default="0.0"/>
+  <arg name="y" default="0.0"/>
+  <arg name="yaw" default="0.0"/>
+  <arg name="z" default="0.1"/>
+  <arg name="enable_logging" default="false"/>
+  <arg name="enable_ground_truth" default="true"/>
+  <arg name="log_file" default="$(var mav_name)"/>
+  <arg name="enable_wind" default="true"/>
+  <arg name="robot_namespace" default="/"/>
+  <arg name="gazebo_namespace" default=""/>
+
+  <!-- send the robot XML to param server -->
+  <param name="robot_description" command="
+    $(find-pkg-share xacro)/xacro '$(var model)'
+    mav_name:=$(var mav_name)
+    gazebo_namespace:=$(var gazebo_namespace)/gazebo
+    robot_namespace:=$(var robot_namespace)"
+  />
+  <param name="tf_prefix" type="string" let="$(var tf_prefix)" />
+
+  <!-- push robot_description to factory and spawn robot in gazebo -->
+  <node name="spawn_$(var mav_name)" pkg="gazebo_ros" type="spawn_model"
+   args="-param robot_description
+         -urdf
+         -x $(var x)
+         -y $(var y)
+         -z $(var z)
+         -Y $(var yaw)
+         -gazebo_namespace $(var gazebo_namespace)/gazebo
+         -robot_namespace $(var robot_namespace)
+         -model $(var mav_name)"
+   respawn="false" output="screen">
+  </node>
+</launch>
