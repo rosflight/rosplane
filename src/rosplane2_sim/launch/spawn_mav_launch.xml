@@ -14,7 +14,7 @@
   <arg name="robot_namespace" default="/"/>
   <arg name="gazebo_namespace" default=""/>
 
-  <!-- send the robot XML to param server -->
+  <!-- send the robot XML to param server  New message-->
   <param name="robot_description" command="
     $(find-pkg-share xacro)/xacro '$(var model)'
     mav_name:=$(var mav_name)
