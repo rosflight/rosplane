@@ -2,7 +2,7 @@
 <launch>
   <arg name="mav_name" default="fixedwing"/>
   <arg name="model" default="$(find-pkg-share rosplane2_sim)/xacro/$(var mav_name).xacro"/>
-  <arg name="tf_prefix" default="$(env ROS_NAMESPACE)"/>
+  
   <arg name="x" default="0.0"/>
   <arg name="y" default="0.0"/>
   <arg name="yaw" default="0.0"/>
@@ -14,26 +14,24 @@
   <arg name="robot_namespace" default="/"/>
   <arg name="gazebo_namespace" default=""/>
 
-  <!-- send the robot XML to param server  New message-->
-  <param name="robot_description" command="
-    $(find-pkg-share xacro)/xacro '$(var model)'
-    mav_name:=$(var mav_name)
-    gazebo_namespace:=$(var gazebo_namespace)/gazebo
-    robot_namespace:=$(var robot_namespace)"
-  />
-  <param name="tf_prefix" type="string" let="$(var tf_prefix)" />
+  <!-- Start Gazebo simulator -->
+  <group>
+    <include file="/opt/ros/humble/share/ros_gz_sim/launch/gz_sim.launch.py">
+      <arg name="gz_version" value="7" />
+      <!--<arg name="gz_args" value="~/ROSPlane2/src/rosplane2_sim/worlds/empty.sdf"/> -->
+    </include>
+  </group>
 
-  <!-- push robot_description to factory and spawn robot in gazebo -->
-  <node name="spawn_$(var mav_name)" pkg="gazebo_ros" type="spawn_model"
-   args="-param robot_description
-         -urdf
-         -x $(var x)
-         -y $(var y)
-         -z $(var z)
-         -Y $(var yaw)
-         -gazebo_namespace $(var gazebo_namespace)/gazebo
-         -robot_namespace $(var robot_namespace)
-         -model $(var mav_name)"
-   respawn="false" output="screen">
-  </node>
+  <node pkg="ros_gz_sim" exec="create" 
+    args="-world default
+      -file 3k_shapes.sdf"
+      />
+
+  
+  
+  
+  
+
+
+
 </launch>
