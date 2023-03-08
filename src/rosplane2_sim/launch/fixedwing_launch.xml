@@ -1,0 +1,52 @@
+<!-- This is a launch file that runs the bare minimum requirements to get -->
+<!-- gazebo running for a fixed-wing aircraft -->
+
+<launch>
+  <arg name="mav_name" default="fixedwing"/>
+  <group>
+    <include file="opt/ros2Project/ROSPlane2/src/rosplane_sim/worlds/empty.sdf">
+      <arg name="paused" default="true"/>
+      <arg name="gui" default="true"/>
+      <arg name="verbose" default="false"/>
+      <arg name="debug" default="false"/>
+    </include>
+   </group>
+
+   <!-- Spawn MAV -->
+  <group>
+    <include file="/opt/ros2Project/ROSPlane2/src/rosplane2_sim/launch/spawn_mav_launch.xml">
+      <arg name="mav_name" default="$(arg mav_name)" />
+      <arg name="model" default="/opt/ros2Project/ROSPlane2/src/rosplane2_sim/xacro/$(arg mav_name).xacro" />
+    </include>
+  </group>
+
+
+  <group push-ros-namespace="$(arg mav_name)">
+    <!-- Load Global Parameters for this MAV -->
+     <param command="load" from="$(find rosplane_sim)/params/$(arg mav_name).yaml"/>
+
+    <node name="autopilot" pkg="rosplane" exec="rosplane_controller" >
+      <remap from="state" to="truth"/>
+    </node>
+
+    <node name="estimator" pkg="rosplane" exec="rosplane_estimator" output="screen"/>
+    <!-- Must publish a status: armed to estimate states -->
+    <node name="status_publisher" pkg="rostopic" exec="rostopic" output="screen"
+      args="pub status rosflight_msgs/Status '{header: {seq: 0, stamp: 0, frame_id: 'none'},
+      armed: 'true', failsafe: 'false', rc_override: 'false', offboard: 'false',
+      control_mode: 0, error_code: 0, num_errors: 0, loop_time_us: 0}'"/>
+
+    <node name="pathfollower" pkg="rosplane" exec="rosplane_path_follower">
+       <remap from="state" to="truth"/>
+    </node>
+
+    <!-- <node name="current_path_publisher" pkg="rostopic" type="rostopic"
+      args="pub current_path rosplane_msgs/Current_Path '0' '15.0'  '[0.0, 0.0, -100.0]'  '[1.0, 0.0, 0.0]'  '[0.0, 0.0, -100.0]'  '100.0' '1'"/> -->
+
+    <node name="pathmanager" pkg="rosplane" exec="rosplane_path_manager" output="screen">
+      <remap from="state" to="truth"/>
+    </node>
+
+    <node name="pathplanner" pkg="rosplane" exec="rosplane_path_planner"/> 
+  </group>
+</launch>
