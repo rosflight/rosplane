@@ -18,14 +18,14 @@
         <visual name='visual'>
           <geometry>
             <mesh>
-              <uri>file:///home/controls/ROSPlane2/src/rosplane2_sim/Aircraft/xacro/meshes/fixedwing.dae</uri>
+              <uri>file:///opt/ros2Project/ROSPlane2/src/rosplane2_sim/Aircraft/xacro/meshes/fixedwing.dae</uri>
             </mesh>
           </geometry>
         </visual>
         <collision name='collision'>
           <geometry>
             <mesh>
-              <uri>file:///home/controls/ROSPlane2/src/rosplane2_sim/Aircraft/xacro/meshes/fixedwing.dae</uri>
+              <uri>file:///opt/ros2Project/ROSPlane2/src/rosplane2_sim/Aircraft/xacro/meshes/fixedwing.dae</uri>
             </mesh>
           </geometry>
         </collision>

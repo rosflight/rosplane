@@ -17,14 +17,11 @@
   <!-- Start Gazebo simulator -->
   <group>
     <include file="/opt/ros/humble/share/ros_gz_sim/launch/gz_sim.launch.py">
-	  <arg name="gz_version" value="7" />
-	  <arg name="gz_args" value="~/ROSPlane2/src/rosplane2_sim/worlds/TempWorld.sdf"/>
+	  <!-- <arg name="gz_version" value="6" /> -->
+	  <arg name="gz_args" value="/opt/ros2Project/ROSPlane2/src/rosplane2_sim/worlds/TempWorld.sdf"/>
 
     </include>
   </group>
-
-  <node pkg="ros_gz_sim" exec="create" 
-    args="-world default -file /usr/share/ignition/ignition-gazebo6/worlds/fixedwing.sdf"/>
 
 
   <!--'https://fuel.ignitionrobotics.org/1.0/openrobotics/models/Gazebo'   -->
