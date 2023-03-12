@@ -1,5 +1,5 @@
-<sdf version='1.10'>
-  <world name='default'>
+<sdf version='1.9'>
+  <world name='NEw'>
     <gravity>0 0 -9.8000000000000007</gravity>
     <magnetic_field>5.5644999999999998e-06 2.2875799999999999e-05 -4.2388400000000002e-05</magnetic_field>
     <atmosphere type='adiabatic'/>
@@ -12,41 +12,13 @@
       <ambient>0.400000006 0.400000006 0.400000006 1</ambient>
       <background>0.699999988 0.699999988 0.699999988 1</background>
       <shadows>true</shadows>
+      <sky>
+        <clouds>
+          <speed>0.1</speed>
+        </clouds>
+      </sky>
     </scene>
-    <model name='fixedwing'>
-      <link name='link'>
-        <visual name='visual'>
-          <geometry>
-            <mesh>
-              <uri>file:///opt/ros2Project/ROSPlane2/src/rosplane2_sim/Aircraft/xacro/meshes/fixedwing.dae</uri>
-            </mesh>
-          </geometry>
-        </visual>
-        <collision name='collision'>
-          <geometry>
-            <mesh>
-              <uri>file:///opt/ros2Project/ROSPlane2/src/rosplane2_sim/Aircraft/xacro/meshes/fixedwing.dae</uri>
-            </mesh>
-          </geometry>
-        </collision>
-        <pose>0 0 0 0 0 0</pose>
-        <inertial>
-          <pose>0 0 0 0 0 0</pose>
-          <mass>1</mass>
-          <inertia>
-            <ixx>1</ixx>
-            <ixy>0</ixy>
-            <ixz>0</ixz>
-            <iyy>1</iyy>
-            <iyz>0</iyz>
-            <izz>1</izz>
-          </inertia>
-        </inertial>
-        <enable_wind>false</enable_wind>
-      </link>
-      <pose>1.0761700000000001 0.33744800000000003 0 0 0 0</pose>
-      <static>false</static>
-      <self_collide>false</self_collide>
-    </model>
+    
+   
   </world>
 </sdf>
