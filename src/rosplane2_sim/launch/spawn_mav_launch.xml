@@ -27,9 +27,7 @@
   
 
   <!--'https://fuel.ignitionrobotics.org/1.0/openrobotics/models/Gazebo'   -->
-   
-  <node pkg="xacro" exec="xacro" 
-    args="-o $(find-pkg-share rosplane2_sim)/Aircraft/xacro/fixedwing.xacro"/>  
+    
   
 
 
