@@ -20,7 +20,7 @@ source ~/ROSPlane2/install/setup.bash
 
 echo "Sourced Rosplane2"
 
-export IGN_GAZEBO_RESOURCE_PATH=${IGN_GAZEBO_RESOURCE_PATH}:"REPLACE ME WITH PATH LOCATION"/ROSPlane2/install/rosplane2_sim/share/rosplane2_sim
+export IGN_GAZEBO_RESOURCE_PATH=${IGN_GAZEBO_RESOURCE_PATH}:"REPLACE ME WITH PATH LOCATION DIRECTORY CONTAINING ROSPLANE2"/ROSPlane2/install/rosplane2_sim/share/rosplane2_sim
 
 echo "Exported file path"
 
