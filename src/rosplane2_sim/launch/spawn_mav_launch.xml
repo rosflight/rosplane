@@ -15,33 +15,22 @@
   <arg name="gazebo_namespace" default=""/>
 
    <!--###################################################################################-->
-  
+
   <!-- Start Gazebo simulator -->
   <group>
     <include file="$(find-pkg-share ros_gz_sim)/launch/gz_sim.launch.py">
 	  <arg name="gz_args" value="$(find-pkg-share rosplane2_sim)/worlds/TempWorld.sdf"/>
     </include>
   </group>
-
-
-  
-
-  <!--'https://fuel.ignitionrobotics.org/1.0/openrobotics/models/Gazebo'   -->
-    
-  
-
-
-  <node pkg="ros_gz_sim" exec="create" 
-    args="-world TEV -file $(find-pkg-share rosplane2_sim)/Aircraft/UnbuildAircraft.sdf"
-    respawn="false" output="screen"
-    > 
-    
-
+  <node name="spawn_fix"  pkg="ros_gz_bridge" exec="bridge_node"
+   respawn="false" output="screen">
   </node>
 
-  
-
-
+  <!--'https://fuel.ignitionrobotics.org/1.0/openrobotics/models/Gazebo'   -->
+  <node pkg="ros_gz_sim" exec="create"
+    args="-world TEV -file $(find-pkg-share rosplane2_sim)/Aircraft/UnbuildAircraft.sdf"
+    respawn="false" output="screen"
+    />
 
 
 </launch>
