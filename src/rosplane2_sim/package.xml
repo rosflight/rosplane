@@ -5,7 +5,7 @@
   <version>0.0.0</version>
   <description>intial rosPlane2 file.</description>
   <maintainer email="blayer@byu.edu">controls</maintainer>
-  <license>TODO: License declaration</license>
+  <license>Apache 2.0 License</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

@@ -9,14 +9,14 @@
 #ifndef CONTROLLER_BASE_H
 #define CONTROLLER_BASE_H
 
-//#include <ros/ros.h>
-//#include <rosflight_msgs/Command.h>
-//#include <rosplane_msgs/State.h>
-//#include <rosplane_msgs/Controller_Commands.h>
-//#include <rosplane_msgs/Controller_Internals.h>
+#include <ros/ros.h>
+#include <rosflight_msgs/Command.h>
+#include <rosplane_msgs/State.h>
+#include <rosplane_msgs/Controller_Commands.h>
+#include <rosplane_msgs/Controller_Internals.h>
 
-//#include <dynamic_reconfigure/server.h>
-//#include <rosplane/ControllerConfig.h>
+#include <dynamic_reconfigure/server.h>
+#include <rosplane/ControllerConfig.h>
 
 namespace rosplane
 {

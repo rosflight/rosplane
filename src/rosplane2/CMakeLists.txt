@@ -20,8 +20,11 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(rosplane2_msgs REQUIRED)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-find_package(rosplane2 REQUIRED)
 
 ament_export_dependencies(rclcpp rclpy)
 ament_export_include_directories(include)
@@ -38,17 +41,66 @@ include_directories(  #use this if you need .h files for include statements.  Th
   ${GAZEBO_INCLUDE_DIRS}
 )
 
+#START OF REAL EXECUTABLES
 #add_executable(rosplane_controller
 #            originalFiles/controller_base.cpp
 #            originalFiles/controller_example.cpp)
 
-#ament_target_dependencies(rosplane_controller rclcpp rclpy Eigen3)
-#target_link_libraries(rosplane_controller PLANE_HEADERS)
+#ament_target_dependencies(rosplane_controller rosplane2_msgs rclcpp rclpy Eigen3)
 
 #install(TARGETS
 #  rosplane_controller
 #  DESTINATION lib/${PROJECT_NAME})
 
+
+#add_executable(rosplane_estimator
+#            originalFiles/estimator_base.cpp
+#            originalFiles/estimator_example.cpp)
+
+#ament_target_dependencies(rosplane_estimator rosplane2_msgs rclcpp rclpy Eigen3)
+
+#install(TARGETS
+#  rosplane_estimator
+#  DESTINATION lib/${PROJECT_NAME})
+
+
+
+#add_executable(rosplane_path_follower
+#            originalFiles/path_follower_example.cpp
+#            originalFiles/path_follower_base.cpp)
+
+#ament_target_dependencies(rosplane_path_follower rosplane2_msgs rclcpp rclpy Eigen3)
+
+#install(TARGETS
+#  rosplane_path_follower
+#  DESTINATION lib/${PROJECT_NAME})
+
+
+
+#add_executable(rosplane_path_manager
+#            originalFiles/path_manager_base.cpp
+#            originalFiles/path_manager_example.cpp)
+
+#ament_target_dependencies(rosplane_path_manager rosplane2_msgs rclcpp rclpy Eigen3)
+
+#install(TARGETS
+#  rosplane_path_manager
+#  DESTINATION lib/${PROJECT_NAME})
+
+
+
+#add_executable(rosplane_path_planner
+#            originalFiles/path_planner.cpp)
+
+#ament_target_dependencies(rosplane_path_planner rosplane2_msgs rclcpp rclpy Eigen3)
+
+#install(TARGETS
+#  rosplane_path_planner
+#  DESTINATION lib/${PROJECT_NAME})
+
+# END OF REAL EXECUTABLES
+
+#custom executable, just as sanity check to make sure it works.
 add_executable(talker originalFiles/testNode.cpp)
 ament_target_dependencies(talker rclcpp std_msgs)
 
