@@ -1,14 +1,20 @@
-#include <ros/ros.h>
-#include <rosplane_msgs/Waypoint.h>
-
+//#include <ros/ros.h>
+//#include <rosplane_msgs/Waypoint.h>
+#include "rclcpp/rclcpp.hpp"
+#include "rosplane_msgs/msg/Waypoint.h"
 #define num_waypoints 3
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "rosplane_simple_path_planner");
+  //ros::init(argc, argv, "rosplane_simple_path_planner");
+  //ros::NodeHandle nh_; // !!! n vs nh_ example I am following used nh_ 
+  rclcpp::init(argc, argv);
+  auto node = rclcpp::Node::make_shared("rosplane_simple_path_planner")
 
-  ros::NodeHandle nh_;
-  ros::Publisher waypointPublisher = nh_.advertise<rosplane_msgs::Waypoint>("waypoint_path", 10);
+  //ros::Publisher waypointPublisher = nh_.advertise<rosplane_msgs::Waypoint>("waypoint_path", 10);
+  //ros::Rate loop_rate(10);
+  //rclpp::Rate loop_rate(10); !!! probably not important but the example had this Also there is a quality of service that is recomended probably not needed. 
+  auto waypointPublisher = node->create_publisher<rosplane_msgs::msg::Waypoint>("waypoint_path", 10); // !!! n vs nh_ example I am following used nh_ 
 
   float Va = 12;
   float wps[5*num_waypoints] =
@@ -20,9 +26,9 @@ int main(int argc, char **argv)
 
   for (int i(0); i < num_waypoints; i++)
   {
-    ros::Duration(0.5).sleep();
+    rclpp::Duration(0.5).sleep(); // !!! pattern following ros to rclpp
 
-    rosplane_msgs::Waypoint new_waypoint;
+    rosplane_msgs::msg::Waypoint new_waypoint; // !!! pattern following add ::msg directory
 
     new_waypoint.w[0] = wps[i*5 + 0];
     new_waypoint.w[1] = wps[i*5 + 1];
@@ -39,7 +45,7 @@ int main(int argc, char **argv)
 
     waypointPublisher.publish(new_waypoint);
   }
-  ros::Duration(1.5).sleep();
+  rclpp::Duration(1.5).sleep(); // !!! pattern following ros to rclpp
 
   return 0;
 }
