@@ -10,17 +10,17 @@
 #ifndef PATH_MANAGER_BASE_H
 #define PATH_MANAGER_BASE_H
 
-#include <ros/ros.h>
-#include <rosplane_msgs/State.h>
-#include <rosplane_msgs/Current_Path.h>
-#include <rosplane_msgs/Waypoint.h>
-#include <sensor_msgs/Imu.h>
-#include <std_msgs/Float32.h>
-#include <std_msgs/Float32MultiArray.h>
-#include <sensor_msgs/FluidPressure.h>
-#include <math.h>
+#include <rclcpp/rclcpp.hpp> 
+#include <rosplane_msgs/msg/State.hpp>
+#include <rosplane_msgs/msg/Current_Path.hpp>
+#include <rosplane_msgs/msg/Waypoint.hpp>
+#include <sensor_msgs/Imu.hpp>
+#include <std_msgs/msg/Float32.hpp>
+#include <std_msgs/msg/Float32MultiArray.hpp>
+#include <sensor_msgs/msg/FluidPressure.hpp>
+#include <math.hpp>
 #include <Eigen/Eigen>
-#include <rosplane/ControllerConfig.h>
+#include <rosplane/ControllerConfig.hpp>
 
 namespace rosplane
 {
@@ -71,23 +71,23 @@ protected:
 
 private:
 
-  ros::NodeHandle nh_;
-  ros::NodeHandle nh_private_;
-  ros::Subscriber vehicle_state_sub_;     /**< vehicle state subscription */
-  ros::Subscriber new_waypoint_sub_;      /**< new waypoint subscription */
-  ros::Publisher  current_path_pub_;      /**< controller commands publication */
+  rclcpp::NodeHandle nh_;
+  rclcpp::NodeHandle nh_private_;
+  rclcpp::Subscriber vehicle_state_sub_;     /**< vehicle state subscription */
+  rclcpp::Subscriber new_waypoint_sub_;      /**< new waypoint subscription */
+  rclcpp::Publisher  current_path_pub_;      /**< controller commands publication */
 
   struct params_s params_;
 
   rosplane_msgs::State vehicle_state_;     /**< vehicle state */
 
   double update_rate_;
-  ros::Timer update_timer_;
+  rclcpp::Timer update_timer_;
 
   void vehicle_state_callback(const rosplane_msgs::StateConstPtr &msg);
   bool state_init_;
   void new_waypoint_callback(const rosplane_msgs::Waypoint &msg);
-  void current_path_publish(const ros::TimerEvent &);
+  void current_path_publish(const rclcpp::TimerEvent &);
 };
 } //end namespace
 #endif // PATH_MANAGER_BASE_H
