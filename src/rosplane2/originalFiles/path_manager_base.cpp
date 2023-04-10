@@ -1,11 +1,11 @@
-#include "path_manager_base.h"
-#include "path_manager_example.h"
+#include "path_manager_base.hpp"
+#include "path_manager_example.hpp"
 
 namespace rosplane
 {
 
 path_manager_base::path_manager_base():
-  nh_(ros::NodeHandle()), /** nh_ stuff added here */
+  nh_(ros::NodeHandle()), /** nh_ stuff added here */ // !!! is this custom? perhaps this is passed to path_planner.cpp? does auto node handle this?
   nh_private_(ros::NodeHandle("~"))
 {
   nh_private_.param<double>("R_min", params_.R_min, 25.0);

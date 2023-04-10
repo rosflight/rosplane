@@ -14,9 +14,9 @@ int main(int argc, char **argv)
   //ros::Publisher waypointPublisher = nh_.advertise<rosplane_msgs::Waypoint>("waypoint_path", 10);
   //ros::Rate loop_rate(10);
   //rclpp::Rate loop_rate(10); !!! probably not important but the example had this Also there is a quality of service that is recomended probably not needed. 
-  auto waypointPublisher = node->create_publisher<rosplane_msgs::msg::Waypoint>("waypoint_path", 10); // !!! n vs nh_ example I am following used nh_ 
+  auto waypointPublisher = node->create_publisher<rosplane_msgs::msg::Waypoint>("waypoint_path", 10); // !!! n vs nh_ example I am following used n 
 
-  float Va = 12;
+  float va = 12;
   float wps[5*num_waypoints] =
   {
     200, 0, -50, 45*M_PI/180, Va,
