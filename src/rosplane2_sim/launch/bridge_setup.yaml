@@ -1,0 +1,23 @@
+- topic_name: "Pose"
+  ros_type_name: "geometry_msgs/Pose"
+  gz_type_name: "ignition.msgs.Pose"
+
+- topic_name: "position_velocities"
+  ros_type_name: "geometry_msgs/Vector3"
+  gz_type_name: "ignition.msgs.Vector3d"
+
+- topic_name: "angular_velocities"
+  ros_type_name: "geometry_msgs/Vector3"
+  gz_type_name: "ignition.msgs.Vector3d"
+
+- topic_name: "forces"
+  ros_type_name: "geometry_msgs/Vector3"
+  gz_type_name: "ignition.msgs.Vector3d"
+
+- topic_name: "moments"
+  ros_type_name: "geometry_msgs/Vector3"
+  gz_type_name: "ignition.msgs.Vector3d"
+
+- topic_name: "clock"
+  ros_type_name: "rosgraph_msgs/Clock"
+  gz_type_name: "ignition.msgs.Clock"

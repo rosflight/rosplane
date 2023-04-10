@@ -23,9 +23,11 @@
     </include>
   </group>
 
+  <!--
   <node name="spawn_fix"  pkg="rosplane2" exec="AircraftGazeboNode"
    respawn="false" output="screen">
   </node>
+  -->
 
   <!--'https://fuel.ignitionrobotics.org/1.0/openrobotics/models/Gazebo'   -->
   <node pkg="ros_gz_sim" exec="create"
