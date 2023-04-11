@@ -8,7 +8,7 @@
   <arg name="yaw" default="0.0"/>
   <arg name="z" default="0.1"/>
   <arg name="enable_logging" default="false"/>
-  <arg name="enable_ground_truth" default="true"/>
+  <!-- <arg name="enable_ground_truth" default="true"/> -->
   <arg name="log_file" default="$(var mav_name)"/>
   <arg name="enable_wind" default="true"/>
   <arg name="robot_namespace" default="/"/>
@@ -23,22 +23,18 @@
     </include>
   </group>
 
-  <!--
-  <node name="spawn_fix"  pkg="rosplane2" exec="AircraftGazeboNode"
-   respawn="false" output="screen">
-  </node>
-  -->
-
-  <!-- This is 100% a guess at how this works and I can't test it from my laptop -->
   <node name="bridge" pkg="ros_gz_bridge" exec="parameter_bridge"
-    arg name="bridge_setup" value = "$(find-pkg-share rosplane2_sim)/launch/bridge_setup.yaml"
+    args="--ros-args -p config_file:=$(find-pkg-share rosplane2_sim)/launch/bridge_setup.yaml"
     respawn="false" output="screen">
   </node>
   
 
   <!--'https://fuel.ignitionrobotics.org/1.0/openrobotics/models/Gazebo'   -->
+  <!--
   <node pkg="ros_gz_sim" exec="create"
-    args="-world TEV -file $(find-pkg-share rosplane2_sim)/Aircraft/UnbuildAircraft.sdf"
+    args="-world rosplane2 -file $(find-pkg-share rosplane2_sim)/Aircraft/UnbuildAircraft.sdf"
     respawn="false" output="screen"
     />
+  -->
+
 </launch>

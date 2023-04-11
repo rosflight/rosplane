@@ -1,23 +1,30 @@
-- topic_name: "Pose"
-  ros_type_name: "geometry_msgs/Pose"
-  gz_type_name: "ignition.msgs.Pose"
-
-- topic_name: "position_velocities"
-  ros_type_name: "geometry_msgs/Vector3"
-  gz_type_name: "ignition.msgs.Vector3d"
-
-- topic_name: "angular_velocities"
-  ros_type_name: "geometry_msgs/Vector3"
-  gz_type_name: "ignition.msgs.Vector3d"
-
-- topic_name: "forces"
-  ros_type_name: "geometry_msgs/Vector3"
-  gz_type_name: "ignition.msgs.Vector3d"
-
-- topic_name: "moments"
-  ros_type_name: "geometry_msgs/Vector3"
-  gz_type_name: "ignition.msgs.Vector3d"
-
 - topic_name: "clock"
-  ros_type_name: "rosgraph_msgs/Clock"
+  ros_type_name: "rosgraph_msgs/msg/Clock"
   gz_type_name: "ignition.msgs.Clock"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "truth/odometry"
+  gz_topic_name: "/model/fixedwing/odometry"
+  ros_type_name: "nav_msgs/msg/Odometry"
+  gz_type_name: "ignition.msgs.Odometry"
+  direction: GZ_TO_ROS
+
+- topic_name: "truth/wind"
+  ros_type_name: "geometry_msgs/msg/Vector3"
+  gz_type_name: "ignition.msgs.Vector3d"
+  direction: GZ_TO_ROS
+
+- topic_name: "forces_moments"
+  ros_type_name: "geometry_msgs/msg/Wrench"
+  gz_type_name: "ignition.msgs.Wrench"
+  direction: ROS_TO_GZ
+
+# - topic_name: "imu"
+#   ros_type_name: "sensor_msgs/msg/Imu"
+#   gz_type_name: "ignition.msgs.IMU"
+#   direction: GZ_TO_ROS
+
+# - topic_name: "navsat"
+#   ros_type_name: "sensor_msgs/msg/NavSatFix"
+#   gz_type_name: "ignition.msgs.NavSat"
+#   direction: GZ_TO_ROS
