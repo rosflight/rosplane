@@ -1,0 +1,54 @@
+<sdf version='1.9'>
+
+    <model name='fixedwing'>
+
+      <link name='link'>
+
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file:///Aircraft/xacro/meshes/fixedwing.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>file:///Aircraft/xacro/meshes/fixedwing.dae</uri>
+            </mesh>
+          </geometry>
+        </collision>
+
+        <pose>0 0 0 0 0 0</pose>
+
+        <inertial>
+          <pose>0 0 0 0 0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.1147</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+
+        <enable_wind>false</enable_wind>
+        
+      </link>
+
+      <pose>0 0 3 0 0 0</pose>
+      <static>false</static>
+      <self_collide>true</self_collide>
+
+      <!-- True State Odometry -->
+      <plugin filename="ignition-gazebo-odometry-publisher-system"
+        name="ignition::gazebo::systems::OdometryPublisher">
+        <dimensions>3</dimensions>
+      </plugin> 
+
+    </model>
+    
+</sdf>
