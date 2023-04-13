@@ -4,7 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include <cmath>
 
-namespace rosplane
+namespace rosplane2
 {
 
 path_manager_example::path_manager_example() : path_manager_base()

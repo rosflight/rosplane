@@ -102,7 +102,7 @@ install(TARGETS
 
 #custom executable, just as sanity check to make sure it works.
 add_executable(talker originalFiles/testNode.cpp)
-ament_target_dependencies(talker rclcpp std_msgs)
+ament_target_dependencies(talker rclcpp std_msgs sensor_msgs)
 
 install(TARGETS
   talker

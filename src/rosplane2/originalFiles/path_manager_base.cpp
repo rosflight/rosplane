@@ -1,35 +1,62 @@
 #include "path_manager_base.hpp"
 #include "path_manager_example.hpp"
 
-namespace rosplane
+namespace rosplane2
 {
 
 path_manager_base::path_manager_base():
-  nh_(ros::NodeHandle()), /** nh_ stuff added here */ // !!! is this custom? perhaps this is passed to path_planner.cpp? does auto node handle this?
-  nh_private_(ros::NodeHandle("~"))
+  nh_(rclcpp::Node()),
+  nh_private_(rclcpp::Node("~"))
+/* class path_manager_base::path_manager_base()// : public rclcpp::Node
 {
-  nh_private_.param<double>("R_min", params_.R_min, 25.0);
-  nh_private_.param<double>("update_rate", update_rate_, 10.0);
+  auto nh_ = rclcpp::Node::make_shared("talker");
 
-  vehicle_state_sub_ = nh_.subscribe("state", 10, &path_manager_base::vehicle_state_callback, this);
-  new_waypoint_sub_ = nh_.subscribe("waypoint_path", 10, &path_manager_base::new_waypoint_callback, this);
-  current_path_pub_ = nh_.advertise<rosplane_msgs::Current_Path>("current_path", 10);
+  public:
+  nh_():Node("min_pub"),count_(0)
+  {
+    pub = this->create_publisher<std_msgs::msg::String>("topic",10);
+    timer_ = this-> create_wall_timer(500ms, std::bind(&min_pub::timer_callback, this));
+  }
 
-  update_timer_ = nh_.createTimer(ros::Duration(1.0/update_rate_), &path_manager_base::current_path_publish, this);
+  //auto nh_ = rclcpp::Node::make_shared("talker");
+  //auto nh_private_ = 
+
+} */
+
+{
+  nh_private_.set_parameter_if_not_set("R_min", params_.R_min, 25.0);
+  nh_private_.set_parameter_if_not_set("update_rate", update_rate_, 10.0);
+
+  // vehicle_state_sub_ = nh_.subscribe("state", 10, &path_manager_base::vehicle_state_callback, this);
+  // new_waypoint_sub_ = nh_.subscribe("waypoint_path", 10, &path_manager_base::new_waypoint_callback, this);
+
+  vehicle_state_sub_ = nh_.create_subscription("state", 10, &path_manager_base::vehicle_state_callback, this);
+  new_waypoint_sub_ = nh_.create_subscription("waypoint_path", 10, &path_manager_base::new_waypoint_callback, this);
+
+  //auto node = rclcpp::Node::make_shared("talker")
+  //auto chatter_pub = node->create_publisher<std_msgs::msg::String>("chatter",1000);
+  rclcpp::Rate loop_rate(10)
+  //vehicle_state_sub_ = this -> create_subscription<std_msgs::msg::String>("state",10);
+  //vehicle_state_sub_ = this -> create_subscription<rosplane2::msg::State.msg>("state",10);
+  //new_waypoint_sub_ = nh_.subscribe("waypoint_path", 10, &path_manager_base::new_waypoint_callback, this);
+
+  current_path_pub_ = nh_.advertise<rosplane2_msgs::msg::CurrentPath>("current_path", 10);
+
+  update_timer_ = nh_.createTimer(rclcpp::Duration(1.0/update_rate_), &path_manager_base::current_path_publish, this);
 
   num_waypoints_ = 0;
 
   state_init_ = false;
 }
 
-void path_manager_base::vehicle_state_callback(const rosplane_msgs::StateConstPtr &msg)
+void path_manager_base::vehicle_state_callback(const rosplane2_msgs::StateConstPtr &msg)
 {
   vehicle_state_ = *msg;
 
   state_init_ = true;
 }
 
-void path_manager_base::new_waypoint_callback(const rosplane_msgs::Waypoint &msg)
+void path_manager_base::new_waypoint_callback(const rosplane2_msgs::Waypoint &msg)
 {
   if (msg.clear_wp_list == true)
   {
@@ -64,7 +91,7 @@ void path_manager_base::new_waypoint_callback(const rosplane_msgs::Waypoint &msg
   num_waypoints_++;
 }
 
-void path_manager_base::current_path_publish(const ros::TimerEvent &)
+void path_manager_base::current_path_publish(const rclcpp::TimerEvent &)
 {
 
   struct input_s input;
@@ -80,7 +107,7 @@ void path_manager_base::current_path_publish(const ros::TimerEvent &)
     manage(params_, input, output);
   }
 
-  rosplane_msgs::Current_Path current_path;
+  rosplane2_msgs::Current_Path current_path;
 
   if (output.flag)
     current_path.path_type = current_path.LINE_PATH;
@@ -103,10 +130,10 @@ void path_manager_base::current_path_publish(const ros::TimerEvent &)
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "rosplane_path_manager");
-  rosplane::path_manager_base *est = new rosplane::path_manager_example();
+  rclcpp::init(argc, argv, "rosplane2_path_manager");
+  rosplane2::path_manager_base *est = new rosplane2::path_manager_example();
 
-  ros::spin();
+  rclcpp::spin();
 
   return 0;
 }

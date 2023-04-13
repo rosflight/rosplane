@@ -1,28 +1,28 @@
 /**
- * @file path_manager_base.h
+ * @file path_manager_base.hpp
  *
  * Base class definition for autopilot path follower in chapter 10 of UAVbook, see http://uavbook.byu.edu/doku.php
  *
  * @author Gary Ellingson <gary.ellingson@byu.edu>
- * adapted by Judd Mehr and Brian Russel for RosPlane software
+ * adapted by Judd Mehr and Brian Russel for RosPlane2 software
  */
 
 #ifndef PATH_MANAGER_BASE_H
 #define PATH_MANAGER_BASE_H
 
 #include <rclcpp/rclcpp.hpp> 
-#include <rosplane_msgs/msg/State.hpp>
-#include <rosplane_msgs/msg/Current_Path.hpp>
-#include <rosplane_msgs/msg/Waypoint.hpp>
-#include <sensor_msgs/Imu.hpp>
-#include <std_msgs/msg/Float32.hpp>
-#include <std_msgs/msg/Float32MultiArray.hpp>
-#include <sensor_msgs/msg/FluidPressure.hpp>
-#include <math.hpp>
+#include <rosplane2_msgs/msg/state.hpp> // src/rosplane2_msgs/msg/State.msg
+#include <rosplane2_msgs/msg/current_path.hpp>
+#include <rosplane2_msgs/msg/waypoint.hpp>
+#include <sensor_msgs/msg/imu.hpp>
+#include <sensor_msgs/msg/fluid_pressure.hpp>
+#include <std_msgs/msg/float32.hpp>
+#include <std_msgs/msg/float32_multi_array.hpp>
+#include <math.h>
 #include <Eigen/Eigen>
-#include <rosplane/ControllerConfig.hpp>
+//#include <rosplane2/ControllerConfig.hpp>
 
-namespace rosplane
+namespace rosplane2
 {
 class path_manager_base
 {
@@ -71,22 +71,22 @@ protected:
 
 private:
 
-  rclcpp::NodeHandle nh_;
-  rclcpp::NodeHandle nh_private_;
+  rclcpp::Node nh_;
+  rclcpp::Node nh_private_;
   rclcpp::Subscriber vehicle_state_sub_;     /**< vehicle state subscription */
   rclcpp::Subscriber new_waypoint_sub_;      /**< new waypoint subscription */
   rclcpp::Publisher  current_path_pub_;      /**< controller commands publication */
 
   struct params_s params_;
 
-  rosplane_msgs::State vehicle_state_;     /**< vehicle state */
+  rosplane2_msgs::State vehicle_state_;     /**< vehicle state */
 
   double update_rate_;
   rclcpp::Timer update_timer_;
 
-  void vehicle_state_callback(const rosplane_msgs::StateConstPtr &msg);
+  void vehicle_state_callback(const rosplane2_msgs::StateConstPtr &msg);
   bool state_init_;
-  void new_waypoint_callback(const rosplane_msgs::Waypoint &msg);
+  void new_waypoint_callback(const rosplane2_msgs::Waypoint &msg);
   void current_path_publish(const rclcpp::TimerEvent &);
 };
 } //end namespace
