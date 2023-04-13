@@ -29,12 +29,7 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 ament_export_dependencies(rclcpp rclpy)
 ament_export_include_directories(include)
 
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
-  install(DIRECTORY originalFiles DESTINATION share/${PROJECT_NAME}/)
-
-
+install(DIRECTORY originalFiles DESTINATION share/${PROJECT_NAME}/)
 include_directories(  #use this if you need .h files for include statements.  The include will need to have the directories where each .h is respectively.
   include
   ${EIGEN3_INCLUDE_DIRS}

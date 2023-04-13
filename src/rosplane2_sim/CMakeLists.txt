@@ -16,51 +16,30 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-
-find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(ros_gz REQUIRED)
 find_package(Eigen3 REQUIRED)
-# find_package(rosflight_msgs REQUIRED)
 # find_package(rosplane_msgs REQUIRED)
-# find_package(gazebo_plugins REQUIRED)
-
-install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
-install(DIRECTORY Aircraft  DESTINATION share/${PROJECT_NAME}/)
-install(DIRECTORY worlds  DESTINATION share/${PROJECT_NAME}/)
-
-# include_directories(
-#   include
-#   ${EIGEN3_INCLUDE_DIRS}
-#   ${GAZEBO_INCLUDE_DIRS}
-# )
-
-# link_directories(${GAZEBO_LIBRARY_DIRS}) # gz-cmake???
 
 ament_export_dependencies(
   rclcpp
   geometry_msgs
   ros_gz
-  #gazebo_plugins
-  #rosflight_msgs 
   #rosplane_msgs
   Eigen3
-  #gazebo???
 )
-
-# add_library(aircraft_truth_plugin src/aircraft_truth.cpp)
-# target_link_libraries(aircraft_truth_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
-# add_dependencies(aircraft_truth_plugin ${catkin_EXPORTED_TARGETS})
-
-# add_library(aircraft_forces_and_moments_plugin src/aircraft_forces_and_moments.cpp)
-# target_link_libraries(aircraft_forces_and_moments_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
-# add_dependencies(aircraft_forces_and_moments_plugin ${catkin_EXPORTED_TARGETS})
-
 # ament_export_include_directories(include)
 # ament_export_libraries()
+
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
+install(DIRECTORY Aircraft DESTINATION share/${PROJECT_NAME}/)
+install(DIRECTORY worlds DESTINATION share/${PROJECT_NAME}/)
+
+# Add the EntityWrench node
+add_executable(entity_wrench_pub src/entity_wrench_pub.cpp)
+ament_target_dependencies(entity_wrench_pub)
+install(TARGETS entity_wrench_pub DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
