@@ -4,7 +4,8 @@
 namespace rosplane2
 {
 
-path_manager_base::path_manager_base()
+path_manager_base::path_manager_base() 
+//path_manager_base::path_manager_base: public rclcpp::Node
   //nh_(rclcpp::Node()),
   //nh_private_(rclcpp::Node("~"))
   
@@ -29,14 +30,11 @@ path_manager_base::path_manager_base()
   //rclcpp::Node::SharedPtr vehicle_state_sub_ = create_subscription(rosplane2_msgs::msg::State, 'state', &path_manager_base::vehicle_state_callback, 10)
   //rclcpp::Node::SharedPtr new_waypoint_sub_ = create_subscription(rosplane2_msgs::msg::Waypoint, 'waypoint_path', &path_manager_base::new_waypoint_callback, 10)
   //rclcpp::Node::SharedPtr current_path_pub_ = create_publisher(rosplane2_msgs::msg::CurrentPath, 'current_path', 10)
-  vehicle_state_sub_ = this->create_subscription<rosplane2_msgs::msg::State>("state", 10);
-  new_waypoint_sub_  = this->create_subscription<rosplane2_msgs::msg::Waypoint>("waypoint_path", 10);
-  current_path_pub_  = this->create_publisher<rosplane2_msgs::msg::CurrentPath>("current_path", 10);
-  rclcpp::executors::StaticSingleThreadedExecutor executor;
-  executor.add_node(node1);
-  executor.add_node(node2);
-  executor.add_node(node2);
-  executor.spin();
+  using std::placeholders::_1;
+  auto vehicle_state_sub_ = this->create_subscription<rosplane2_msgs::msg::State>("state", 10, std::bind(&path_manager_base::vehicle_state_callback,this,_1));
+  auto new_waypoint_sub_  = this->create_subscription<rosplane2_msgs::msg::Waypoint>("waypoint_path", 10, std::bind(&path_manager_base::new_waypoint_callback,this,_1));
+  auto current_path_pub_  = this->create_publisher<rosplane2_msgs::msg::CurrentPath>("current_path", 10);
+
 
 
   nh_private_.set_parameter_if_not_set("R_min", params_.R_min, 25.0);
@@ -71,7 +69,7 @@ void path_manager_base::vehicle_state_callback(const rosplane2_msgs::StateConstP
   state_init_ = true;
 }
 
-void path_manager_base::new_waypoint_callback(const rosplane2_msgs::Waypoint &msg)
+void path_manager_base::new_waypoint_callback(const rosplane2_msgs::msg::Waypoint &msg)
 {
   if (msg.clear_wp_list == true)
   {
@@ -88,7 +86,7 @@ void path_manager_base::new_waypoint_callback(const rosplane2_msgs::Waypoint &ms
     currentwp.w[2] = (vehicle_state_.position[2] > -25 ? msg.w[2] : vehicle_state_.position[2]);
     currentwp.chi_d = vehicle_state_.chi;
     currentwp.chi_valid = msg.chi_valid;
-    currentwp.Va_d = msg.Va_d;
+    currentwp.va_d = msg.va_d;
 
     waypoints_.clear();
     waypoints_.push_back(currentwp);
@@ -101,7 +99,7 @@ void path_manager_base::new_waypoint_callback(const rosplane2_msgs::Waypoint &ms
   nextwp.w[2]         = msg.w[2];
   nextwp.chi_d        = msg.chi_d;
   nextwp.chi_valid    = msg.chi_valid;
-  nextwp.Va_d         = msg.Va_d;
+  nextwp.va_d         = msg.va_d;
   waypoints_.push_back(nextwp);
   num_waypoints_++;
 }
@@ -122,13 +120,13 @@ void path_manager_base::current_path_publish(const rclcpp::TimerEvent &)
     manage(params_, input, output);
   }
 
-  rosplane2_msgs::msg::Current_Path current_path;
+  rosplane2_msgs::msg::CurrentPath current_path;
 
   if (output.flag)
-    current_path.path_type = current_path.LINE_PATH;
+    rcpputils::fs::current_path.path_type = current_path.LINE_PATH;
   else
-    current_path.path_type = current_path.ORBIT_PATH;
-  current_path.Va_d = output.Va_d;
+    rcpputils::fs::current_path.path_type = current_path.ORBIT_PATH;
+  rcpputils::fs::current_path.va_d = output.va_d;
   for (int i = 0; i < 3; i++)
   {
     current_path.r[i] = output.r[i];
@@ -136,9 +134,9 @@ void path_manager_base::current_path_publish(const rclcpp::TimerEvent &)
     current_path.c[i] = output.c[i];
   }
   current_path.rho = output.rho;
-  current_path.lambda = output.lambda;
+  current_path.lamda = output.lambda;
 
-  current_path_pub_.publish(current_path);
+  current_path_publish.publish(current_path);
 }
 
 } //end namespace
@@ -148,7 +146,13 @@ int main(int argc, char **argv)
   rclcpp::init(argc, argv, "rosplane2_path_manager");
   rosplane2::path_manager_base *est = new rosplane2::path_manager_example();
 
-  rclcpp::spin();
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(vehicle_state_sub_);
+  executor.add_node(new_waypoint_sub_);
+  executor.add_node(current_path_pub_);
+  executor.spin();
+
+  //rclcpp::spin();
 
   return 0;
 }

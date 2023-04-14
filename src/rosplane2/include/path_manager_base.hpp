@@ -24,7 +24,7 @@
 
 namespace rosplane2
 {
-class path_manager_base
+class path_manager_base : public rclcpp::Node
 {
 public:
   path_manager_base();
@@ -36,7 +36,7 @@ protected:
     float w[3];
     float chi_d;
     bool  chi_valid;
-    float Va_d;
+    float va_d;
   };
 
   std::vector<waypoint_s> waypoints_;
@@ -54,12 +54,12 @@ protected:
   struct output_s
   {
     bool  flag;             /** Inicates strait line or orbital path (true is line, false is orbit) */
-    float Va_d;             /** Desired airspeed (m/s) */
+    float va_d;             /** Desired airspeed (m/s) */
     float r[3];             /** Vector to origin of straight line path (m) */
     float q[3];             /** Unit vector, desired direction of travel for line path */
     float c[3];             /** Center of orbital path (m) */
     float rho;              /** Radius of orbital path (m) */
-    int8_t lambda;          /** Direction of orbital path (cw is 1, ccw is -1) */
+    int8_t lamda;          /** Direction of orbital path (cw is 1, ccw is -1) */
   };
 
   struct params_s
@@ -73,16 +73,16 @@ private:
 
   //rclcpp::Node nh_;
   //rclcpp::Node nh_private_;
-  rclcpp::Subscriber vehicle_state_sub_;     /**< vehicle state subscription */
-  rclcpp::Subscriber new_waypoint_sub_;      /**< new waypoint subscription */
-  rclcpp::Publisher  current_path_pub_;      /**< controller commands publication */
+  //rclcpp::Subscriber vehicle_state_sub_;     /**< vehicle state subscription */
+  //rclcpp::Subscriber new_waypoint_sub_;      /**< new waypoint subscription */
+  //rclcpp::Publisher  current_path_pub_;      /**< controller commands publication */
 
   struct params_s params_;
 
   rosplane2_msgs::msg::State vehicle_state_;     /**< vehicle state */
 
   double update_rate_;
-  rclcpp::Timer update_timer_;
+  rclcpp::Time update_timer_;
 
   void vehicle_state_callback(const rosplane2_msgs::msg::StateConstPtr &msg);
   bool state_init_;
