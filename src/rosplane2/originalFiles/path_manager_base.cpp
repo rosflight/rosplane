@@ -4,6 +4,8 @@
 namespace rosplane2
 {
 
+
+
 path_manager_base::path_manager_base() 
 //path_manager_base::path_manager_base: public rclcpp::Node
   //nh_(rclcpp::Node()),
@@ -35,16 +37,20 @@ path_manager_base::path_manager_base()
   auto new_waypoint_sub_  = this->create_subscription<rosplane2_msgs::msg::Waypoint>("waypoint_path", 10, std::bind(&path_manager_base::new_waypoint_callback,this,_1));
   auto current_path_pub_  = this->create_publisher<rosplane2_msgs::msg::CurrentPath>("current_path", 10);
 
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(vehicle_state_sub_);
+  executor.add_node(new_waypoint_sub_);
+  executor.add_node(current_path_pub_);
 
 
-  nh_private_.set_parameter_if_not_set("R_min", params_.R_min, 25.0);
-  nh_private_.set_parameter_if_not_set("update_rate", update_rate_, 10.0);
+  //nh_private_.set_parameter_if_not_set("R_min", params_.R_min, 25.0);
+  //nh_private_.set_parameter_if_not_set("update_rate", update_rate_, 10.0);
 
   // vehicle_state_sub_ = nh_.subscribe("state", 10, &path_manager_base::vehicle_state_callback, this);
   // new_waypoint_sub_ = nh_.subscribe("waypoint_path", 10, &path_manager_base::new_waypoint_callback, this);
 
-  vehicle_state_sub_ = nh_.create_subscription("state", 10, &path_manager_base::vehicle_state_callback, this);
-  new_waypoint_sub_ = nh_.create_subscription("waypoint_path", 10, &path_manager_base::new_waypoint_callback, this);
+  //vehicle_state_sub_ = nh_.create_subscription("state", 10, &path_manager_base::vehicle_state_callback, this);
+  //new_waypoint_sub_ = nh_.create_subscription("waypoint_path", 10, &path_manager_base::new_waypoint_callback, this);
 
   //auto node = rclcpp::Node::make_shared("talker")
   //auto chatter_pub = node->create_publisher<std_msgs::msg::String>("chatter",1000);
@@ -53,7 +59,7 @@ path_manager_base::path_manager_base()
   //vehicle_state_sub_ = this -> create_subscription<rosplane2::msg::State.msg>("state",10);
   //new_waypoint_sub_ = nh_.subscribe("waypoint_path", 10, &path_manager_base::new_waypoint_callback, this);
 
-  current_path_pub_ = nh_.advertise<rosplane2_msgs::msg::CurrentPath>("current_path", 10);
+  //current_path_pub_ = nh_.advertise<rosplane2_msgs::msg::CurrentPath>("current_path", 10);
 
   update_timer_ = nh_.createTimer(rclcpp::Duration(1.0/update_rate_), &path_manager_base::current_path_publish, this);
 
@@ -134,7 +140,7 @@ void path_manager_base::current_path_publish(const rclcpp::TimerEvent &)
     current_path.c[i] = output.c[i];
   }
   current_path.rho = output.rho;
-  current_path.lamda = output.lambda;
+  current_path.lamda = output.lamda;
 
   current_path_publish.publish(current_path);
 }
@@ -146,10 +152,7 @@ int main(int argc, char **argv)
   rclcpp::init(argc, argv, "rosplane2_path_manager");
   rosplane2::path_manager_base *est = new rosplane2::path_manager_example();
 
-  rclcpp::executors::MultiThreadedExecutor executor;
-  executor.add_node(vehicle_state_sub_);
-  executor.add_node(new_waypoint_sub_);
-  executor.add_node(current_path_pub_);
+
   executor.spin();
 
   //rclcpp::spin();
