@@ -17,10 +17,10 @@
 
 #include <iostream>
 #include <string>
-#include <gz/msgs/entity.pb.h>
-#include <gz/msgs/wrench.pb.h>
-#include <gz/msgs/entity_wrench.pb.h>
-#include <gz/transport.hh>
+#include <ignition/msgs/entity.pb.h>
+#include <ignition/msgs/wrench.pb.h>
+#include <ignition/msgs/entity_wrench.pb.h>
+#include <ignition/transport.hh>
 
 
 //////////////////////////////////////////////////
