@@ -4,9 +4,10 @@
 namespace rosplane2
 {
 
-path_manager_base::path_manager_base():
-  nh_(rclcpp::Node()),
-  nh_private_(rclcpp::Node("~"))
+path_manager_base::path_manager_base()
+  //nh_(rclcpp::Node()),
+  //nh_private_(rclcpp::Node("~"))
+  
 /* class path_manager_base::path_manager_base()// : public rclcpp::Node
 {
   auto nh_ = rclcpp::Node::make_shared("talker");

@@ -71,22 +71,22 @@ protected:
 
 private:
 
-  rclcpp::Node nh_;
-  rclcpp::Node nh_private_;
+  //rclcpp::Node nh_;
+  //rclcpp::Node nh_private_;
   rclcpp::Subscriber vehicle_state_sub_;     /**< vehicle state subscription */
   rclcpp::Subscriber new_waypoint_sub_;      /**< new waypoint subscription */
   rclcpp::Publisher  current_path_pub_;      /**< controller commands publication */
 
   struct params_s params_;
 
-  rosplane2_msgs::State vehicle_state_;     /**< vehicle state */
+  rosplane2_msgs::msg::State vehicle_state_;     /**< vehicle state */
 
   double update_rate_;
   rclcpp::Timer update_timer_;
 
-  void vehicle_state_callback(const rosplane2_msgs::StateConstPtr &msg);
+  void vehicle_state_callback(const rosplane2_msgs::msg::StateConstPtr &msg);
   bool state_init_;
-  void new_waypoint_callback(const rosplane2_msgs::Waypoint &msg);
+  void new_waypoint_callback(const rosplane2_msgs::msg::Waypoint &msg);
   void current_path_publish(const rclcpp::TimerEvent &);
 };
 } //end namespace
