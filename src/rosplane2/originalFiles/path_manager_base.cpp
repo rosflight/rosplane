@@ -25,6 +25,20 @@ path_manager_base::path_manager_base()
 } */
 
 {
+  // python
+  //rclcpp::Node::SharedPtr vehicle_state_sub_ = create_subscription(rosplane2_msgs::msg::State, 'state', &path_manager_base::vehicle_state_callback, 10)
+  //rclcpp::Node::SharedPtr new_waypoint_sub_ = create_subscription(rosplane2_msgs::msg::Waypoint, 'waypoint_path', &path_manager_base::new_waypoint_callback, 10)
+  //rclcpp::Node::SharedPtr current_path_pub_ = create_publisher(rosplane2_msgs::msg::CurrentPath, 'current_path', 10)
+  vehicle_state_sub_ = this->create_subscription<rosplane2_msgs::msg::State>("state", 10);
+  new_waypoint_sub_  = this->create_subscription<rosplane2_msgs::msg::Waypoint>("waypoint_path", 10);
+  current_path_pub_  = this->create_publisher<rosplane2_msgs::msg::CurrentPath>("current_path", 10);
+  rclcpp::executors::StaticSingleThreadedExecutor executor;
+  executor.add_node(node1);
+  executor.add_node(node2);
+  executor.add_node(node2);
+  executor.spin();
+
+
   nh_private_.set_parameter_if_not_set("R_min", params_.R_min, 25.0);
   nh_private_.set_parameter_if_not_set("update_rate", update_rate_, 10.0);
 
@@ -108,7 +122,7 @@ void path_manager_base::current_path_publish(const rclcpp::TimerEvent &)
     manage(params_, input, output);
   }
 
-  rosplane2_msgs::Current_Path current_path;
+  rosplane2_msgs::msg::Current_Path current_path;
 
   if (output.flag)
     current_path.path_type = current_path.LINE_PATH;
