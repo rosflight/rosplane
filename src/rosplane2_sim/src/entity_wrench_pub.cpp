@@ -25,27 +25,28 @@
 
 //////////////////////////////////////////////////
 /// \brief Function called each time a topic update is received.
-void cb(const gz::msgs::Wrench &_wrench)
+void cb(const ignition::msgs::Wrench &wrench_)
 {
   //std::cout << "Msg: " << _msg.data() << std::endl << std::endl;
-  gz::transport::Node publisher;
+  ignition::transport::Node publisher;
   std::string topic_pub = "/world/rosplane2/wrench";
   auto pub = publisher.Advertise<gz::msgs::EntityWrench>(topic_pub);
   if (!pub)
   {
     std::cerr << "Error advertising topic [" << topic_pub << "]" << std::endl;
-    return -1;
+    return;
   }
   
-  gz::msgs::Entity en;
-  std::string link_name = "fixedwing::link"
-  en.set_name(link_name)
-  en.set_type(LINK)
+  ignition::msgs::Entity en;
+  std::string link_name = "fixedwing::link";
+  en.set_name(link_name);
+  en.set_type(ignition::msgs::Entity_Type_LINK);
+  ignition::msgs::Wrench wrench = wrench_;
   
-  gz::msgs::EntityWrench ew;
-  ew.set_allocated_entity(en);
-  ew.set_allocated_wrench(_wrench);
-  pub.publish(ew);
+  ignition::msgs::EntityWrench ew;
+  ew.set_allocated_entity(&en);
+  ew.set_allocated_wrench(&wrench);
+  pub.Publish(ew);
 }
 
 //////////////////////////////////////////////////
@@ -53,7 +54,7 @@ int main(int argc, char **argv)
 {
   // Create a transport node and advertise a topic.
   gz::transport::Node subscriber;
-  std::string topic_sub = "/forces_moments";
+  const std::string topic_sub = "/forces_moments";
   
 
   // Subscribe to a topic by registering a callback.
@@ -64,7 +65,7 @@ int main(int argc, char **argv)
   }
 
   // Zzzzzz.
-  gz:transport::waitForShutdown();
+  gz::transport::waitForShutdown();
 
   return 0;
 }
