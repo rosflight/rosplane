@@ -84,7 +84,7 @@ private:
   double update_rate_;
   rclcpp::Time update_timer_;
 
-  void vehicle_state_callback(const rosplane2_msgs::msg::StateConstPtr &msg);
+  void vehicle_state_callback(const rosplane2_msgs::msg::State &msg);
   bool state_init_;
   void new_waypoint_callback(const rosplane2_msgs::msg::Waypoint &msg);
   void current_path_publish(const rclcpp::TimerEvent &);
