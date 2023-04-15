@@ -11,6 +11,7 @@ find_package(std_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/Command.msg"
   "msg/ControllerCommands.msg"
   "msg/ControllerInternals.msg"
   "msg/CurrentPath.msg"

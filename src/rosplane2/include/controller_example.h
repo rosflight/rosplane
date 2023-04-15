@@ -3,7 +3,7 @@
 
 #include "controller_base.h"
 
-namespace rosplane
+namespace rosplane2
 {
 
 class controller_example : public controller_base
