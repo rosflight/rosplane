@@ -1,5 +1,7 @@
 #include "controller_example.h"
 
+#include "iostream"
+
 namespace rosplane2
 {
 

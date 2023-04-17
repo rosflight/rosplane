@@ -14,6 +14,10 @@
 #include <rosplane2_msgs/msg/controller_commands.hpp>
 #include <rosplane2_msgs/msg/controller_internals.hpp>
 #include <rosplane2_msgs/msg/command.hpp>
+#include "chrono"
+
+using std::placeholders::_1;
+using namespace std::chrono_literals;
 
 namespace rosplane2
 {
@@ -106,6 +110,10 @@ protected:
 
 private:
     rclcpp::Publisher<rosplane2_msgs::msg::Command>::SharedPtr actuators_pub_;
+    rclcpp::Subscription<rosplane2_msgs::msg::ControllerCommands>::SharedPtr controller_commands_sub_;
+    rclcpp::Subscription<rosplane2_msgs::msg::State>::SharedPtr vehicle_state_sub_;
+
+    rclcpp::TimerBase::SharedPtr timer_;
 
     struct params_s params_ = {
             /* alt_hz */ 10.0,
@@ -149,8 +157,8 @@ private:
     // TODO remove when dynamic reconfigure works.
 
 
-//    rosplane2_msgs::msg::ControllerCommands controller_commands_;
-//    rosplane2_msgs::msg::State vehicle_state_;
+    rosplane2_msgs::msg::ControllerCommands controller_commands_;
+    rosplane2_msgs::msg::State vehicle_state_;
 
     bool command_recieved_;
 
@@ -164,6 +172,10 @@ private:
     */
     void actuator_controls_publish();
 
+
+    void controller_commands_callback(const rosplane2_msgs::msg::ControllerCommands::SharedPtr msg);
+
+        void vehicle_state_callback(const rosplane2_msgs::msg::State::SharedPtr msg);
 
 
 
