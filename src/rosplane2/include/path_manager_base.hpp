@@ -26,8 +26,8 @@ namespace rosplane2
 {
 class path_manager_base : public rclcpp::Node
 {
-public:
-  path_manager_base();
+  public:
+    path_manager_base();
 
 protected:
 
@@ -77,6 +77,10 @@ private:
   //rclcpp::Subscriber new_waypoint_sub_;      /**< new waypoint subscription */
   //rclcpp::Publisher  current_path_pub_;      /**< controller commands publication */
 
+  rclcpp::Subscription<rosplane2_msgs::msg::State>::SharedPtr vehicle_state_sub_;     /**< vehicle state subscription */
+  rclcpp::Subscription<rosplane2_msgs::msg::Waypoint>::SharedPtr new_waypoint_sub_;      /**< new waypoint subscription */
+  rclcpp::Publisher<rosplane2_msgs::msg::CurrentPath>::SharedPtr current_path_pub_;     /**< controller commands publication */
+
   struct params_s params_;
 
   rosplane2_msgs::msg::State vehicle_state_;     /**< vehicle state */
@@ -87,7 +91,7 @@ private:
   void vehicle_state_callback(const rosplane2_msgs::msg::State &msg);
   bool state_init_;
   void new_waypoint_callback(const rosplane2_msgs::msg::Waypoint &msg);
-  void current_path_publish(const rclcpp::TimerEvent &);
+  //void current_path_publish(const rclcpp::TimerEvent &); // !!!
 };
 } //end namespace
 #endif // PATH_MANAGER_BASE_H

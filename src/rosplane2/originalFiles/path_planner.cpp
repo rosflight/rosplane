@@ -25,9 +25,11 @@ int main(int argc, char **argv)
     200, 200, -50, 225*M_PI/180, va,
   };
 
+  rclcpp::Clock wait;
   for (int i(0); i < num_waypoints; i++)
   {
-    rclcpp::Duration(0.5).sleep(); // !!! pattern following ros to rclpp
+    //ros::Duration(0.5).sleep(); // !!! pattern following ros to rclpp
+    wait.sleep_for(rclcpp::Duration(0,int(5e8)));
 
     rosplane2_msgs::msg::Waypoint new_waypoint; // !!! pattern following add ::msg directory
 
@@ -44,9 +46,9 @@ int main(int argc, char **argv)
       new_waypoint.set_current = false;
     new_waypoint.clear_wp_list = false;
 
-    waypoint_publisher.publish(new_waypoint);
+    waypoint_publisher->publish(new_waypoint);
   }
-  rclpp::Duration(1.5).sleep(); // !!! pattern following ros to rclpp
-
+  // rclpp::Duration(1.5).sleep(); // !!! pattern following ros to rclpp
+  wait.sleep_for(rclcpp::Duration(0,int(5e8)));
   return 0;
 }

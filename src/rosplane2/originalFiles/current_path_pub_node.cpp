@@ -7,7 +7,6 @@
 #include "std_msgs/msg/string.hpp"
 
 
-
 using namespace std::chrono_literals;
 
 /* This example creates a subclass of Node and uses std::bind() to register a
@@ -40,10 +39,7 @@ class MinimalPublisher : public rclcpp::Node
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<rclcpp::Node>("my_node");
-  
-  //rclcpp::spin(std::make_shared<MinimalPublisher>());
-  rclcpp::spin(node);
+  rclcpp::spin(std::make_shared<MinimalPublisher>());
   rclcpp::shutdown();
   return 0;
 }
