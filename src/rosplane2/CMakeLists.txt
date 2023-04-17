@@ -42,15 +42,15 @@ include_directories(  #use this if you need .h files for include statements.  Th
 )
 
 #START OF REAL EXECUTABLES
-#add_executable(rosplane_controller
-#            originalFiles/controller_base.cpp
-#            originalFiles/controller_example.cpp)
+add_executable(rosplane_controller
+            originalFiles/controller_base.cpp
+            originalFiles/controller_example.cpp)
 
-#ament_target_dependencies(rosplane_controller rosplane2_msgs rclcpp rclpy Eigen3)
+ament_target_dependencies(rosplane_controller rosplane2_msgs rclcpp rclpy Eigen3)
 
-#install(TARGETS
-#  rosplane_controller
-#  DESTINATION lib/${PROJECT_NAME})
+install(TARGETS
+  rosplane_controller
+  DESTINATION lib/${PROJECT_NAME})
 
 
 #add_executable(rosplane_estimator
