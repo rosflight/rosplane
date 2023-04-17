@@ -28,10 +28,10 @@ int main(int argc, char **argv)
   rclcpp::Clock wait;
   for (int i(0); i < num_waypoints; i++)
   {
-    //ros::Duration(0.5).sleep(); // !!! pattern following ros to rclpp
+    //ros::Duration(0.5).sleep(); 
     wait.sleep_for(rclcpp::Duration(0,int(5e8)));
 
-    rosplane2_msgs::msg::Waypoint new_waypoint; // !!! pattern following add ::msg directory
+    rosplane2_msgs::msg::Waypoint new_waypoint; 
 
     new_waypoint.w[0] = wps[i*5 + 0];
     new_waypoint.w[1] = wps[i*5 + 1];
@@ -48,7 +48,7 @@ int main(int argc, char **argv)
 
     waypoint_publisher->publish(new_waypoint);
   }
-  // rclpp::Duration(1.5).sleep(); // !!! pattern following ros to rclpp
+  // rclpp::Duration(1.5).sleep(); 
   wait.sleep_for(rclcpp::Duration(0,int(5e8)));
   return 0;
 }

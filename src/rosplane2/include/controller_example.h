@@ -3,11 +3,7 @@
 
 #include "controller_base.h"
 
-<<<<<<< HEAD
-namespace rosplane
-=======
 namespace rosplane2
->>>>>>> origin/IanFresh
 {
 
 class controller_example : public controller_base

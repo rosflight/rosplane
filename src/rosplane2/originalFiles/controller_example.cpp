@@ -1,12 +1,8 @@
 #include "controller_example.h"
 
-<<<<<<< HEAD
-namespace rosplane
-=======
 #include "iostream"
 
 namespace rosplane2
->>>>>>> origin/IanFresh
 {
 
 controller_example::controller_example() : controller_base()

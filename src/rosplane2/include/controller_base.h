@@ -9,18 +9,6 @@
 #ifndef CONTROLLER_BASE_H
 #define CONTROLLER_BASE_H
 
-<<<<<<< HEAD
-#include <ros/ros.h>
-#include <rosflight_msgs/Command.h>
-#include <rosplane_msgs/State.h>
-#include <rosplane_msgs/Controller_Commands.h>
-#include <rosplane_msgs/Controller_Internals.h>
-
-#include <dynamic_reconfigure/server.h>
-#include <rosplane/ControllerConfig.h>
-
-namespace rosplane
-=======
 #include <rclcpp/rclcpp.hpp>
 #include <rosplane2_msgs/msg/state.hpp>
 #include <rosplane2_msgs/msg/controller_commands.hpp>
@@ -32,7 +20,6 @@ using std::placeholders::_1;
 using namespace std::chrono_literals;
 
 namespace rosplane2
->>>>>>> origin/IanFresh
 {
 
 enum class alt_zones
@@ -43,11 +30,7 @@ enum class alt_zones
   ALTITUDE_HOLD
 };
 
-<<<<<<< HEAD
-class controller_base
-=======
 class controller_base : public rclcpp::Node
->>>>>>> origin/IanFresh
 {
 public:
   controller_base();
