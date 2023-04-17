@@ -112,6 +112,7 @@ private:
     rclcpp::Publisher<rosplane2_msgs::msg::Command>::SharedPtr actuators_pub_;
     rclcpp::Subscription<rosplane2_msgs::msg::ControllerCommands>::SharedPtr controller_commands_sub_;
     rclcpp::Subscription<rosplane2_msgs::msg::State>::SharedPtr vehicle_state_sub_;
+    rclcpp::Publisher<rosplane2_msgs::msg::ControllerInternals>::SharedPtr internals_pub_;
 
     rclcpp::TimerBase::SharedPtr timer_;
 
