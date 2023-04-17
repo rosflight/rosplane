@@ -17,11 +17,16 @@
 
 #include <iostream>
 #include <string>
+#include <stdio.h>
+#include <stdlib.h>
 #include <ignition/msgs/entity.pb.h>
 #include <ignition/msgs/wrench.pb.h>
 #include <ignition/msgs/entity_wrench.pb.h>
 #include <ignition/transport.hh>
 
+#include <ignition/common/Console.hh>
+#include <ignition/common/Util.hh>
+#include <ignition/transport/Node.hh>
 
 //////////////////////////////////////////////////
 /// \brief Function called each time a topic update is received.
@@ -29,31 +34,26 @@ void cb(const ignition::msgs::Wrench &wrench_)
 {
 
   ignition::transport::Node publisher;
-  std::string topic_pub = "/world/rosplane2/wrench";
 
-  auto pub = publisher.Advertise<ignition::msgs::EntityWrench>(topic_pub);
+  auto pub = publisher.Advertise<ignition::msgs::EntityWrench>("/world/rosplane2/wrench");
 
-  if (!pub)
-  {
-    std::cerr << "Error advertising topic [" << topic_pub << "]" << std::endl;
-    return;
-  }
+  auto const force = wrench_.force();
 
-  ignition::msgs::Entity en;
-  std::string link_name = "fixedwing::link";
-  en.set_name(link_name);
-  en.set_type(ignition::msgs::Entity_Type_LINK);
+  auto const torque = wrench_.torque();
 
-
-  ignition::msgs::Wrench wrench = wrench_;
-  
   ignition::msgs::EntityWrench ew;
-  ew.set_allocated_entity(&en);
-  ew.set_allocated_wrench(&wrench);
+  ew.mutable_entity()->set_name("fixedwing");
+  ew.mutable_entity()->set_type(ignition::msgs::Entity::MODEL);
+  ew.mutable_wrench()->mutable_force()->set_x(force.x());
+  ew.mutable_wrench()->mutable_force()->set_y(force.y());
+  ew.mutable_wrench()->mutable_force()->set_z(force.z());
+  ew.mutable_wrench()->mutable_torque()->set_x(torque.x());
+  ew.mutable_wrench()->mutable_torque()->set_y(torque.y());
+  ew.mutable_wrench()->mutable_torque()->set_z(torque.z());
 
 
   pub.Publish(ew);
-  std::cout <<std::endl<< std::endl<<"HERE!!!" << std::endl<< std::endl;
+
 }
 
 //////////////////////////////////////////////////
