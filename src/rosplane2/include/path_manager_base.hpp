@@ -21,6 +21,8 @@
 #include <math.h>
 #include <Eigen/Eigen>
 //#include <rosplane2/ControllerConfig.hpp>
+using std::placeholders::_1;
+using namespace std::chrono_literals;
 
 namespace rosplane2
 {
@@ -86,12 +88,12 @@ private:
   rosplane2_msgs::msg::State vehicle_state_;     /**< vehicle state */
 
   double update_rate_;
-  rclcpp::Time update_timer_;
+  rclcpp::TimerBase::SharedPtr update_timer_;
 
   void vehicle_state_callback(const rosplane2_msgs::msg::State &msg);
   bool state_init_;
   void new_waypoint_callback(const rosplane2_msgs::msg::Waypoint &msg);
-  //void current_path_publish(const rclcpp::TimerEvent &); // !!!
+  void current_path_publish(); 
 };
 } //end namespace
 #endif // PATH_MANAGER_BASE_H
