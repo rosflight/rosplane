@@ -27,26 +27,33 @@
 /// \brief Function called each time a topic update is received.
 void cb(const ignition::msgs::Wrench &wrench_)
 {
-  //std::cout << "Msg: " << _msg.data() << std::endl << std::endl;
+
   ignition::transport::Node publisher;
   std::string topic_pub = "/world/rosplane2/wrench";
-  auto pub = publisher.Advertise<gz::msgs::EntityWrench>(topic_pub);
+
+  auto pub = publisher.Advertise<ignition::msgs::EntityWrench>(topic_pub);
+
   if (!pub)
   {
     std::cerr << "Error advertising topic [" << topic_pub << "]" << std::endl;
     return;
   }
-  
+
   ignition::msgs::Entity en;
   std::string link_name = "fixedwing::link";
   en.set_name(link_name);
   en.set_type(ignition::msgs::Entity_Type_LINK);
+
+
   ignition::msgs::Wrench wrench = wrench_;
   
   ignition::msgs::EntityWrench ew;
   ew.set_allocated_entity(&en);
   ew.set_allocated_wrench(&wrench);
+
+
   pub.Publish(ew);
+  std::cout <<std::endl<< std::endl<<"HERE!!!" << std::endl<< std::endl;
 }
 
 //////////////////////////////////////////////////

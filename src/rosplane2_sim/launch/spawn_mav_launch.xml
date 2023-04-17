@@ -16,18 +16,22 @@
     args="--ros-args -p config_file:=$(find-pkg-share rosplane2_sim)/launch/bridge_setup.yaml"
     respawn="false" output="screen">
   </node>
+
+  <node name="gzMomentMover" pkg="rosplane2_sim" exec="entity_wrench_pub" respawn="false" output="screen">
+
+  </node>
   
   <!-- Launch Nodes -->
-  <!-- <node name="autopilot" pkg="rosplane2" type="rosplane2_controller" >
+  <!-- <node name="autopilot" pkg="rosplane2" exec="rosplane2_controller" >
     <remap from="state" to="truth"/>
   </node>
-  <node name="pathfollower" pkg="rosplane2" type="rosplane2_path_follower">
+  <node name="pathfollower" pkg="rosplane2" exec="rosplane2_path_follower">
       <remap from="state" to="truth"/>
   </node>
-  <node name="pathmanager" pkg="rosplane2" type="rosplane2_path_manager" output="screen">
+  <node name="pathmanager" pkg="rosplane2" exec="rosplane2_path_manager" output="screen">
     <remap from="state" to="truth"/>
   </node>
-  <node name="pathplanner" pkg="rosplane" type="rosplane_path_planner"/>  -->
+  <node name="pathplanner" pkg="rosplane" exec="rosplane_path_planner"/>  -->
 
 
 </launch>
