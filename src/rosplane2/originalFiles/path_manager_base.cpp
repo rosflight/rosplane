@@ -135,7 +135,7 @@ int main(int argc, char **argv)
 {
   //rclcpp::init(argc, argv, "rosplane2_path_manager"); 
   rclcpp::init(argc, argv);
-  rosplane2::path_manager_base *est = new rosplane2::path_manager_example();
+//  rosplane2::path_manager_base *est = new rosplane2::path_manager_example();
 
   //ros::spin();
   rclcpp::spin(std::make_shared<rosplane2::path_manager_example>());
