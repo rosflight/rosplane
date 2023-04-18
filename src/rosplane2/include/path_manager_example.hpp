@@ -1,14 +1,14 @@
 #ifndef PATH_MANAGER_EXAMPLE_H
 #define PATH_MANAGER_EXAMPLE_H
 
-#include "path_manager_base.h"
+#include "path_manager_base.hpp"
 #include <Eigen/Eigen>
 //#include <lib/mathlib/mathlib.h>
 
 
 #define M_PI_F 3.14159265358979323846f
 #define M_PI_2_F 1.57079632679489661923f
-namespace rosplane
+namespace rosplane2
 {
 enum class fillet_state
 {
