@@ -20,7 +20,7 @@
                 "state", 10, std::bind(&controller_base::vehicle_state_callback, this, _1));
 
 
-        command_recieved_ = true; // false; TODO turn back to false.
+        command_recieved_ = false;
     }
 
     void controller_base::controller_commands_callback(const rosplane2_msgs::msg::ControllerCommands::SharedPtr msg)
@@ -32,6 +32,8 @@
     void controller_base::vehicle_state_callback(const rosplane2_msgs::msg::State::SharedPtr msg)
     {
         vehicle_state_ = *msg;
+
+//        std::cout << "Vehicle State received." << std::endl;
     }
 
     void controller_base::actuator_controls_publish()

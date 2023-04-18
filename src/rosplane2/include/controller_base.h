@@ -176,7 +176,7 @@ private:
 
     void controller_commands_callback(const rosplane2_msgs::msg::ControllerCommands::SharedPtr msg);
 
-        void vehicle_state_callback(const rosplane2_msgs::msg::State::SharedPtr msg);
+    void vehicle_state_callback(const rosplane2_msgs::msg::State::SharedPtr msg);
 
 
 
