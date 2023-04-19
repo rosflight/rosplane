@@ -46,10 +46,9 @@
 #include <string> 
 
 #include "rclcpp/rclcpp.hpp" // from tutorial: "allows you to use the most common pieces of the ROS 2 system"
-
-#include <rosplane2_msgs/State.h>
-#include <std_msgs/Float32.h>
-#include <geometry_msgs/Vector3.h>
+#include "nav_msgs/msg/odometry.hpp"
+#include "std_msgs/msg/float32.hpp"
+#include "geometry_msgs/msg/vector3.hpp"
 
 namespace rosplane2
 {
@@ -78,6 +77,8 @@ private:
   rclcpp::Publisher<rosplane_msgs::State>::SharedPtr true_state_pub_;
 
   void WindSpeedCallback(const geometry_msgs::Vector3 &wind);
+
+  void topic_callback(const nav_msgs::msg::Odometry & topic_msg)
 
 };
 }
