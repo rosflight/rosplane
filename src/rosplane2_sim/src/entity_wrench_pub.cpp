@@ -30,29 +30,37 @@
 
 //////////////////////////////////////////////////
 /// \brief Function called each time a topic update is received.
+void cb1(const ignition::msgs::EntityWrench &entity_wrench){
+
+return entity_wrench.
+}
+
 void cb(const ignition::msgs::Wrench &wrench_)
 {
 
   ignition::transport::Node publisher;
 
-  auto pub = publisher.Advertise<ignition::msgs::EntityWrench>("/world/rosplane2/wrench");
-
+  auto pub = publisher.Advertise<ignition::msgs::EntityWrench>("/world/rosplane2/wrench/persistent");
+  subscriber.Subscribe(topic_sub, cb1)
   auto const force = wrench_.force();
-
   auto const torque = wrench_.torque();
 
-  ignition::msgs::EntityWrench ew;
-  ew.mutable_entity()->set_name("fixedwing");
-  ew.mutable_entity()->set_type(ignition::msgs::Entity::MODEL);
-  ew.mutable_wrench()->mutable_force()->set_x(force.x());
-  ew.mutable_wrench()->mutable_force()->set_y(force.y());
-  ew.mutable_wrench()->mutable_force()->set_z(force.z());
-  ew.mutable_wrench()->mutable_torque()->set_x(torque.x());
-  ew.mutable_wrench()->mutable_torque()->set_y(torque.y());
-  ew.mutable_wrench()->mutable_torque()->set_z(torque.z());
+  gz::transport::Node subscriber;
+  const std::string topic_sub = "/world/rosplane2/wrench/persistent";
 
 
-  pub.Publish(ew);
+  {
+    ignition::msgs::EntityWrench ew;
+    ew.mutable_entity()->set_name("fixedwing");
+    ew.mutable_entity()->set_type(ignition::msgs::Entity::MODEL);
+    ew.mutable_wrench()->mutable_force()->set_x(force.x());
+    ew.mutable_wrench()->mutable_force()->set_y(force.y());
+    ew.mutable_wrench()->mutable_force()->set_z(force.z());
+    ew.mutable_wrench()->mutable_torque()->set_x(torque.x());
+    ew.mutable_wrench()->mutable_torque()->set_y(torque.y());
+    ew.mutable_wrench()->mutable_torque()->set_z(torque.z());
+    pub.Publish(ew);
+  }
 
 }
 
