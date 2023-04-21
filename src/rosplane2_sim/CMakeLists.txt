@@ -26,9 +26,7 @@ find_package(ros_gz REQUIRED)
 find_package(Eigen3 REQUIRED)
 # find_package(rosplane_msgs REQUIRED)
 
-
-
-ament_export_detruth_publisherpendencies(
+ament_export_dependencies(
   rclcpp
   geometry_msgs
   ros_gz
