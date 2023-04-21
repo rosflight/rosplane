@@ -1,8 +1,10 @@
-#include "path_manager_example.h"
-#include "ros/ros.h"
+//#include "path_manager_example.h"
+//#include "ros/ros.h"
+#include "path_manager_example.hpp"
+#include "rclcpp/rclcpp.hpp"
 #include <cmath>
 
-namespace rosplane
+namespace rosplane2
 {
 
 path_manager_example::path_manager_example() : path_manager_base()
@@ -16,14 +18,15 @@ void path_manager_example::manage(const params_s &params, const input_s &input, 
 
   if (num_waypoints_ < 2)
   {
-    ROS_WARN_THROTTLE(4, "No waypoints received! Loitering about origin at 50m");
+    //ROS_WARN_THROTTLE(4, "No waypoints received! Loitering about origin at 50m");
+    //RCLCPP_WARN(this->get_logger(), "No waypoints received! Loitering about origin at 50m",4); !!!
     output.flag = false;
-    output.Va_d = 12;
+    output.va_d = 12;
     output.c[0] = 0.0f;
     output.c[1] = 0.0f;
     output.c[2] = -50.0f;
     output.rho = params.R_min;
-    output.lambda = 1;
+    output.lamda = 1;
   }
   else
   {
@@ -69,7 +72,7 @@ void path_manager_example::manage_line(const params_s &params, const input_s &in
   Eigen::Vector3f w_ip1(waypoints_[idx_c].w);
 
   output.flag = true;
-  output.Va_d = waypoints_[idx_a_].Va_d;
+  output.va_d = waypoints_[idx_a_].va_d;
   output.r[0] = w_im1(0);
   output.r[1] = w_im1(1);
   output.r[2] = w_im1(2);
@@ -125,7 +128,7 @@ void path_manager_example::manage_fillet(const params_s &params, const input_s &
 
   float R_min = params.R_min;
 
-  output.Va_d = waypoints_[idx_a_].Va_d;
+  output.va_d = waypoints_[idx_a_].va_d;
   output.r[0] = w_im1(0);
   output.r[1] = w_im1(1);
   output.r[2] = w_im1(2);
@@ -145,7 +148,7 @@ void path_manager_example::manage_fillet(const params_s &params, const input_s &
     output.c[1] = 1;
     output.c[2] = 1;
     output.rho = 1;
-    output.lambda = 1;
+    output.lamda = 1;
     z = w_i - q_im1*(R_min/tanf(beta/2.0));
     if ((p - z).dot(q_im1) > 0)
       fil_state_ = fillet_state::ORBIT;
@@ -160,7 +163,7 @@ void path_manager_example::manage_fillet(const params_s &params, const input_s &
     output.c[1] = c(1);
     output.c[2] = c(2);
     output.rho = R_min;
-    output.lambda = ((q_im1(0)*q_i(1) - q_im1(1)*q_i(0)) > 0 ? 1 : -1);
+    output.lamda = ((q_im1(0)*q_i(1) - q_im1(1)*q_i(0)) > 0 ? 1 : -1);
     z = w_i + q_i*(R_min/tanf(beta/2.0));
     if ((p - z).dot(q_i) > 0)
     {
@@ -179,7 +182,7 @@ void path_manager_example::manage_dubins(const params_s &params, const input_s &
   Eigen::Vector3f p;
   p << input.pn, input.pe, -input.h;
 
-  output.Va_d = waypoints_[idx_a_].Va_d;
+  output.va_d = waypoints_[idx_a_].va_d;
   output.r[0] = 0;
   output.r[1] = 0;
   output.r[2] = 0;
@@ -199,7 +202,7 @@ void path_manager_example::manage_dubins(const params_s &params, const input_s &
     output.c[1] = dubinspath_.cs(1);
     output.c[2] = dubinspath_.cs(2);
     output.rho = dubinspath_.R;
-    output.lambda = dubinspath_.lams;
+    output.lamda = dubinspath_.lams;
     if ((p - dubinspath_.w1).dot(dubinspath_.q1) >= 0) // start in H1
     {
       dub_state_ = dubin_state::BEFORE_H1_WRONG_SIDE;
@@ -215,7 +218,7 @@ void path_manager_example::manage_dubins(const params_s &params, const input_s &
     output.c[1] = dubinspath_.cs(1);
     output.c[2] = dubinspath_.cs(2);
     output.rho = dubinspath_.R;
-    output.lambda = dubinspath_.lams;
+    output.lamda = dubinspath_.lams;
     if ((p - dubinspath_.w1).dot(dubinspath_.q1) >= 0) // entering H1
     {
       dub_state_ = dubin_state::STRAIGHT;
@@ -227,7 +230,7 @@ void path_manager_example::manage_dubins(const params_s &params, const input_s &
     output.c[1] = dubinspath_.cs(1);
     output.c[2] = dubinspath_.cs(2);
     output.rho = dubinspath_.R;
-    output.lambda = dubinspath_.lams;
+    output.lamda = dubinspath_.lams;
     if ((p - dubinspath_.w1).dot(dubinspath_.q1) < 0) // exit H1
     {
       dub_state_ = dubin_state::BEFORE_H1;
@@ -245,7 +248,7 @@ void path_manager_example::manage_dubins(const params_s &params, const input_s &
     output.q[1] = dubinspath_.q1(1);
     output.q[2] = dubinspath_.q1(2);
     output.rho = 1;
-    output.lambda = 1;
+    output.lamda = 1;
     if ((p - dubinspath_.w2).dot(dubinspath_.q1) >= 0) // entering H2
     {
       if ((p - dubinspath_.w3).dot(dubinspath_.q3) >= 0) // start in H3
@@ -264,7 +267,7 @@ void path_manager_example::manage_dubins(const params_s &params, const input_s &
     output.c[1] = dubinspath_.ce(1);
     output.c[2] = dubinspath_.ce(2);
     output.rho = dubinspath_.R;
-    output.lambda = dubinspath_.lame;
+    output.lamda = dubinspath_.lame;
     if ((p - dubinspath_.w3).dot(dubinspath_.q3) >= 0) // entering H3
     {
       // increase the waypoint pointer
@@ -305,7 +308,7 @@ void path_manager_example::manage_dubins(const params_s &params, const input_s &
     output.c[1] = dubinspath_.ce(1);
     output.c[2] = dubinspath_.ce(2);
     output.rho = dubinspath_.R;
-    output.lambda = dubinspath_.lame;
+    output.lamda = dubinspath_.lame;
     if ((p - dubinspath_.w3).dot(dubinspath_.q3) < 0) // exit H3
     {
       dub_state_ = dubin_state::BEFORE_H1;
@@ -343,7 +346,9 @@ void path_manager_example::dubinsParameters(const waypoint_s start_node, const w
                     (start_node.w[1] - end_node.w[1])*(start_node.w[1] - end_node.w[1]));
   if (ell < 2.0*R)
   {
-    ROS_ERROR("The distance between nodes must be larger than 2R.");
+    //ROS_ERROR("The distance between nodes must be larger than 2R."); 
+    //RCLCPP_ERROR(this->get_logger(),"The distance between nodes must be larger than 2R.",4);  !!!
+
   }
   else
   {
