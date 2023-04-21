@@ -12,6 +12,12 @@
   gz_type_name: "ignition.msgs.Wrench"
   direction: ROS_TO_GZ
 
+### Clock
+- topic_name: "clock"
+  ros_type_name: "rosgraph_msgs/msg/Clock"
+  gz_type_name: "ignition.msgs.Clock"
+  direction: GZ_TO_ROS
+
 # - topic_name: "truth/wind"
 #   ros_type_name: "geometry_msgs/msg/Vector3"
 #   gz_type_name: "ignition.msgs.Vector3d"
