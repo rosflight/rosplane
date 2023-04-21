@@ -22,16 +22,13 @@
   </node>
   
   <!-- Launch Nodes -->
-  <!-- <node name="autopilot" pkg="rosplane2" exec="rosplane2_controller" >
-    <remap from="state" to="truth"/>
-  </node>
-  <node name="pathfollower" pkg="rosplane2" exec="rosplane2_path_follower">
-      <remap from="state" to="truth"/>
-  </node>
-  <node name="pathmanager" pkg="rosplane2" exec="rosplane2_path_manager" output="screen">
-    <remap from="state" to="truth"/>
-  </node>
-  <node name="pathplanner" pkg="rosplane" exec="rosplane_path_planner"/>  -->
+  <node name= "truth_pub" pkg="rosplane2" exec="truth_publisher" />
+  <node name="autopilot" pkg="rosplane2" exec="rosplane2_controller" />
+  <!--
+  <node name="pathfollower" pkg="rosplane2" exec="rosplane2_path_follower"/>
+  <node name="pathmanager" pkg="rosplane2" exec="rosplane2_path_manager" output="screen"/>
+  <node name="pathplanner" pkg="rosplane" exec="rosplane_path_planner"/>
+  -->
 
 
 </launch>

@@ -28,7 +28,7 @@ find_package(Eigen3 REQUIRED)
 
 
 
-ament_export_dependencies(
+ament_export_detruth_publisherpendencies(
   rclcpp
   geometry_msgs
   ros_gz

@@ -36,73 +36,61 @@ include_directories(  #use this if you need .h files for include statements.  Th
   ${GAZEBO_INCLUDE_DIRS}
 )
 
-#START OF REAL EXECUTABLES
+### START OF REAL EXECUTABLES ###
+
+# Truth Node
+add_executable(truth_publisher
+            src/aircraft_truth.cpp)
+ament_target_dependencies(truth_publisher rosplane2_msgs rclcpp rclpy Eigen3)
+install(TARGETS
+  truth_publisher
+  DESTINATION lib/${PROJECT_NAME})
+
+# Autopilot
 add_executable(rosplane_controller
             originalFiles/controller_base.cpp
             originalFiles/controller_example.cpp)
-
 ament_target_dependencies(rosplane_controller rosplane2_msgs rclcpp rclpy Eigen3)
-
 install(TARGETS
   rosplane_controller
   DESTINATION lib/${PROJECT_NAME})
 
-
+# Estimator
 #add_executable(rosplane_estimator
 #            originalFiles/estimator_base.cpp
 #            originalFiles/estimator_example.cpp)
-
 #ament_target_dependencies(rosplane_estimator rosplane2_msgs rclcpp rclpy Eigen3)
-
 #install(TARGETS
 #  rosplane_estimator
 #  DESTINATION lib/${PROJECT_NAME})
 
-
-
+# Follower
 #add_executable(rosplane_path_follower
 #            originalFiles/path_follower_example.cpp
 #            originalFiles/path_follower_base.cpp)
-
 #ament_target_dependencies(rosplane_path_follower rosplane2_msgs rclcpp rclpy Eigen3)
-
 #install(TARGETS
 #  rosplane_path_follower
 #  DESTINATION lib/${PROJECT_NAME})
 
-
-
+# Manager
 add_executable(rosplane_path_manager
             originalFiles/path_manager_base.cpp
             originalFiles/path_manager_example.cpp)
-
 ament_target_dependencies(rosplane_path_manager rosplane2_msgs rclcpp rclpy Eigen3)
-
 install(TARGETS
   rosplane_path_manager
   DESTINATION lib/${PROJECT_NAME})
 
-
-
+# Planner
 add_executable(rosplane_path_planner
             originalFiles/path_planner.cpp)
-
 ament_target_dependencies(rosplane_path_planner rosplane2_msgs rclcpp rclpy Eigen3)
-
 install(TARGETS
   rosplane_path_planner
   DESTINATION lib/${PROJECT_NAME})
 
-# END OF REAL EXECUTABLES
-
-#custom executable, just as sanity check to make sure it works.
-add_executable(talker originalFiles/testNode.cpp)
-ament_target_dependencies(talker rclcpp std_msgs sensor_msgs)
-
-install(TARGETS
-  talker
-  DESTINATION lib/${PROJECT_NAME})
-
+#### END OF REAL EXECUTABLES ###
 
 
 if(BUILD_TESTING)
