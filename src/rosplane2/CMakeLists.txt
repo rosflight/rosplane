@@ -39,55 +39,55 @@ include_directories(  #use this if you need .h files for include statements.  Th
 ### START OF REAL EXECUTABLES ###
 
 # Truth Node
-add_executable(truth_publisher
+add_executable(rosplane2_truth_publisher
             src/test_aircraft_truth.cpp)
-ament_target_dependencies(truth_publisher rosplane2_msgs rclcpp rclpy nav_msgs)
+ament_target_dependencies(rosplane2_truth_publisher rosplane2_msgs rclcpp rclpy nav_msgs)
 install(TARGETS
-  truth_publisher
+  rosplane2_truth_publisher
   DESTINATION lib/${PROJECT_NAME})
 
 # Autopilot
-add_executable(rosplane_controller
-            originalFiles/controller_base.cpp
-            originalFiles/controller_example.cpp)
-ament_target_dependencies(rosplane_controller rosplane2_msgs rclcpp rclpy Eigen3)
+add_executable(rosplane2_controller
+            src/controller_base.cpp
+            src/controller_example.cpp)
+ament_target_dependencies(rosplane2_controller rosplane2_msgs rclcpp rclpy Eigen3)
 install(TARGETS
-  rosplane_controller
+  rosplane2_controller
   DESTINATION lib/${PROJECT_NAME})
 
 # Estimator
-#add_executable(rosplane_estimator
+#add_executable(rosplane2_estimator
 #            originalFiles/estimator_base.cpp
 #            originalFiles/estimator_example.cpp)
-#ament_target_dependencies(rosplane_estimator rosplane2_msgs rclcpp rclpy Eigen3)
+#ament_target_dependencies(rosplane2_estimator rosplane2_msgs rclcpp rclpy Eigen3)
 #install(TARGETS
-#  rosplane_estimator
+#  rosplane2_estimator
 #  DESTINATION lib/${PROJECT_NAME})
 
 # Follower
-#add_executable(rosplane_path_follower
-#            originalFiles/path_follower_example.cpp
-#            originalFiles/path_follower_base.cpp)
-#ament_target_dependencies(rosplane_path_follower rosplane2_msgs rclcpp rclpy Eigen3)
-#install(TARGETS
-#  rosplane_path_follower
-#  DESTINATION lib/${PROJECT_NAME})
+add_executable(rosplane2_path_follower
+            src/path_follower_example.cpp
+            src/path_follower_base.cpp)
+ament_target_dependencies(rosplane2_path_follower rosplane2_msgs rclcpp rclpy Eigen3)
+install(TARGETS
+  rosplane2_path_follower
+  DESTINATION lib/${PROJECT_NAME})
 
 # Manager
-add_executable(rosplane_path_manager
-            originalFiles/path_manager_base.cpp
-            originalFiles/path_manager_example.cpp)
-ament_target_dependencies(rosplane_path_manager rosplane2_msgs rclcpp rclpy Eigen3)
+add_executable(rosplane2_path_manager
+            src/path_manager_base.cpp
+            src/path_manager_example.cpp)
+ament_target_dependencies(rosplane2_path_manager rosplane2_msgs rclcpp rclpy Eigen3)
 install(TARGETS
-  rosplane_path_manager
+  rosplane2_path_manager
   DESTINATION lib/${PROJECT_NAME})
 
 # Planner
-add_executable(rosplane_path_planner
-            originalFiles/path_planner.cpp)
-ament_target_dependencies(rosplane_path_planner rosplane2_msgs rclcpp rclpy Eigen3)
+add_executable(rosplane2_path_planner
+            src/path_planner.cpp)
+ament_target_dependencies(rosplane2_path_planner rosplane2_msgs rclcpp rclpy Eigen3)
 install(TARGETS
-  rosplane_path_planner
+  rosplane2_path_planner
   DESTINATION lib/${PROJECT_NAME})
 
 #### END OF REAL EXECUTABLES ###
