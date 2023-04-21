@@ -1,15 +1,16 @@
 #ifndef PATH_FOLLOWER_BASE_H
 #define PATH_FOLLOWER_BASE_H
 
-#include <ros/ros.h>
-#include <rosplane_msgs/State.h>
-#include <rosplane_msgs/Controller_Commands.h>
-#include <dynamic_reconfigure/server.h>
-#include <rosplane/FollowerConfig.h>
-#include <rosplane_msgs/Current_Path.h>
+#include <rclcpp/rclcpp.hpp>
+#include <rosplane2_msgs/msg/state.hpp>
+#include <rosplane2_msgs/msg/controller_commands.hpp>
+// #include <dynamic_reconfigure/server.h>
+// #include <rosplane2_msgs/msg/controller_internals.hpp>
+#include <rosplane2_msgs/msg/current_path.hpp>
+using namespace std::chrono_literals;
+using std::placeholders::_1;
 
-
-namespace rosplane
+namespace rosplane2
 {
 
 enum class path_type
@@ -18,7 +19,7 @@ enum class path_type
   Line
 };
 
-class path_follower_base
+class path_follower_base : public rclcpp::Node
 {
 public:
   path_follower_base();
@@ -52,38 +53,38 @@ protected:
 
   struct params_s
   {
-    double chi_infty;
-    double k_path;
-    double k_orbit;
+    double chi_infty = 1.0472;
+    double k_path = 0.025;
+    double k_orbit = 4.0;
   };
 
   virtual void follow(const struct params_s &params, const struct input_s &input, struct output_s &output) = 0;
 
 private:
-  ros::NodeHandle nh_;
-  ros::NodeHandle nh_private_;
-  ros::Subscriber vehicle_state_sub_;
-  ros::Subscriber current_path_sub_;
 
-  ros::Publisher controller_commands_pub_;
+  rclcpp::Subscription<rosplane2_msgs::msg::State>::SharedPtr vehicle_state_sub_;
+  rclcpp::Subscription<rosplane2_msgs::msg::CurrentPath>::SharedPtr current_path_sub_;
 
+  rclcpp::Publisher<rosplane2_msgs::msg::ControllerCommands>::SharedPtr controller_commands_pub_;
+  rclcpp::TimerBase::SharedPtr update_timer_;
   double update_rate_ = 100.0;
-  ros::Timer update_timer_;
+  // rclcpp::Timer update_timer_;
+  // rclcpp::WallTimer<CallbackT>::SharedPtr create_wall_timer(std::chrono::duration<DurationRepT, DurationT> period, CallbackT callback, rclcpp::CallbackGroup::SharedPtr group = nullptr)
 
-  rosplane_msgs::Controller_Commands controller_commands_;
+  rosplane2_msgs::msg::ControllerCommands controller_commands_;
   struct params_s  params_;            /**< params */
   struct input_s input_;
 
-  void vehicle_state_callback(const rosplane_msgs::StateConstPtr &msg);
+  void vehicle_state_callback(const rosplane2_msgs::msg::State::SharedPtr msg);
   bool state_init_;
-  void current_path_callback(const rosplane_msgs::Current_PathConstPtr &msg);
+  void current_path_callback(const rosplane2_msgs::msg::CurrentPath::SharedPtr msg);
   bool current_path_init_;
 
-  dynamic_reconfigure::Server<rosplane::FollowerConfig> server_;
-  dynamic_reconfigure::Server<rosplane::FollowerConfig>::CallbackType func_;
-  void reconfigure_callback(rosplane::FollowerConfig &config, uint32_t level);
+  // dynamic_reconfigure::Server<rosplane::FollowerConfig> server_;
+  // dynamic_reconfigure::Server<rosplane::FollowerConfig>::CallbackType func_;
+  // void reconfigure_callback(rosplane2::FollowerConfig &config, uint32_t level);
 
-  void update(const ros::TimerEvent &);
+  void update();
 };
 
 } // end namespace
