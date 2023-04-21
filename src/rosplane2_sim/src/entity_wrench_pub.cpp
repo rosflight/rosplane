@@ -35,13 +35,9 @@ void cb(const ignition::msgs::Wrench &wrench_)
 
   ignition::transport::Node publisher;
 
-  auto pub = publisher.Advertise<ignition::msgs::EntityWrench>("/world/rosplane2/wrench/persistent");
+  auto pub = publisher.Advertise<ignition::msgs::EntityWrench>("/world/rosplane2/wrench");
   auto const force = wrench_.force();
   auto const torque = wrench_.torque();
-
-  gz::transport::Node subscriber;
-  const std::string topic_sub = "/world/rosplane2/wrench/persistent";
-
 
   {
     ignition::msgs::EntityWrench ew;
