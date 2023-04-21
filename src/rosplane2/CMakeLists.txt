@@ -40,8 +40,8 @@ include_directories(  #use this if you need .h files for include statements.  Th
 
 # Truth Node
 add_executable(truth_publisher
-            src/aircraft_truth.cpp)
-ament_target_dependencies(truth_publisher rosplane2_msgs rclcpp rclpy Eigen3)
+            src/test_aircraft_truth.cpp)
+ament_target_dependencies(truth_publisher rosplane2_msgs rclcpp rclpy nav_msgs)
 install(TARGETS
   truth_publisher
   DESTINATION lib/${PROJECT_NAME})
