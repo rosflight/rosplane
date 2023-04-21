@@ -37,7 +37,7 @@ ament_export_dependencies(
   ignition-cmake2
   ignition-msgs5
   ignition-msgs8
-  ignition-common3
+  ignition-common4
 )
 # ament_export_include_directories(include)
 # ament_export_libraries()

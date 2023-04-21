@@ -30,18 +30,12 @@
 
 //////////////////////////////////////////////////
 /// \brief Function called each time a topic update is received.
-void cb1(const ignition::msgs::EntityWrench &entity_wrench){
-
-return entity_wrench.
-}
-
 void cb(const ignition::msgs::Wrench &wrench_)
 {
 
   ignition::transport::Node publisher;
 
   auto pub = publisher.Advertise<ignition::msgs::EntityWrench>("/world/rosplane2/wrench/persistent");
-  subscriber.Subscribe(topic_sub, cb1)
   auto const force = wrench_.force();
   auto const torque = wrench_.torque();
 
