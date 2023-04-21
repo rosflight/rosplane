@@ -7,7 +7,7 @@
 
   <!-- Spawn MAV -->
   <!-- <node name="spawn_mav" pkg="ros_gz_sim" exec="create"
-    args="-file $(find-pkg-share rosplane2_sim)/Aircraft/fixedwing.sdf"
+    args=" -world rosplane2 -file $(find-pkg-share rosplane2_sim)/Aircraft/fixedwing.sdf"
     respawn="false" output="screen">
   </node> -->
 
@@ -16,18 +16,15 @@
     args="--ros-args -p config_file:=$(find-pkg-share rosplane2_sim)/launch/bridge_setup.yaml"
     respawn="false" output="screen">
   </node>
-
-  <node name="gzMomentMover" pkg="rosplane2_sim" exec="entity_wrench_pub" respawn="false" output="screen">
-
-  </node>
   
   <!-- Launch Nodes -->
   <node name= "truth_pub" pkg="rosplane2" exec="rosplane2_truth_publisher"/>
   <node name="autopilot" pkg="rosplane2" exec="rosplane2_controller"/>
-  <!--<node name="pathfollower" pkg="rosplane2" exec="rosplane2_path_follower"/>
-  <node name="pathmanager" pkg="rosplane2" exec="rosplane2_path_manager"/>
-  <node name="pathplanner" pkg="rosplane" exec="rosplane2_path_planner"/>
-  -->
+  <node name="path_follower" pkg="rosplane2" exec="rosplane2_path_follower"/>
+  <node name="path_manager" pkg="rosplane2" exec="rosplane2_path_manager"/>
+  <node name="path_planner" pkg="rosplane2" exec="rosplane2_path_planner"/>
+  <node name="forces_pub" pkg="rosplane2_sim" exec="entity_wrench_pub" /> <!--respawn="false" output="screen"-->
+  <!---->
 
 
 </launch>
