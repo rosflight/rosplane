@@ -55,7 +55,7 @@ void cb(const ignition::msgs::Wrench &wrench_)
 int main(int argc, char **argv)
 {
   // Create a transport node and advertise a topic.
-  gz::transport::Node subscriber;
+  ignition::transport::Node subscriber;
   const std::string topic_sub = "/forces_moments";
   
   // Subscribe to a topic by registering a callback.
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
   }
 
   // Zzzzzz.
-  gz::transport::waitForShutdown();
+  ignition::transport::waitForShutdown();
 
   return 0;
 }
