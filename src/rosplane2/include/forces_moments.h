@@ -18,7 +18,7 @@
 
 #include <stdio.h>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <eigen3/Eigen/Eigen>
 
 //#include <gazebo/common/common.hh>
@@ -51,17 +51,11 @@ class AircraftForcesAndMoments : public rclcpp::Node
     public:
         AircraftForcesAndMoments();
 
-//        void InitializeParams();
-
-
-
-    protected:
-        void UpdateForcesAndMoments();
-        void Reset();
-//        void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
-//        void OnUpdate(const common::UpdateInfo & /*_info*/);
 
     private:
+        void UpdateForcesAndMoments();
+        void Reset();
+
         std::string command_topic_;
         std::string wind_speed_topic_;
         std::string joint_name_;

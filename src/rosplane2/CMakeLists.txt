@@ -40,10 +40,18 @@ include_directories(  #use this if you need .h files for include statements.  Th
 
 # Truth Node
 add_executable(rosplane2_truth_publisher
-            src/test_aircraft_truth.cpp)
+            src/aircraft_truth.cpp)
 ament_target_dependencies(rosplane2_truth_publisher rosplane2_msgs rclcpp rclpy nav_msgs)
 install(TARGETS
   rosplane2_truth_publisher
+  DESTINATION lib/${PROJECT_NAME})
+
+# Forces Node
+add_executable(rosplane2_force_publisher
+            src/forces_moments.cpp)
+ament_target_dependencies(rosplane2_force_publisher rosplane2_msgs geometry_msgs rclcpp rclpy nav_msgs)
+install(TARGETS
+  rosplane2_force_publisher
   DESTINATION lib/${PROJECT_NAME})
 
 # Autopilot

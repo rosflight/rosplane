@@ -7,7 +7,7 @@
   direction: GZ_TO_ROS
 
 ### Forces & Moments
-- topic_name: "forces_moments"
+- ros_topic_name: "forces_moments"
   ros_type_name: "geometry_msgs/msg/Wrench"
   gz_type_name: "ignition.msgs.Wrench"
   direction: ROS_TO_GZ

@@ -39,19 +39,16 @@ void cb(const ignition::msgs::Wrench &wrench_)
   auto const force = wrench_.force();
   auto const torque = wrench_.torque();
 
-  {
-    ignition::msgs::EntityWrench ew;
-    ew.mutable_entity()->set_name("fixedwing");
-    ew.mutable_entity()->set_type(ignition::msgs::Entity::MODEL);
-    ew.mutable_wrench()->mutable_force()->set_x(force.x());
-    ew.mutable_wrench()->mutable_force()->set_y(force.y());
-    ew.mutable_wrench()->mutable_force()->set_z(force.z());
-    ew.mutable_wrench()->mutable_torque()->set_x(torque.x());
-    ew.mutable_wrench()->mutable_torque()->set_y(torque.y());
-    ew.mutable_wrench()->mutable_torque()->set_z(torque.z());
-    pub.Publish(ew);
-  }
-
+  ignition::msgs::EntityWrench ew;
+  ew.mutable_entity()->set_name("fixedwing");
+  ew.mutable_entity()->set_type(ignition::msgs::Entity::MODEL);
+  ew.mutable_wrench()->mutable_force()->set_x(force.x());
+  ew.mutable_wrench()->mutable_force()->set_y(force.y());
+  ew.mutable_wrench()->mutable_force()->set_z(force.z());
+  ew.mutable_wrench()->mutable_torque()->set_x(torque.x());
+  ew.mutable_wrench()->mutable_torque()->set_y(torque.y());
+  ew.mutable_wrench()->mutable_torque()->set_z(torque.z());
+  pub.Publish(ew);
 }
 
 //////////////////////////////////////////////////
@@ -61,7 +58,6 @@ int main(int argc, char **argv)
   gz::transport::Node subscriber;
   const std::string topic_sub = "/forces_moments";
   
-
   // Subscribe to a topic by registering a callback.
   if (!subscriber.Subscribe(topic_sub, cb))
   {

@@ -1,0 +1,30 @@
+
+<launch>
+  <!-- Start Gazebo simulator -->
+  <include file="$(find-pkg-share ros_gz_sim)/launch/gz_sim.launch.py">
+    <arg name="gz_args" value="$(find-pkg-share rosplane2_sim)/worlds/rosplane2_world.sdf"/>
+  </include>
+
+  <!-- Spawn MAV -->
+  <!-- <node name="spawn_mav" pkg="ros_gz_sim" exec="create"
+    args=" -world rosplane2 -file $(find-pkg-share rosplane2_sim)/worlds/fixedwing.sdf"
+    respawn="false" output="screen">
+  </node> -->
+
+  <!-- Start ROS-GZ-Bridge -->
+  <node name="ros_gz_bridge" pkg="ros_gz_bridge" exec="parameter_bridge"
+    args="--ros-args -p config_file:=$(find-pkg-share rosplane2_sim)/launch/bridge_setup.yaml"
+    respawn="false" output="screen">
+  </node>
+  
+  <!-- Launch Nodes -->
+  <node name= "truth_pub" pkg="rosplane2" exec="rosplane2_truth_publisher" respawn="false" output="screen"/>
+  <node name="autopilot" pkg="rosplane2" exec="rosplane2_controller" respawn="false" output="screen"/>
+  <node name="path_follower" pkg="rosplane2" exec="rosplane2_path_follower" respawn="false" output="screen"/>
+  <node name="path_manager" pkg="rosplane2" exec="rosplane2_path_manager" respawn="false" output="screen"/>
+  <node name="path_planner" pkg="rosplane2" exec="rosplane2_path_planner" respawn="false" output="screen"/>
+  <node name="ros_forces" pkg="rosplane2" exec="rosplane2_force_publisher" respawn="false" output="screen"/>
+  <node name="gazebo_forces_pub" pkg="rosplane2_sim" exec="entity_wrench_pub" respawn="false" output="screen"/> <!--respawn="false" output="screen"-->
+
+
+</launch>

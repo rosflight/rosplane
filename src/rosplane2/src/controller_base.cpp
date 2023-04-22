@@ -115,9 +115,7 @@
 
     int main(int argc, char **argv)
     {
-        rclcpp::init(argc, argv); //, "rosplane2-controller")
-        //  rosplane2::controller_base *cont = new rosplane2::controller_example();
-
+        rclcpp::init(argc, argv);
         rclcpp::spin(std::make_shared<rosplane2::controller_example>());
 
         return 0;
