@@ -105,7 +105,7 @@
         <visual name='visual'>
           <geometry>
             <mesh>
-              <uri>file:///worlds/fixedwing.dae</uri>
+              <uri>file:/src/rosplane2_sim/worlds/fixedwing.dae</uri>
             </mesh>
           </geometry>
         </visual>
@@ -113,7 +113,7 @@
         <collision name='collision'>
           <geometry>
             <mesh>
-              <uri>file:///worlds/fixedwing.dae</uri>
+              <uri>file:/src/rosplane2_sim/worlds/fixedwing.dae</uri>
             </mesh>
           </geometry>
         </collision>
