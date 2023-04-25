@@ -4,6 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "rosplane2_msgs/msg/state.hpp"
+#include "Eigen/Geometry"
 
 using std::placeholders::_1;
 using nav_msgs::msg::Odometry;
@@ -39,9 +40,9 @@ class AircraftTruth : public rclcpp::Node
             truthState.initial_lon = 0;
             truthState.initial_alt = 0;
 
-            truthState.position[0] = gazeboPosition.x;
-            truthState.position[1] = gazeboPosition.y;
-            truthState.position[2] = gazeboPosition.z;
+            truthState.position[0] = gazeboPosition.y;
+            truthState.position[1] = gazeboPosition.x;
+            truthState.position[2] = -gazeboPosition.z;
 
             truthState.quat[0]= gazeboOrient.w;
             truthState.quat[1]= gazeboOrient.x;
@@ -49,17 +50,31 @@ class AircraftTruth : public rclcpp::Node
             truthState.quat[3]= gazeboOrient.z;
             truthState.quat_valid = true;
 
-            truthState.phi = atan2(2*(gazeboOrient.w * gazeboOrient.x + gazeboOrient.y * gazeboOrient.z), pow(gazeboOrient.w,2.0) + pow(gazeboOrient.z,2.0) - pow(gazeboOrient.x,2.0) - pow(gazeboOrient.y,2.0));
-            truthState.theta = asin(2*(gazeboOrient.w * gazeboOrient.y - gazeboOrient.x * gazeboOrient.z));
-            truthState.psi = atan2(2*(gazeboOrient.w * gazeboOrient.z + gazeboOrient.x * gazeboOrient.y), pow(gazeboOrient.w,2.0) + pow(gazeboOrient.x,2.0) - pow(gazeboOrient.y,2.0) - pow(gazeboOrient.z,2.0));
+            truthState.theta = atan2(2*(gazeboOrient.w * gazeboOrient.x + gazeboOrient.y * gazeboOrient.z), pow(gazeboOrient.w,2.0) + pow(gazeboOrient.z,2.0) - pow(gazeboOrient.x,2.0) - pow(gazeboOrient.y,2.0));
+            truthState.phi = asin(2*(gazeboOrient.w * gazeboOrient.y - gazeboOrient.x * gazeboOrient.z));
+            truthState.psi = -atan2(2*(gazeboOrient.w * gazeboOrient.z + gazeboOrient.x * gazeboOrient.y), pow(gazeboOrient.w,2.0) + pow(gazeboOrient.x,2.0) - pow(gazeboOrient.y,2.0) - pow(gazeboOrient.z,2.0));
 
-            truthState.u = gazeboLinVelocity.x;
-            truthState.v = gazeboLinVelocity.y;
-            truthState.w = gazeboLinVelocity.z;
+            float quat_array[4] = {truthState.quat[0], truthState.quat[1], truthState.quat[2], truthState.quat[3]};
 
-            truthState.p = gazeboAngVelocity.x;
-            truthState.q = gazeboAngVelocity.y;
-            truthState.r = gazeboAngVelocity.z;
+            Eigen::Quaternionf quat = Eigen::Map<Eigen::Quaternionf>(quat_array);
+
+            Eigen::Matrix3f rot = quat.toRotationMatrix();
+
+            Eigen::Vector3f vel(gazeboLinVelocity.x, gazeboLinVelocity.y, gazeboLinVelocity.z);
+
+            vel = rot.inverse()*vel;
+
+            truthState.u = vel[1];
+            truthState.v = vel[0];
+            truthState.w = -vel[2];
+
+            Eigen::Vector3f angle_vel(gazeboAngVelocity.x, gazeboAngVelocity.y, gazeboAngVelocity.z);
+
+            angle_vel = rot.inverse()*angle_vel;
+
+            truthState.p = angle_vel[1];
+            truthState.q = angle_vel[0];
+            truthState.r = -angle_vel[2];
 
             truthState.wn = 0; //not doing wind for now
             truthState.we = 0; 

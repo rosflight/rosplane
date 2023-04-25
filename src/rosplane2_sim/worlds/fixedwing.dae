@@ -603,7 +603,7 @@
         <node id="node-Prop_Bone" name="Prop_Bone">
           <translate>0 236.0148 -12.994</translate>
           <node id="node-Prop" name="Propeller">
-            <rotate>0 1 0 -89.99998</rotate>
+            <rotate>0 1 0 0</rotate>
             <node>
               <matrix>1 0 0 0 0 1 0 87.18144 0 0 1 2.94279 0 0 0 1</matrix>
               <instance_geometry url="#geom-Prop">

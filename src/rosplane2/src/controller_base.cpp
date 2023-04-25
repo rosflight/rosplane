@@ -69,7 +69,7 @@
 
         actuators.ignore = 0;
         actuators.mode = rosplane2_msgs::msg::Command::MODE_PASS_THROUGH;
-        actuators.x = output.delta_a;//(isfinite(output.delta_a)) ? output.delta_a : 0.0f;
+        actuators.x = (std::isfinite(output.delta_a)) ? output.delta_a : 0.0f;
         actuators.y = output.delta_e;//(isfinite(output.delta_e)) ? output.delta_e : 0.0f;
         actuators.z = output.delta_r;//(isfinite(output.delta_r)) ? output.delta_r : 0.0f;
         actuators.f = output.delta_t;//(isfinite(output.delta_t)) ? output.delta_t : 0.0f;

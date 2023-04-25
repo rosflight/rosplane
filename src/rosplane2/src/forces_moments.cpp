@@ -47,6 +47,12 @@ namespace rosplane2
         p = msg->p;
         q = msg->q;
         r = msg->r;
+
+        quat_array[0] = msg->quat[0];
+        quat_array[1] = msg->quat[1];
+        quat_array[2] = msg->quat[2];
+        quat_array[3] = msg->quat[3];
+
     }
 
     void AircraftForcesAndMoments::CommandCallback(const rosplane2_msgs::msg::Command::SharedPtr msg)
@@ -131,13 +137,24 @@ namespace rosplane2
 
             geometry_msgs::msg::Wrench forces_moments_msg;
 
-            forces_moments_msg.force.x = forces_.Fx;
-            forces_moments_msg.force.y = forces_.Fy;
-            forces_moments_msg.force.z = forces_.Fz;
+            Eigen::Quaternionf quat = Eigen::Map<Eigen::Quaternionf>(quat_array);
 
-            forces_moments_msg.torque.x = forces_.l;
-            forces_moments_msg.torque.y = forces_.m;
-            forces_moments_msg.torque.z = forces_.n;
+            Eigen::Matrix3f rot = quat.toRotationMatrix();
+
+            Eigen::Vector3f rotated_forces(forces_.Fx, forces_.Fy, forces_.Fz);
+            Eigen::Vector3f rotated_moments(forces_.l, forces_.m, forces_.n);
+
+
+            rotated_forces = rot.inverse()*rotated_forces;
+            rotated_moments = rot.inverse()*rotated_moments;
+
+            forces_moments_msg.force.x = rotated_forces[1];
+            forces_moments_msg.force.y = rotated_forces[0];
+            forces_moments_msg.force.z = -rotated_forces[2];
+
+            forces_moments_msg.torque.x = rotated_moments[1];
+            forces_moments_msg.torque.y = rotated_moments[0];
+            forces_moments_msg.torque.z = -rotated_moments[2];
 
             // Publish forces and moments.
             forces_moments_pub_->publish(forces_moments_msg);

@@ -172,6 +172,8 @@ class AircraftForcesAndMoments : public rclcpp::Node
 
         rclcpp::TimerBase::SharedPtr timer_;
 
+        float quat_array[4] = {0.0, 0.0, 0.0, 0.0};
+
 //        ros::Subscriber wind_speed_sub_;
 //        rclcpp::Subscription<rosplane2_msgs::msg::State>::SharedPtr wind_speed_sub_;
 

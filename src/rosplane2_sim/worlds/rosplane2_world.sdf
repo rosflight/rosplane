@@ -103,6 +103,7 @@
       <link name='link'>
 
         <visual name='visual'>
+        <pose degrees="true"> 0 0 0 0 0 180</pose>
           <geometry>
             <mesh>
               <uri>file:/src/rosplane2_sim/worlds/fixedwing.dae</uri>
@@ -122,14 +123,14 @@
 
         <inertial>
           <pose>0 0 0 0 0 0</pose>
-          <mass>1</mass>
+          <mass>3.92</mass>
           <inertia>
-            <ixx>0.1147</ixx>
+            <ixx>.213</ixx>
             <ixy>0</ixy>
-            <ixz>0</ixz>
-            <iyy>1</iyy>
+            <ixz>.04</ixz>
+            <iyy>.171</iyy>
             <iyz>0</iyz>
-            <izz>1</izz>
+            <izz>.350</izz>
           </inertia>
         </inertial>
 
@@ -137,7 +138,7 @@
         
       </link>
 
-      <pose>0 0 3 0 0 0</pose>
+      <pose degrees="true">0 0 10 0 0 0</pose>
       <static>false</static>
       <self_collide>true</self_collide>
 
