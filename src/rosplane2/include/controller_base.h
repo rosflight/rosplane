@@ -163,6 +163,8 @@ private:
 
     bool command_recieved_;
 
+    OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
+
     /**
     * Convert from deflection angle to pwm
     */
@@ -173,12 +175,16 @@ private:
     */
     void actuator_controls_publish();
 
-
     void controller_commands_callback(const rosplane2_msgs::msg::ControllerCommands::SharedPtr msg);
 
     void vehicle_state_callback(const rosplane2_msgs::msg::State::SharedPtr msg);
 
+    rcl_interfaces::msg::SetParametersResult parametersCallback(
+            const std::vector<rclcpp::Parameter> &parameters);
 
+    void set_parameters();
+
+    void declare_parameters();
 
 };
 } //end namespace

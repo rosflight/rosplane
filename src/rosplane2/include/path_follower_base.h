@@ -4,9 +4,10 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rosplane2_msgs/msg/state.hpp>
 #include <rosplane2_msgs/msg/controller_commands.hpp>
-// #include <dynamic_reconfigure/server.h>
+
 // #include <rosplane2_msgs/msg/controller_internals.hpp>
 #include <rosplane2_msgs/msg/current_path.hpp>
+
 using namespace std::chrono_literals;
 using std::placeholders::_1;
 
@@ -53,9 +54,9 @@ protected:
 
   struct params_s
   {
-    double chi_infty = 1.0472;
-    double k_path = 0.025;
-    double k_orbit = 4.0;
+    double chi_infty;
+    double k_path;
+    double k_orbit;
   };
 
   virtual void follow(const struct params_s &params, const struct input_s &input, struct output_s &output) = 0;
@@ -68,11 +69,9 @@ private:
   rclcpp::Publisher<rosplane2_msgs::msg::ControllerCommands>::SharedPtr controller_commands_pub_;
   rclcpp::TimerBase::SharedPtr update_timer_;
   double update_rate_ = 100.0;
-  // rclcpp::Timer update_timer_;
-  // rclcpp::WallTimer<CallbackT>::SharedPtr create_wall_timer(std::chrono::duration<DurationRepT, DurationT> period, CallbackT callback, rclcpp::CallbackGroup::SharedPtr group = nullptr)
 
   rosplane2_msgs::msg::ControllerCommands controller_commands_;
-  struct params_s  params_;            /**< params */
+  struct params_s  params_ = {1.0472, 0.025, 4.0};            /**< params */
   struct input_s input_;
 
   void vehicle_state_callback(const rosplane2_msgs::msg::State::SharedPtr msg);
@@ -80,11 +79,12 @@ private:
   void current_path_callback(const rosplane2_msgs::msg::CurrentPath::SharedPtr msg);
   bool current_path_init_;
 
-  // dynamic_reconfigure::Server<rosplane::FollowerConfig> server_;
-  // dynamic_reconfigure::Server<rosplane::FollowerConfig>::CallbackType func_;
-  // void reconfigure_callback(rosplane2::FollowerConfig &config, uint32_t level);
+
 
   void update();
+
+  rcl_interfaces::msg::SetParametersResult parametersCallback(
+            const std::vector<rclcpp::Parameter> &parameters);
 };
 
 } // end namespace

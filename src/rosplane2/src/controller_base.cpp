@@ -19,8 +19,16 @@
         vehicle_state_sub_ = this->create_subscription<rosplane2_msgs::msg::State>(
                 "state", 10, std::bind(&controller_base::vehicle_state_callback, this, _1));
 
-
         command_recieved_ = false;
+
+        declare_parameters();
+
+        set_parameters();
+
+        parameter_callback_handle_ = this->add_on_set_parameters_callback(
+                std::bind(&controller_base::parametersCallback, this, std::placeholders::_1));
+
+
     }
 
     void controller_base::controller_commands_callback(const rosplane2_msgs::msg::ControllerCommands::SharedPtr msg)
@@ -104,8 +112,278 @@
         }
     }
 
-        void controller_base::convert_to_pwm(controller_base::output_s &output)
-        {
+    void controller_base::set_parameters() {
+        params_.alt_hz = this->get_parameter("alt_hz").as_double();
+        params_.alt_toz = this->get_parameter("alt_toz").as_double();
+        params_.tau = this->get_parameter("tau").as_double();
+        params_.c_kp = this->get_parameter("c_kp").as_double();
+        params_.c_kd = this->get_parameter("c_kd").as_double();
+        params_.c_ki = this->get_parameter("c_ki").as_double();
+        params_.r_kp = this->get_parameter("r_kp").as_double();
+        params_.r_kd = this->get_parameter("r_kd").as_double();
+        params_.r_ki = this->get_parameter("r_ki").as_double();
+        params_.p_kp = this->get_parameter("p_kp").as_double();
+        params_.p_kd = this->get_parameter("p_kd").as_double();
+        params_.p_ki = this->get_parameter("p_ki").as_double();
+        params_.p_ff = this->get_parameter("p_ff").as_double();
+        params_.a_p_kp = this->get_parameter("a_p_kp").as_double();
+        params_.a_p_kd = this->get_parameter("a_p_kd").as_double();
+        params_.a_p_ki = this->get_parameter("a_p_ki").as_double();
+        params_.a_t_kp = this->get_parameter("a_t_kp").as_double();
+        params_.a_t_kd = this->get_parameter("a_t_kd").as_double();
+        params_.a_t_ki = this->get_parameter("a_t_ki").as_double();
+        params_.a_kp = this->get_parameter("a_kp").as_double();
+        params_.a_kd = this->get_parameter("a_kd").as_double();
+        params_.a_ki = this->get_parameter("a_ki").as_double();
+        params_.b_kp = this->get_parameter("b_kp").as_double();
+        params_.b_kd = this->get_parameter("b_kd").as_double();
+        params_.b_ki = this->get_parameter("b_ki").as_double();
+        params_.trim_e = this->get_parameter("trim_e").as_double();
+        params_.trim_a = this->get_parameter("trim_a").as_double();
+        params_.trim_r = this->get_parameter("trim_r").as_double();
+        params_.trim_t = this->get_parameter("trim_t").as_double();
+        params_.max_e = this->get_parameter("max_e").as_double();
+        params_.max_a = this->get_parameter("max_a").as_double();
+        params_.max_r = this->get_parameter("max_r").as_double();
+        params_.max_t = this->get_parameter("max_t").as_double();
+        params_.pwm_rad_e = this->get_parameter("pwm_rad_e").as_double();
+        params_.pwm_rad_a = this->get_parameter("pwm_rad_a").as_double();
+        params_.pwm_rad_r = this->get_parameter("pwm_rad_r").as_double();
+    }
+
+    void controller_base::declare_parameters() {
+        this->declare_parameter("alt_hz", params_.alt_hz);
+        this->declare_parameter("alt_toz", params_.alt_toz);
+        this->declare_parameter("tau", params_.tau);
+        this->declare_parameter("c_kp", params_.c_kp);
+        this->declare_parameter("c_kd", params_.c_kd);
+        this->declare_parameter("c_ki", params_.c_ki);
+        this->declare_parameter("r_kp", params_.r_kp);
+        this->declare_parameter("r_kd", params_.r_kd);
+        this->declare_parameter("r_ki", params_.r_ki);
+        this->declare_parameter("p_kp", params_.p_kp);
+        this->declare_parameter("p_kd", params_.p_kd);
+        this->declare_parameter("p_ki", params_.p_ki);
+        this->declare_parameter("p_ff", params_.p_ff);
+        this->declare_parameter("a_p_kp", params_.a_p_kp);
+        this->declare_parameter("a_p_kd", params_.a_p_kd);
+        this->declare_parameter("a_p_ki", params_.a_p_ki);
+        this->declare_parameter("a_t_kp", params_.a_t_kp);
+        this->declare_parameter("a_t_kd", params_.a_t_kd);
+        this->declare_parameter("a_t_ki", params_.a_t_ki);
+        this->declare_parameter("a_kp", params_.a_kp);
+        this->declare_parameter("a_kd", params_.a_kd);
+        this->declare_parameter("a_ki", params_.a_ki);
+        this->declare_parameter("b_kp", params_.b_kp);
+        this->declare_parameter("b_kd", params_.b_kd);
+        this->declare_parameter("b_ki", params_.b_ki);
+        this->declare_parameter("trim_e", params_.trim_e);
+        this->declare_parameter("trim_a", params_.trim_a);
+        this->declare_parameter("trim_r", params_.trim_r);
+        this->declare_parameter("trim_t", params_.trim_t);
+        this->declare_parameter("max_e", params_.max_e);
+        this->declare_parameter("max_a", params_.max_a);
+        this->declare_parameter("max_r", params_.max_r);
+        this->declare_parameter("max_t", params_.max_t);
+        this->declare_parameter("pwm_rad_e", params_.pwm_rad_e);
+        this->declare_parameter("pwm_rad_a", params_.pwm_rad_a);
+        this->declare_parameter("pwm_rad_r", params_.pwm_rad_r);
+    }
+
+    rcl_interfaces::msg::SetParametersResult controller_base::parametersCallback(const std::vector<rclcpp::Parameter> &parameters) {
+            rcl_interfaces::msg::SetParametersResult result;
+            result.successful = false;
+            result.reason = "";
+
+            for (const auto &param : parameters) {
+
+                if (param.get_name() == "alt_hz"){
+                    params_.alt_hz = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "alt_toz"){
+                    params_.alt_toz = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "tau"){
+                    params_.tau = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "c_kp"){
+                    params_.c_kp = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "c_kd"){
+                    params_.c_kd = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "c_ki"){
+                    params_.c_ki = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "r_kp"){
+                    params_.r_kp = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "r_kd"){
+                    params_.r_kd = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "r_ki"){
+                    params_.r_ki = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "p_kp"){
+                    params_.p_kp = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "p_kd"){
+                    params_.p_kd = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "p_ki"){
+                    params_.p_ki = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "p_ff"){
+                    params_.p_ff = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "a_p_kp"){
+                    params_.a_p_kp = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "a_p_kd"){
+                    params_.a_p_kd = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "a_p_ki"){
+                    params_.a_p_ki = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "a_t_kp"){
+                    params_.a_t_kp = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "a_t_kd"){
+                    params_.a_t_kd = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "a_t_ki"){
+                    params_.a_t_ki = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "a_kp"){
+                    params_.a_kp = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "a_kd"){
+                    params_.a_kd = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "a_ki"){
+                    params_.a_ki = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "b_kp"){
+                    params_.b_kp = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "b_kd"){
+                    params_.b_kd = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "b_ki"){
+                    params_.b_ki = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "trim_e"){
+                    params_.trim_e = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "trim_a"){
+                    params_.trim_a = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "trim_r"){
+                    params_.trim_r = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "trim_t"){
+                    params_.trim_t = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "max_e"){
+                    params_.max_e = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "max_a"){
+                    params_.max_a = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "max_r"){
+                    params_.max_r = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "max_t"){
+                    params_.max_t = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "pwm_rad_e"){
+                    params_.pwm_rad_e = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "pwm_rad_a"){
+                    params_.pwm_rad_a = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+                else if (param.get_name() == "pwm_rad_r"){
+                    params_.pwm_rad_r = param.as_double();
+                    result.successful = true;
+                    result.reason = "success";
+                }
+
+            }
+
+            return result;
+        }
+
+    void controller_base::convert_to_pwm(controller_base::output_s &output) {
             output.delta_e = output.delta_e*params_.pwm_rad_e;
             output.delta_a = output.delta_a*params_.pwm_rad_a;
             output.delta_r = output.delta_r*params_.pwm_rad_r;

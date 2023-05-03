@@ -10,25 +10,18 @@ path_follower_base::path_follower_base(): Node("path_follower_base")
                 "state", 10, std::bind(&path_follower_base::vehicle_state_callback, this, _1));
   current_path_sub_ = this->create_subscription<rosplane2_msgs::msg::CurrentPath>(
                 "current_path", 100, std::bind(&path_follower_base::current_path_callback, this, _1)); // the 1 may need to be 100
-  /*controller_commands_sub_ = this->create_subscription<rosplane2_msgs::msg::ControllerCommands>(
-          "controller_commands", 10, std::bind(&controller_base::controller_commands_callback, this, _1));
-  vehicle_state_sub_ = this->create_subscription<rosplane2_msgs::msg::State>(
-          "state", 10, std::bind(&controller_base::vehicle_state_callback, this, _1));*/
-  // vehicle_state_sub_ = nh_.subscribe<rosplane_msgs::msg::State>("state", 1, &path_follower_base::vehicle_state_callback, this);
-  // current_path_sub_ = nh_.subscribe<rosplane_msgs::msg::Current_Path>("current_path", 1,
-  //                     &path_follower_base::current_path_callback, this);
 
 
-  // nh_private_.param<double>("CHI_INFTY", params_.chi_infty, 1.0472);
-  // nh_private_.param<double>("K_PATH", params_.k_path, 0.025);
-  // nh_private_.param<double>("K_ORBIT", params_.k_orbit, 4.0);
-
-  // auto func_ = std::bind(&path_follower_base::reconfigure_callback, this, std::placeholders::_1, std::placeholders::_2); /// these may need to be enabled after all; they depend on a config file that doens't exist.
-  // server_.setCallback(func_);
-  update_timer_ = this->create_wall_timer(100ms, std::bind(&path_follower_base::update, this)); /// 100ms?
-  // update_timer_ = nh_.createTimer(rclcpp::Duration(1.0/update_rate_), &path_follower_base::update, this);
-  // controller_commands_pub_ = nh_.advertise<rosplane_msgs::msg::Controller_Commands>("controller_commands", 1);
+  update_timer_ = this->create_wall_timer(100ms, std::bind(&path_follower_base::update, this)); // TODO change this duration to change based on update rate.
   controller_commands_pub_  = this->create_publisher<rosplane2_msgs::msg::ControllerCommands>("controller_commands",1);
+
+  this->declare_parameter("CHI_INFTY", params_.chi_infty);
+  this->declare_parameter("K_PATH", params_.k_path);
+  this->declare_parameter("K_ORBIT", params_.k_orbit);
+
+  params_.chi_infty = this->get_parameter("CHI_INFTY").as_double();
+  params_.k_path = this->get_parameter("K_PATH").as_double();
+  params_.k_orbit = this->get_parameter("K_ORBIT").as_double();
 
   state_init_ = false;
   current_path_init_ = false;
@@ -81,22 +74,40 @@ void path_follower_base::current_path_callback(const rosplane2_msgs::msg::Curren
   current_path_init_ = true;
 }
 
-// no longer used for compatibility reasons
-/*void path_follower_base::reconfigure_callback(rosplane::FollowerConfig &config, uint32_t level)
-{
-  params_.chi_infty = config.CHI_INFTY;
-  params_.k_path = config.K_PATH;
-  params_.k_orbit = config.K_ORBIT;
-}*/
+    rcl_interfaces::msg::SetParametersResult path_follower_base::parametersCallback(const std::vector<rclcpp::Parameter> &parameters) {
+        rcl_interfaces::msg::SetParametersResult result;
+        result.successful = false;
+        result.reason = "";
+
+        for (const auto &param : parameters) {
+
+            if (param.get_name() == "CHI_INFTY"){
+                params_.chi_infty = param.as_double();
+                result.successful = true;
+                result.reason = "success";
+            }
+            else if (param.get_name() == "K_PATH"){
+                params_.k_path = param.as_double();
+                result.successful = true;
+                result.reason = "success";
+            }
+            else if (param.get_name() == "K_ORBIT"){
+                params_.k_orbit = param.as_double();
+                result.successful = true;
+                result.reason = "success";
+            }
+
+        }
+
+        return result;
+    }
+
 } //end namespace
 
 int main(int argc, char **argv)
 {
-  rclcpp::init(argc, argv);//, "rosplane_path_follower");
-  // rosplane2::path_follower_base *path = new rosplane2::path_follower_example();
+  rclcpp::init(argc, argv);
 
   rclcpp::spin(std::make_shared<rosplane2::path_follower_example>());
-  // rclcpp::spin(path);
-
   return 0;
 }
