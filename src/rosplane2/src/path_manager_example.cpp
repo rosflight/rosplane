@@ -347,7 +347,7 @@ void path_manager_example::dubinsParameters(const waypoint_s start_node, const w
   if (ell < 2.0*R)
   {
     //ROS_ERROR("The distance between nodes must be larger than 2R."); 
-    //RCLCPP_ERROR(this->get_logger(),"The distance between nodes must be larger than 2R.",4);  !!!
+    RCLCPP_ERROR(this->get_logger(),"The distance between nodes must be larger than 2R.");
 
   }
   else

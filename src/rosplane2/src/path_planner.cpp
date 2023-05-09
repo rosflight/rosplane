@@ -6,15 +6,9 @@
 
 int main(int argc, char **argv)
 {
-  //ros::init(argc, argv, "rosplane_simple_path_planner");
-  //ros::NodeHandle nh_; // !!! n vs nh_ example I am following used nh_ 
   rclcpp::init(argc, argv);
   auto node = rclcpp::Node::make_shared("rosplane2_simple_path_planner");
 
-  //ros::Publisher waypointPublisher = nh_.advertise<rosplane_msgs::Waypoint>("waypoint_path", 10);
-  //ros::Rate loop_rate(10);
-  //rclpp::Rate loop_rate(10); !!! probably not important but the example had this Also there is a quality of service that is recomended probably not needed. 
-  //auto waypointPublisher = node->create_publisher<rosplane2_msgs::msg::Waypoint>("waypoint_path", 10); // !!! n vs nh_ example I am following used n 
   auto waypoint_publisher = node->create_publisher<rosplane2_msgs::msg::Waypoint>("waypoint_path", 10); // !!! n vs nh_ example I am following used n 
   rclcpp::Rate loop_rate(10);
   float va = 12;
@@ -28,7 +22,7 @@ int main(int argc, char **argv)
   rclcpp::Clock wait;
   for (int i(0); i < num_waypoints; i++)
   {
-    //ros::Duration(0.5).sleep(); 
+
     wait.sleep_for(rclcpp::Duration(0,int(5e8)));
 
     rosplane2_msgs::msg::Waypoint new_waypoint; 
@@ -48,7 +42,7 @@ int main(int argc, char **argv)
 
     waypoint_publisher->publish(new_waypoint);
   }
-  // rclpp::Duration(1.5).sleep(); 
-  wait.sleep_for(rclcpp::Duration(0,int(5e8)));
+
+  wait.sleep_for(rclcpp::Duration(1,int(5e8)));
   return 0;
 }

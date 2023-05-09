@@ -6,24 +6,6 @@
 
 namespace rosplane2
 {
-/* 
-path_manager_base::path_manager_base(): 
-  nh_(ros_trace_callback_end::NodeHandle()),
-  nh_private_(ros::NodeHandle("~"))
-{
-  nh_private_.set_parameter_if_not_set("R_min", params_.R_min, 25.0);
-  nh_private_.set_parameter_if_not_set("update_rate", update_rate_, 10.0);
-
-  vehicle_state_sub_ = nh_.subscribe("state", 10, &path_manager_base::vehicle_state_callback, this);
-  new_waypoint_sub_ = nh_.subscribe("waypoint_path", 10, &path_manager_base::new_waypoint_callback, this);
-  current_path_pub_ = nh_.advertise<rosplane2_msgs::msg::CurrentPath>("current_path", 10);
-
-  update_timer_ = nh_.createTimer(ros::Duration(1.0/update_rate_), &path_manager_base::current_path_publish, this);
-
-  num_waypoints_ = 0;
-
-  state_init_ = false;
-} */
 
 path_manager_base::path_manager_base() : Node("rosplane2_path_manager")
 {
@@ -33,24 +15,19 @@ path_manager_base::path_manager_base() : Node("rosplane2_path_manager")
   update_timer_      = this->create_wall_timer(10ms, std::bind(&path_manager_base::current_path_publish, this));
   // interesting read on wall timer
   // https://answers.ros.org/question/375561/create-wall-timer-using-callback-with-parameters-ros2-c/
-  // update_timer_      = new_waypoint_sub_.createTimer(rclcpp::Duration(1.0/update_rate_), &path_manager_base::current_path_publish, this);
-  // update_timer_      = new_waypoint_sub_.create_timer(this, rclcpp::Duration(1.0/update_rate_), std::bind(&path_manager_base::current_path_publish));
+
+  this->declare_parameter("R_min", 25.0);
+
+  params_.R_min = this->get_parameter("R_min").as_double();
 
   num_waypoints_ = 0;
 
   state_init_ = false;
 }
 
-/* void path_manager_base::vehicle_state_callback(const rosplane2_msgs::StateConstPtr &msg)
-{
-  vehicle_state_ = *msg;
-
-  state_init_ = true;
-} */
-
 void path_manager_base::vehicle_state_callback(const rosplane2_msgs::msg::State &msg)
 {
-  //vehicle_state_ = *msg;
+
   vehicle_state_ = msg;
 
   state_init_ = true;
@@ -133,11 +110,8 @@ void path_manager_base::current_path_publish() //const rclcpp::TimerEvent &
 
 int main(int argc, char **argv)
 {
-  //rclcpp::init(argc, argv, "rosplane2_path_manager"); 
-  rclcpp::init(argc, argv);
-//  rosplane2::path_manager_base *est = new rosplane2::path_manager_example();
 
-  //ros::spin();
+  rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<rosplane2::path_manager_example>());
 
   return 0;
