@@ -6,6 +6,11 @@
 #include "rosplane2_msgs/msg/state.hpp"
 #include "Eigen/Geometry"
 
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+
 using std::placeholders::_1;
 using nav_msgs::msg::Odometry;
 using rosplane2_msgs::msg::State;
@@ -19,13 +24,50 @@ class AircraftTruth : public rclcpp::Node
             subscription_ = this->create_subscription<nav_msgs::msg::Odometry>("truth/odometry", 10, std::bind(&AircraftTruth::topic_callback, this, _1));
             publisher_ = this->create_publisher<rosplane2_msgs::msg::State>("state", 10);
 
+            std::string filename = "/home/ian/Downloads/state_updated.csv";
+
+            std::ifstream file(filename);
+
+            if (!file.is_open())
+            {
+                std::cout << "Failed to open file: " << filename << std::endl;
+                debug = false;
+            }
+            else{
+
+                std::string line;
+                // Skip header
+                getline(file, line);
+
+                while (getline(file, line)) {
+
+                    std::vector<std::string> tokens;
+                    std::stringstream ss(line);
+                    std::string token;
+
+                    while (getline(ss, token, ','))
+                    {
+                        tokens.push_back(token);
+                    }
+
+                    state_values.push_back(tokens);
+                }
+
+
+            }
         }
 
     private:
         rclcpp::Subscription<Odometry>::SharedPtr subscription_;
         rclcpp::Publisher<State>::SharedPtr publisher_;
 
-        void topic_callback(const Odometry & msg) const
+        int step = 0;
+
+        bool debug = true;
+
+        std::vector<std::vector<std::string>> state_values;
+
+        void topic_callback(const Odometry & msg)
         {
             // get the info from the gazebo message
             auto gazeboPosition = msg.pose.pose.position;
@@ -97,7 +139,57 @@ class AircraftTruth : public rclcpp::Node
             truthState.chi_deg -= (truthState.chi_deg > 180.0 ? 360.0 : 0.0);
 
             //RCLCPP_INFO(this->get_logger(), "Sub heard: '%s'", msg.child_frame_id.c_str());
+
+            /// Debugging by high jacking the gazebo state and publishing from the csv.
+
+
+            if (!debug) {
+                publisher_->publish(truthState);
+                return;
+            }
+
+            truthState.position[0] = std::stof(state_values[step][4]);
+            truthState.position[1] = std::stof(state_values[step][5]);
+            truthState.position[2] = std::stof(state_values[step][6]);
+
+            truthState.va = std::stof(state_values[step][7]);
+
+            truthState.alpha = std::stof(state_values[step][8]);
+            truthState.beta = std::stof(state_values[step][9]);
+
+            truthState.phi = std::stof(state_values[step][10]);
+            truthState.theta = std::stof(state_values[step][11]);
+            truthState.psi = std::stof(state_values[step][12]);
+
+
+            truthState.p = std::stof(state_values[step][14]);
+            truthState.q = std::stof(state_values[step][15]);
+            truthState.r = std::stof(state_values[step][16]);
+
+            truthState.vg = std::stof(state_values[step][17]);
+            truthState.wn = std::stof(state_values[step][18]);
+            truthState.we = std::stof(state_values[step][19]);
+
+            truthState.quat[0] = std::stof(state_values[step][20]);
+            truthState.quat[1] = std::stof(state_values[step][21]);
+            truthState.quat[2] = std::stof(state_values[step][22]);
+            truthState.quat[3] = std::stof(state_values[step][23]);
+            truthState.quat_valid = std::stoi(state_values[step][24]);
+
+            truthState.chi_deg = std::stof(state_values[step][25]);
+            truthState.psi_deg = std::stof(state_values[step][26]);
+
+            truthState.initial_lat = std::stof(state_values[step][27]);
+            truthState.initial_lon = std::stof(state_values[step][28]);
+            truthState.initial_alt = std::stof(state_values[step][29]);
+
+            truthState.chi = std::stof(state_values[step][13]);
+
+
             publisher_->publish(truthState);
+
+            step++;
+
         }
 
 

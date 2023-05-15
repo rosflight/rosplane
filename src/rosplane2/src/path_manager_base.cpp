@@ -50,6 +50,7 @@ void path_manager_base::new_waypoint_callback(const rosplane2_msgs::msg::Waypoin
     currentwp.w[2] = (vehicle_state_.position[2] > -25 ? msg.w[2] : vehicle_state_.position[2]);
     currentwp.chi_d = vehicle_state_.chi;
     currentwp.chi_valid = msg.chi_valid;
+
     currentwp.va_d = msg.va_d;
 
     waypoints_.clear();
@@ -100,6 +101,17 @@ void path_manager_base::current_path_publish() //const rclcpp::TimerEvent &
   }
   current_path.rho = output.rho;
   current_path.lamda = output.lamda;
+
+  RCLCPP_DEBUG_STREAM(this->get_logger(), "Publishing Current Path!");
+
+  RCLCPP_DEBUG_STREAM(this->get_logger(), "Path Type: " << current_path.path_type);
+  RCLCPP_DEBUG_STREAM(this->get_logger(), "va_d: " << current_path.va_d);
+  RCLCPP_DEBUG_STREAM(this->get_logger(), "r: " << current_path.r[0] << ", " << current_path.r[1] << ", " << current_path.r[2]);
+  RCLCPP_DEBUG_STREAM(this->get_logger(), "q: " << current_path.q[0] << ", " << current_path.q[1] << ", " << current_path.q[2]);
+  RCLCPP_DEBUG_STREAM(this->get_logger(), "c: " << current_path.c[0] << ", " << current_path.c[1] << ", " << current_path.c[2]);
+  RCLCPP_DEBUG_STREAM(this->get_logger(), "rho: " << current_path.rho);
+  RCLCPP_DEBUG_STREAM(this->get_logger(), "lamda: " << current_path.lamda);
+
 
   current_path_pub_->publish(current_path);
 } 

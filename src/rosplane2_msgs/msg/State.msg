@@ -19,7 +19,7 @@ float32 p		# Body frame rollrate (rad/s)
 float32 q		# Body frame pitchrate (rad/s)
 float32 r		# Body frame yawrate (rad/s)
 float32 vg		# Groundspeed (m/s)
-float32 wn		# Windspeed north component (m/s)
+float32 wn		# Winorth component (m/s)
 float32 we		# Windspeed east component (m/s)
 
 # Additional States for convenience

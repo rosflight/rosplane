@@ -36,10 +36,23 @@ void path_follower_base::update()
   {
     follow(params_, input_, output);
     rosplane2_msgs::msg::ControllerCommands msg;
+
     msg.chi_c = output.chi_c;
     msg.va_c = output.Va_c;
     msg.h_c = output.h_c;
     msg.phi_ff = output.phi_ff;
+
+    RCLCPP_DEBUG_STREAM(this->get_logger(), "Publishing Contoller Commands!");
+
+    RCLCPP_DEBUG_STREAM(this->get_logger(), "chi_c: " << msg.chi_c);
+    RCLCPP_DEBUG_STREAM(this->get_logger(), "va_c: " << msg.va_c);
+    RCLCPP_DEBUG_STREAM(this->get_logger(), "h_c: " << msg.h_c);
+    RCLCPP_DEBUG_STREAM(this->get_logger(), "phi_ff: " << msg.phi_ff);
+
+    RCLCPP_DEBUG_STREAM(this->get_logger(), "k_orbit: " << params_.k_orbit);
+
+
+
     controller_commands_pub_->publish(msg);
   }
 }
@@ -51,6 +64,9 @@ void path_follower_base::vehicle_state_callback(const rosplane2_msgs::msg::State
   input_.h = -msg->position[2];                /** altitude */
   input_.chi = msg->chi;
   input_.Va = msg->va;
+
+  RCLCPP_DEBUG_STREAM(this->get_logger(), "FROM STATE -- input.chi: " << input_.chi);
+
 
   state_init_ = true;
 }

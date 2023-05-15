@@ -14,12 +14,19 @@ void path_follower_example::follow(const params_s &params, const input_s &input,
   {
     // compute wrapped version of the path angle
     float chi_q = atan2f(input.q_path[1], input.q_path[0]);
+
     while (chi_q - input.chi < -M_PI)
       chi_q += 2.0*M_PI;
     while (chi_q - input.chi > M_PI)
       chi_q -= 2.0*M_PI;
 
+    RCLCPP_DEBUG_STREAM(this->get_logger(), "input.chi: " << input.chi);
+
+    RCLCPP_DEBUG_STREAM(this->get_logger(), "chi_q: " << chi_q);
+
+
     float path_error = -sinf(chi_q)*(input.pn - input.r_path[0]) + cosf(chi_q)*(input.pe - input.r_path[1]);
+
     // heading command
     output.chi_c = chi_q - params.chi_infty*2/M_PI*atanf(params.k_path*path_error);
 

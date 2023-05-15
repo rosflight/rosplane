@@ -25,6 +25,8 @@ find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rosplane2_msgs REQUIRED)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 ament_export_dependencies(rclcpp rclpy)
 ament_export_include_directories(include)
@@ -97,6 +99,13 @@ ament_target_dependencies(rosplane2_path_planner rosplane2_msgs rclcpp rclpy Eig
 install(TARGETS
   rosplane2_path_planner
   DESTINATION lib/${PROJECT_NAME})
+
+add_executable(rosplane2_transform_node
+            src/transform_node.cpp)
+ament_target_dependencies(rosplane2_transform_node rosplane2_msgs rclcpp rclpy Eigen3 tf2 tf2_ros)
+install(TARGETS
+        rosplane2_transform_node
+        DESTINATION lib/${PROJECT_NAME})
 
 #### END OF REAL EXECUTABLES ###
 

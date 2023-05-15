@@ -148,13 +148,13 @@ namespace rosplane2
             rotated_forces = rot.inverse()*rotated_forces;
             rotated_moments = rot.inverse()*rotated_moments;
 
-            forces_moments_msg.force.x = rotated_forces[1];
-            forces_moments_msg.force.y = rotated_forces[0];
-            forces_moments_msg.force.z = -rotated_forces[2];
+            forces_moments_msg.force.x = 0.0;// rotated_forces[1];
+            forces_moments_msg.force.y = 0.0;// rotated_forces[0];
+            forces_moments_msg.force.z = 0.0;// -rotated_forces[2];
 
-            forces_moments_msg.torque.x = rotated_moments[1];
-            forces_moments_msg.torque.y = rotated_moments[0];
-            forces_moments_msg.torque.z = -rotated_moments[2];
+            forces_moments_msg.torque.x = 0.0;// rotated_moments[1];
+            forces_moments_msg.torque.y = 0.0;// rotated_moments[0];
+            forces_moments_msg.torque.z = 0.0;// -rotated_moments[2];
 
             // Publish forces and moments.
             forces_moments_pub_->publish(forces_moments_msg);

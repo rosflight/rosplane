@@ -1,7 +1,6 @@
-//#include <ros/ros.h>
-//#include <rosplane_msgs/Waypoint.h>
 #include "rclcpp/rclcpp.hpp"
 #include "rosplane2_msgs/msg/waypoint.hpp"
+
 #define num_waypoints 3
 
 int main(int argc, char **argv)
@@ -39,6 +38,14 @@ int main(int argc, char **argv)
     else
       new_waypoint.set_current = false;
     new_waypoint.clear_wp_list = false;
+
+    RCLCPP_DEBUG_STREAM(node->get_logger(), "Publishing Waypoint!");
+
+    RCLCPP_DEBUG_STREAM(node->get_logger(), "North: " << new_waypoint.w[0]);
+    RCLCPP_DEBUG_STREAM(node->get_logger(), "East: " << new_waypoint.w[1]);
+    RCLCPP_DEBUG_STREAM(node->get_logger(), "Down: " << new_waypoint.w[2]);
+    RCLCPP_DEBUG_STREAM(node->get_logger(), "chi_d: " << new_waypoint.chi_d);
+
 
     waypoint_publisher->publish(new_waypoint);
   }

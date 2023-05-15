@@ -33,7 +33,7 @@ void controller_example::control(const params_s &params, const input_s &input, o
     output.theta_c = 15.0*3.14/180.0;
     if (input.h >= params.alt_toz)
     {
-      RCLCPP_DEBUG(this->get_logger(), "climb");
+      RCLCPP_INFO(this->get_logger(), "climb");
       current_zone = alt_zones::CLIMB;
       ap_error_ = 0;
       ap_integrator_ = 0;
@@ -45,7 +45,7 @@ void controller_example::control(const params_s &params, const input_s &input, o
     output.theta_c = airspeed_with_pitch_hold(input.Va_c, input.va, params, input.Ts);
     if (input.h >= input.h_c - params.alt_hz)
     {
-      RCLCPP_DEBUG(this->get_logger(), "hold");
+      RCLCPP_INFO(this->get_logger(), "hold");
       current_zone = alt_zones::ALTITUDE_HOLD;
       at_error_ = 0;
       at_integrator_ = 0;
@@ -56,7 +56,7 @@ void controller_example::control(const params_s &params, const input_s &input, o
     }
     else if (input.h <= params.alt_toz)
     {
-      RCLCPP_DEBUG(this->get_logger(), "takeoff");
+      RCLCPP_INFO(this->get_logger(), "takeoff");
       current_zone = alt_zones::TAKE_OFF;
     }
     break;
@@ -65,7 +65,7 @@ void controller_example::control(const params_s &params, const input_s &input, o
     output.theta_c = airspeed_with_pitch_hold(input.Va_c, input.va, params, input.Ts);
     if (input.h <= input.h_c + params.alt_hz)
     {
-      RCLCPP_DEBUG(this->get_logger(), "hold");
+      RCLCPP_INFO(this->get_logger(), "hold");
       current_zone = alt_zones::ALTITUDE_HOLD;
       at_error_ = 0;
       at_integrator_ = 0;
@@ -80,7 +80,7 @@ void controller_example::control(const params_s &params, const input_s &input, o
     output.theta_c = altitiude_hold(input.h_c, input.h, params, input.Ts);
     if (input.h >= input.h_c + params.alt_hz)
     {
-      RCLCPP_DEBUG(this->get_logger(), "desend");
+      RCLCPP_INFO(this->get_logger(), "desend");
       current_zone = alt_zones::DESCEND;
       ap_error_ = 0;
       ap_integrator_ = 0;
@@ -88,7 +88,7 @@ void controller_example::control(const params_s &params, const input_s &input, o
     }
     else if (input.h <= input.h_c - params.alt_hz)
     {
-      RCLCPP_DEBUG(this->get_logger(), "climb");
+      RCLCPP_INFO(this->get_logger(), "climb");
       current_zone = alt_zones::CLIMB;
       ap_error_ = 0;
       ap_integrator_ = 0;
