@@ -25,6 +25,7 @@
   <node name="path_planner" pkg="rosplane2" exec="rosplane2_path_planner" respawn="false" output="screen"/>
   <node name="ros_forces" pkg="rosplane2" exec="rosplane2_force_publisher" respawn="false" output="screen"/>
   <node name="gazebo_forces_pub" pkg="rosplane2_sim" exec="entity_wrench_pub" respawn="false" output="screen"/> <!--respawn="false" output="screen"-->
+  <node name="transforms" pkg="rosplane2" exec="rosplane2_transform_node" respawn="false" output="screen"/>
 
 
 </launch>
