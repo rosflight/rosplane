@@ -20,19 +20,13 @@
 
 #include <boost/bind/bind.hpp>
 #include <eigen3/Eigen/Eigen>
-
-//#include <gazebo/common/common.hh>
-//#include <gazebo/common/Plugin.hh>
-//#include <gazebo/gazebo.hh>
-//#include <gazebo/physics/physics.hh>
-//#include <rclcpp/callback_queue.h>
 #include <rclcpp/rclcpp.hpp>
 
 #include <rosplane2_msgs/msg/command.hpp>
 #include <rosplane2_msgs/msg/state.hpp>
-//#include <std_msgs/msg/Float32.hpp>
 #include "geometry_msgs/msg/vector3.hpp"
 #include "geometry_msgs/msg/wrench.hpp"
+#include "cmath"
 
 
 
@@ -63,13 +57,6 @@ class AircraftForcesAndMoments : public rclcpp::Node
         std::string parent_frame_id_;
         std::string motor_speed_pub_topic_; //!!!
         std::string namespace_;
-//
-//        physics::WorldPtr world_;
-//        physics::ModelPtr model_;
-//        physics::LinkPtr link_;
-//        physics::JointPtr joint_;
-//        physics::EntityPtr parent_link_;
-//        event::ConnectionPtr updateConnection_; // Pointer to the update event connection.
 
         // physical parameters
         double mass_ = 3.92;
@@ -172,7 +159,9 @@ class AircraftForcesAndMoments : public rclcpp::Node
 
         rclcpp::TimerBase::SharedPtr timer_;
 
-        float quat_array[4] = {0.0, 0.0, 0.0, 0.0};
+        rosplane2_msgs::msg::State _state;
+
+        Eigen::Quaternionf quat;
 
 //        ros::Subscriber wind_speed_sub_;
 //        rclcpp::Subscription<rosplane2_msgs::msg::State>::SharedPtr wind_speed_sub_;

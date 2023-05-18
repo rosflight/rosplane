@@ -36,7 +36,7 @@ namespace rosplane2
                 "command", 10, std::bind(&AircraftForcesAndMoments::CommandCallback, this, std::placeholders::_1));
         state_sub_ = this->create_subscription<rosplane2_msgs::msg::State>(
                 "state", 10, std::bind(&AircraftForcesAndMoments::StateCallback, this, std::placeholders::_1));
-        timer_ = this->create_wall_timer(1ms, std::bind(&AircraftForcesAndMoments::SendForces, this)); // TODO: update this to the publish every timestep.
+        timer_ = this->create_wall_timer(10ms, std::bind(&AircraftForcesAndMoments::SendForces, this)); // TODO: update this to the publish every timestep.
     }
 
     void AircraftForcesAndMoments::StateCallback(const rosplane2_msgs::msg::State::SharedPtr msg)
@@ -48,10 +48,12 @@ namespace rosplane2
         q = msg->q;
         r = msg->r;
 
-        quat_array[0] = msg->quat[0];
-        quat_array[1] = msg->quat[1];
-        quat_array[2] = msg->quat[2];
-        quat_array[3] = msg->quat[3];
+        quat.w() = msg->quat[0];
+        quat.x() = msg->quat[1];
+        quat.y() = msg->quat[2];
+        quat.z() = msg->quat[3];
+
+        _state = *msg;
 
     }
 
@@ -75,6 +77,13 @@ namespace rosplane2
 
         double Va = sqrt(pow(ur, 2.0) + pow(vr, 2.0) + pow(wr, 2.0));
 
+        //gravity
+        Eigen::Vector3f fg(0.0, 0.0, 9.81*mass_);
+
+        Eigen::Matrix3f rotation = quat.toRotationMatrix();
+
+        fg = rotation*fg;
+
         // Don't divide by zero, and don't let NaN's get through (sometimes GetRelativeLinearVel returns NaNs)
         if (Va > 0.000001 && std::isfinite(Va))
         {
@@ -84,8 +93,22 @@ namespace rosplane2
              * By Randy Beard and Tim McLain.
              * Look there for a detailed explanation of each line in the rest of this function
              */
-            double alpha = atan2(wr , ur);
+
+            double alpha;
+
+            if (ur == 0){
+                alpha = std::copysign(1, wr) * M_PI/2.0;
+            }
+            else {
+                 alpha= atan2(wr, ur);
+            }
+
             double beta = asin(vr/Va);
+
+            float tmp = std::sqrt(pow(ur,2) + pow(wr,2));
+            if (tmp == 0){
+                beta = std::copysign(1, vr)*M_PI/2.0;
+            }
 
             double sign = (alpha >= 0 ? 1 : -1); //Sigmoid function
             double sigma_a = (1 + exp(-(wing_.M*(alpha - wing_.alpha0))) + exp((wing_.M*(alpha + wing_.alpha0))))/((1 + exp(-
@@ -104,9 +127,9 @@ namespace rosplane2
             double CZ_q_a = -CD_.q*sin(alpha) - CL_.q*cos(alpha);
             double CZ_deltaE_a = -CD_.delta_e*sin(alpha) - CL_.delta_e*cos(alpha);
 
-            forces_.Fx = 0.5*(rho_)*pow(Va, 2.0)*wing_.S*(CX_a + (CX_q_a*wing_.c*q) / (2.0*Va) + CX_deltaE_a*delta_.e) + 0.5*rho_*prop_.S*prop_.C*(pow((prop_.k_motor*delta_.t), 2.0) - pow(Va, 2.0));
-            forces_.Fy = 0.5*(rho_)*pow(Va, 2.0)*wing_.S*(CY_.O + CY_.beta*beta + ((CY_.p*wing_.b*p) / (2.0*Va)) + ((CY_.r*wing_.b*r)/(2.0*Va)) + CY_.delta_a*delta_.a + CY_.delta_r*delta_.r);
-            forces_.Fz = 0.5*(rho_)*pow(Va, 2.0)*wing_.S*(CZ_a + (CZ_q_a*wing_.c*q) / (2.0*Va) + CZ_deltaE_a*delta_.e);
+            forces_.Fx = 0.5*(rho_)*pow(Va, 2.0)*wing_.S*(CX_a + (CX_q_a*wing_.c*q) / (2.0*Va) + CX_deltaE_a*delta_.e) + 0.5*rho_*prop_.S*prop_.C*(pow((prop_.k_motor*delta_.t), 2.0) - pow(Va, 2.0)) + fg[0];
+            forces_.Fy = 0.5*(rho_)*pow(Va, 2.0)*wing_.S*(CY_.O + CY_.beta*beta + ((CY_.p*wing_.b*p) / (2.0*Va)) + ((CY_.r*wing_.b*r)/(2.0*Va)) + CY_.delta_a*delta_.a + CY_.delta_r*delta_.r) + fg[1];
+            forces_.Fz = 0.5*(rho_)*pow(Va, 2.0)*wing_.S*(CZ_a + (CZ_q_a*wing_.c*q) / (2.0*Va) + CZ_deltaE_a*delta_.e) + fg[2];
             forces_.l = 0.5*(rho_)*pow(Va, 2.0)*wing_.S*wing_.b*(Cell_.O + Cell_.beta*beta + (Cell_.p*wing_.b*p) / (2.0*Va) + (Cell_.r*wing_.b*r)/(2.0*Va) + Cell_.delta_a*delta_.a + Cell_.delta_r*delta_.r) - prop_.k_T_P * pow((prop_.k_Omega*delta_.t), 2.0);
             forces_.m = 0.5*(rho_)*pow(Va, 2.0)*wing_.S*wing_.c*(Cm_.O + Cm_.alpha*alpha + (Cm_.q*wing_.c*q) / (2.0*Va) + Cm_.delta_e*delta_.e);
             forces_.n = 0.5*(rho_)*pow(Va, 2.0)*wing_.S*wing_.b*(Cn_.O + Cn_.beta*beta + (Cn_.p*wing_.b*p) / (2.0*Va) + (Cn_.r*wing_.b*r)/(2.0*Va) + Cn_.delta_a*delta_.a + Cn_.delta_r*delta_.r);
@@ -134,27 +157,15 @@ namespace rosplane2
         // Make sure we are applying reasonable forces
         if (std::isfinite(forces_.Fx + forces_.Fy + forces_.Fz + forces_.l + forces_.m + forces_.n))
         {
-
             geometry_msgs::msg::Wrench forces_moments_msg;
 
-            Eigen::Quaternionf quat = Eigen::Map<Eigen::Quaternionf>(quat_array);
+            forces_moments_msg.force.x = forces_.Fx;
+            forces_moments_msg.force.y = forces_.Fy;
+            forces_moments_msg.force.z = forces_.Fz;
 
-            Eigen::Matrix3f rot = quat.toRotationMatrix();
-
-            Eigen::Vector3f rotated_forces(forces_.Fx, forces_.Fy, forces_.Fz);
-            Eigen::Vector3f rotated_moments(forces_.l, forces_.m, forces_.n);
-
-
-            rotated_forces = rot.inverse()*rotated_forces;
-            rotated_moments = rot.inverse()*rotated_moments;
-
-            forces_moments_msg.force.x = 0.0;// rotated_forces[1];
-            forces_moments_msg.force.y = 0.0;// rotated_forces[0];
-            forces_moments_msg.force.z = 0.0;// -rotated_forces[2];
-
-            forces_moments_msg.torque.x = 0.0;// rotated_moments[1];
-            forces_moments_msg.torque.y = 0.0;// rotated_moments[0];
-            forces_moments_msg.torque.z = 0.0;// -rotated_moments[2];
+            forces_moments_msg.torque.x = forces_.l;
+            forces_moments_msg.torque.y = forces_.m;
+            forces_moments_msg.torque.z = forces_.n;
 
             // Publish forces and moments.
             forces_moments_pub_->publish(forces_moments_msg);
