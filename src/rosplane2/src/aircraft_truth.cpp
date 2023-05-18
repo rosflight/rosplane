@@ -29,14 +29,14 @@ class AircraftTruth : public rclcpp::Node
 
             prev_state[0] = 0.0;
             prev_state[1] = 0.0;
-            prev_state[2] = 0.0;
+            prev_state[2] = 0.0;  // TODO find where the large change in position comes from (just jumps to 100m)
             prev_state[3] = 0.0;
             prev_state[4] = 0.0;
             prev_state[5] = 0.0;
-            prev_state[6] = 0.0;
+            prev_state[6] = 1.0;
             prev_state[7] = 0.0;
             prev_state[8] = 0.0;
-            prev_state[9] = 0.0;
+            prev_state[9] = 0.0; // TODO find out why the controller is now freaking out (jumping between the hold, climb, descend, takeoff).
             prev_state[10] = 0.0;
             prev_state[11] = 0.0;
             prev_state[12] = 0.0;
@@ -82,7 +82,7 @@ class AircraftTruth : public rclcpp::Node
 
         int step = 0;
 
-        bool debug = true;
+        bool debug = false;
 
         std::vector<std::vector<std::string>> state_values;
 
@@ -92,59 +92,22 @@ class AircraftTruth : public rclcpp::Node
             forces_moments = msg;
         }
 
-        int once = 0;
-
 
         void update()
         {
 
-//            RCLCPP_INFO(this->get_logger(), "Updating.....");
-
-
-            if (once < 5) {
-                RCLCPP_INFO_STREAM(this->get_logger(),
-                                   "True State: Position -- " << prev_state[0] << prev_state[1] << prev_state[2]); // TODO check the rest of the states.
-            }
             // set up the state message object.
             rosplane2_msgs::msg::State truthState = rosplane2_msgs::msg::State();
 
             auto k1 = derivatives(prev_state, forces_moments);
 
-            if (once < 5) {
-                RCLCPP_INFO_STREAM(this->get_logger(),
-                                   "k1: Position -- " << k1[0] << k1[1] << k1[2]);
-            }
-
             auto k2 = derivatives(prev_state + ts/2.0 * k1, forces_moments);
-
-            if (once < 5) {
-                RCLCPP_INFO_STREAM(this->get_logger(),
-                                   "k2: Position -- " << k2[0] << k2[1] << k2[2]);
-            }
 
             auto k3 = derivatives(prev_state + ts/2.0 * k2, forces_moments);
 
-            if (once < 5) {
-                RCLCPP_INFO_STREAM(this->get_logger(),
-                                   "k3: Position -- " << k3[0] << k3[1] << k3[2]);
-            }
-
             auto k4 = derivatives(prev_state + ts/2.0 * k3, forces_moments);
 
-            if (once < 5) {
-                RCLCPP_INFO_STREAM(this->get_logger(),
-                                   "k4: Position -- " << k4[0] << k4[1] << k4[2]);
-            }
-
             prev_state += ts/6.0 *(k1 + 2*k2 + 2*k3 + k4);
-
-            if (once < 5) {
-                RCLCPP_INFO_STREAM(this->get_logger(),
-                                   "iterated True State: Position -- " << prev_state[0] << prev_state[1] << prev_state[2]);
-
-                once++;
-            }
-
 
             // Normalize the quaternion.
 
@@ -225,7 +188,7 @@ class AircraftTruth : public rclcpp::Node
             truthState.chi = std::stof(state_values[step][13]);
 
 
-            publisher_->publish(truthState);
+//            publisher_->publish(truthState);
 
             step++;
 
@@ -262,6 +225,8 @@ class AircraftTruth : public rclcpp::Node
 
             Eigen::Vector3f vels;
             vels << u, v, w;
+
+//            RCLCPP_INFO_STREAM(this->get_logger(), "vels: u = " << u << " v = " << v << " w = " << w);
             auto pos_dot = quat.toRotationMatrix()*vels;
             float north_dot = pos_dot[0];
             float east_dot = pos_dot[1];
@@ -381,6 +346,12 @@ class AircraftTruth : public rclcpp::Node
             Eigen::Matrix<float, 3, 1> vels;
 
             vels << prev_state[3], prev_state[4], prev_state[5];
+
+//            RCLCPP_INFO_STREAM(this->get_logger(), "vels: u = " << prev_state[3] << " v = " << prev_state[4] << " w = " << prev_state[5]);
+
+            true_state.u = vels[0];
+            true_state.v = vels[1];
+            true_state.w = vels[2];
 
             Eigen::Matrix<float, 3, 1> pdot = quaternion.toRotationMatrix() * vels;
 

@@ -80,7 +80,7 @@ void controller_example::control(const params_s &params, const input_s &input, o
     output.theta_c = altitiude_hold(input.h_c, input.h, params, input.Ts);
     if (input.h >= input.h_c + params.alt_hz)
     {
-      RCLCPP_INFO(this->get_logger(), "desend");
+      RCLCPP_INFO(this->get_logger(), "descend");
       current_zone = alt_zones::DESCEND;
       ap_error_ = 0;
       ap_integrator_ = 0;

@@ -4,7 +4,7 @@
 namespace rosplane2
 {
 
-    transform_node::transform_node() : Node("transform_node"){
+    transform_node::transform_node() : Node("transform_node"){ // TODO find out why this is crashing on start up.
 
         vehicle_state_sub_ = this->create_subscription<rosplane2_msgs::msg::State>(
                 "state", 10, std::bind(&transform_node::state_callback, this, _1)
