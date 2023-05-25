@@ -98,7 +98,7 @@ namespace rosplane2
         transform_stamped.transform.rotation.z = q.z();
         transform_stamped.transform.rotation.w = q.w();
 
-        transform_broadcaster->sendTransform(transform_stamped);
+        transform_broadcaster->sendTransform(transform_stamped); // TODO This breaks the node. Probably because the tree hasn't been set up.
     }
 
 }
