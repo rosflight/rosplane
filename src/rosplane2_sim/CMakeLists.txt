@@ -18,31 +18,21 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(ignition-cmake2 REQUIRED)
-find_package(ignition-msgs8 REQUIRED)
-find_package(ignition-common4 REQUIRED)
-find_package(ignition-transport11 REQUIRED)
-find_package(ros_gz REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 ament_export_dependencies(
   rclcpp
   geometry_msgs
-  ros_gz
   Eigen3
-  ignition-cmake2
-  ignition-msgs5
-  ignition-msgs8
-  ignition-common4
 )
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
 install(DIRECTORY worlds DESTINATION share/${PROJECT_NAME}/)
 
 # Add the EntityWrench node
-add_executable(entity_wrench_pub src/entity_wrench_pub.cpp)
-ament_target_dependencies(entity_wrench_pub ignition-cmake2 ignition-msgs8 ignition-transport11 ignition-common4 rclcpp Eigen3)
-install(TARGETS entity_wrench_pub DESTINATION lib/${PROJECT_NAME})
+# add_executable(entity_wrench_pub src/entity_wrench_pub.cpp)
+# ament_target_dependencies(entity_wrench_pub rclcpp Eigen3)
+# install(TARGETS entity_wrench_pub DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
