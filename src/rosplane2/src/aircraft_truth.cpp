@@ -11,6 +11,7 @@
 #include <sstream>
 #include <string>
 #include <geometry_msgs/msg/wrench.hpp>
+#include "chrono"
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
@@ -144,6 +145,14 @@ class AircraftTruth : public rclcpp::Node
 
             //Publish the new state.
             /// Debugging by high jacking the gazebo state and publishing from the csv.
+
+            rclcpp::Time now = this->get_clock()->now();
+            true_state.header.stamp.sec = now.seconds();
+            true_state.header.stamp.nanosec = now.nanoseconds();
+
+            RCLCPP_INFO_STREAM(this->get_logger(), now.seconds() << ":" << now.nanoseconds());
+
+
 
             if (!debug) {
                 publisher_->publish(true_state);

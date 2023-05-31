@@ -80,16 +80,15 @@ def generate_launch_description():
         ),
 
         ################# Tools for Interacting with the Sim #########################
-        Node(
-            package='rviz2',
-            executable='rviz2',
-            name='rviz2',
-            arguments=['-d', [os.path.join(rosplane2_dir, 'SIL.rviz')]],
-            parameters=[{
-                'use_sim_time': False
-            }]
-        )
-        # ,
+        # Node(
+        #     package='rviz2',
+        #     executable='rviz2',
+        #     name='rviz2',
+        #     arguments=['-d', [os.path.join(rosplane2_dir, 'SIL.rviz')]],
+        #     parameters=[{
+        #         'use_sim_time': False
+        #     }]
+        # ),
         # Node(
         #     package='rqt_publisher',
         #     executable='rqt_publisher',
@@ -98,14 +97,15 @@ def generate_launch_description():
         #         'use_sim_time': False
         #     }]
         # ),
-        # Node(
-        #     package='rosplane2',
-        #     executable='uav_plotter',
-        #     name='uav_plotter',
-        #     parameters=[{
-        #         'use_sim_time': True,
-        #         't_horizon': 100.,
-        #         'plot_sensors': False
-        #     }]
-        # )
+        Node(
+            package='data_viz',
+            executable='viz_data',
+            name='uav_plotter',
+            parameters=[{
+                'use_sim_time': False,  # TODO Will this cause and error???
+                't_horizon': 100.,
+                'plot_sensors': False
+            }],
+            output='screen'
+        )
     ])

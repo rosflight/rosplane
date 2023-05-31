@@ -75,6 +75,10 @@
         rosplane2_msgs::msg::Command actuators;
         /* publish actuator controls */
 
+        rclcpp::Time now = this->get_clock()->now();
+        actuators.header.stamp.sec = now.seconds();
+        actuators.header.stamp.nanosec = now.nanoseconds();
+
         actuators.ignore = 0;
         actuators.mode = rosplane2_msgs::msg::Command::MODE_PASS_THROUGH;
         actuators.x = (std::isfinite(output.delta_a)) ? output.delta_a : 0.0f;
