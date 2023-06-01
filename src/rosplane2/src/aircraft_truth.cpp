@@ -146,12 +146,15 @@ class AircraftTruth : public rclcpp::Node
             //Publish the new state.
             /// Debugging by high jacking the gazebo state and publishing from the csv.
 
+            auto sys_now = std::chrono::high_resolution_clock::now();
+
             rclcpp::Time now = this->get_clock()->now();
-            true_state.header.stamp.sec = now.seconds();
-            true_state.header.stamp.nanosec = now.nanoseconds();
+            uint64_t nanoseconds_since_epoch = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+            uint64_t seconds_since_epoch = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+            true_state.header.stamp.sec = seconds_since_epoch;
+            true_state.header.stamp.nanosec = nanoseconds_since_epoch - seconds_since_epoch * 1000000000;
 
-            RCLCPP_INFO_STREAM(this->get_logger(), now.seconds() << ":" << now.nanoseconds());
-
+//            RCLCPP_INFO_STREAM(this->get_logger(), seconds_since_epoch << ":" << nanoseconds_since_epoch - seconds_since_epoch * 1000000000);
 
 
             if (!debug) {
@@ -252,7 +255,7 @@ class AircraftTruth : public rclcpp::Node
             float e0_dot = 0.5 * (-p*quat.x() - q*quat.y() - r*quat.z());
             float e1_dot = 0.5 * (p*quat.w() + r*quat.y() - q*quat.z());
             float e2_dot = 0.5 * (q*quat.w() - r*quat.x() + p*quat.z());
-            float e3_dot = 0.5 * (r*quat.w() + q*quat.y() - p*quat.y());
+            float e3_dot = 0.5 * (r*quat.w() + q*quat.x() - p*quat.y());
 
             // Rotational Dynamics
 

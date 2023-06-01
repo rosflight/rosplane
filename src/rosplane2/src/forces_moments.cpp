@@ -82,7 +82,7 @@ namespace rosplane2
 
         Eigen::Matrix3f rotation = quat.toRotationMatrix();
 
-        fg = rotation*fg;
+        fg = rotation.transpose()*fg;
 
         // Don't divide by zero, and don't let NaN's get through (sometimes GetRelativeLinearVel returns NaNs)
         if (Va > 0.000001 && std::isfinite(Va))
@@ -102,6 +102,9 @@ namespace rosplane2
             else {
                  alpha= atan2(wr, ur);
             }
+
+//            RCLCPP_INFO_STREAM(this->get_logger(), "alpha: " << alpha);
+
 
             double beta = asin(vr/Va);
 
@@ -127,7 +130,14 @@ namespace rosplane2
             double CZ_q_a = -CD_.q*sin(alpha) - CL_.q*cos(alpha);
             double CZ_deltaE_a = -CD_.delta_e*sin(alpha) - CL_.delta_e*cos(alpha);
 
-            forces_.Fx = 0.5*(rho_)*pow(Va, 2.0)*wing_.S*(CX_a + (CX_q_a*wing_.c*q) / (2.0*Va) + CX_deltaE_a*delta_.e) + 0.5*rho_*prop_.S*prop_.C*(pow((prop_.k_motor*delta_.t), 2.0) - pow(Va, 2.0)) + fg[0];
+//            RCLCPP_INFO_STREAM(this->get_logger(), "Thrust from motor: " << 0.5*rho_*prop_.S*prop_.C*(pow((prop_.k_motor*delta_.t), 2.0) - pow(Va, 2.0)));
+
+
+//            forces_.Fx = 0.5*(rho_)*pow(Va, 2.0)*wing_.S*(CX_a + (CX_q_a*wing_.c*q) / (2.0*Va) + CX_deltaE_a*delta_.e) + 0.5*rho_*prop_.S*prop_.C*(pow((prop_.k_motor*delta_.t), 2.0) - pow(Va, 2.0)) + fg[0];
+
+            RCLCPP_INFO_STREAM(this->get_logger(), "Fx: " << forces_.Fx);
+
+
             forces_.Fy = 0.5*(rho_)*pow(Va, 2.0)*wing_.S*(CY_.O + CY_.beta*beta + ((CY_.p*wing_.b*p) / (2.0*Va)) + ((CY_.r*wing_.b*r)/(2.0*Va)) + CY_.delta_a*delta_.a + CY_.delta_r*delta_.r) + fg[1];
             forces_.Fz = 0.5*(rho_)*pow(Va, 2.0)*wing_.S*(CZ_a + (CZ_q_a*wing_.c*q) / (2.0*Va) + CZ_deltaE_a*delta_.e) + fg[2];
             forces_.l = 0.5*(rho_)*pow(Va, 2.0)*wing_.S*wing_.b*(Cell_.O + Cell_.beta*beta + (Cell_.p*wing_.b*p) / (2.0*Va) + (Cell_.r*wing_.b*r)/(2.0*Va) + Cell_.delta_a*delta_.a + Cell_.delta_r*delta_.r) - prop_.k_T_P * pow((prop_.k_Omega*delta_.t), 2.0);

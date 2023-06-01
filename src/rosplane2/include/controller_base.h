@@ -118,7 +118,7 @@ private:
 
     struct params_s params_ = {
             /* alt_hz */ 10.0,
-            /* alt_toz */ 20.0,
+            /* alt_toz */ 10.0,
             /* tau */ 5.0,
             /* c_kp */ 0.7329,
             /* c_kd */ 0.0,

@@ -39,6 +39,11 @@ def generate_launch_description():
         ),
         Node(
             package='rosplane2',
+            executable='rosplane2_controller',
+            name='autopilot',
+        ),
+        Node(
+            package='rosplane2',
             executable='rosplane2_truth_publisher',
             name='truth_pub',
             parameters=[{
@@ -53,11 +58,6 @@ def generate_launch_description():
         #         'use_sim_time': use_sim_time
         #     }]
         # ),
-        Node(
-            package='rosplane2',
-            executable='rosplane2_controller',
-            name='autopilot',
-        ),
         Node(
             package='rosplane2',
             executable='rosplane2_path_follower',

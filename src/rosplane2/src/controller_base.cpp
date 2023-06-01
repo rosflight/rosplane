@@ -76,15 +76,22 @@
         /* publish actuator controls */
 
         rclcpp::Time now = this->get_clock()->now();
-        actuators.header.stamp.sec = now.seconds();
-        actuators.header.stamp.nanosec = now.nanoseconds();
+
+
+        uint64_t nanoseconds_since_epoch = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        uint64_t seconds_since_epoch = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        actuators.header.stamp.sec = seconds_since_epoch;
+        actuators.header.stamp.nanosec = nanoseconds_since_epoch - seconds_since_epoch * 1000000000;
+
+//        actuators.header.stamp.sec = now.seconds();
+//        actuators.header.stamp.nanosec = now.nanoseconds();
 
         actuators.ignore = 0;
         actuators.mode = rosplane2_msgs::msg::Command::MODE_PASS_THROUGH;
         actuators.x = (std::isfinite(output.delta_a)) ? output.delta_a : 0.0f;
-        actuators.y = output.delta_e;//(isfinite(output.delta_e)) ? output.delta_e : 0.0f;
-        actuators.z = output.delta_r;//(isfinite(output.delta_r)) ? output.delta_r : 0.0f;
-        actuators.f = output.delta_t;//(isfinite(output.delta_t)) ? output.delta_t : 0.0f;
+        actuators.y = (std::isfinite(output.delta_e)) ? output.delta_e : 0.0f;
+        actuators.z = (std::isfinite(output.delta_r)) ? output.delta_r : 0.0f;
+        actuators.f = (std::isfinite(output.delta_t)) ? output.delta_t : 0.0f;
 
         actuators_pub_->publish(actuators);
 

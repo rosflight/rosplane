@@ -156,6 +156,10 @@ float controller_example::pitch_hold(float theta_c, float theta, float q, const 
   float ud = params.p_kd*q;
 
   float delta_e = sat(params.trim_e/params.pwm_rad_e + up + ui + ud, params.max_e, -params.max_e);
+
+  RCLCPP_INFO_STREAM(this->get_logger(), "delta_e: " << delta_e);
+
+
   if (fabs(params.p_ki) >= 0.00001)
   {
     float delta_e_unsat = params.trim_e/params.pwm_rad_e + up + ui + ud;

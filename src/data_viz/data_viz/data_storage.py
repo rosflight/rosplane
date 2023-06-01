@@ -125,8 +125,8 @@ class CommandStorage:
         """
         # Append data
         self.time.append(time.nanoseconds*1.e-9)
-        self.elevator.append(cmd.x)
-        self.aileron.append(cmd.y)
+        self.elevator.append(cmd.y)
+        self.aileron.append(cmd.x)
         self.rudder.append(cmd.z)
         self.throttle.append(cmd.f)
 
