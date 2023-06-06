@@ -59,12 +59,33 @@ class AircraftForcesAndMoments : public rclcpp::Node
         std::string namespace_;
 
         // physical parameters
-        double mass_ = 3.92;
-        double Jx_ = .213;
-        double Jy_ = .171;
-        double Jz_ = .350;
-        double Jxz_ = .04;
+        double mass_ = 11.0;
+        double Jx_ = .8244;
+        double Jy_ = 1.135;
+        double Jz_ = 1.759;
+        double Jxz_ = .1204;
         double rho_ = 1.268;
+
+        // motor and prop parameters
+
+        float D_prop = 20*.0254; // prop diameter in meters.
+
+        float KV_rpm_per_volt = 145.0;
+        float KV = (1/KV_rpm_per_volt) * 60. / (2*M_PI); // Moving to correct units.
+        float KQ = KV; // these are the same value when in the correct units.
+        float R_motor = .042; // resistance of the motor.
+        float i_0 = 1.5; // no load current draw.
+
+        float number_cells = 12.; // number of cells in the battery.
+        float V_max = number_cells*3.7; // maximum voltage that can be applied.
+
+        // prop coeffecients.
+        float C_Q2 = -0.01664;
+        float C_Q1 = 0.004970;
+        float C_Q0 = 0.005230;
+        float C_T2 = -0.1079;
+        float C_T1 = -0.06044;
+        float C_T0 = 0.09357;
 
         // aerodynamic coefficients
         struct WingCoeff
@@ -75,7 +96,7 @@ class AircraftForcesAndMoments : public rclcpp::Node
             double M;
             double epsilon;
             double alpha0;
-        } wing_ = {0.468, 1.8, 0.26, 50, 0.159, 0.304};
+        } wing_ = {0.55, 2.8956, 0.18994, 50.0, 0.159, 0.47};
 
         // Propeller Coefficients
         struct PropCoeff
@@ -102,12 +123,12 @@ class AircraftForcesAndMoments : public rclcpp::Node
             double delta_r;
         };
 
-        LiftCoeff CL_ = {0.2869, 5.1378, 0.0, .0, 1.7102, .0, .0, 0.5202, .0};
-        LiftCoeff CD_ = {0.03087, 0.0043021, 0.0, 0.02815, 0.2514, 0.0, 0.0, 0.01879, 0.0};
-        LiftCoeff Cm_ = {0.0362, -0.2627, 0.0, 0.0, -9.7213, 0.0, 0.0, -1.2392, 0.0};
-        LiftCoeff CY_ = {0.0, 0.00, -0.2471, -0.07278, 0.0, 0.1849, -0.02344, 0.0, 0.1591};
-        LiftCoeff Cell_ = {0.0, 0.00, 0.0193, -0.5406, 0.0, 0.1929, 0.2818, 0.0, 0.00096};
-        LiftCoeff Cn_{0.0, 0.0, 0.08557, -0.0498, 0.0, -0.0572, 0.0095, 0.0, -0.06};
+        LiftCoeff CL_ = {0.23, 5.61, 0.0, 0.0, 7.95, .0, .0, 0.13, .0};
+        LiftCoeff CD_ = {0.043, 0.03, 0.0, 0.0, 0.0, 0.0, 0.0, 0.134, 0.0};
+        LiftCoeff Cm_ = {0.0135, -2.74, 0.0, 0.0, -38.21, 0.0, 0.0, -0.99, 0.0};
+        LiftCoeff CY_ = {0.0, 0.00, -0.98, -0.07278, 0.0, 0.0, 0.075, 0.0, 0.19};
+        LiftCoeff Cell_ = {0.0, 0.00, -0.13, -0.51, 0.0, 0.25, 0.17, 0.0, 0.0024};
+        LiftCoeff Cn_{0.0, 0.0, 0.08557, 0.069, 0.0, -0.095, -0.0003, 0.0, -0.069}; // Cn_delta_a -.0011
 
         // not constants
         // actuators
@@ -173,6 +194,8 @@ class AircraftForcesAndMoments : public rclcpp::Node
         void StateCallback(const rosplane2_msgs::msg::State::SharedPtr msg);
 
         void SendForces();
+
+        Eigen::Matrix<float, 2, 1> MotorThrustAndTorque(float Va, float delta_t);
 
 //        GazeboVector wind_speed_W_;
     };

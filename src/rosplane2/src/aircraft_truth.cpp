@@ -30,8 +30,8 @@ class AircraftTruth : public rclcpp::Node
 
             prev_state[0] = 0.0;
             prev_state[1] = 0.0;
-            prev_state[2] = 0.0;  // TODO find where the large change in position comes from (just jumps to 100m)
-            prev_state[3] = 0.0;
+            prev_state[2] = 0.0;
+            prev_state[3] = 30.0;
             prev_state[4] = 0.0;
             prev_state[5] = 0.0;
             prev_state[6] = 1.0;
@@ -293,7 +293,7 @@ class AircraftTruth : public rclcpp::Node
             quaternion.y() = prev_state[8];
             quaternion.z() = prev_state[9];
 
-            Eigen::Matrix3f rot = quaternion.toRotationMatrix();
+            Eigen::Matrix3f rot = quaternion.toRotationMatrix(); // TODO make sure this is resulting in the correct rotation to get the right alpha.
 
             Eigen::Matrix<float, 3, 1> wind_body_frame = rot.transpose() * steady_state;
 
@@ -349,11 +349,12 @@ class AircraftTruth : public rclcpp::Node
 
             // Euler angles.
 
-            Eigen::Matrix<float, 3, 1> euler = quaternion.toRotationMatrix().eulerAngles(0,1,2);
+            true_state.phi = atan2(2.0*(quaternion.w()*quaternion.x() + quaternion.y() * quaternion.z()), pow(quaternion.w(), 2) + pow(quaternion.z(), 2) - pow(quaternion.x(), 2) - pow(quaternion.y(), 2));
+            true_state.theta = asin(2.0*(quaternion.w()*quaternion.y() - quaternion.x()*quaternion.z()));
+            true_state.psi = atan2(2.0*(quaternion.w()*quaternion.z() + quaternion.x()*quaternion.y()), pow(quaternion.w(), 2) + pow(quaternion.x(), 2) - pow(quaternion.y(), 2) - pow(quaternion.z(), 2));
 
-            true_state.phi = euler[0];
-            true_state.theta = euler[1];
-            true_state.psi = euler[2];
+//            RCLCPP_INFO_STREAM(this->get_logger(), "theta: " << true_state.theta <<  "alpha: " << alpha);
+
 
             Eigen::Matrix<float, 3, 1> vels;
 
@@ -407,12 +408,12 @@ class AircraftTruth : public rclcpp::Node
 
         float ts = .01;
 
-        double mass_ = 3.92;
+        double mass_ = 11.;
 
-        float Jx = .213;
-        float Jy = .171;
-        float Jz = .350;
-        float Jxz = .04;
+        float Jx = 11.;
+        float Jy = 1.135;
+        float Jz = 1.759;
+        float Jxz = .1204;
 
 
 

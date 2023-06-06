@@ -76,8 +76,19 @@ void controller_example::control(const params_s &params, const input_s &input, o
     }
     break;
   case alt_zones::ALTITUDE_HOLD:
+    double adjusted_hc;
+    double max_alt;
+    max_alt = 5.0; // TODO add this to params.
+
+    if (abs(input.h_c - input.h) > max_alt){
+        adjusted_hc = input.h + copysign(max_alt, input.h_c - input.h);
+    }
+    else{
+        adjusted_hc = input.h_c;
+    }
+
     output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts);
-    output.theta_c = altitiude_hold(input.h_c, input.h, params, input.Ts);
+    output.theta_c = altitiude_hold(adjusted_hc, input.h, params, input.Ts);
     if (input.h >= input.h_c + params.alt_hz)
     {
       RCLCPP_INFO(this->get_logger(), "descend");
@@ -157,7 +168,7 @@ float controller_example::pitch_hold(float theta_c, float theta, float q, const 
 
   float delta_e = sat(params.trim_e/params.pwm_rad_e + up + ui + ud, params.max_e, -params.max_e);
 
-  RCLCPP_INFO_STREAM(this->get_logger(), "delta_e: " << delta_e);
+//  RCLCPP_INFO_STREAM(this->get_logger(), "theta_c: " << theta_c);
 
 
   if (fabs(params.p_ki) >= 0.00001)
@@ -197,6 +208,9 @@ float controller_example::airspeed_with_throttle_hold(float Va_c, float Va, cons
 {
   float error = Va_c - Va;
 
+//    RCLCPP_INFO_STREAM(this->get_logger(), "Va_error: " << error);
+
+
   at_integrator_ = at_integrator_ + (Ts/2.0)*(error + at_error_);
   at_differentiator_ = (2.0*params.tau - Ts)/(2.0*params.tau + Ts)*at_differentiator_ + (2.0 /
                        (2.0*params.tau + Ts))*(error - at_error_);
@@ -234,6 +248,9 @@ float controller_example::altitiude_hold(float h_c, float h, const params_s &par
     float theta_c_unsat = up + ui + ud;
     a_integrator_ = a_integrator_ + (Ts/params.a_ki)*(theta_c - theta_c_unsat);
   }
+
+//  RCLCPP_INFO_STREAM(this->get_logger(), "theta_c: " << theta_c);
+
 
   at_error_ = error;
   return theta_c;
