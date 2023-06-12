@@ -43,7 +43,7 @@ void path_follower_base::update()
     msg.phi_ff = output.phi_ff;
 
     // DEBUGGING REVERT THESE CHANGES!!!
-//    msg.chi_c = 0.0;
+//    msg.chi_c = 5.0;
 //    msg.va_c = 25.0;
 //    msg.h_c = 100.0;
 //    msg.phi_ff = 0.0;

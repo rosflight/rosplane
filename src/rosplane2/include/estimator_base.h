@@ -9,25 +9,28 @@
 #ifndef ESTIMATOR_BASE_H
 #define ESTIMATOR_BASE_H
 
-#include <ros/ros.h>
-#include <rosplane_msgs/State.h>
-#include <sensor_msgs/NavSatFix.h>
-#include <sensor_msgs/Imu.h>
-#include <geometry_msgs/TwistStamped.h>
-#include <rosflight_msgs/Barometer.h>
-#include <rosflight_msgs/Airspeed.h>
-#include <rosflight_msgs/Status.h>
+#include <rclcpp/rclcpp.hpp>
+#include <rosplane2_msgs/msg/state.hpp>
+#include <sensor_msgs/msg/nav_sat_fix.hpp>
+#include <sensor_msgs/msg/imu.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <rosflight_msgs/msg/barometer.hpp>
+#include <rosflight_msgs/msg/airspeed.hpp>
+#include <rosflight_msgs/msg/status.hpp>
 #include <math.h>
 #include <Eigen/Eigen>
 #include <numeric>
+#include <chrono>
 
 #define EARTH_RADIUS 6378145.0f
 
-namespace rosplane
+using std::placeholders::_1;
+
+namespace rosplane2
 {
 
 
-class estimator_base
+class estimator_base : public rclcpp::Node
 {
 public:
   estimator_base();
@@ -89,46 +92,47 @@ protected:
   virtual void estimate(const struct params_s &params, const struct input_s &input, struct output_s &output) = 0;
 
 private:
-  ros::NodeHandle nh_;
-  ros::NodeHandle nh_private_;
-  ros::Publisher vehicle_state_pub_;
-  ros::Subscriber gnss_fix_sub_;
-  ros::Subscriber gnss_vel_sub_; //used in conjunction with the gnss_fix_sub_
-  ros::Subscriber imu_sub_;
-  ros::Subscriber baro_sub_;
-  ros::Subscriber airspeed_sub_;
-  ros::Subscriber status_sub_;
+  rclcpp::Publisher<rosplane2_msgs::msg::State>::SharedPtr vehicle_state_pub_;
+  rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr gnss_fix_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr gnss_vel_sub_; //used in conjunction with the gnss_fix_sub_
+  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
+  rclcpp::Subscription<rosflight_msgs::msg::Barometer>::SharedPtr baro_sub_;
+  rclcpp::Subscription<rosflight_msgs::msg::Airspeed>::SharedPtr airspeed_sub_;
+  rclcpp::Subscription<rosflight_msgs::msg::Status>::SharedPtr status_sub_;
 
-  void update(const ros::TimerEvent &);
-  void gnssFixCallback(const sensor_msgs::NavSatFix &msg);
-  void gnssVelCallback(const geometry_msgs::TwistStamped &msg);
-  void imuCallback(const sensor_msgs::Imu &msg);
-  void baroAltCallback(const rosflight_msgs::Barometer &msg);
-  void airspeedCallback(const rosflight_msgs::Airspeed &msg);
-  void statusCallback(const rosflight_msgs::Status &msg);
+  void update();
+  void gnssFixCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg);
+  void gnssVelCallback(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
+  void imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg);
+  void baroAltCallback(const rosflight_msgs::msg::Barometer::SharedPtr msg);
+  void airspeedCallback(const rosflight_msgs::msg::Airspeed::SharedPtr msg);
+  void statusCallback(const rosflight_msgs::msg::Status::SharedPtr msg);
 
-  double update_rate_;
-  ros::Timer update_timer_;
-  std::string gnss_fix_topic_;
-  std::string gnss_vel_topic_;
-  std::string imu_topic_;
-  std::string baro_topic_;
-  std::string airspeed_topic_;
-  std::string status_topic_;
+  double update_rate_ = 100.0;
+  rclcpp::TimerBase::SharedPtr update_timer_;
+  std::string gnss_fix_topic_ = "navsat_compat/fix";
+  std::string gnss_vel_topic_ = "navsat_compat/vel";
+  std::string imu_topic_ = "imu/data";
+  std::string baro_topic_ = "baro";
+  std::string airspeed_topic_ = "airspeed";
+  std::string status_topic_ = "status";
 
   bool gps_new_;
   bool gps_init_;
-  double init_lat_;       /**< Initial latitude in degrees */
-  double init_lon_;       /**< Initial longitude in degrees */
-  float init_alt_;        /**< Initial altitude in meters above MSL  */
+  double init_lat_ = 0.0;       /**< Initial latitude in degrees */
+  double init_lon_ = 0.0;       /**< Initial longitude in degrees */
+  float init_alt_ = 0.0;        /**< Initial altitude in meters above MSL  */
   bool armed_first_time_; /**< Arm before starting estimation  */
   bool baro_init_;        /**< Initial barometric pressure */
   float init_static_;     /**< Initial static pressure (mbar)  */
   int baro_count_;        /**< Used to grab the first set of baro measurements */
   std::vector<float> init_static_vector_; /**< Used to grab the first set of baro measurements */
 
-  struct params_s                 params_;
-  struct input_s                  input_;
+  struct params_s params_ = {9.8, 1.225, .0245, .21, .21, .0500, .0045, 1.0f/update_rate_ * 100.0};
+
+
+
+  struct input_s input_;
 };
 
 } //end namespace

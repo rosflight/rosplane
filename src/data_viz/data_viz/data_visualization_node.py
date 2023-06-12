@@ -57,17 +57,20 @@ class StatePlotter:
         # Create position plots
         self._plotters.append(PlotNav(
             true_data=self._data.true.pn, true_xdata=self._data.true.time,
-            true_label="$p_n$-True", show_legend=True,
+            nav_data=self._data.est.pn, nav_xdata=self._data.est.time,
+            true_label="$p_n$-True", nav_label="$p_n$-Est", show_legend=True,
             ax=state_axis[0,0], title="x-axis", ylabel="$m$", widget=widget
         ))
         self._plotters.append(PlotNav(
             true_data=self._data.true.pe, true_xdata=self._data.true.time,
-            true_label="$p_e$-True", show_legend=True,
+            nav_data=self._data.est.pe, nav_xdata=self._data.est.time,
+            true_label="$p_e$-True", nav_label="$p_e$-Est", show_legend=True,
             ax=state_axis[0,1], title="y-axis", ylabel="$m$", widget=widget
         ))
         self._plotters.append(PlotNav(
             true_data=self._data.true.p_alt, true_xdata=self._data.true.time,
-            true_label="alt-True", show_legend=True,
+            nav_data=self._data.est.p_alt, nav_xdata=self._data.est.time,
+            true_label="alt-True", nav_label="alt-Est", show_legend=True,
             ax=state_axis[0,2], title="z-axis", ylabel="$m$", widget=widget
         ))
         self._plotters.append(PlotNav(
@@ -81,17 +84,20 @@ class StatePlotter:
         # Create linear velocity plots
         self._plotters.append(PlotNav(
             true_data=self._data.true.u, true_xdata=self._data.true.time,
-            true_label="$u$-True", show_legend=True,
+            nav_data=self._data.est.u, nav_xdata=self._data.est.time,
+            true_label="$u$-True", nav_label="$u$-Est", show_legend=True,
             ax=state_axis[1,0], title="", ylabel="$m/s$", widget=widget
         ))
         self._plotters.append(PlotNav(
             true_data=self._data.true.v, true_xdata=self._data.true.time,
-            true_label="$v$-True", show_legend=True,
+            nav_data=self._data.est.v, nav_xdata=self._data.est.time,
+            true_label="$v$-True", nav_label="$v$-Est", show_legend=True,
             ax=state_axis[1,1], title="", ylabel="$m/s$", widget=widget
         ))
         self._plotters.append(PlotNav(
             true_data=self._data.true.w, true_xdata=self._data.true.time,
-            true_label="$w$-True", show_legend=True,
+            nav_data=self._data.est.w, nav_xdata=self._data.est.time,
+            true_label="$w$-True", nav_label="$w$-Est", show_legend=True,
             ax=state_axis[1,2], title="", ylabel="$m/s$", widget=widget
         ))
         self._plotters.append(PlotNav(
@@ -103,48 +109,54 @@ class StatePlotter:
         ))
         self._plotters.append(PlotNav(
             true_data=self._data.true.chi, true_xdata=self._data.true.time,
-            nav_data=self._data.true.chi, nav_xdata=self._data.true.time,
             ax=state_axis[1,3], title="", ylabel="rad",
-            true_label="$\\gamma$", nav_label="$\\chi$", show_legend=True,
-            true_color="sienna", nav_color="deeppink", widget=widget
+            true_label="$\\chi$", show_legend=True,
+            true_color="sienna", widget=widget
         ))
 
         # Create attitude plots
         self._plotters.append(PlotNav(
             true_data=self._data.true.phi, true_xdata=self._data.true.time,
-            true_label="$\\phi$-True", show_legend=True,
+            nav_data=self._data.est.phi, nav_xdata=self._data.est.time,
+            true_label="$\\phi$-True", nav_label="$\\phi$-Est", show_legend=True,
             ax=state_axis[2,0], title="", ylabel="$rad$", widget=widget
         ))
         self._plotters.append(PlotNav(
             true_data=self._data.true.theta, true_xdata=self._data.true.time,
-            true_label="$\\theta$-True", show_legend=True,
+            nav_data=self._data.est.theta, nav_xdata=self._data.est.time,
+            true_label="$\\theta$-True", nav_label="$\\theta$-Est", show_legend=True,
             ax=state_axis[2,1], title="", ylabel="$rad$", widget=widget
         ))
         self._plotters.append(PlotNav(
             true_data=self._data.true.psi, true_xdata=self._data.true.time,
-            true_label="$\\psi$-True", show_legend=True,
+            nav_data=self._data.est.psi, nav_xdata=self._data.est.time,
+            true_label="$\\psi$-True", nav_label="$\\psi$-Est", show_legend=True,
             ax=state_axis[2,2], title="", ylabel="$rad$", widget=widget
         ))
         self._plotters.append(PlotNav(
             true_data=self._data.true.v_a, true_xdata=self._data.true.time,
-            true_label="$V_a$-True", show_legend=True,
+            nav_data=self._data.est.v_a, nav_xdata=self._data.est.time,
+            true_label="$V_a$-True", nav_label="$V_a$-Est", show_legend=True,
             ax=state_axis[2,3], title="", ylabel="$m/s$", widget=widget
         ))
 
         # Create angular velocity plots
         self._plotters.append(PlotNav(
             true_data=self._data.true.p, true_xdata=self._data.true.time,
-            true_label="$p$-True", show_legend=True,
+            nav_data=self._data.est.p, nav_xdata=self._data.est.time,
+            true_label="$p$-True", nav_label = "$p$-Est", show_legend=True,
             ax=state_axis[3,0], title="", ylabel="$rad/s$", widget=widget
         ))
         self._plotters.append(PlotNav(
             true_data=self._data.true.q, true_xdata=self._data.true.time,
-            true_label="$q$-True", show_legend=True,
+            nav_data=self._data.est.q, nav_xdata=self._data.est.time,
+            true_label="$q$-True", nav_label="$q$-Est", show_legend=True,
             ax=state_axis[3,1], title="", ylabel="$rad/s$", widget=widget
         ))
         self._plotters.append(PlotNav(
             true_data=self._data.true.r, true_xdata=self._data.true.time,
-            true_label="$r$-True", show_legend=True,
+            nav_data=self._data.est.r, nav_xdata=self._data.est.time,
+            true_label="$r$-True", nav_label="$r$-Est", show_legend=True,
             ax=state_axis[3,2], title="", ylabel="$rad/s$", widget=widget
         ))
         self._plotters.append(PlotNav(

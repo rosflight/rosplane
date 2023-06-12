@@ -1,7 +1,7 @@
 #include "estimator_base.h"
 #include "estimator_example.h"
 
-namespace rosplane
+namespace rosplane2
 {
 
 float radians(float degrees)
@@ -29,7 +29,7 @@ estimator_example::estimator_example() :
   Q_a_(1, 1) = 0.00000001;
 
   P_p_ = Eigen::MatrixXf::Identity(7, 7);
-  P_p_(0, 0) = .03;
+  P_p_(0, 0) = .03; // TODO Add params for these?
   P_p_(1, 1) = .03;
   P_p_(2, 2) = .01;
   P_p_(3, 3) = radians(5.0f);
@@ -48,8 +48,10 @@ estimator_example::estimator_example() :
   psihat_ = 0;
   Vwhat_ = 0;
 
-  lpf_static_ = 0;
-  lpf_diff_ = 0;
+  lpf_static_ = 0.0;
+  lpf_diff_ = 0.0;
+
+
 
   N_ = 10;
 
@@ -72,6 +74,7 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
     float lpf_a = 50.0;
     float lpf_a1 = 8.0;
     alpha_ = exp(-lpf_a*params.Ts);
+    alpha_ = .7; // .99 // TODO this is way too high, but it is the lowest value that works.
     alpha1_ = exp(-lpf_a1*params.Ts);
   }
 
@@ -126,8 +129,11 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
     A_a_(0, 1) = (qhat*sp + rhat*cp)/ct/ct;
     A_a_(1, 0) = -qhat*sp - rhat*cp;
 
-    xhat_a_ += f_a_*(params.Ts/N_);
-    P_a_ += (A_a_*P_a_ + P_a_*A_a_.transpose() + Q_a_)*(params.Ts/N_);
+//    xhat_a_ += f_a_*(params.Ts/N_);
+
+    Eigen::MatrixXf A_d = Eigen::MatrixXf::Identity(2,2) + params.Ts * A_a_ + pow(params.Ts, 2) / 2.0 * A_a_ * A_a_;
+
+    P_a_ += (A_d*P_a_ + P_a_*A_d.transpose() + Q_a_*pow(params.Ts, 2));
   }
   // measurement updates
   cp = cosf(xhat_a_(0));
@@ -137,13 +143,18 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   Eigen::Matrix2f I;
   I = Eigen::Matrix2f::Identity();
 
+//  h_a_ = Eigen::Vector3f::Zero(3);
+//  h_a_(0) = qhat * Vahat *st + params.gravity*st;
+//  h_a_(2) = rhat
+
   // x-axis accelerometer
   h_a_ = qhat*Vahat*st + params.gravity*st;
   C_a_ = Eigen::Vector2f::Zero();
   C_a_(1) = qhat*Vahat*ct + params.gravity*ct;
   L_a_ = (P_a_*C_a_)/(R_accel_ + C_a_.transpose()*P_a_*C_a_);
   P_a_ = (I - L_a_*C_a_.transpose())*P_a_;
-  xhat_a_ += L_a_*((hhat < 15 ? lpf_accel_x_/3 : lpf_accel_x_) - h_a_);
+  xhat_a_ += L_a_*((lpf_accel_x_) - h_a_);
+//    RCLCPP_INFO_STREAM(this->get_logger(), "")
 
   // y-axis accelerometer
   h_a_ = rhat*Vahat*ct - phat*Vahat*st - params.gravity*ct*sp;
@@ -163,10 +174,19 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   P_a_ = (I - L_a_*C_a_.transpose())*P_a_;
   xhat_a_ += L_a_*(lpf_accel_z_ - h_a_);
 
+
+
+
   check_xhat_a();
 
-  float phihat = xhat_a_(0);
-  float thetahat = xhat_a_(1);
+  phihat_ = alpha_*phihat_ + (1-alpha_)*xhat_a_(0);
+  thetahat_ = alpha_*thetahat_+ (1-alpha_)*xhat_a_(1); // TODO find out if this is an acceptable way to filter the estimate.
+
+  xhat_a_(0) = phihat_;
+  xhat_a_(1) = thetahat_;
+
+  float phihat = phihat_;
+  float thetahat = thetahat_; // TODO implement this properly.
 
   // implement continous-discrete EKF to estimate pn, pe, chi, Vg
   // prediction step
@@ -178,16 +198,42 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
 
   for (int i = 0; i < N_; i++)
   {
+
+
+      // xhat_p_(0) - pn
+      // xhat_p_(1) - pe
+      // xhat_p_(2) - Vg
+      // xhat_p_(3) - chi
+      // xhat_p_(4) - wn
+      // xhat_p_(5) - we
+      // xhat_p_(6) - psi
+
+      float pn = xhat_p_(0);
+      float pe = xhat_p_(1);
+      float Vg = xhat_p_(2);
+      float chi = xhat_p_(3);
+      float wn = xhat_p_(4);
+      float we = xhat_p_(5);
+      float psi = xhat_p_(6);
+
     psidot = (qhat*sinf(phihat) + rhat*cosf(phihat))/cosf(thetahat);
+//      RCLCPP_INFO_STREAM(this->get_logger(), "psidot: " << psidot);
+
     tmp = -psidot*Vahat*(xhat_p_(4)*cosf(xhat_p_(6)) + xhat_p_(5)*sinf(xhat_p_(6)))/xhat_p_(2);
-    Vgdot = ((Vahat*cosf(xhat_p_(6)) + xhat_p_(4))*(-psidot*Vahat*sinf(xhat_p_(6))) + (Vahat*sinf(xhat_p_(
-               6)) + xhat_p_(5))*(psidot*Vahat*cosf(xhat_p_(6))))/xhat_p_(2);
+    Vgdot = Vahat/Vg * psidot*(we*cosf(psi) - wn*sinf(psi));
+//      RCLCPP_INFO_STREAM(this->get_logger(), "psi: " << psi);
+
+      // Psi is a little wack.
+
+
+//    Vgdot = ((Vahat*cosf(xhat_p_(6)) + xhat_p_(4))*(-psidot*Vahat*sinf(xhat_p_(6))) + (Vahat*sinf(xhat_p_( // The old version.
+//               6)) + xhat_p_(5))*(psidot*Vahat*cosf(xhat_p_(6))))/xhat_p_(2);
 
     f_p_ = Eigen::VectorXf::Zero(7);
     f_p_(0) = xhat_p_(2)*cosf(xhat_p_(3));
     f_p_(1) = xhat_p_(2)*sinf(xhat_p_(3));
     f_p_(2) = Vgdot;
-    f_p_(3) = params.gravity/xhat_p_(2)*tanf(phihat)*cosf(xhat_p_(3) - xhat_p_(6));
+    f_p_(3) = params.gravity/xhat_p_(2)*tanf(phihat)*cosf(chi-psi);
     f_p_(6) = psidot;
 
     A_p_ = Eigen::MatrixXf::Zero(7, 7);
@@ -199,25 +245,30 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
     A_p_(2, 4) = -psidot*Vahat*sinf(xhat_p_(6))/xhat_p_(2);
     A_p_(2, 5) = psidot*Vahat*cosf(xhat_p_(6))/xhat_p_(2);
     A_p_(2, 6) = tmp;
-    A_p_(3, 2) = -params.gravity/powf(xhat_p_(2), 2)*tanf(phihat)*cosf(xhat_p_(3) - xhat_p_(6));
-    A_p_(3, 3) = -params.gravity/xhat_p_(2)*tanf(phihat)*sinf(xhat_p_(3) - xhat_p_(6));
-    A_p_(3, 6) = params.gravity/xhat_p_(2)*tanf(phihat)*sinf(xhat_p_(3) - xhat_p_(6));
+    A_p_(3, 2) = -params.gravity/powf(xhat_p_(2), 2)*tanf(phihat);
+//    A_p_(3, 3) = -params.gravity/xhat_p_(2)*tanf(phihat)*sinf(xhat_p_(3) - xhat_p_(6)); TODO why are these here they are not in the book.
+//    A_p_(3, 6) = params.gravity/xhat_p_(2)*tanf(phihat)*sinf(xhat_p_(3) - xhat_p_(6));
 
-    xhat_p_ += f_p_*(params.Ts/N_);
-    P_p_ += (A_p_*P_p_ + P_p_*A_p_.transpose() + Q_p_)*(params.Ts/N_);
+//    xhat_p_ += f_p_*(params.Ts/N_); // TODO what is this?????
+
+    Eigen::MatrixXf A_d_ = Eigen::MatrixXf::Identity(7,7) + params.Ts*A_p_ + A_p_ * A_p_ * pow(params.Ts, 2)/2.0;
+
+    P_p_ += (A_d_*P_p_ + P_p_*A_d_.transpose() + Q_p_*pow(params.Ts, 2));
   }
 
-//    while(xhat_p(3) > radians(180.0f)) xhat_p(3) = xhat_p(3) - radians(360.0f);
-//    while(xhat_p(3) < radians(-180.0f)) xhat_p(3) = xhat_p(3) + radians(360.0f);
-//    if(xhat_p(3) > radians(180.0f) || xhat_p(3) < radians(-180.0f))
-//    {
-//        ROS_WARN("Course estimate not wrapped from -pi to pi");
-//        xhat_p(3) = 0;
-//    }
+    while(xhat_p_(3) > radians(180.0f)) xhat_p_(3) = xhat_p_(3) - radians(360.0f); // TODO Revisit !!!
+    while(xhat_p_(3) < radians(-180.0f)) xhat_p_(3) = xhat_p_(3) + radians(360.0f);
+    if(xhat_p_(3) > radians(180.0f) || xhat_p_(3) < radians(-180.0f))
+    {
+        RCLCPP_WARN(this->get_logger(), "Course estimate not wrapped from -pi to pi");
+        xhat_p_(3) = 0;
+    }
 
-  // measurement updates
+  // measurement updates TODO Try implementing the same way as the book.
   if (input.gps_new)
   {
+//      RCLCPP_INFO_STREAM(this->get_logger(), "New GPS received.");
+
     Eigen::MatrixXf I_p(7, 7);
     I_p = Eigen::MatrixXf::Identity(7, 7);
 
@@ -228,6 +279,7 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
     L_p_ = (P_p_*C_p_)/(R_p_(0, 0) + (C_p_.transpose()*P_p_*C_p_));
     P_p_ = (I_p - L_p_*C_p_.transpose())*P_p_;
     xhat_p_ = xhat_p_ + L_p_*(input.gps_n - h_p_);
+//      RCLCPP_INFO_STREAM(this->get_logger(), "gps_n - h_p_ = " << input.gps_n - h_p_);
 
     // gps East position
     h_p_ = xhat_p_(1);
@@ -236,6 +288,8 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
     L_p_ = (P_p_*C_p_)/(R_p_(1, 1) + (C_p_.transpose()*P_p_*C_p_));
     P_p_ = (I_p - L_p_*C_p_.transpose())*P_p_;
     xhat_p_ = xhat_p_ + L_p_*(input.gps_e - h_p_);
+//      RCLCPP_INFO_STREAM(this->get_logger(), "gps_e - h_p_ = " << input.gps_e - h_p_);
+
 
     // gps ground speed
     h_p_ = xhat_p_(2);
@@ -245,49 +299,60 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
     P_p_ = (I_p - L_p_*C_p_.transpose())*P_p_;
     xhat_p_ = xhat_p_ + L_p_*(input.gps_Vg - h_p_);
 
+//      RCLCPP_INFO_STREAM(this->get_logger(), "gps_Vg = " << (input.gps_Vg));
+
+
     // gps course
     //wrap course measurement
     float gps_course = fmodf(input.gps_course, radians(360.0f));
 
+//      RCLCPP_INFO_STREAM(this->get_logger(), "gps_course = " << (gps_course));
+
+
     while (gps_course - xhat_p_(3) > radians(180.0f)) gps_course = gps_course - radians(360.0f);
     while (gps_course - xhat_p_(3) < radians(-180.0f)) gps_course = gps_course + radians(360.0f);
     h_p_ = xhat_p_(3);
+//      RCLCPP_INFO_STREAM(this->get_logger(), "chi = " << (h_p_));
+
     C_p_ = Eigen::VectorXf::Zero(7);
     C_p_(3) = 1;
     L_p_ = (P_p_*C_p_)/(R_p_(3, 3) + (C_p_.transpose()*P_p_*C_p_));
     P_p_ = (I_p - L_p_*C_p_.transpose())*P_p_;
     xhat_p_ = xhat_p_ + L_p_*(gps_course - h_p_);
 
-//        // pseudo measurement #1 y_1 = Va*cos(psi)+wn-Vg*cos(chi)
-//        h_p = Vahat*cosf(xhat_p(6)) + xhat_p(4) - xhat_p(2)*cosf(xhat_p(3));  // pseudo measurement
-//        C_p = Eigen::VectorXf::Zero(7);
-//        C_p(2) = -cos(xhat_p(3));
-//        C_p(3) = xhat_p(2)*sinf(xhat_p(3));
-//        C_p(4) = 1;
-//        C_p(6) = -Vahat*sinf(xhat_p(6));
-//        L_p = (P_p*C_p)/(R_p(4,4) + (C_p.transpose()*P_p*C_p));
-//        P_p = (I_p - L_p*C_p.transpose())*P_p;
-//        xhat_p = xhat_p + L_p*(0 - h_p);
+//      RCLCPP_INFO_STREAM(this->get_logger(), "gps_course - chi = " << (gps_course - h_p_));
 
-//        // pseudo measurement #2 y_2 = Va*sin(psi) + we - Vg*sin(chi)
-//        h_p = Vahat*sinf(xhat_p(6))+xhat_p(5)-xhat_p(2)*sinf(xhat_p(3));  // pseudo measurement
-//        C_p = Eigen::VectorXf::Zero(7);
-//        C_p(2) = -sin(xhat_p(3));
-//        C_p(3) = -xhat_p(2)*cosf(xhat_p(3));
-//        C_p(5) = 1;
-//        C_p(6) = Vahat*cosf(xhat_p(6));
-//        L_p = (P_p*C_p)/(R_p(5,5) + (C_p.transpose()*P_p*C_p));
-//        P_p = (I_p - L_p*C_p.transpose())*P_p;
-//        xhat_p = xhat_p + L_p*(0 - h_p);
+    // pseudo measurement #1 y_1 = Va*cos(psi)+wn-Vg*cos(chi) // TODO find out why this was taken out
+    h_p_ = Vahat*cosf(xhat_p_(6)) + xhat_p_(4) - xhat_p_(2)*cosf(xhat_p_(3));  // pseudo measurement
+    C_p_ = Eigen::VectorXf::Zero(7);
+    C_p_(2) = -cos(xhat_p_(3));
+    C_p_(3) = xhat_p_(2)*sinf(xhat_p_(3));
+    C_p_(4) = 1;
+    C_p_(6) = -Vahat*sinf(xhat_p_(6));
+    L_p_ = (P_p_*C_p_)/(R_p_(4,4) + (C_p_.transpose()*P_p_*C_p_));
+    P_p_ = (I_p - L_p_*C_p_.transpose())*P_p_;
+    xhat_p_ = xhat_p_ + L_p_*(0 - h_p_);
+
+
+    // pseudo measurement #2 y_2 = Va*sin(psi) + we - Vg*sin(chi)
+    h_p_ = Vahat*sinf(xhat_p_(6))+xhat_p_(5)-xhat_p_(2)*sinf(xhat_p_(3));  // pseudo measurement
+    C_p_ = Eigen::VectorXf::Zero(7);
+    C_p_(2) = -sin(xhat_p_(3));
+    C_p_(3) = -xhat_p_(2)*cosf(xhat_p_(3));
+    C_p_(5) = 1;
+    C_p_(6) = Vahat*cosf(xhat_p_(6));
+    L_p_ = (P_p_*C_p_)/(R_p_(5,5) + (C_p_.transpose()*P_p_*C_p_));
+    P_p_ = (I_p - L_p_*C_p_.transpose())*P_p_;
+    xhat_p_ = xhat_p_ + L_p_*(0 - h_p_);
 
     if (xhat_p_(0) > 10000 || xhat_p_(0) < -10000)
     {
-      ROS_WARN("gps n limit reached");
+      RCLCPP_WARN(this->get_logger(), "gps n limit reached");
       xhat_p_(0) = input.gps_n;
     }
     if (xhat_p_(1) > 10000 || xhat_p_(1) < -10000)
     {
-      ROS_WARN("gps e limit reached");
+      RCLCPP_WARN(this->get_logger(), "gps e limit reached");
       xhat_p_(1) = input.gps_e;
     }
   }
@@ -335,7 +400,7 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   }
   if (problem)
   {
-    ROS_WARN("position estimator reinitialized due to non-finite state %d", prob_index);
+//    RCLCPP_WARN(this->get_logger(), "position estimator reinitialized due to non-finite state %d", prob_index);
   }
   if (xhat_p_(6) - xhat_p_(3) > radians(360.0f) || xhat_p_(6) - xhat_p_(3) < radians(-360.0f))
   {
@@ -350,6 +415,9 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   float wnhat = xhat_p_(4);
   float wehat = xhat_p_(5);
   float psihat = xhat_p_(6);
+
+
+//    RCLCPP_INFO_STREAM(this->get_logger(), "chihat: " << chihat);
 
   output.pn = pnhat;
   output.pe = pehat;
@@ -378,17 +446,17 @@ void estimator_example::check_xhat_a()
       xhat_a_(0) = 0;
       P_a_ = Eigen::Matrix2f::Identity();
       P_a_ *= powf(radians(20.0f), 2);
-      ROS_WARN("attiude estimator reinitialized due to non-finite roll");
+      RCLCPP_WARN(this->get_logger(), "attiude estimator reinitialized due to non-finite roll");
     }
     else if (xhat_a_(0) > radians(85.0))
     {
       xhat_a_(0) = radians(82.0);
-      ROS_WARN("max roll angle");
+//      RCLCPP_WARN(this->get_logger(), "max roll angle");
     }
     else if (xhat_a_(0) < radians(-85.0))
     {
       xhat_a_(0) = radians(-82.0);
-      ROS_WARN("min roll angle");
+//      RCLCPP_WARN(this->get_logger(), "min roll angle");
     }
   }
   if (xhat_a_(1) > radians(80.0) || xhat_a_(1) < radians(-80.0) || !std::isfinite(xhat_a_(1)))
@@ -398,17 +466,17 @@ void estimator_example::check_xhat_a()
       xhat_a_(1) = 0;
       P_a_ = Eigen::Matrix2f::Identity();
       P_a_ *= powf(radians(20.0f), 2);
-      ROS_WARN("attiude estimator reinitialized due to non-finite pitch");
+      RCLCPP_WARN(this->get_logger(), "attiude estimator reinitialized due to non-finite pitch");
     }
     else if (xhat_a_(1) > radians(80.0))
     {
       xhat_a_(1) = radians(77.0);
-      ROS_WARN("max pitch angle");
+//      RCLCPP_WARN(this->get_logger(), "max pitch angle");
     }
     else if (xhat_a_(1) < radians(-80.0))
     {
       xhat_a_(1) = radians(-77.0);
-      ROS_WARN("min pitch angle");
+//      RCLCPP_WARN(this->get_logger(), "min pitch angle"); // TODO uncomment WARNs and find out why they keep going off.
     }
   }
 }

@@ -27,11 +27,12 @@ find_package(rosplane2_msgs REQUIRED)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(rosflight_msgs REQUIRED)
 
 ament_export_dependencies(rclcpp rclpy)
 ament_export_include_directories(include)
 
-install(DIRECTORY originalFiles DESTINATION share/${PROJECT_NAME}/)
+#install(DIRECTORY originalFiles DESTINATION share/${PROJECT_NAME}/)
 include_directories(  #use this if you need .h files for include statements.  The include will need to have the directories where each .h is respectively.
   include
   ${EIGEN3_INCLUDE_DIRS}
@@ -106,6 +107,23 @@ ament_target_dependencies(rosplane2_transform_node rosplane2_msgs rclcpp rclpy E
 install(TARGETS
         rosplane2_transform_node
         DESTINATION lib/${PROJECT_NAME})
+
+add_executable(rosplane2_estimator_node
+              src/estimator_base.cpp
+              src/estimator_example.cpp)
+ament_target_dependencies(rosplane2_estimator_node rosplane2_msgs rosflight_msgs rclcpp Eigen3)
+install(TARGETS
+        rosplane2_estimator_node
+        DESTINATION lib/${PROJECT_NAME})
+        
+add_executable(rosplane2_sensors_node
+            src/sensors.cpp)
+
+ament_target_dependencies(rosplane2_sensors_node rosplane2_msgs rosflight_msgs rclcpp rclpy nav_msgs Eigen3)
+install(TARGETS
+        rosplane2_sensors_node
+        DESTINATION lib/${PROJECT_NAME})
+
 
 #### END OF REAL EXECUTABLES ###
 

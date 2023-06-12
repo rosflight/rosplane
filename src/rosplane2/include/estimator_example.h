@@ -4,9 +4,9 @@
 #include "estimator_base.h"
 
 #include <math.h>
-#include <Eigen/Eigen>
+#include <Eigen/Geometry>
 
-namespace rosplane
+namespace rosplane2
 {
 
 class estimator_example : public estimator_base

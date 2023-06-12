@@ -163,17 +163,26 @@ class RosStorageInterface:
 
         # Initialize the ros variables
         self._sub_state = self.node.create_subscription(State, "/state", self.state_callback, 1)
+        self._sub_est = self.node.create_subscription(State, "/estimated_state", self.estimate_callback, 1)
         self._sub_cmd = self.node.create_subscription(Command, "/command", self.command_callback, 1)
 
         # Initailize the storage
         self.true = StateStorage(t_horizon=self.t_horizon)
         self.cmd = CommandStorage(t_horizon=self.t_horizon)
+        self.est = StateStorage(t_horizon=self.t_horizon)
 
     def state_callback(self, msg: State) -> None:
         """Stores the latest state data
         """
         with self.lock:
             self.true.append(state=msg)
+
+    def estimate_callback(self, msg: State) -> None:
+        """Stores the latest estimated state data
+        """
+        # self.node.get_logger().info("In estimated state callback.")
+        with self.lock:
+            self.est.append(state=msg)
 
 
     def command_callback(self, msg: Command) -> None:

@@ -19,24 +19,24 @@ def generate_launch_description():
 
     return LaunchDescription([
         ################ Dynamics and kinematics #####################################
-        Node(
-            package='rosplane2',
-            executable='rosplane2_transform_node',
-            name='transforms',
-            # parameters=[{
-            #     'use_sim_time': use_sim_time
-            # }]
-        ),
-        Node( # TODO find out what this does.
-            package='robot_state_publisher',
-            executable='robot_state_publisher',
-            name='robot_state_publisher',
-            output='screen',
-            arguments=[urdf],
-            parameters=[{
-                'use_sim_time': use_sim_time
-            }]
-        ),
+        # Node(
+        #     package='rosplane2',
+        #     executable='rosplane2_transform_node',
+        #     name='transforms',
+        #     # parameters=[{
+        #     #     'use_sim_time': use_sim_time
+        #     # }]
+        # ),
+        # Node( # TODO find out what this does.
+        #     package='robot_state_publisher',
+        #     executable='robot_state_publisher',
+        #     name='robot_state_publisher',
+        #     output='screen',
+        #     arguments=[urdf],
+        #     parameters=[{
+        #         'use_sim_time': use_sim_time
+        #     }]
+        # ),
         Node(
             package='rosplane2',
             executable='rosplane2_controller',
@@ -50,14 +50,6 @@ def generate_launch_description():
                 'use_sim_time': use_sim_time
             }]
         ),
-        # Node(
-        #     package='rosplane2',
-        #     executable='ch04_wind',
-        #     name='wind',
-        #     parameters=[{
-        #         'use_sim_time': use_sim_time
-        #     }]
-        # ),
         Node(
             package='rosplane2',
             executable='rosplane2_path_follower',
@@ -78,6 +70,16 @@ def generate_launch_description():
             executable='rosplane2_force_publisher',
             name='forces_and_moments',
         ),
+        Node(
+            package='rosplane2',
+            executable='rosplane2_estimator_node',
+            name='estimator'
+        ),
+        Node (
+            package = 'rosplane2',
+            executable='rosplane2_sensors_node',
+            name='sensor_sim'
+        ),
 
         ################# Tools for Interacting with the Sim #########################
         # Node(
@@ -85,14 +87,6 @@ def generate_launch_description():
         #     executable='rviz2',
         #     name='rviz2',
         #     arguments=['-d', [os.path.join(rosplane2_dir, 'SIL.rviz')]],
-        #     parameters=[{
-        #         'use_sim_time': False
-        #     }]
-        # ),
-        # Node(
-        #     package='rqt_publisher',
-        #     executable='rqt_publisher',
-        #     name='rqt_publisher',
         #     parameters=[{
         #         'use_sim_time': False
         #     }]
