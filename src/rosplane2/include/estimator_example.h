@@ -50,11 +50,13 @@ private:
   Eigen::MatrixXf P_p_;  // 7x7
 
   Eigen::Matrix2f Q_a_;  // 2x2
-  float R_accel_;
+  Eigen::Matrix3f Q_g_;
+  Eigen::Matrix3f R_accel_;
   Eigen::Vector2f f_a_;  // 2
   Eigen::Matrix2f A_a_;  // 2x2
-  float h_a_;
-  Eigen::Vector2f C_a_;  // 2
+//  float h_a_;
+  Eigen::Vector3f h_a_;
+  Eigen::Matrix<float, 3, 2> C_a_;  // 2
   Eigen::Vector2f L_a_;  // 2
 
   Eigen::MatrixXf Q_p_;  // 7x7
@@ -64,6 +66,8 @@ private:
   float h_p_;
   Eigen::VectorXf C_p_;  // 7
   Eigen::VectorXf L_p_;  // 7
+
+  float gate_threshold_ = 9.21; // chi2(q = .01, df = 2)
 
   void check_xhat_a();
 

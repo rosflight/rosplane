@@ -14,10 +14,12 @@ estimator_example::estimator_example() :
   xhat_a_(Eigen::Vector2f::Zero()),
   P_a_(Eigen::Matrix2f::Identity()),
   Q_a_(Eigen::Matrix2f::Identity()),
+  Q_g_(Eigen::Matrix3f::Identity()),
   xhat_p_(Eigen::VectorXf::Zero(7)),
   P_p_(Eigen::MatrixXf::Identity(7, 7)),
   Q_p_(Eigen::MatrixXf::Identity(7, 7)),
   R_p_(Eigen::MatrixXf::Zero(7, 7)),
+  R_accel_(Eigen::Matrix3f::Identity()),
   f_p_(7),
   A_p_(7, 7),
   C_p_(7),
@@ -25,8 +27,10 @@ estimator_example::estimator_example() :
 {
   P_a_ *= powf(radians(5.0f), 2);
 
-  Q_a_(0, 0) = 0.00000001;
-  Q_a_(1, 1) = 0.00000001;
+  Q_a_(0, 0) = 0.0001;
+  Q_a_(1, 1) = 0.0001;
+
+  Q_g_ *= pow(M_PI*.13/180.0,2); // TODO connect this to the actual params.
 
   P_p_ = Eigen::MatrixXf::Identity(7, 7);
   P_p_(0, 0) = .03; // TODO Add params for these?
@@ -40,6 +44,8 @@ estimator_example::estimator_example() :
   Q_p_ *= 0.0001f;
   Q_p_(3, 3) = 0.000001f;
 
+  R_accel_ = R_accel_ * pow(.0025*9.81, 2);
+
   phat_ = 0;
   qhat_ = 0;
   rhat_ = 0;
@@ -51,8 +57,6 @@ estimator_example::estimator_example() :
   lpf_static_ = 0.0;
   lpf_diff_ = 0.0;
 
-
-
   N_ = 10;
 
   alpha_ = 0.0f;
@@ -62,7 +66,7 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
 {
   if (alpha_ == 0.0f) //initailze stuff that comes from params
   {
-    R_accel_ = powf(params.sigma_accel, 2);
+//    R_accel_ = powf(params.sigma_accel, 2);
 
     R_p_(0, 0) = powf(params.sigma_n_gps, 2);
     R_p_(1, 1) = powf(params.sigma_e_gps, 2);
@@ -112,28 +116,42 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   float cp; // cos(phi)
   float sp; // sin(phi)
   float tt; // tan(thata)
-  float ct; // cos(thata)
+  float ct; // cos(thata)F
   float st; // sin(theta)
   for (int i = 0; i < N_; i++)
   {
+
     cp = cosf(xhat_a_(0)); // cos(phi)
     sp = sinf(xhat_a_(0)); // sin(phi)
-    tt = tanf(xhat_a_(1)); // tan(thata)
-    ct = cosf(xhat_a_(1)); // cos(thata)
+    tt = tanf(xhat_a_(1)); // tan(theta)
+    ct = cosf(xhat_a_(1)); // cos(theta)
 
     f_a_(0) = phat + (qhat*sp + rhat*cp)*tt;
     f_a_(1) = qhat*cp - rhat*sp;
+
+    xhat_a_ += f_a_*(params.Ts)/N_;
+
+    cp = cosf(xhat_a_(0)); // cos(phi)
+    sp = sinf(xhat_a_(0)); // sin(phi)
+    tt = tanf(xhat_a_(1)); // tan(theta)
+    ct = cosf(xhat_a_(1)); // cos(theta)
 
     A_a_ = Eigen::Matrix2f::Zero();
     A_a_(0, 0) = (qhat*cp - rhat*sp)*tt;
     A_a_(0, 1) = (qhat*sp + rhat*cp)/ct/ct;
     A_a_(1, 0) = -qhat*sp - rhat*cp;
 
-//    xhat_a_ += f_a_*(params.Ts/N_);
+//      RCLCPP_INFO_STREAM(this->get_logger(), "Got here...");
+
 
     Eigen::MatrixXf A_d = Eigen::MatrixXf::Identity(2,2) + params.Ts * A_a_ + pow(params.Ts, 2) / 2.0 * A_a_ * A_a_;
 
-    P_a_ += (A_d*P_a_ + P_a_*A_d.transpose() + Q_a_*pow(params.Ts, 2));
+    Eigen::Matrix<float, 2, 3> G;
+    G << 1, sp*tt, cp*tt, 0.0, cp, -sp;
+
+    P_a_ += (A_d*P_a_*A_d.transpose() + (Q_a_ + G * Q_g_ * G.transpose())*pow(params.Ts, 2));
+
+
   }
   // measurement updates
   cp = cosf(xhat_a_(0));
@@ -143,47 +161,71 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   Eigen::Matrix2f I;
   I = Eigen::Matrix2f::Identity();
 
-//  h_a_ = Eigen::Vector3f::Zero(3);
-//  h_a_(0) = qhat * Vahat *st + params.gravity*st;
-//  h_a_(2) = rhat
+  h_a_ = Eigen::Vector3f::Zero(3);
+  h_a_(0) = qhat * Vahat * st + params.gravity*st;
+  h_a_(1) = rhat * Vahat * ct - phat * Vahat * st - params.gravity * ct * sp;
+  h_a_(2) = -qhat * Vahat * ct - params.gravity * ct * cp;
 
-  // x-axis accelerometer
-  h_a_ = qhat*Vahat*st + params.gravity*st;
-  C_a_ = Eigen::Vector2f::Zero();
-  C_a_(1) = qhat*Vahat*ct + params.gravity*ct;
-  L_a_ = (P_a_*C_a_)/(R_accel_ + C_a_.transpose()*P_a_*C_a_);
-  P_a_ = (I - L_a_*C_a_.transpose())*P_a_;
-  xhat_a_ += L_a_*((lpf_accel_x_) - h_a_);
-//    RCLCPP_INFO_STREAM(this->get_logger(), "")
+  C_a_ << 0.0,                      qhat*ct + params.gravity*ct,
+          -params.gravity*cp*ct,    -rhat*Vahat*st - phat*Vahat*ct + params.gravity*sp*st,
+          params.gravity*sp*ct,     (qhat*Vahat + params.gravity*cp) * st;
 
-  // y-axis accelerometer
-  h_a_ = rhat*Vahat*ct - phat*Vahat*st - params.gravity*ct*sp;
-  C_a_ = Eigen::Vector2f::Zero();
-  C_a_(0) = -params.gravity*cp*ct;
-  C_a_(1) = -rhat*Vahat*st - phat*Vahat*ct + params.gravity*st*sp;
-  L_a_ = (P_a_*C_a_)/(R_accel_ + C_a_.transpose()*P_a_*C_a_);
-  P_a_ = (I - L_a_*C_a_.transpose())*P_a_;
-  xhat_a_ += L_a_*(lpf_accel_y_ - h_a_);
+  Eigen::Vector3f y;
 
-  // z-axis accelerometer
-  h_a_ = -qhat*Vahat*ct - params.gravity*ct*cp;
-  C_a_ = Eigen::Vector2f::Zero();
-  C_a_(0) = params.gravity*sp*ct;
-  C_a_(1) = (qhat*Vahat + params.gravity*cp)*st;
-  L_a_ = (P_a_*C_a_)/(R_accel_ + C_a_.transpose()*P_a_*C_a_);
-  P_a_ = (I - L_a_*C_a_.transpose())*P_a_;
-  xhat_a_ += L_a_*(lpf_accel_z_ - h_a_);
+  y << lpf_accel_x_, lpf_accel_y_, lpf_accel_z_;
+
+  Eigen::MatrixXf S_inv = (R_accel_ + C_a_ * P_a_ * C_a_.transpose()).inverse();
+
+//    RCLCPP_INFO_STREAM(this->get_logger(), "gate_val: " << (y-h_a_).transpose() * S_inv * (y-h_a_));
+
+
+  if ((y-h_a_).transpose() * S_inv * (y-h_a_) < 10000000.0){
+      Eigen::MatrixXf L = P_a_ * C_a_.transpose() * S_inv;
+      Eigen::MatrixXf temp = Eigen::MatrixXf::Identity(2,2) - L * C_a_;
+      P_a_ = temp * P_a_ * temp.transpose() + L * R_accel_ * L.transpose();
+      xhat_a_ = xhat_a_ + L * (y - h_a_);
+  }
+
+//  // x-axis accelerometer
+//  h_a_ = qhat*Vahat*st + params.gravity*st;
+//  C_a_ = Eigen::Vector2f::Zero();
+//  C_a_(1) = qhat*Vahat*ct + params.gravity*ct;
+//  L_a_ = (P_a_*C_a_)/(R_accel_ + C_a_.transpose()*P_a_*C_a_);
+//  P_a_ = (I - L_a_*C_a_.transpose())*P_a_;
+//  xhat_a_ += L_a_*((lpf_accel_x_) - h_a_);
+////    RCLCPP_INFO_STREAM(this->get_logger(), "")
+//
+//  // y-axis accelerometer
+//  h_a_ = rhat*Vahat*ct - phat*Vahat*st - params.gravity*ct*sp;
+//  C_a_ = Eigen::Vector2f::Zero();
+//  C_a_(0) = -params.gravity*cp*ct;
+//  C_a_(1) = -rhat*Vahat*st - phat*Vahat*ct + params.gravity*st*sp;
+//  L_a_ = (P_a_*C_a_)/(R_accel_ + C_a_.transpose()*P_a_*C_a_);
+//  P_a_ = (I - L_a_*C_a_.transpose())*P_a_;
+//  xhat_a_ += L_a_*(lpf_accel_y_ - h_a_);
+//
+//  // z-axis accelerometer
+//  h_a_ = -qhat*Vahat*ct - params.gravity*ct*cp;
+//  C_a_ = Eigen::Vector2f::Zero();
+//  C_a_(0) = params.gravity*sp*ct;
+//  C_a_(1) = (qhat*Vahat + params.gravity*cp)*st;
+//  L_a_ = (P_a_*C_a_)/(R_accel_ + C_a_.transpose()*P_a_*C_a_);
+//  P_a_ = (I - L_a_*C_a_.transpose())*P_a_;
+//  xhat_a_ += L_a_*(lpf_accel_z_ - h_a_);
 
 
 
 
   check_xhat_a();
 
-  phihat_ = alpha_*phihat_ + (1-alpha_)*xhat_a_(0);
-  thetahat_ = alpha_*thetahat_+ (1-alpha_)*xhat_a_(1); // TODO find out if this is an acceptable way to filter the estimate.
+//  phihat_ = alpha_*phihat_ + (1-alpha_)*xhat_a_(0);
+//  thetahat_ = alpha_*thetahat_+ (1-alpha_)*xhat_a_(1); // TODO find out if this is an acceptable way to filter the estimate.
+//
+//  xhat_a_(0) = phihat_;
+//  xhat_a_(1) = thetahat_;
 
-  xhat_a_(0) = phihat_;
-  xhat_a_(1) = thetahat_;
+  phihat_ = xhat_a_(0);
+  thetahat_ = xhat_a_(1);
 
   float phihat = phihat_;
   float thetahat = thetahat_; // TODO implement this properly.
@@ -223,11 +265,6 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
     Vgdot = Vahat/Vg * psidot*(we*cosf(psi) - wn*sinf(psi));
 //      RCLCPP_INFO_STREAM(this->get_logger(), "psi: " << psi);
 
-      // Psi is a little wack.
-
-
-//    Vgdot = ((Vahat*cosf(xhat_p_(6)) + xhat_p_(4))*(-psidot*Vahat*sinf(xhat_p_(6))) + (Vahat*sinf(xhat_p_( // The old version.
-//               6)) + xhat_p_(5))*(psidot*Vahat*cosf(xhat_p_(6))))/xhat_p_(2);
 
     f_p_ = Eigen::VectorXf::Zero(7);
     f_p_(0) = xhat_p_(2)*cosf(xhat_p_(3));
@@ -235,6 +272,9 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
     f_p_(2) = Vgdot;
     f_p_(3) = params.gravity/xhat_p_(2)*tanf(phihat)*cosf(chi-psi);
     f_p_(6) = psidot;
+
+//    xhat_p_ += f_p_*(params.Ts); // TODO Add this back in.
+
 
     A_p_ = Eigen::MatrixXf::Zero(7, 7);
     A_p_(0, 2) = cos(xhat_p_(3));
@@ -249,7 +289,6 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
 //    A_p_(3, 3) = -params.gravity/xhat_p_(2)*tanf(phihat)*sinf(xhat_p_(3) - xhat_p_(6)); TODO why are these here they are not in the book.
 //    A_p_(3, 6) = params.gravity/xhat_p_(2)*tanf(phihat)*sinf(xhat_p_(3) - xhat_p_(6));
 
-//    xhat_p_ += f_p_*(params.Ts/N_); // TODO what is this?????
 
     Eigen::MatrixXf A_d_ = Eigen::MatrixXf::Identity(7,7) + params.Ts*A_p_ + A_p_ * A_p_ * pow(params.Ts, 2)/2.0;
 
@@ -400,7 +439,7 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   }
   if (problem)
   {
-//    RCLCPP_WARN(this->get_logger(), "position estimator reinitialized due to non-finite state %d", prob_index);
+    RCLCPP_WARN(this->get_logger(), "position estimator reinitialized due to non-finite state %d", prob_index);
   }
   if (xhat_p_(6) - xhat_p_(3) > radians(360.0f) || xhat_p_(6) - xhat_p_(3) < radians(-360.0f))
   {
@@ -451,12 +490,12 @@ void estimator_example::check_xhat_a()
     else if (xhat_a_(0) > radians(85.0))
     {
       xhat_a_(0) = radians(82.0);
-//      RCLCPP_WARN(this->get_logger(), "max roll angle");
+      RCLCPP_WARN(this->get_logger(), "max roll angle");
     }
     else if (xhat_a_(0) < radians(-85.0))
     {
       xhat_a_(0) = radians(-82.0);
-//      RCLCPP_WARN(this->get_logger(), "min roll angle");
+      RCLCPP_WARN(this->get_logger(), "min roll angle");
     }
   }
   if (xhat_a_(1) > radians(80.0) || xhat_a_(1) < radians(-80.0) || !std::isfinite(xhat_a_(1)))
@@ -471,12 +510,12 @@ void estimator_example::check_xhat_a()
     else if (xhat_a_(1) > radians(80.0))
     {
       xhat_a_(1) = radians(77.0);
-//      RCLCPP_WARN(this->get_logger(), "max pitch angle");
+      RCLCPP_WARN(this->get_logger(), "max pitch angle");
     }
     else if (xhat_a_(1) < radians(-80.0))
     {
       xhat_a_(1) = radians(-77.0);
-//      RCLCPP_WARN(this->get_logger(), "min pitch angle"); // TODO uncomment WARNs and find out why they keep going off.
+      RCLCPP_WARN(this->get_logger(), "min pitch angle");
     }
   }
 }

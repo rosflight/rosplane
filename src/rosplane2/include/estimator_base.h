@@ -86,6 +86,7 @@ protected:
     double sigma_e_gps;
     double sigma_Vg_gps;
     double sigma_course_gps;
+    double sigma_gyro;
     double Ts;
   };
 
@@ -128,7 +129,7 @@ private:
   int baro_count_;        /**< Used to grab the first set of baro measurements */
   std::vector<float> init_static_vector_; /**< Used to grab the first set of baro measurements */
 
-  struct params_s params_ = {9.8, 1.225, .0245, .21, .21, .0500, .0045, 1.0f/update_rate_ * 100.0};
+  struct params_s params_ = {9.8, 1.225, .0245, .01, .01, .005, .005/20., M_PI*.13/180.0, 1.0f/update_rate_};
 
 
 
