@@ -1,6 +1,7 @@
 # ROS2 Install & ROSplane2 Setup
 
-1. Install [ROS2 Humble](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html)
+1. Install [ROS2 Humble](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html) and source it.
+    `source /opt/ros/humble/setup.bash`
 2. Install some required ROS packages:
     1. colcon: `sudo apt install python3-colcon-common-extensions`
     2. rqt: `sudo apt install ~nros-humble-rqt*`
