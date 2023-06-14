@@ -76,19 +76,19 @@ private:
     float gps_hz_ = 5;
     float sim_t_ = .01; // Time of simulation in seconds.
     float gps_k = 1. / 1100.;
-    float gps_n_sigma = 0.0; // 0.01;
-    float gps_e_sigma = 0.0; // 0.01;
-    float gps_h_sigma = 0.0; // 0.03; // TODO move to the params_ struct
-    float gps_Vg_sigma = 0.0; //0.005;
+    float gps_n_sigma = 0.01;
+    float gps_e_sigma = 0.01;
+    float gps_h_sigma = 0.03; // TODO move to the params_ struct
+    float gps_Vg_sigma = 0.005;
     float gps_course_sigma = gps_Vg_sigma / 20.0;
     double gps_init_lat = 40.2669751;
     double gps_init_long = -111.6362489;
     double gps_init_alt = 1387.0;
 
-    float accel_sigma = 0.0; // .0025*9.81; // std dev in m/s^2
-    float gyro_sigma = 0.0; //M_PI*(.13)/180.0; // radians(.13); // std dev in rad/sec
-    float abs_pres_sigma = 0.0; // 0.01*1000; // std dev in Pa
-    float diff_pres_sigma = 0.0; // 0.002*1000; // std dev in Pa
+    float accel_sigma = .0025*9.81; // std dev in m/s^2
+    float gyro_sigma = M_PI*(.13)/180.0; // radians(.13); // std dev in rad/sec
+    float abs_pres_sigma = 0.01*1000; // std dev in Pa
+    float diff_pres_sigma = 0.002*1000; // std dev in Pa
 
     // GPS sim variables.
     float t_gps_ = 0;
@@ -116,8 +116,6 @@ private:
 
     void update_sensors(const rosplane2_msgs::msg::State::SharedPtr msg){
 
-
-        // TODO add random noise.
 
         status_.armed = true;
 

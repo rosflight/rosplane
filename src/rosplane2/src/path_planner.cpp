@@ -13,9 +13,9 @@ int main(int argc, char **argv)
   float va = 25;
   float wps[5*num_waypoints] =
   {
-    200, 0, -50, 45*M_PI/180, va,
-    0, 200, -50, 45*M_PI/180, va,
-    200, 200, -50, 225*M_PI/180, va,
+    200, 0, -100, 45*M_PI/180, va,
+    0, 200, -100, 45*M_PI/180, va,
+    200, 200, -100, 225*M_PI/180, va,
   };
 
   rclcpp::Clock wait;
