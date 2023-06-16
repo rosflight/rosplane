@@ -78,7 +78,7 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
     float lpf_a = 50.0;
     float lpf_a1 = 8.0;
     alpha_ = exp(-lpf_a*params.Ts);
-    alpha_ = .9; // .99 // TODO this is way too high, but it is the lowest value that works.
+    alpha_ = .7; // .99 // TODO this is way too high, but it is the lowest value that works.
     alpha1_ = exp(-lpf_a1*params.Ts);
   }
 
@@ -108,7 +108,7 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
 
   // low pass filter accelerometers
   lpf_accel_x_ = alpha_*lpf_accel_x_ + (1 - alpha_)*input.accel_x;
-  lpf_accel_y_ = alpha_*lpf_accel_y_ + (1 - alpha_)*input.accel_y;
+  lpf_accel_y_ = alpha_*lpf_accel_y_ + (1 - alpha_)*input.accel_y; // TODO does this expect units of g or of m/s^2!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   lpf_accel_z_ = alpha_*lpf_accel_z_ + (1 - alpha_)*input.accel_z;
 
   // implement continuous-discrete EKF to estimate roll and pitch angles
@@ -151,6 +151,8 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
 
     P_a_ += (A_d*P_a_*A_d.transpose() + (Q_a_ + G * Q_g_ * G.transpose())*pow(params.Ts, 2));
 
+//    P_a_ += (A_a_*P_a_ + P_a_*A_a_.transpose() + Q_a_) * (params.Ts/N_);
+
 
   }
   // measurement updates
@@ -185,11 +187,11 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
 
   check_xhat_a();
 
-  phihat_ = alpha_*phihat_ + (1-alpha_)*xhat_a_(0);
-  thetahat_ = alpha_*thetahat_+ (1-alpha_)*xhat_a_(1); // TODO find out if this is an acceptable way to filter the estimate.
-
-  xhat_a_(0) = phihat_;
-  xhat_a_(1) = thetahat_;
+//  phihat_ = alpha_*phihat_ + (1-alpha_)*xhat_a_(0);
+//  thetahat_ = alpha_*thetahat_+ (1-alpha_)*xhat_a_(1); // TODO find out if this is an acceptable way to filter the estimate.
+//
+//  xhat_a_(0) = phihat_;
+//  xhat_a_(1) = thetahat_;
 
 
   phihat_ = xhat_a_(0);

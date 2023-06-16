@@ -3,7 +3,8 @@ from rclpy.node import Node
 from rclpy.time import Time
 from builtin_interfaces.msg import Time as TimeMsg
 import threading
-from rosplane2_msgs.msg import Command, State
+from rosplane2_msgs.msg import State
+from rosflight_msgs.msg import Command
 
 def trim_data(time: list[float], data: list[float], val_thresh: float) -> None:
     """Trims the time and data vectors to only have time values over the latest 'val_thresh' window"""

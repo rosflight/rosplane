@@ -13,7 +13,7 @@
 #include <rosplane2_msgs/msg/state.hpp>
 #include <rosplane2_msgs/msg/controller_commands.hpp>
 #include <rosplane2_msgs/msg/controller_internals.hpp>
-#include <rosplane2_msgs/msg/command.hpp>
+#include "rosflight_msgs/msg/command.hpp"
 #include "chrono"
 
 using std::placeholders::_1;
@@ -109,7 +109,7 @@ protected:
   virtual void control(const struct params_s &params, const struct input_s &input, struct output_s &output) = 0;
 
 private:
-    rclcpp::Publisher<rosplane2_msgs::msg::Command>::SharedPtr actuators_pub_;
+    rclcpp::Publisher<rosflight_msgs::msg::Command>::SharedPtr actuators_pub_;
     rclcpp::Subscription<rosplane2_msgs::msg::ControllerCommands>::SharedPtr controller_commands_sub_;
     rclcpp::Subscription<rosplane2_msgs::msg::State>::SharedPtr vehicle_state_sub_;
     rclcpp::Publisher<rosplane2_msgs::msg::ControllerInternals>::SharedPtr internals_pub_;

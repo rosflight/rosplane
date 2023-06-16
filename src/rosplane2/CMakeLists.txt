@@ -61,7 +61,7 @@ install(TARGETS
 add_executable(rosplane2_controller
             src/controller_base.cpp
             src/controller_example.cpp)
-ament_target_dependencies(rosplane2_controller rosplane2_msgs rclcpp rclpy Eigen3)
+ament_target_dependencies(rosplane2_controller rosplane2_msgs rosflight_msgs rclcpp rclpy Eigen3)
 install(TARGETS
   rosplane2_controller
   DESTINATION lib/${PROJECT_NAME})

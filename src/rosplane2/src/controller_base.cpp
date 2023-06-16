@@ -1,7 +1,7 @@
     #include "controller_base.h"
     #include "controller_example.h"
 
-    #include <iostream>
+#include <iostream>
 
     namespace rosplane2
     {
@@ -9,7 +9,7 @@
     controller_base::controller_base() : Node("controller_base")
     {
 
-        actuators_pub_ = this->create_publisher<rosplane2_msgs::msg::Command>("command",10); //Advertise
+        actuators_pub_ = this->create_publisher<rosflight_msgs::msg::Command>("command",10); //Advertise
         internals_pub_ = this->create_publisher<rosplane2_msgs::msg::ControllerInternals>("controller_inners",10);
 
         timer_ = this->create_wall_timer(10ms, std::bind(&controller_base::actuator_controls_publish, this));
@@ -17,7 +17,7 @@
         controller_commands_sub_ = this->create_subscription<rosplane2_msgs::msg::ControllerCommands>(
                 "controller_commands", 10, std::bind(&controller_base::controller_commands_callback, this, _1));
         vehicle_state_sub_ = this->create_subscription<rosplane2_msgs::msg::State>(
-                "state", 10, std::bind(&controller_base::vehicle_state_callback, this, _1));
+                "estimated_state", 10, std::bind(&controller_base::vehicle_state_callback, this, _1));
 
         command_recieved_ = false;
 
@@ -72,7 +72,7 @@
 
         convert_to_pwm(output);
 
-        rosplane2_msgs::msg::Command actuators;
+        rosflight_msgs::msg::Command actuators;
         /* publish actuator controls */
 
         rclcpp::Time now = this->get_clock()->now();
@@ -87,7 +87,7 @@
 //        actuators.header.stamp.nanosec = now.nanoseconds();
 
         actuators.ignore = 0;
-        actuators.mode = rosplane2_msgs::msg::Command::MODE_PASS_THROUGH;
+        actuators.mode = rosflight_msgs::msg::Command::MODE_PASS_THROUGH;
         actuators.x = (std::isfinite(output.delta_a)) ? output.delta_a : 0.0f;
         actuators.y = (std::isfinite(output.delta_e)) ? output.delta_e : 0.0f;
         actuators.z = (std::isfinite(output.delta_r)) ? output.delta_r : 0.0f;

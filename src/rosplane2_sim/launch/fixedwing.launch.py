@@ -42,14 +42,14 @@ def generate_launch_description():
             executable='rosplane2_controller',
             name='autopilot',
         ),
-        Node(
-            package='rosplane2',
-            executable='rosplane2_truth_publisher',
-            name='truth_pub',
-            parameters=[{
-                'use_sim_time': use_sim_time
-            }]
-        ),
+        # Node(
+        #     package='rosplane2',
+        #     executable='rosplane2_truth_publisher',
+        #     name='truth_pub',
+        #     parameters=[{
+        #         'use_sim_time': use_sim_time
+        #     }]
+        # ),
         Node(
             package='rosplane2',
             executable='rosplane2_path_follower',
@@ -65,21 +65,21 @@ def generate_launch_description():
             executable='rosplane2_path_planner',
             name='path_planner',
         ),
-        Node(
-            package='rosplane2',
-            executable='rosplane2_force_publisher',
-            name='forces_and_moments',
-        ),
+        # Node(
+        #     package='rosplane2',
+        #     executable='rosplane2_force_publisher',
+        #     name='forces_and_moments',
+        # ),
         Node(
             package='rosplane2',
             executable='rosplane2_estimator_node',
             name='estimator'
         ),
-        Node (
-            package = 'rosplane2',
-            executable='rosplane2_sensors_node',
-            name='sensor_sim'
-        ),
+        # Node (
+        #     package = 'rosplane2',
+        #     executable='rosplane2_sensors_node',
+        #     name='sensor_sim'
+        # ),
 
         ################# Tools for Interacting with the Sim #########################
         # Node(
