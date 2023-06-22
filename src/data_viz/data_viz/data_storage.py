@@ -85,10 +85,6 @@ class StateStorage:
         self.beta.append(state.beta)
         self.chi.append(state.chi)
 
-        print("Appending the following to time: ")
-        print(state.header.stamp.sec)
-        print(time_to_seconds(state.header.stamp))
-
         # Trim the data
         ind = bisect.bisect_left(self.time, self.time[-1] - self.t_horizon)
         if ind > 0:
