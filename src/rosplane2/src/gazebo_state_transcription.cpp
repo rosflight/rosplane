@@ -1,0 +1,130 @@
+#include <memory>
+
+#include "rclcpp/rclcpp.hpp"
+#include "nav_msgs/msg/odometry.hpp"
+#include "geometry_msgs/msg/vector3_stamped.hpp"
+#include "rosplane2_msgs/msg/state.hpp"
+#include "Eigen/Geometry"
+
+#include "chrono"
+
+using namespace std::chrono_literals;
+using std::placeholders::_1;
+using rosplane2_msgs::msg::State;
+
+class gazebo_transcription : public rclcpp::Node
+{
+public:
+    gazebo_transcription()
+            : Node("gazebo_state")
+    {
+        odom_subscription_ = this->create_subscription<nav_msgs::msg::Odometry>("/fixedwing/truth/NED", 10, std::bind(&gazebo_transcription::publish_truth, this, _1));
+//        euler_sub_ = this->create_subscription<geometry_msgs::msg::Vector3Stamped>("/attitude/euler", 10, std::bind(&gazebo_transcription::euler_callback, this, _1));
+
+        publisher_ = this->create_publisher<rosplane2_msgs::msg::State>("state", 10);
+    }
+
+private:
+    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_subscription_;
+    rclcpp::Subscription<geometry_msgs::msg::Vector3Stamped>::SharedPtr euler_sub_; // TODO is there going to be gitter between the times each of these collected?
+
+    rclcpp::Publisher<State>::SharedPtr publisher_;
+
+//    geometry_msgs::msg::Vector3Stamped euler_angles_;
+
+    //TODO insert wind callback.
+    double wn = 0.0;
+    double we = 0.0;
+    double wd = 0.0;
+
+
+
+    void publish_truth(const nav_msgs::msg::Odometry &msg){
+
+        rosplane2_msgs::msg::State state;
+
+        state.header.stamp = this->get_clock()->now();
+        state.header.frame_id = 1; // Denotes global frame.
+
+        state.initial_lat = 0.0; // TODO get a better initalization.
+        state.initial_lon = 0.0;
+        state.initial_alt = 0.0;
+
+        state.position[0] = msg.pose.pose.position.x;
+        state.position[1] = msg.pose.pose.position.y; // TODO these may have different signs.
+        state.position[2] = msg.pose.pose.position.z;
+
+        Eigen::Quaternionf q;
+        q.w() = msg.pose.pose.orientation.w;
+        q.x() = msg.pose.pose.orientation.x;
+        q.y() = msg.pose.pose.orientation.y;
+        q.z() = msg.pose.pose.orientation.z;
+
+//        auto euler = q.toRotationMatrix().eulerAngles(0, 1, 2); // TODO make sure these are right.
+
+        Eigen::Vector3f euler;
+        euler(0) = atan2(2.0*(q.w()*q.x() + q.y()*q.z()), pow(q.w(), 2) + pow(q.z(),2) - pow(q.x(), 2) - pow(q.y(), 2));
+        euler(1) = asin(2.0* (q.w()*q.y() - q.w()*q.z()));
+        euler(2) = atan2(2.0*(q.w()*q.z() + q.x()*q.y()), pow(q.w(), 2) + pow(q.x(), 2) - pow(q.y(), 2) - pow(q.z(), 2));
+
+        state.phi = euler(0);
+        state.theta = euler(1);
+        state.psi = euler(2);
+
+        double u = msg.twist.twist.linear.x;
+        double v = msg.twist.twist.linear.y;
+        double w = msg.twist.twist.linear.z;
+
+        state.u = u;
+        state.v = v;
+        state.w = w;
+
+        state.vg = std::sqrt(pow(u, 2) + pow(v, 2) + pow(w, 2));
+
+        state.p = msg.twist.twist.angular.x;
+        state.q = msg.twist.twist.angular.y;
+        state.r = msg.twist.twist.angular.z;
+
+        state.wn = wn;
+        state.we = we;
+
+        double ur = u - wn;
+        double vr = v - we;
+        double wr = w - wd;
+
+        state.va = std::sqrt(pow(ur, 2) + pow(vr, 2) + pow(wr, 2));
+
+        state.chi = atan2(state.va*sin(state.psi), state.va*cos(state.psi));
+        state.alpha = atan2(wr, ur);
+        state.beta = asin(vr/state.va);
+
+        state.quat_valid = true;
+
+        state.quat[0] = msg.pose.pose.orientation.w;
+        state.quat[1] = msg.pose.pose.orientation.x;
+        state.quat[2] = msg.pose.pose.orientation.y;
+        state.quat[3] = msg.pose.pose.orientation.z;
+
+//        state.psi_deg = state.psi * TODO implement the deg into the state.
+
+        publisher_->publish(state);
+
+    }
+//
+//    void euler_callback(const geometry_msgs::msg::Vector3Stamped &msg){
+//        euler_angles_ = msg;
+//    }
+
+
+
+
+
+};
+
+int main(int argc, char * argv[])
+{
+    rclcpp:: init(argc, argv);
+    rclcpp::spin(std::make_shared<gazebo_transcription>());
+    rclcpp::shutdown();
+    return 0;
+}

@@ -59,6 +59,10 @@ class StateStorage:
     def append(self, state: State):
         """ Stores the state data and trims the vectors
         """
+
+        if(state.header.stamp.sec == 0):
+            return
+
         # Store the data
         self.time.append(time_to_seconds(state.header.stamp))
         self.pn.append(state.position.item(0))
@@ -80,6 +84,10 @@ class StateStorage:
         self.alpha.append(state.alpha)
         self.beta.append(state.beta)
         self.chi.append(state.chi)
+
+        print("Appending the following to time: ")
+        print(state.header.stamp.sec)
+        print(time_to_seconds(state.header.stamp))
 
         # Trim the data
         ind = bisect.bisect_left(self.time, self.time[-1] - self.t_horizon)

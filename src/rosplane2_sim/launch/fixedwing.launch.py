@@ -75,11 +75,11 @@ def generate_launch_description():
             executable='rosplane2_estimator_node',
             name='estimator'
         ),
-        # Node (
-        #     package = 'rosplane2',
-        #     executable='rosplane2_sensors_node',
-        #     name='sensor_sim'
-        # ),
+        Node (
+            package = 'rosplane2',
+            executable='rosplane2_gazebo_truth_publisher',
+            name='gazebo_truth'
+        ),
 
         ################# Tools for Interacting with the Sim #########################
         # Node(
