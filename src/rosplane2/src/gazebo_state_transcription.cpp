@@ -64,7 +64,7 @@ private:
 
         Eigen::Vector3f euler;
         euler(0) = atan2(2.0*(q.w()*q.x() + q.y()*q.z()), pow(q.w(), 2) + pow(q.z(),2) - pow(q.x(), 2) - pow(q.y(), 2));
-        euler(1) = asin(2.0* (q.w()*q.y() - q.w()*q.z()));
+        euler(1) = asin(2.0* (q.w()*q.y() - q.x()*q.z()));
         euler(2) = atan2(2.0*(q.w()*q.z() + q.x()*q.y()), pow(q.w(), 2) + pow(q.x(), 2) - pow(q.y(), 2) - pow(q.z(), 2));
 
         state.phi = euler(0);

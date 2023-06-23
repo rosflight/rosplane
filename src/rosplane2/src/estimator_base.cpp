@@ -56,9 +56,9 @@ void estimator_base::update()
   msg.header.stamp = this->get_clock()->now();
   msg.header.frame_id = 1; // Denotes global frame TODO make sure all messages throughout ROSPlane have this
 
-  msg.position[0] = output.pn;
-  msg.position[1] = output.pe;
-  msg.position[2] = output.h; // TODO This should be negative, find out why it isn't.
+  msg.position[0] = - output.pn;
+  msg.position[1] = - output.pe; // TODO find out why there are these minuses.
+  msg.position[2] = - output.h;
   if (gps_init_)
   {
     msg.initial_lat = init_lat_;
