@@ -1,0 +1,29 @@
+# Fixedwing parameters for simulation.
+# type: 6 - int
+
+- {name: MOTOR_PWM_UPDATE, type: 6, value: 50}
+- {name: ARM_SPIN_MOTORS, type: 6, value: 0}
+- {name: MOTOR_IDLE_THR, type: 9, value: .1}
+- {name: ARM_CHANNEL, type: 6, value: 4}
+- {name: FIXED_WING, type: 6, value: 1}
+- {name: MIXER, type: 6, value: 10}
+- {name: ELEVATOR_REV, type: 6, value: 0}
+- {name: AIL_REV, type: 6, value: 0}
+- {name: RUDDER_REV, type: 6, value: 0}
+- {name: CAL_GYRO_ARM, type: 6, value: 0}
+- {name: RC_THR_OVRD_CHN, type: 6, value: 5}
+- {name: RC_ATT_OVRD_CHN, type: 6, value: 5}
+- {name: MIN_THROTTLE, type: 6, value: 0}
+- {name: RC_ATT_CTRL_CHN, type: 6, value: 8}
+
+
+#MOTOR_PWM_UPDATE: 50
+#ARM_SPIN_MOTORS: False
+#MOTOR_IDLE_THR: .1
+#ARM_CHANNEL: 4 # this may need to change for sim
+#FIXED_WING: True
+#MIXER: 10
+#ELEVATOR_REV: 0
+#AIL_REV: 0
+#RUDDER_REV: 0
+#CAL_GYRO_ARM: false
