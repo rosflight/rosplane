@@ -124,13 +124,13 @@ install(TARGETS
         rosplane2_sensors_node
         DESTINATION lib/${PROJECT_NAME})
 
-add_executable(rosplane2_dummy_status_node
-        src/dummy_status.cpp)
-
-ament_target_dependencies(rosplane2_dummy_status_node rosflight_msgs rclcpp rclpy)
-install(TARGETS
-        rosplane2_dummy_status_node
-        DESTINATION lib/${PROJECT_NAME})
+#add_executable(rosplane2_dummy_status_node
+#        src/dummy_status.cpp)
+#
+#ament_target_dependencies(rosplane2_dummy_status_node rosflight_msgs rclcpp rclpy)
+#install(TARGETS
+#        rosplane2_dummy_status_node
+#        DESTINATION lib/${PROJECT_NAME})
 
 add_executable(rosplane2_gazebo_truth_publisher
             src/gazebo_state_transcription.cpp)
