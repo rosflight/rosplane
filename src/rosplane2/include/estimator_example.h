@@ -42,7 +42,7 @@ private:
   float Vwhat_;
   float phihat_;
   float thetahat_;
-  float psihat_;
+  float psihat_ = 0.0; // TODO link to an inital condiditons param
   Eigen::Vector2f xhat_a_; // 2
   Eigen::Matrix2f P_a_;  // 2x2
 

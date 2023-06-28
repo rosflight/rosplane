@@ -30,7 +30,7 @@ estimator_example::estimator_example() :
   Q_a_(0, 0) = 0.01;
   Q_a_(1, 1) = 0.01;
 
-  Q_g_ *= .1; //pow(M_PI*.13/180.0,2); // TODO connect this to the actual params.
+  Q_g_ *= pow(M_PI*.13/180.0,2); // TODO connect this to the actual params.
 
   P_p_ = Eigen::MatrixXf::Identity(7, 7);
   P_p_(0, 0) = .03; // TODO Add params for these?
@@ -41,10 +41,7 @@ estimator_example::estimator_example() :
   P_p_(5, 5) = .04;
   P_p_(6, 6) = radians(5.0f);
 
-  Q_p_ *= 0.0001f;
-  Q_p_(3, 3) = 0.000001f;
-
-  R_accel_ = R_accel_ * pow(.0025*9.81, 2);
+  Q_p_ *= 0.1f;
 
   phat_ = 0;
   qhat_ = 0;
@@ -66,19 +63,20 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
 {
   if (alpha_ == 0.0f) //initailze stuff that comes from params
   {
-//    R_accel_ = powf(params.sigma_accel, 2);
+    R_accel_ = R_accel_ * pow(.0025*9.81, 2); // TODO add ot params
 
     R_p_(0, 0) = powf(params.sigma_n_gps, 2);
     R_p_(1, 1) = powf(params.sigma_e_gps, 2);
     R_p_(2, 2) = powf(params.sigma_Vg_gps, 2);
     R_p_(3, 3) = powf(params.sigma_course_gps, 2);
-    R_p_(4, 4) = 0.001;
-    R_p_(5, 5) = 0.001;
+    R_p_(4, 4) = 0.01;
+    R_p_(5, 5) = 0.01;
+    R_p_(6, 6) = 0.01;
+
 
     float lpf_a = 50.0;
     float lpf_a1 = 8.0;
     alpha_ = exp(-lpf_a*params.Ts);
-    alpha_ = .7; // .99 // TODO this is way too high, but it is the lowest value that works.
     alpha1_ = exp(-lpf_a1*params.Ts);
   }
 
@@ -108,7 +106,7 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
 
   // low pass filter accelerometers
   lpf_accel_x_ = alpha_*lpf_accel_x_ + (1 - alpha_)*input.accel_x;
-  lpf_accel_y_ = alpha_*lpf_accel_y_ + (1 - alpha_)*input.accel_y; // TODO does this expect units of g or of m/s^2!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  lpf_accel_y_ = alpha_*lpf_accel_y_ + (1 - alpha_)*input.accel_y;
   lpf_accel_z_ = alpha_*lpf_accel_z_ + (1 - alpha_)*input.accel_z;
 
   // implement continuous-discrete EKF to estimate roll and pitch angles
@@ -144,12 +142,12 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
 //      RCLCPP_INFO_STREAM(this->get_logger(), "Got here...");
 
 
-    Eigen::MatrixXf A_d = Eigen::MatrixXf::Identity(2,2) + params.Ts * A_a_ + pow(params.Ts, 2) / 2.0 * A_a_ * A_a_;
+    Eigen::MatrixXf A_d = Eigen::MatrixXf::Identity(2,2) + params.Ts/N_ * A_a_ + pow(params.Ts/N_, 2) / 2.0 * A_a_ * A_a_;
 
     Eigen::Matrix<float, 2, 3> G;
     G << 1, sp*tt, cp*tt, 0.0, cp, -sp;
 
-    P_a_ += (A_d*P_a_*A_d.transpose() + (Q_a_ + G * Q_g_ * G.transpose())*pow(params.Ts, 2));
+    P_a_ = (A_d*P_a_*A_d.transpose() + (Q_a_ + G * Q_g_ * G.transpose())*pow(params.Ts/N_, 2));
 
 //    P_a_ += (A_a_*P_a_ + P_a_*A_a_.transpose() + Q_a_) * (params.Ts/N_);
 
@@ -187,11 +185,6 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
 
   check_xhat_a();
 
-//  phihat_ = alpha_*phihat_ + (1-alpha_)*xhat_a_(0);
-//  thetahat_ = alpha_*thetahat_+ (1-alpha_)*xhat_a_(1); // TODO find out if this is an acceptable way to filter the estimate.
-//
-//  xhat_a_(0) = phihat_;
-//  xhat_a_(1) = thetahat_;
 
 
   phihat_ = xhat_a_(0);
@@ -209,21 +202,21 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   {
 
 
-      // xhat_p_(0) - pn
-      // xhat_p_(1) - pe
-      // xhat_p_(2) - Vg
-      // xhat_p_(3) - chi
-      // xhat_p_(4) - wn
-      // xhat_p_(5) - we
-      // xhat_p_(6) - psi
+    // xhat_p_(0) - pn
+    // xhat_p_(1) - pe
+    // xhat_p_(2) - Vg
+    // xhat_p_(3) - chi
+    // xhat_p_(4) - wn
+    // xhat_p_(5) - we
+    // xhat_p_(6) - psi
 
-      float pn = xhat_p_(0);
-      float pe = xhat_p_(1);
-      float Vg = xhat_p_(2);
-      float chi = xhat_p_(3);
-      float wn = xhat_p_(4);
-      float we = xhat_p_(5);
-      float psi = xhat_p_(6);
+    float pn = xhat_p_(0);
+    float pe = xhat_p_(1);
+    float Vg = xhat_p_(2);
+    float chi = xhat_p_(3);
+    float wn = xhat_p_(4);
+    float we = xhat_p_(5);
+    float psi = xhat_p_(6);
 
     psidot = (qhat*sinf(phihat_) + rhat*cosf(phihat_))/cosf(thetahat_);
 
@@ -251,9 +244,9 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
     A_p_(3, 2) = -params.gravity/powf(xhat_p_(2), 2)*tanf(phihat_);
 
 
-    Eigen::MatrixXf A_d_ = Eigen::MatrixXf::Identity(7,7) + params.Ts*A_p_ + A_p_ * A_p_ * pow(params.Ts, 2)/2.0;
+    Eigen::MatrixXf A_d_ = Eigen::MatrixXf::Identity(7,7) + params.Ts/N_*A_p_ + A_p_ * A_p_ * pow(params.Ts/N_, 2)/2.0;
 
-    P_p_ += (A_d_*P_p_ + P_p_*A_d_.transpose() + Q_p_*pow(params.Ts, 2));
+    P_p_ = (A_d_*P_p_*A_d_.transpose() + Q_p_*pow(params.Ts/N_, 2));
   }
 
     while(xhat_p_(3) > radians(180.0f)) xhat_p_(3) = xhat_p_(3) - radians(360.0f);
@@ -263,6 +256,15 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
         RCLCPP_WARN(this->get_logger(), "Course estimate not wrapped from -pi to pi");
         xhat_p_(3) = 0;
     }
+
+    while(xhat_p_(6) > radians(180.0f)) xhat_p_(6) = xhat_p_(6) - radians(360.0f);
+    while(xhat_p_(6) < radians(-180.0f)) xhat_p_(6) = xhat_p_(6) + radians(360.0f);
+    if(xhat_p_(6) > radians(180.0f) || xhat_p_(6) < radians(-180.0f))
+    {
+        RCLCPP_WARN(this->get_logger(), "Psi estimate not wrapped from -pi to pi");
+        xhat_p_(6) = 0;
+    }
+
 
   // measurement updates
   if (input.gps_new)
