@@ -1,9 +1,9 @@
 # ROSplane2 Workspace Setup
 To set up the workspace to run ROSPlane with ROSFlight, do the following:
 1. Follow the instructions for setup up ROSFlight found here:
-   https://github.com/bsutherland333/rosflight2.git
+   https://github.com/byu-magicc/rosflight2.git
 2. Clone the ROSPlane2 Gitlab repo into the same workspace folder as ROSFlight:
-    `git clone https://github.com/bsutherland333/rosflight2.git`
+    `git clone https://github.com/byu-magicc/rosflight2.git`
    1. This will have a file structure like this:
         ```bash
       workspace_dir
