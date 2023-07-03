@@ -5,6 +5,9 @@ from builtin_interfaces.msg import Time as TimeMsg
 import threading
 from rosplane2_msgs.msg import State
 from rosflight_msgs.msg import Command
+from rosplane2_msgs.msg import ControllerInternals
+from rosplane2_msgs.msg import ControllerCommands
+
 
 def trim_data(time: list[float], data: list[float], val_thresh: float) -> None:
     """Trims the time and data vectors to only have time values over the latest 'val_thresh' window"""
@@ -144,6 +147,41 @@ class CommandStorage:
             del self.rudder[0:ind]
             del self.throttle[0:ind]
 
+class CommandedStateStorage:
+
+    def __init__(self, t_horizon: float) -> None:
+
+        self.t_horizon = t_horizon
+
+        self.time: list[float] = []     # Time values (seconds)
+        self.pitch: list[float] = []
+        self.roll: list[float] = []
+        self.course: list[float] = []
+        self.altitude: list[float] = []
+        self.airspeed: list[float] = []
+
+    def append(self, cmd_state: list, time: Time) -> None:
+        """ Stores the command data and trims the vectors
+        """
+        # Append data
+        self.time.append(time.nanoseconds*1.e-9)
+        self.pitch.append(cmd_state[0])
+        self.roll.append(cmd_state[1])
+        self.course.append(cmd_state[2])
+        self.altitude.append(cmd_state[3])
+        self.airspeed.append(cmd_state[4])
+
+        # Trim the data
+        ind = bisect.bisect_left(self.time, self.time[-1] - self.t_horizon)
+        if ind > 0:
+            del self.time[0:ind]
+            del self.pitch[0:ind]
+            del self.roll[0:ind]
+            del self.course[0:ind]
+            del self.altitude[0:ind]
+            del self.airspeed[0:ind]
+
+
 class RosStorageInterface:
     """ Uses a given node to subscribe to state, command, and sensory information
     """
@@ -163,18 +201,23 @@ class RosStorageInterface:
         # Initialize the state parameters
         self.t_horizon = 100. # TODO Read in instead of hard code
         self.lock = threading.Lock() # The lock is used to allow data to not be received / updated
-                                     # while being accessed
+        # while being accessed
 
 
         # Initialize the ros variables
         self._sub_state = self.node.create_subscription(State, "/state", self.state_callback, 1)
         self._sub_est = self.node.create_subscription(State, "/estimated_state", self.estimate_callback, 1)
         self._sub_cmd = self.node.create_subscription(Command, "/command", self.command_callback, 1)
+        self._sub_cmd_internals = self.node.create_subscription(ControllerInternals, "/controller_inners", self.cmd_internal_callback, 1)
+        self._sub_con_cmd = self.node.create_subscription(ControllerCommands, "/controller_commands", self.con_command_callback, 1)
+
+        self.con_cmd = ControllerCommands()
 
         # Initailize the storage
         self.true = StateStorage(t_horizon=self.t_horizon)
         self.cmd = CommandStorage(t_horizon=self.t_horizon)
         self.est = StateStorage(t_horizon=self.t_horizon)
+        self.cmd_state = CommandedStateStorage(t_horizon=self.t_horizon)
 
     def state_callback(self, msg: State) -> None:
         """Stores the latest state data
@@ -195,3 +238,21 @@ class RosStorageInterface:
         """
         with self.lock:
             self.cmd.append(cmd=msg, time=self.node.get_clock().now())
+
+
+    def cmd_internal_callback(self, msg: ControllerInternals) -> None:
+
+        update = []
+
+        update.append(msg.theta_c)
+        update.append(msg.phi_c)
+        update.append(self.con_cmd.chi_c)
+        update.append(self.con_cmd.h_c)
+        update.append(self.con_cmd.va_c)
+
+        with self.lock:
+            self.cmd_state.append(cmd_state=update, time=self.node.get_clock().now())
+
+    def con_command_callback(self, msg: ControllerCommands) -> None:
+
+        self.con_cmd = msg

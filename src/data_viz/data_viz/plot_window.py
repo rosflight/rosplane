@@ -44,10 +44,10 @@ class PlotAxis:
 class PlotNav(PlotAxis):
     """Used to plot true and navigation data on a single axis"""
     def __init__(self, ax: plt.Axes, true_data: list[float], true_xdata: list[float], nav_data: Optional[list[float]] = None,
-        nav_xdata: Optional[list[float]]=None, title: str = "", ylabel: str = "", xlabel: str = "time (sec)",
-        true_label: str = "True", nav_label: str = "Est", show_legend: bool = True,
-        nav_color: str = 'lime', true_color: str = 'deepskyblue', widget: Optional[QWidget] = None
-        ) -> None:
+                 nav_xdata: Optional[list[float]]=None, cmd_data: Optional[list[float]] = None, cmd_xdata: Optional[list[float]] = None, title: str = "", ylabel: str = "", xlabel: str = "time (sec)",
+                 true_label: str = "True", nav_label: str = "Est", cmd_label: str = "Cmd", show_legend: bool = True,
+                 nav_color: str = 'lime', true_color: str = 'deepskyblue', cmd_color: str = 'red', widget: Optional[QWidget] = None
+                 ) -> None:
         """ Data required for plotting
 
         Inputs:
@@ -71,6 +71,8 @@ class PlotNav(PlotAxis):
         self._true_xdata = true_xdata
         self._nav_data = nav_data
         self._nav_xdata = nav_xdata
+        self._cmd_data = cmd_data
+        self._cmd_xdata = cmd_xdata
         self._widget = widget
 
         # Create the plots
@@ -80,6 +82,12 @@ class PlotNav(PlotAxis):
             self._nav.set_label(nav_label)
             self._nav.set_color(nav_color)
             self._nav.set_linewidth(3)
+        self._cmd: Optional[Line2D] = None
+        if (cmd_data is not None) and (cmd_xdata is not None):
+            (self._cmd, ) = self._ax.plot(self._cmd_xdata, self._cmd_data)
+            self._cmd.set_label(cmd_label)
+            self._cmd.set_color(cmd_color)
+            self._cmd.set_linewidth(3)
         (self._true, ) = self._ax.plot(self._true_xdata, self._true_data)
         self._true.set_label(true_label)
         self._true.set_color(true_color)
@@ -98,6 +106,8 @@ class PlotNav(PlotAxis):
         self._true.set_data(self._true_xdata, self._true_data)
         if self._nav is not None:
             self._nav.set_data(self._nav_xdata, self._nav_data)
+        if self._cmd is not None:
+            self._cmd.set_data(self._cmd_xdata, self._cmd_data)
 
         # Adjust the axes properties
         self._adjust_axes()
@@ -105,10 +115,10 @@ class PlotNav(PlotAxis):
 class PlotDiff(PlotAxis):
     """Used to plot the difference between two data sets using interpolation of the data"""
     def __init__(self, ax: plt.Axes, data_y1: list[float], data_x1: list[float], data_y2: list[float],
-        data_x2: list[float], title: str = "", ylabel: str = "", xlabel: str = "time (sec)",
-        legend_label: str = "", show_legend: bool = True,
-        data_color: str = 'red', widget: Optional[QWidget] = None
-        ) -> None:
+                 data_x2: list[float], title: str = "", ylabel: str = "", xlabel: str = "time (sec)",
+                 legend_label: str = "", show_legend: bool = True,
+                 data_color: str = 'red', widget: Optional[QWidget] = None
+                 ) -> None:
         """ Data required for plotting
 
         Inputs:

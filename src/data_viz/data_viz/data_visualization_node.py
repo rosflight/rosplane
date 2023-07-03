@@ -39,7 +39,7 @@ class StatePlotter:
         # if self._plot_sensors:
         #     self._create_sensor_plotter()
 
-        print("initalized...")
+        # print("initalized...")
 
         # Flush out plots and add figures to the GUI
         for fig in self._figures:
@@ -69,7 +69,8 @@ class StatePlotter:
         ))
         self._plotters.append(PlotNav(
             true_data=self._data.true.p_alt, true_xdata=self._data.true.time,
-            nav_data=self._data.est.p_alt, nav_xdata=self._data.est.time,
+            nav_data=self._data.est.p_alt, nav_xdata=self._data.est.time, cmd_data=self._data.cmd_state.altitude,
+            cmd_xdata=self._data.cmd_state.time, cmd_label="$alt_{cmd}$",
             true_label="alt-True", nav_label="alt-Est", show_legend=True,
             ax=state_axis[0,2], title="z-axis", ylabel="$m$", widget=widget
         ))
@@ -108,23 +109,24 @@ class StatePlotter:
             true_color="darkorange", nav_color="forestgreen", widget=widget
         ))
         self._plotters.append(PlotNav(
-            true_data=self._data.true.chi, true_xdata=self._data.true.time,
-            ax=state_axis[1,3], title="", ylabel="rad",
-            true_label="$\\chi$", show_legend=True,
+            true_data=self._data.true.chi, true_xdata=self._data.true.time, cmd_data=self._data.cmd_state.course,
+            cmd_xdata=self._data.cmd_state.time, ax=state_axis[1,3], title="", ylabel="rad",
+            true_label="$\\chi$", cmd_label="$\\chi_{cmd}$", show_legend=True,
             true_color="sienna", widget=widget
         ))
 
         # Create attitude plots
         self._plotters.append(PlotNav(
             true_data=self._data.true.phi, true_xdata=self._data.true.time,
-            nav_data=self._data.est.phi, nav_xdata=self._data.est.time,
-            true_label="$\\phi$-True", nav_label="$\\phi$-Est", show_legend=True,
-            ax=state_axis[2,0], title="", ylabel="$rad$", widget=widget
+            nav_data=self._data.est.phi, nav_xdata=self._data.est.time, cmd_data=self._data.cmd_state.roll,
+            cmd_xdata=self._data.cmd_state.time, true_label="$\\phi$-True", nav_label="$\\phi$-Est",
+            cmd_label="$\\phi_{cmd}$", show_legend=True, ax=state_axis[2,0], title="", ylabel="$rad$", widget=widget
         ))
         self._plotters.append(PlotNav(
             true_data=self._data.true.theta, true_xdata=self._data.true.time,
-            nav_data=self._data.est.theta, nav_xdata=self._data.est.time,
-            true_label="$\\theta$-True", nav_label="$\\theta$-Est", show_legend=True,
+            nav_data=self._data.est.theta, nav_xdata=self._data.est.time,  cmd_data=self._data.cmd_state.pitch,
+            cmd_xdata=self._data.cmd_state.time, true_label="$\\theta$-True",
+            nav_label="$\\theta$-Est", show_legend=True, cmd_label="$\\theta_{cmd}$",
             ax=state_axis[2,1], title="", ylabel="$rad$", widget=widget
         ))
         self._plotters.append(PlotNav(
@@ -187,239 +189,6 @@ class StatePlotter:
             true_label="$\\delta_t$", show_legend=True,
             ax=state_axis[4,3], title="", ylabel="", widget=widget
         ))
-
-    # def _create_nav_error_plotter(self) -> None:
-    #     """Creates the plotting windows for navigation error
-    #     """
-    #     # Create the inidivual figures
-    #     fig, nav_axis = plt.subplots(5, 4)
-    #     widget = self._pw.addPlot("Nav Error", fig)
-    #     self._figures.append(fig)
-    #
-    #     # Create position plots
-    #     self._plotters.append(PlotDiff(
-    #         data_y1=self._data.true.pn, data_x1=self._data.true.time,
-    #         data_y2=self._data.est.pn, data_x2=self._data.est.time,
-    #         legend_label="$\\delta p_n$", show_legend=True,
-    #         ax=nav_axis[0,0], title="", ylabel="$m$", widget=widget
-    #     ))
-    #     self._plotters.append(PlotDiff(
-    #         data_y1=self._data.true.pe, data_x1=self._data.true.time,
-    #         data_y2=self._data.est.pe, data_x2=self._data.est.time,
-    #         legend_label="$\\delta p_e$", show_legend=True,
-    #         ax=nav_axis[0,1], title="", ylabel="$m$", widget=widget
-    #     ))
-    #     self._plotters.append(PlotDiff(
-    #         data_y1=self._data.true.p_alt, data_x1=self._data.true.time,
-    #         data_y2=self._data.est.p_alt, data_x2=self._data.est.time,
-    #         legend_label="$\\delta p_{alt}$", show_legend=True,
-    #         ax=nav_axis[0,2], title="", ylabel="$m$", widget=widget
-    #     ))
-    #
-    #     # Create linear velocity plots
-    #     self._plotters.append(PlotDiff(
-    #         data_y1=self._data.true.u, data_x1=self._data.true.time,
-    #         data_y2=self._data.est.u, data_x2=self._data.est.time,
-    #         legend_label="$\\delta u$", show_legend=True,
-    #         ax=nav_axis[1,0], title="", ylabel="$m/s$", widget=widget
-    #     ))
-    #     self._plotters.append(PlotDiff(
-    #         data_y1=self._data.true.v, data_x1=self._data.true.time,
-    #         data_y2=self._data.est.v, data_x2=self._data.est.time,
-    #         legend_label="$\\delta v$", show_legend=True,
-    #         ax=nav_axis[1,1], title="", ylabel="$m/s$", widget=widget
-    #     ))
-    #     self._plotters.append(PlotDiff(
-    #         data_y1=self._data.true.w, data_x1=self._data.true.time,
-    #         data_y2=self._data.est.w, data_x2=self._data.est.time,
-    #         legend_label="$\\delta w$", show_legend=True,
-    #         ax=nav_axis[1,2], title="", ylabel="$m/s$", widget=widget
-    #     ))
-    #
-    #     # Create the airspeed plots
-    #     self._plotters.append(PlotDiff(
-    #         data_y1=self._data.true.v_a, data_x1=self._data.true.time,
-    #         data_y2=self._data.est.v_a, data_x2=self._data.est.time,
-    #         legend_label="$\\delta v_a$", show_legend=True, data_color='red',
-    #         ax=nav_axis[1,3], title="", ylabel="$m/s$", widget=widget
-    #     ))
-    #     self._plotters.append(PlotDiff(
-    #         data_y1=self._data.true.v_g, data_x1=self._data.true.time,
-    #         data_y2=self._data.est.v_g, data_x2=self._data.est.time,
-    #         legend_label="$\\delta v_g$", show_legend=True, data_color='blue',
-    #         ax=nav_axis[1,3], title="", ylabel="$m/s$", widget=widget
-    #     ))
-    #
-    #     # Create attitude plots
-    #     self._plotters.append(PlotDiff(
-    #         data_y1=self._data.true.phi, data_x1=self._data.true.time,
-    #         data_y2=self._data.est.phi, data_x2=self._data.est.time,
-    #         legend_label="$\\delta \\phi$", show_legend=True,
-    #         ax=nav_axis[2,0], title="", ylabel="$rad$", widget=widget
-    #     ))
-    #     self._plotters.append(PlotDiff(
-    #         data_y1=self._data.true.theta, data_x1=self._data.true.time,
-    #         data_y2=self._data.est.theta, data_x2=self._data.est.time,
-    #         legend_label="$\\delta \\theta$", show_legend=True,
-    #         ax=nav_axis[2,1], title="", ylabel="$rad$", widget=widget
-    #     ))
-    #     self._plotters.append(PlotDiff(
-    #         data_y1=self._data.true.psi, data_x1=self._data.true.time,
-    #         data_y2=self._data.est.psi, data_x2=self._data.est.time,
-    #         legend_label="$\\delta \\psi$", show_legend=True,
-    #         ax=nav_axis[2,2], title="", ylabel="$rad$", widget=widget
-    #     ))
-    #
-    #     # Create angular velocity plots
-    #     self._plotters.append(PlotDiff(
-    #         data_y1=self._data.true.p, data_x1=self._data.true.time,
-    #         data_y2=self._data.est.p, data_x2=self._data.est.time,
-    #         legend_label="$\\delta p$", show_legend=True,
-    #         ax=nav_axis[3,0], title="", ylabel="$rad/s$", widget=widget
-    #     ))
-    #     self._plotters.append(PlotDiff(
-    #         data_y1=self._data.true.q, data_x1=self._data.true.time,
-    #         data_y2=self._data.est.q, data_x2=self._data.est.time,
-    #         legend_label="$\\delta q$", show_legend=True,
-    #         ax=nav_axis[3,1], title="", ylabel="$rad/s$", widget=widget
-    #     ))
-    #     self._plotters.append(PlotDiff(
-    #         data_y1=self._data.true.r, data_x1=self._data.true.time,
-    #         data_y2=self._data.est.r, data_x2=self._data.est.time,
-    #         legend_label="$\\delta r$", show_legend=True,
-    #         ax=nav_axis[3,2], title="", ylabel="$rad/s$", widget=widget
-    #     ))
-    #
-    #     # Create the gyro bias plots
-    #     self._plotters.append(PlotDiff(
-    #         data_y1=self._data.true.gyro_bx, data_x1=self._data.true.time,
-    #         data_y2=self._data.est.gyro_bx, data_x2=self._data.est.time,
-    #         legend_label="gyro-$\\delta b_x$", show_legend=True, data_color='red',
-    #         ax=nav_axis[3,3], title="", ylabel="$rad/s$", widget=widget
-    #     ))
-    #     self._plotters.append(PlotDiff(
-    #         data_y1=self._data.true.gyro_by, data_x1=self._data.true.time,
-    #         data_y2=self._data.est.gyro_by, data_x2=self._data.est.time,
-    #         legend_label="gyro-$\\delta b_y$", show_legend=True, data_color='blue',
-    #         ax=nav_axis[3,3], title="", ylabel="$rad/s$", widget=widget
-    #     ))
-    #     self._plotters.append(PlotDiff(
-    #         data_y1=self._data.true.gyro_bz, data_x1=self._data.true.time,
-    #         data_y2=self._data.est.gyro_bz, data_x2=self._data.est.time,
-    #         legend_label="gyro-$\\delta b_z$", show_legend=True, data_color='lime',
-    #         ax=nav_axis[3,3], title="", ylabel="$rad/s$", widget=widget
-    #     ))
-
-    # def _create_sensor_plotter(self) -> None:
-    #     """Creates the plotting window for sensor data
-    #     """
-    #     # Create the inidivual figures
-    #     fig, sense_axis = plt.subplots(4, 3)
-    #     widget = self._pw.addPlot("Sensors", fig)
-    #     self._figures.append(fig)
-    #
-    #     # Create the gps plots
-    #     self._plotters.append(PlotNav(
-    #         true_data=self._data.gps.pn, true_xdata=self._data.gps.time,
-    #         true_label="$p_n$-GPS", true_color=self._sensor_color, show_legend=True,
-    #         ax=sense_axis[0,0], title="", ylabel="$m$", widget=widget
-    #     ))
-    #     self._plotters.append(PlotNav(
-    #         true_data=self._data.gps.pe, true_xdata=self._data.gps.time,
-    #         true_label="$p_e$-GPS", true_color=self._sensor_color, show_legend=True,
-    #         ax=sense_axis[0,1], title="", ylabel="$m$", widget=widget
-    #     ))
-    #     self._plotters.append(PlotNav(
-    #         true_data=self._data.gps.p_alt, true_xdata=self._data.gps.time,
-    #         true_label="alt-GPS", true_color=self._sensor_color, show_legend=True,
-    #         ax=sense_axis[0,2], title="", ylabel="$m$", widget=widget
-    #     ))
-    #
-    #     # GPS velocity, compass, and pressure sensors
-    #     self._plotters.append(PlotNav(
-    #         true_data=self._data.gps.v_g, true_xdata=self._data.gps.time,
-    #         true_label="$V_g$-GPS", true_color=self._sensor_color, show_legend=True,
-    #         ax=sense_axis[1,0], title="", ylabel="$m/s$", widget=widget
-    #     ))
-    #     self._plotters.append(PlotNav(
-    #         true_data=self._data.comp.angle, true_xdata=self._data.comp.time,
-    #         true_color=self._sensor_color, true_label="$\\psi$-Compass", show_legend=True,
-    #         ax=sense_axis[1,1], title="", ylabel="$rad$", widget=widget
-    #     ))
-    #     self._plotters.append(PlotNav(
-    #         true_data=self._data.true.psi, true_xdata=self._data.true.time,
-    #         nav_data=self._data.est.psi, nav_xdata=self._data.est.time,
-    #         true_label="$\\psi$-True", nav_label="$\\psi$-Est", show_legend=True,
-    #         ax=sense_axis[1,1], title="", ylabel="$rad$", widget=widget
-    #     ))
-    #     self._plotters.append(PlotNav(
-    #         true_data=self._data.press.abs_pressure, true_xdata=self._data.press.time,
-    #         nav_data=self._data.press.diff_pressure, nav_xdata=self._data.press.time,
-    #         nav_color=self._sensor_color, true_color="darkviolet",
-    #         true_label="abs-press", nav_label="diff-press", show_legend=True,
-    #         ax=sense_axis[1,2], title="", ylabel="pascals", widget=widget
-    #     ))
-    #
-    #     # Create the accelerometer plots
-    #     self._plotters.append(PlotNav(
-    #             true_data=self._data.imu.ax, true_xdata=self._data.imu.time,
-    #             true_label="accel-x", true_color=self._sensor_color, show_legend=True,
-    #             ax=sense_axis[2,0], title="", ylabel="$m/s^2$", widget=widget
-    #         )
-    #     )
-    #     self._plotters.append(PlotNav(
-    #             true_data=self._data.imu.ay, true_xdata=self._data.imu.time,
-    #             true_label="accel-y", true_color=self._sensor_color, show_legend=True,
-    #             ax=sense_axis[2,1], title="", ylabel="$m/s^2$", widget=widget
-    #         )
-    #     )
-    #     self._plotters.append(PlotNav(
-    #             true_data=self._data.imu.az, true_xdata=self._data.imu.time,
-    #             true_label="accel-z", true_color=self._sensor_color, show_legend=True,
-    #             ax=sense_axis[2,2], title="", ylabel="$m/s^2$", widget=widget
-    #         )
-    #     )
-    #
-    #     # Create the gyro plots
-    #     self._plotters.append(PlotNav(
-    #             true_data=self._data.imu.p, true_xdata=self._data.imu.time,
-    #             true_label="gyro-x", true_color=self._sensor_color, show_legend=True,
-    #             ax=sense_axis[3,0], title="", ylabel="rad/s", widget=widget
-    #         )
-    #     )
-    #     self._plotters.append(PlotNav(
-    #             true_data=self._data.true.gyro_bx, true_xdata=self._data.true.time,
-    #             nav_data=self._data.est.gyro_bx, nav_xdata=self._data.est.time,
-    #             true_label="True-bias", nav_label="Nav-bias", show_legend=True,
-    #             ax=sense_axis[3,0], title="", ylabel="rad/s", widget=widget
-    #         )
-    #     )
-    #     self._plotters.append(PlotNav(
-    #             true_data=self._data.imu.q, true_xdata=self._data.imu.time,
-    #             true_label="gyro-y", true_color=self._sensor_color, show_legend=True,
-    #             ax=sense_axis[3,1], title="", ylabel="rad/s", widget=widget
-    #         )
-    #     )
-    #     self._plotters.append(PlotNav(
-    #             true_data=self._data.true.gyro_by, true_xdata=self._data.true.time,
-    #             nav_data=self._data.est.gyro_by, nav_xdata=self._data.est.time,
-    #             true_label="True-bias", nav_label="Nav-bias", show_legend=True,
-    #             ax=sense_axis[3,1], title="", ylabel="rad/s", widget=widget
-    #         )
-    #     )
-    #     self._plotters.append(PlotNav(
-    #             true_data=self._data.imu.r, true_xdata=self._data.imu.time,
-    #             true_label="gyro-z", true_color=self._sensor_color, show_legend=True,
-    #             ax=sense_axis[3,2], title="", ylabel="rad/s", widget=widget
-    #         )
-    #     )
-    #     self._plotters.append(PlotNav(
-    #             true_data=self._data.true.gyro_bz, true_xdata=self._data.true.time,
-    #             nav_data=self._data.est.gyro_bz, nav_xdata=self._data.est.time,
-    #             true_label="True-bias", nav_label="Nav-bias", show_legend=True,
-    #             ax=sense_axis[3,2], title="", ylabel="rad/s", widget=widget
-    #         )
-    #     )
 
     def plot_states(self) -> None:
         """Plots the state updates"""
