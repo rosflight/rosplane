@@ -21,7 +21,7 @@ void path_manager_example::manage(const params_s &params, const input_s &input, 
     //ROS_WARN_THROTTLE(4, "No waypoints received! Loitering about origin at 50m");
     //RCLCPP_WARN(this->get_logger(), "No waypoints received! Loitering about origin at 50m",4); !!!
     output.flag = false;
-    output.va_d = 12;
+    output.va_d = 20;
     output.c[0] = 0.0f;
     output.c[1] = 0.0f;
     output.c[2] = -50.0f;

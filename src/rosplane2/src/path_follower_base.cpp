@@ -42,12 +42,6 @@ void path_follower_base::update()
     msg.h_c = output.h_c;
     msg.phi_ff = output.phi_ff;
 
-    // DEBUGGING REVERT THESE CHANGES!!!
-//    msg.chi_c = 5.0;
-//    msg.va_c = 25.0;
-//    msg.h_c = 100.0;
-//    msg.phi_ff = 0.0;
-
 
     RCLCPP_DEBUG_STREAM(this->get_logger(), "Publishing Contoller Commands!");
 

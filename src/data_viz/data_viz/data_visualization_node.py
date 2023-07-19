@@ -75,9 +75,9 @@ class StatePlotter:
             ax=state_axis[0,2], title="z-axis", ylabel="$m$", widget=widget
         ))
         self._plotters.append(PlotNav(
-            true_data=self._data.true.w_n, true_xdata=self._data.true.time,
-            nav_data=self._data.true.w_e, nav_xdata=self._data.true.time,
-            ax=state_axis[0,3], title="Wind", ylabel="$m/s$",
+            true_data=self._data.est.w_n, true_xdata=self._data.est.time,
+            nav_data=self._data.est.w_e, nav_xdata=self._data.est.time,
+            ax=state_axis[0,3], title="Wind-estimated", ylabel="$m/s$",
             true_label="$w_n$", nav_label="$w_e$", show_legend=True,
             true_color="darkorange", nav_color="forestgreen", widget=widget
         ))
@@ -138,7 +138,8 @@ class StatePlotter:
         self._plotters.append(PlotNav(
             true_data=self._data.true.v_a, true_xdata=self._data.true.time,
             nav_data=self._data.est.v_a, nav_xdata=self._data.est.time,
-            true_label="$V_a$-True", nav_label="$V_a$-Est", show_legend=True,
+            cmd_data=self._data.cmd_state.airspeed, cmd_xdata=self._data.cmd_state.time,
+            true_label="$V_a$-True", nav_label="$V_a$-Est", cmd_label="$V_a$-Cmd", show_legend=True,
             ax=state_axis[2,3], title="", ylabel="$m/s$", widget=widget
         ))
 

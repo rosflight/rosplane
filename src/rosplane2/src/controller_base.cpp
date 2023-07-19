@@ -17,7 +17,7 @@
         controller_commands_sub_ = this->create_subscription<rosplane2_msgs::msg::ControllerCommands>(
                 "controller_commands", 10, std::bind(&controller_base::controller_commands_callback, this, _1));
         vehicle_state_sub_ = this->create_subscription<rosplane2_msgs::msg::State>(
-                "state", 10, std::bind(&controller_base::vehicle_state_callback, this, _1));
+                "estimated_state", 10, std::bind(&controller_base::vehicle_state_callback, this, _1));
 
         command_recieved_ = false;
 
@@ -40,8 +40,6 @@
     void controller_base::vehicle_state_callback(const rosplane2_msgs::msg::State::SharedPtr msg)
     {
         vehicle_state_ = *msg;
-
-//        std::cout << "Vehicle State received." << std::endl;
     }
 
     void controller_base::actuator_controls_publish()
@@ -61,9 +59,6 @@
         input.phi_ff = controller_commands_.phi_ff;
         input.Ts = 0.01f;
 
-        //  std::cout << "Controlling!" << std::endl;
-        //
-        //  std::cout << "command_recieved: " << command_recieved_ << std::endl;
 
         struct output_s output;
         if (command_recieved_ == true)
@@ -78,13 +73,7 @@
         rclcpp::Time now = this->get_clock()->now();
 
 
-        uint64_t nanoseconds_since_epoch = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-        uint64_t seconds_since_epoch = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-        actuators.header.stamp.sec = seconds_since_epoch;
-        actuators.header.stamp.nanosec = nanoseconds_since_epoch - seconds_since_epoch * 1000000000;
-
-//        actuators.header.stamp.sec = now.seconds();
-//        actuators.header.stamp.nanosec = now.nanoseconds();
+        actuators.header.stamp = now;
 
         actuators.ignore = 0;
         actuators.mode = rosflight_msgs::msg::Command::MODE_PASS_THROUGH;

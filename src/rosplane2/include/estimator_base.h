@@ -25,6 +25,8 @@
 #define EARTH_RADIUS 6378145.0f
 
 using std::placeholders::_1;
+using namespace std::chrono_literals;
+
 
 namespace rosplane2
 {
@@ -90,7 +92,9 @@ protected:
     double Ts;
   };
 
-  virtual void estimate(const struct params_s &params, const struct input_s &input, struct output_s &output) = 0;
+    bool baro_init_;        /**< Initial barometric pressure */
+
+    virtual void estimate(const struct params_s &params, const struct input_s &input, struct output_s &output) = 0;
 
 private:
   rclcpp::Publisher<rosplane2_msgs::msg::State>::SharedPtr vehicle_state_pub_;
@@ -124,7 +128,6 @@ private:
   double init_lon_ = 0.0;       /**< Initial longitude in degrees */
   float init_alt_ = 0.0;        /**< Initial altitude in meters above MSL  */
   bool armed_first_time_; /**< Arm before starting estimation  */
-  bool baro_init_;        /**< Initial barometric pressure */
   float init_static_;     /**< Initial static pressure (mbar)  */
   int baro_count_;        /**< Used to grab the first set of baro measurements */
   std::vector<float> init_static_vector_; /**< Used to grab the first set of baro measurements */

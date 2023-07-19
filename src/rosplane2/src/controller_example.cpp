@@ -30,7 +30,9 @@ void controller_example::control(const params_s &params, const input_s &input, o
     output.phi_c = 0;
     output.delta_a = roll_hold(0.0, input.phi, input.p, params, input.Ts);
     output.delta_t = params.max_t;
-    output.theta_c = 15.0*3.14/180.0;
+
+    output.theta_c = 3.0 * 3.14 / 180.0;
+
     if (input.h >= params.alt_toz)
     {
       RCLCPP_INFO(this->get_logger(), "climb");
@@ -41,8 +43,22 @@ void controller_example::control(const params_s &params, const input_s &input, o
     }
     break;
   case alt_zones::CLIMB:
-    output.delta_t = params.max_t;
-    output.theta_c = airspeed_with_pitch_hold(input.Va_c, input.va, params, input.Ts);
+    double adjusted_hc;
+    double max_alt;
+    max_alt = params.alt_hz/2.0;
+
+    if (abs(input.h_c - input.h) > max_alt){
+        adjusted_hc = input.h + copysign(max_alt, input.h_c - input.h);
+    }
+    else{
+        adjusted_hc = input.h_c;
+    }
+
+    output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts);
+    output.theta_c = altitiude_hold(adjusted_hc, input.h, params, input.Ts);
+    output.delta_a = roll_hold(0.0, input.phi, input.p, params, input.Ts);
+
+
     if (input.h >= input.h_c - params.alt_hz)
     {
       RCLCPP_INFO(this->get_logger(), "hold");
@@ -76,9 +92,7 @@ void controller_example::control(const params_s &params, const input_s &input, o
     }
     break;
   case alt_zones::ALTITUDE_HOLD:
-    double adjusted_hc;
-    double max_alt;
-    max_alt = 5.0; // TODO add this to params.
+    max_alt = params.alt_hz; // TODO add this to params.
 
     if (abs(input.h_c - input.h) > max_alt){
         adjusted_hc = input.h + copysign(max_alt, input.h_c - input.h);
@@ -89,21 +103,15 @@ void controller_example::control(const params_s &params, const input_s &input, o
 
     output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts);
     output.theta_c = altitiude_hold(adjusted_hc, input.h, params, input.Ts);
-    if (input.h >= input.h_c + params.alt_hz)
+
+
+    if (input.h <= params.alt_toz)
     {
-      RCLCPP_INFO(this->get_logger(), "descend");
-      current_zone = alt_zones::DESCEND;
-      ap_error_ = 0;
-      ap_integrator_ = 0;
-      ap_differentiator_ = 0;
-    }
-    else if (input.h <= input.h_c - params.alt_hz)
-    {
-      RCLCPP_INFO(this->get_logger(), "climb");
-      current_zone = alt_zones::CLIMB;
-      ap_error_ = 0;
-      ap_integrator_ = 0;
-      ap_differentiator_ = 0;
+        RCLCPP_INFO(this->get_logger(), "take off");
+        current_zone = alt_zones::TAKE_OFF;
+
+        c_integrator_ = 0;
+
     }
     break;
   default:
@@ -124,7 +132,7 @@ float controller_example::course_hold(float chi_c, float chi, float phi_ff, floa
   float ui = params.c_ki*c_integrator_;
   float ud = params.c_kd*r;
 
-  float phi_c = sat(up + ui + ud + phi_ff, 40.0*3.14/180.0, -40.0*3.14/180.0);
+  float phi_c = sat(up + ui + ud + phi_ff, 15.0*3.14/180.0, -15.0*3.14/180.0);
   if (fabs(params.c_ki) >= 0.00001)
   {
     float phi_c_unsat = up + ui + ud + phi_ff;
@@ -145,10 +153,10 @@ float controller_example::roll_hold(float phi_c, float phi, float p, const param
   float ui = params.r_ki*r_integrator;
   float ud = params.r_kd*p;
 
-  float delta_a = sat(up + ui + ud, params.max_a, -params.max_a);
+  float delta_a = sat(up + ui - ud, params.max_a, -params.max_a);
   if (fabs(params.r_ki) >= 0.00001)
   {
-    float delta_a_unsat = up + ui + ud;
+    float delta_a_unsat = up + ui - ud;
     r_integrator = r_integrator + (Ts/params.r_ki)*(delta_a - delta_a_unsat);
   }
 
@@ -166,19 +174,18 @@ float controller_example::pitch_hold(float theta_c, float theta, float q, const 
   float ui = params.p_ki*p_integrator_;
   float ud = params.p_kd*q;
 
-  float delta_e = sat(params.trim_e/params.pwm_rad_e + up + ui + ud, params.max_e, -params.max_e);
 
-//  RCLCPP_INFO_STREAM(this->get_logger(), "theta_c: " << theta_c);
+  float delta_e = sat(params.trim_e/params.pwm_rad_e + up + ui - ud, params.max_e, -params.max_e);
 
 
   if (fabs(params.p_ki) >= 0.00001)
   {
-    float delta_e_unsat = params.trim_e/params.pwm_rad_e + up + ui + ud;
+    float delta_e_unsat = params.trim_e/params.pwm_rad_e + up + ui - ud;
     p_integrator_ = p_integrator_ + (Ts/params.p_ki)*(delta_e - delta_e_unsat);
   }
 
   p_error_ = error;
-  return delta_e;
+  return -delta_e;
 }
 
 float controller_example::airspeed_with_pitch_hold(float Va_c, float Va, const params_s &params, float Ts)
@@ -208,9 +215,6 @@ float controller_example::airspeed_with_throttle_hold(float Va_c, float Va, cons
 {
   float error = Va_c - Va;
 
-//    RCLCPP_INFO_STREAM(this->get_logger(), "Va_error: " << error);
-
-
   at_integrator_ = at_integrator_ + (Ts/2.0)*(error + at_error_);
   at_differentiator_ = (2.0*params.tau - Ts)/(2.0*params.tau + Ts)*at_differentiator_ + (2.0 /
                        (2.0*params.tau + Ts))*(error - at_error_);
@@ -234,7 +238,13 @@ float controller_example::altitiude_hold(float h_c, float h, const params_s &par
 {
   float error = h_c - h;
 
-  a_integrator_ = a_integrator_ + (Ts/2.0)*(error + a_error_);
+  if (-params.alt_hz + .01 < error && error < params.alt_hz - .01) {
+      a_integrator_ = a_integrator_ + (Ts / 2.0) * (error + a_error_);
+  }
+  else{
+      a_integrator_ = 0.0;
+  }
+
   a_differentiator_ = (2.0*params.tau - Ts)/(2.0*params.tau + Ts)*a_differentiator_ + (2.0 /
                       (2.0*params.tau + Ts))*(error - a_error_);
 
@@ -242,7 +252,7 @@ float controller_example::altitiude_hold(float h_c, float h, const params_s &par
   float ui = params.a_ki*a_integrator_;
   float ud = params.a_kd*a_differentiator_;
 
-  float theta_c = sat(up + ui + ud, 35.0*3.14/180.0, -35.0*3.14/180.0);
+  float theta_c = sat(up + ui + ud, 10.0*3.14/180.0, -10.0*3.14/180.0);
   if (fabs(params.a_ki) >= 0.00001)
   {
     float theta_c_unsat = up + ui + ud;

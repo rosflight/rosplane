@@ -81,8 +81,8 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   }
 
   // low pass filter gyros to estimate angular rates
-  lpf_gyro_x_ = alpha_*lpf_gyro_x_ + (1 - alpha_)*input.gyro_x;
-  lpf_gyro_y_ = alpha_*lpf_gyro_y_ + (1 - alpha_)*input.gyro_y;
+  lpf_gyro_x_ = input.gyro_x;
+  lpf_gyro_y_ = input.gyro_y; // alpha_*lpf_gyro_y_ + (1 - alpha_)*input.gyro_y;
   lpf_gyro_z_ = alpha_*lpf_gyro_z_ + (1 - alpha_)*input.gyro_z;
 
   float phat = lpf_gyro_x_;
@@ -93,8 +93,12 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   lpf_static_ = alpha1_*lpf_static_ + (1 - alpha1_)*input.static_pres;
   float hhat = lpf_static_/params.rho/params.gravity;
 
-  // low pass filter diff pressure sensor and invert to extimate Va
-  lpf_diff_ = alpha1_*lpf_diff_ + (1 - alpha1_)*input.diff_pres;
+  if(input.static_pres == 0.0 || baro_init_ == false){ // Catch the edge case for if pressure measured is zero.
+    hhat = 0.0;
+  }
+
+  // low pass filter diff pressure sensor and invert to estimate Va
+  lpf_diff_ = input.diff_pres;
 
   // when the plane isn't moving or moving slowly, the noise in the sensor
   // will cause the differential pressure to go negative. This will catch
@@ -200,15 +204,6 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
 
   for (int i = 0; i < N_; i++)
   {
-
-
-    // xhat_p_(0) - pn
-    // xhat_p_(1) - pe
-    // xhat_p_(2) - Vg
-    // xhat_p_(3) - chi
-    // xhat_p_(4) - wn
-    // xhat_p_(5) - we
-    // xhat_p_(6) - psi
 
     float pn = xhat_p_(0);
     float pe = xhat_p_(1);

@@ -37,7 +37,7 @@ void path_follower_example::follow(const params_s &params, const input_s &input,
     output.h_c = h_d;
     output.phi_ff = 0.0;
   }
-  else // follow a orbit path specified by c_orbit, rho_orbit, and lam_orbit
+  else // follow an orbit path specified by c_orbit, rho_orbit, and lam_orbit
   {
     float d = sqrtf(powf((input.pn - input.c_orbit[0]), 2) + powf((input.pe - input.c_orbit[1]),
                     2)); // distance from orbit center
