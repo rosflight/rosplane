@@ -17,7 +17,10 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclpy REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(rosplane2_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 ament_export_dependencies(
@@ -25,14 +28,25 @@ ament_export_dependencies(
   geometry_msgs
   Eigen3
 )
+ament_export_include_directories(include)
+
+include_directories(  #use this if you need .h files for include statements.  The include will need to have the directories where each .h is respectively.
+        include
+        ${EIGEN3_INCLUDE_DIRS}
+        )
+
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
 install(DIRECTORY worlds DESTINATION share/${PROJECT_NAME}/)
 
-# Add the EntityWrench node
-# add_executable(entity_wrench_pub src/entity_wrench_pub.cpp)
-# ament_target_dependencies(entity_wrench_pub rclcpp Eigen3)
-# install(TARGETS entity_wrench_pub DESTINATION lib/${PROJECT_NAME})
+
+add_executable(rosplane2_gazebo_truth_publisher
+        src/gazebo_state_transcription.cpp)
+ament_target_dependencies(rosplane2_gazebo_truth_publisher rosplane2_msgs rclcpp rclpy nav_msgs)
+install(TARGETS
+        rosplane2_gazebo_truth_publisher
+        DESTINATION lib/${PROJECT_NAME})
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

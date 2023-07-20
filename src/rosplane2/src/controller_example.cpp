@@ -1,4 +1,4 @@
-#include "controller_example.h"
+#include "controller_example.hpp"
 
 #include "iostream"
 
@@ -95,10 +95,10 @@ void controller_example::control(const params_s &params, const input_s &input, o
     max_alt = params.alt_hz; // TODO add this to params.
 
     if (abs(input.h_c - input.h) > max_alt){
-        adjusted_hc = input.h + copysign(max_alt, input.h_c - input.h);
+      adjusted_hc = input.h + copysign(max_alt, input.h_c - input.h);
     }
     else{
-        adjusted_hc = input.h_c;
+      adjusted_hc = input.h_c;
     }
 
     output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts);
@@ -107,10 +107,10 @@ void controller_example::control(const params_s &params, const input_s &input, o
 
     if (input.h <= params.alt_toz)
     {
-        RCLCPP_INFO(this->get_logger(), "take off");
-        current_zone = alt_zones::TAKE_OFF;
+      RCLCPP_INFO(this->get_logger(), "take off");
+      current_zone = alt_zones::TAKE_OFF;
 
-        c_integrator_ = 0;
+      c_integrator_ = 0;
 
     }
     break;
@@ -239,10 +239,10 @@ float controller_example::altitiude_hold(float h_c, float h, const params_s &par
   float error = h_c - h;
 
   if (-params.alt_hz + .01 < error && error < params.alt_hz - .01) {
-      a_integrator_ = a_integrator_ + (Ts / 2.0) * (error + a_error_);
+    a_integrator_ = a_integrator_ + (Ts / 2.0) * (error + a_error_);
   }
   else{
-      a_integrator_ = 0.0;
+    a_integrator_ = 0.0;
   }
 
   a_differentiator_ = (2.0*params.tau - Ts)/(2.0*params.tau + Ts)*a_differentiator_ + (2.0 /
@@ -258,8 +258,6 @@ float controller_example::altitiude_hold(float h_c, float h, const params_s &par
     float theta_c_unsat = up + ui + ud;
     a_integrator_ = a_integrator_ + (Ts/params.a_ki)*(theta_c - theta_c_unsat);
   }
-
-//  RCLCPP_INFO_STREAM(this->get_logger(), "theta_c: " << theta_c);
 
 
   at_error_ = error;

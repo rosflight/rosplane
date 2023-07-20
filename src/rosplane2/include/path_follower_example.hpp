@@ -1,7 +1,7 @@
 #ifndef PATH_FOLLOWER_EXAMPLE_H
 #define PATH_FOLLOWER_EXAMPLE_H
 
-#include "path_follower_base.h"
+#include "path_follower_base.hpp"
 
 namespace rosplane2
 {

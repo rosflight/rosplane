@@ -1,7 +1,7 @@
 #ifndef CONTROLLER_EXAMPLE_H
 #define CONTROLLER_EXAMPLE_H
 
-#include "controller_base.h"
+#include "controller_base.hpp"
 
 namespace rosplane2
 {

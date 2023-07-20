@@ -25,8 +25,6 @@ find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rosplane2_msgs REQUIRED)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-find_package(tf2 REQUIRED)
-find_package(tf2_ros REQUIRED)
 find_package(rosflight_msgs REQUIRED)
 
 ament_export_dependencies(rclcpp rclpy)
@@ -41,23 +39,7 @@ include_directories(  #use this if you need .h files for include statements.  Th
 
 ### START OF REAL EXECUTABLES ###
 
-# Truth Node
-add_executable(rosplane2_truth_publisher
-            src/aircraft_truth.cpp)
-ament_target_dependencies(rosplane2_truth_publisher rosplane2_msgs rclcpp rclpy nav_msgs)
-install(TARGETS
-  rosplane2_truth_publisher
-  DESTINATION lib/${PROJECT_NAME})
-
-# Forces Node
-add_executable(rosplane2_force_publisher
-            src/forces_moments.cpp)
-ament_target_dependencies(rosplane2_force_publisher rosplane2_msgs geometry_msgs rclcpp rclpy nav_msgs)
-install(TARGETS
-  rosplane2_force_publisher
-  DESTINATION lib/${PROJECT_NAME})
-
-# Autopilot
+# Controller
 add_executable(rosplane2_controller
             src/controller_base.cpp
             src/controller_example.cpp)
@@ -65,15 +47,6 @@ ament_target_dependencies(rosplane2_controller rosplane2_msgs rosflight_msgs rcl
 install(TARGETS
   rosplane2_controller
   DESTINATION lib/${PROJECT_NAME})
-
-# Estimator
-#add_executable(rosplane2_estimator
-#            originalFiles/estimator_base.cpp
-#            originalFiles/estimator_example.cpp)
-#ament_target_dependencies(rosplane2_estimator rosplane2_msgs rclcpp rclpy Eigen3)
-#install(TARGETS
-#  rosplane2_estimator
-#  DESTINATION lib/${PROJECT_NAME})
 
 # Follower
 add_executable(rosplane2_path_follower
@@ -101,13 +74,7 @@ install(TARGETS
   rosplane2_path_planner
   DESTINATION lib/${PROJECT_NAME})
 
-add_executable(rosplane2_transform_node
-            src/transform_node.cpp)
-ament_target_dependencies(rosplane2_transform_node rosplane2_msgs rclcpp rclpy Eigen3 tf2 tf2_ros)
-install(TARGETS
-        rosplane2_transform_node
-        DESTINATION lib/${PROJECT_NAME})
-
+# Estimator
 add_executable(rosplane2_estimator_node
               src/estimator_base.cpp
               src/estimator_example.cpp)
@@ -115,32 +82,8 @@ ament_target_dependencies(rosplane2_estimator_node rosplane2_msgs rosflight_msgs
 install(TARGETS
         rosplane2_estimator_node
         DESTINATION lib/${PROJECT_NAME})
-        
-add_executable(rosplane2_sensors_node
-            src/sensors.cpp)
 
-ament_target_dependencies(rosplane2_sensors_node rosplane2_msgs rosflight_msgs rclcpp rclpy nav_msgs Eigen3)
-install(TARGETS
-        rosplane2_sensors_node
-        DESTINATION lib/${PROJECT_NAME})
-
-#add_executable(rosplane2_dummy_status_node
-#        src/dummy_status.cpp)
-#
-#ament_target_dependencies(rosplane2_dummy_status_node rosflight_msgs rclcpp rclpy)
-#install(TARGETS
-#        rosplane2_dummy_status_node
-#        DESTINATION lib/${PROJECT_NAME})
-
-add_executable(rosplane2_gazebo_truth_publisher
-            src/gazebo_state_transcription.cpp)
-ament_target_dependencies(rosplane2_gazebo_truth_publisher rosplane2_msgs rclcpp rclpy nav_msgs)
-install(TARGETS
-  rosplane2_gazebo_truth_publisher
-  DESTINATION lib/${PROJECT_NAME})
-
-
-#### END OF REAL EXECUTABLES ###
+#### END OF EXECUTABLES ###
 
 
 if(BUILD_TESTING)

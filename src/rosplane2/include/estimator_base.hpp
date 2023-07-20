@@ -92,9 +92,9 @@ protected:
     double Ts;
   };
 
-    bool baro_init_;        /**< Initial barometric pressure */
+  bool baro_init_;        /**< Initial barometric pressure */
 
-    virtual void estimate(const struct params_s &params, const struct input_s &input, struct output_s &output) = 0;
+  virtual void estimate(const struct params_s &params, const struct input_s &input, struct output_s &output) = 0;
 
 private:
   rclcpp::Publisher<rosplane2_msgs::msg::State>::SharedPtr vehicle_state_pub_;

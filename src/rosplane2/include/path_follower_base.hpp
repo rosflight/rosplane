@@ -4,8 +4,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rosplane2_msgs/msg/state.hpp>
 #include <rosplane2_msgs/msg/controller_commands.hpp>
-
-// #include <rosplane2_msgs/msg/controller_internals.hpp>
 #include <rosplane2_msgs/msg/current_path.hpp>
 
 using namespace std::chrono_literals;

@@ -1,5 +1,5 @@
-#include "path_follower_base.h"
-#include "path_follower_example.h"
+#include "path_follower_base.hpp"
+#include "path_follower_example.hpp"
 
 namespace rosplane2
 {
@@ -7,7 +7,7 @@ namespace rosplane2
 path_follower_base::path_follower_base(): Node("path_follower_base")
 {
   vehicle_state_sub_ = this->create_subscription<rosplane2_msgs::msg::State>(
-                "state", 10, std::bind(&path_follower_base::vehicle_state_callback, this, _1));
+                "estimated_state", 10, std::bind(&path_follower_base::vehicle_state_callback, this, _1));
   current_path_sub_ = this->create_subscription<rosplane2_msgs::msg::CurrentPath>(
                 "current_path", 100, std::bind(&path_follower_base::current_path_callback, this, _1)); // the 1 may need to be 100
 

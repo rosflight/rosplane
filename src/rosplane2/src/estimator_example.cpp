@@ -1,5 +1,5 @@
-#include "estimator_base.h"
-#include "estimator_example.h"
+#include "estimator_base.hpp"
+#include "estimator_example.hpp"
 
 namespace rosplane2
 {
@@ -143,9 +143,6 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
     A_a_(0, 1) = (qhat*sp + rhat*cp)/ct/ct;
     A_a_(1, 0) = -qhat*sp - rhat*cp;
 
-//      RCLCPP_INFO_STREAM(this->get_logger(), "Got here...");
-
-
     Eigen::MatrixXf A_d = Eigen::MatrixXf::Identity(2,2) + params.Ts/N_ * A_a_ + pow(params.Ts/N_, 2) / 2.0 * A_a_ * A_a_;
 
     Eigen::Matrix<float, 2, 3> G;
@@ -153,7 +150,6 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
 
     P_a_ = (A_d*P_a_*A_d.transpose() + (Q_a_ + G * Q_g_ * G.transpose())*pow(params.Ts/N_, 2));
 
-//    P_a_ += (A_a_*P_a_ + P_a_*A_a_.transpose() + Q_a_) * (params.Ts/N_);
 
 
   }
@@ -181,15 +177,13 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   Eigen::MatrixXf S_inv = (R_accel_ + C_a_ * P_a_ * C_a_.transpose()).inverse();
 
   if ((y-h_a_).transpose() * S_inv * (y-h_a_) < 10000000.0){
-      Eigen::MatrixXf L = P_a_ * C_a_.transpose() * S_inv;
-      Eigen::MatrixXf temp = Eigen::MatrixXf::Identity(2,2) - L * C_a_;
-      P_a_ = temp * P_a_ * temp.transpose() + L * R_accel_ * L.transpose();
-      xhat_a_ = xhat_a_ + L * (y - h_a_);
+    Eigen::MatrixXf L = P_a_ * C_a_.transpose() * S_inv;
+    Eigen::MatrixXf temp = Eigen::MatrixXf::Identity(2,2) - L * C_a_;
+    P_a_ = temp * P_a_ * temp.transpose() + L * R_accel_ * L.transpose();
+    xhat_a_ = xhat_a_ + L * (y - h_a_);
   }
 
   check_xhat_a();
-
-
 
   phihat_ = xhat_a_(0);
   thetahat_ = xhat_a_(1);

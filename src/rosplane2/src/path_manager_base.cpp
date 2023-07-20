@@ -9,7 +9,7 @@ namespace rosplane2
 
 path_manager_base::path_manager_base() : Node("rosplane2_path_manager")
 {
-  vehicle_state_sub_ = this->create_subscription<rosplane2_msgs::msg::State>("state", 10, std::bind(&path_manager_base::vehicle_state_callback,this,_1));
+  vehicle_state_sub_ = this->create_subscription<rosplane2_msgs::msg::State>("estimated_state", 10, std::bind(&path_manager_base::vehicle_state_callback,this,_1));
   new_waypoint_sub_  = this->create_subscription<rosplane2_msgs::msg::Waypoint>("waypoint_path", 10, std::bind(&path_manager_base::new_waypoint_callback,this,_1));
   current_path_pub_  = this->create_publisher<rosplane2_msgs::msg::CurrentPath>("current_path", 10);
   update_timer_      = this->create_wall_timer(10ms, std::bind(&path_manager_base::current_path_publish, this));

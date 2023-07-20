@@ -1,7 +1,7 @@
 #ifndef ESTIMATOR_EXAMPLE_H
 #define ESTIMATOR_EXAMPLE_H
 
-#include "estimator_base.h"
+#include "estimator_base.hpp"
 
 #include <math.h>
 #include <Eigen/Geometry>

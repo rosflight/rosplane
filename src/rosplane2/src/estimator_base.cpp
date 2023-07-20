@@ -1,5 +1,5 @@
-#include "estimator_base.h"
-#include "estimator_example.h"
+#include "estimator_base.hpp"
+#include "estimator_example.hpp"
 //#include <sensor_msgs/nav_sat_status.hpp>
 
 namespace rosplane2
@@ -7,27 +7,27 @@ namespace rosplane2
 
 estimator_base::estimator_base() : Node("estimator_base") {
 
-    vehicle_state_pub_ = this->create_publisher<rosplane2_msgs::msg::State>("estimated_state", 10);
+  vehicle_state_pub_ = this->create_publisher<rosplane2_msgs::msg::State>("estimated_state", 10);
 
-    gnss_fix_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(gnss_fix_topic_, 10, std::bind(&estimator_base::gnssFixCallback, this, std::placeholders::_1));
-    gnss_vel_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(gnss_vel_topic_, 10, std::bind(&estimator_base::gnssVelCallback, this, std::placeholders::_1));
-    imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(imu_topic_, 10, std::bind(&estimator_base::imuCallback, this, std::placeholders::_1));
-    baro_sub_ = this->create_subscription<rosflight_msgs::msg::Barometer>(baro_topic_, 10, std::bind(&estimator_base::baroAltCallback, this, std::placeholders::_1));
-    airspeed_sub_ = this->create_subscription<rosflight_msgs::msg::Airspeed>(airspeed_topic_, 10, std::bind(&estimator_base::airspeedCallback, this, std::placeholders::_1));
-    status_sub_ = this->create_subscription<rosflight_msgs::msg::Status>(status_topic_, 10, std::bind(&estimator_base::statusCallback, this, std::placeholders::_1));
+  gnss_fix_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(gnss_fix_topic_, 10, std::bind(&estimator_base::gnssFixCallback, this, std::placeholders::_1));
+  gnss_vel_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(gnss_vel_topic_, 10, std::bind(&estimator_base::gnssVelCallback, this, std::placeholders::_1));
+  imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(imu_topic_, 10, std::bind(&estimator_base::imuCallback, this, std::placeholders::_1));
+  baro_sub_ = this->create_subscription<rosflight_msgs::msg::Barometer>(baro_topic_, 10, std::bind(&estimator_base::baroAltCallback, this, std::placeholders::_1));
+  airspeed_sub_ = this->create_subscription<rosflight_msgs::msg::Airspeed>(airspeed_topic_, 10, std::bind(&estimator_base::airspeedCallback, this, std::placeholders::_1));
+  status_sub_ = this->create_subscription<rosflight_msgs::msg::Status>(status_topic_, 10, std::bind(&estimator_base::statusCallback, this, std::placeholders::_1));
 
-    update_timer_ = this->create_wall_timer(10ms, std::bind(&estimator_base::update, this));
+  update_timer_ = this->create_wall_timer(10ms, std::bind(&estimator_base::update, this));
 
-    init_static_ = 0;
-    baro_count_ = 0;
-    armed_first_time_ = false;
+  init_static_ = 0;
+  baro_count_ = 0;
+  armed_first_time_ = false;
 
-    params_.sigma_n_gps = .01;
-    params_.sigma_e_gps = .01;
-    params_.sigma_Vg_gps = .005;
-    params_.sigma_course_gps = .005/20;
+  params_.sigma_n_gps = .01;
+  params_.sigma_e_gps = .01;
+  params_.sigma_Vg_gps = .005;
+  params_.sigma_course_gps = .005/20;
 
-    params_.sigma_accel = .0025*9.81;
+  params_.sigma_accel = .0025*9.81;
 
 }
 
