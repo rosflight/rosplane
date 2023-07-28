@@ -37,7 +37,6 @@ include_directories(  #use this if you need .h files for include statements.  Th
 
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
-install(DIRECTORY worlds DESTINATION share/${PROJECT_NAME}/)
 
 
 add_executable(rosplane2_gazebo_truth_publisher
