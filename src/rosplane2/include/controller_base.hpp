@@ -2,8 +2,9 @@
  * @file controller_base.h
  *
  * Base class definition for autopilot controller in chapter 6 of UAVbook, see http://uavbook.byu.edu/doku.php
+ * Implements ROS2 functionality and support for control algorithm.
  *
- * @author Gary Ellingson <gary.ellingson@byu.edu>
+ * @author Ian Reid <iyr27@byu.edu>
  */
 
 #ifndef CONTROLLER_BASE_H
@@ -21,102 +22,140 @@ using namespace std::chrono_literals;
 
 namespace rosplane2
 {
-
+/**
+ * This defines the different portions of the control algorithm.
+ */
 enum class alt_zones
 {
-  TAKE_OFF,
-  CLIMB,
-  DESCEND,
-  ALTITUDE_HOLD
+  TAKE_OFF,                 /**< In the take off zone where the aircraft gains speed and altitude */
+  CLIMB,                    /**< In the climb zone the aircraft proceeds to commanded altitude without course change. */
+  ALTITUDE_HOLD             /**< In the altitude hold zone the aircraft keeps altitude and follows commanded course */
 };
 
 class controller_base : public rclcpp::Node
 {
 public:
+
+  /**
+   * Constructor for the base functionality.
+   */
   controller_base();
-  float spin();
 
 protected:
 
+  /**
+   * This struct holds all of the inputs to the control algorithm.
+   */
   struct input_s
   {
-    float Ts;               /** time step */
-    float h;                /** altitude */
-    float va;               /** airspeed */
-    float phi;              /** roll angle */
-    float theta;            /** pitch angle */
-    float chi;              /** course angle */
-    float p;                /** body frame roll rate */
-    float q;                /** body frame pitch rate */
-    float r;                /** body frame yaw rate */
-    float Va_c;             /** commanded airspeed (m/s) */
-    float h_c;              /** commanded altitude (m) */
-    float chi_c;            /** commanded course (rad) */
-    float phi_ff;           /** feed forward term for orbits (rad) */
+    float Ts;               /**< time step */
+    float h;                /**< altitude */
+    float va;               /**< airspeed */
+    float phi;              /**< roll angle */
+    float theta;            /**< pitch angle */
+    float chi;              /**< course angle */
+    float p;                /**< body frame roll rate */
+    float q;                /**< body frame pitch rate */
+    float r;                /**< body frame yaw rate */
+    float Va_c;             /**< commanded airspeed (m/s) */
+    float h_c;              /**< commanded altitude (m) */
+    float chi_c;            /**< commanded course (rad) */
+    float phi_ff;           /**< feed forward term for orbits (rad) */
   };
 
+  /**
+   * This struct holds all of the outputs of the control algorithm.
+   */
   struct output_s
   {
-    float theta_c;
-    float delta_e;
-    float phi_c;
-    float delta_a;
-    float delta_r;
-    float delta_t;
-    alt_zones current_zone;
+    float theta_c;          /**< The commanded pitch angle from the altitude control loop */
+    float phi_c;            /**< The commanded roll angle from the course control loop */
+    float delta_e;          /**< The commanded elevator deflection */
+    float delta_a;          /**< The commanded aileron deflection */
+    float delta_r;          /**< The commanded rudder deflection */
+    float delta_t;          /**< The commanded throttle deflection */
+    alt_zones current_zone; /**< The current altitude zone for the control */
   };
 
+  /**
+   * This struct contains all of the parameters used by the controller.
+   */
   struct params_s
   {
     double alt_hz;           /**< altitude hold zone */
     double alt_toz;          /**< altitude takeoff zone */
-    double tau;
-    double c_kp;
-    double c_kd;
-    double c_ki;
-    double r_kp;
-    double r_kd;
-    double r_ki;
-    double p_kp;
-    double p_kd;
-    double p_ki;
-    double p_ff;
-    double a_p_kp;
-    double a_p_kd;
-    double a_p_ki;
-    double a_t_kp;
-    double a_t_kd;
-    double a_t_ki;
-    double a_kp;
-    double a_kd;
-    double a_ki;
-    double b_kp;
-    double b_kd;
-    double b_ki;
-    double trim_e;
-    double trim_a;
-    double trim_r;
-    double trim_t;
-    double max_e;
-    double max_a;
-    double max_r;
-    double max_t;
-    double pwm_rad_e;
-    double pwm_rad_a;
-    double pwm_rad_r;
+    double tau;              /**< servo response time constant */
+    double c_kp;             /**< course hold proportional gain */
+    double c_kd;             /**< course hold derivative gain */
+    double c_ki;             /**< course hold integral gain */
+    double r_kp;             /**< roll hold proportional gain */
+    double r_kd;             /**< roll hold derivative gain */
+    double r_ki;             /**< roll hold integral gain */
+    double p_kp;             /**< pitch hold proportional gain */
+    double p_kd;             /**< pitch hold derivative gain */
+    double p_ki;             /**< pitch hold integral gain */
+    double p_ff;             /**< pitch feedforward */
+    double a_p_kp;           /**< airspeed with pitch hold proportional gain */
+    double a_p_kd;           /**< airspeed with pitch hold derivative gain */
+    double a_p_ki;           /**< airspeed with pitch hold integral gain */
+    double a_t_kp;           /**< airspeed with throttle hold proportional gain */
+    double a_t_kd;           /**< airspeed with throttle hold derivative gain */
+    double a_t_ki;           /**< airspeed with throttle hold integral gain */
+    double a_kp;             /**< altitude hold proportional gain */
+    double a_kd;             /**< altitude hold derivative gain */
+    double a_ki;             /**< altitude hold integral gain */
+    double b_kp;             /**< coordinated turn proportional gain */
+    double b_kd;             /**< coordinated turn derivative gain */
+    double b_ki;             /**< coordinated turn integral gain */
+    double trim_e;           /**< trim value for elevator */
+    double trim_a;           /**< trim value for aileron */
+    double trim_r;           /**< trim value for rudder */
+    double trim_t;           /**< trim value for throttle */
+    double max_e;            /**< maximum value for elevator */
+    double max_a;            /**< maximum value for aileron */
+    double max_r;            /**< maximum value for rudder */
+    double max_t;            /**< maximum value for throttle */
+    double pwm_rad_e;        /**< conversion to pwm from radians for output of control loops */
+    double pwm_rad_a;        /**< conversion to pwm from radians for output of control loops */
+    double pwm_rad_r;        /**< conversion to pwm from radians for output of control loops */
   };
 
+  /**
+   * Interface for control algorithm to interface with the given ROS2 functionality.
+   * @param params Parameters used to calculate.
+   * @param input Inputs to the control algorithm.
+   * @param output Outputs of the controller, including selected intermediate values and final control efforts.
+   */
   virtual void control(const struct params_s &params, const struct input_s &input, struct output_s &output) = 0;
 
 private:
+
+  /**
+   * This publisher publishes the final calculated control surface deflections.
+   */
   rclcpp::Publisher<rosflight_msgs::msg::Command>::SharedPtr actuators_pub_;
-  rclcpp::Subscription<rosplane2_msgs::msg::ControllerCommands>::SharedPtr controller_commands_sub_;
-  rclcpp::Subscription<rosplane2_msgs::msg::State>::SharedPtr vehicle_state_sub_;
-  rclcpp::Subscription<rosplane2_msgs::msg::State>::SharedPtr vehicle_estimated_state_sub_;
+
+    /**
+   * This publisher publishes the intermediate commands in the control algorithm.
+   */
   rclcpp::Publisher<rosplane2_msgs::msg::ControllerInternals>::SharedPtr internals_pub_;
 
+  /**
+   * This subscriber subscribes to the commands the controller uses to calculate control effort.
+   */
+  rclcpp::Subscription<rosplane2_msgs::msg::ControllerCommands>::SharedPtr controller_commands_sub_;
+
+  /**
+   * This subscriber subscribes to the current state of the aircraft.
+   */
+  rclcpp::Subscription<rosplane2_msgs::msg::State>::SharedPtr vehicle_state_sub_;
+
+  /**
+   * This timer controls how often commands are published by the autopilot.
+   */
   rclcpp::TimerBase::SharedPtr timer_;
 
+  /** Parameters for use in control loops.*/
   struct params_s params_ = {
           /* alt_hz */ 10.0,
           /* alt_toz */ 5.0,
@@ -127,8 +166,8 @@ private:
           /* r_kp */ .06,
           /* r_kd */ 0.04,
           /* r_ki */ 0.0,
-          /* p_kp */ -.15, // .-2
-          /* p_kd */ -.05, // -.08
+          /* p_kp */ -.15,
+          /* p_kd */ -.05,
           /* p_ki */ 0.0,
           /* p_ff */ 0.0,
           /* a_p_kp */ -0.0713,
@@ -137,9 +176,9 @@ private:
           /* a_t_kp */ .05,
           /* a_t_kd */ 0.0,
           /* a_t_ki */ .005,
-          /* a_kp */ 0.015, // .05
+          /* a_kp */ 0.015,
           /* a_kd */ 0.0,
-          /* a_ki */ 0.003, // .001
+          /* a_ki */ 0.003,
           /* b_kp */ -0.1164,
           /* b_kd */ 0.0,
           /* b_ki */ -0.0037111,
@@ -153,34 +192,70 @@ private:
           /* max_t */ 1.0,
           /* pwm_rad_e */ 1.0,
           /* pwm_rad_a */ 1.0,
-          /* pwm_rad_r */ 1.0};           /**< params */
-
-  rosplane2_msgs::msg::ControllerCommands controller_commands_;
-  rosplane2_msgs::msg::State vehicle_state_;
-
-  bool command_recieved_;
-
-  OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
+          /* pwm_rad_r */ 1.0};
 
   /**
-  * Convert from deflection angle to pwm
-  */
+   * The stored value for the most up to date commands for the controller.
+   */
+  rosplane2_msgs::msg::ControllerCommands controller_commands_;
+
+  /**
+   * The stored value for the most up to date vehicle state (pose).
+   */
+  rosplane2_msgs::msg::State vehicle_state_;
+
+  /**
+   * Flag to indicate if the first command has been received.
+   */
+  bool command_recieved_;
+
+  /**
+   * Convert from deflection angle in radians to pwm
+   */
   void convert_to_pwm(struct output_s &output);
 
   /**
-  * Publish the outputs
-  */
+   * Publish the outputs to the command topic
+   */
   void actuator_controls_publish();
 
+  /**
+   * Callback for new set of controller commands published to the controller_commands_sub_.
+   * This saves the message as the member variable controller_commands_ for use in control loops.
+   * @param msg ControllerCommands message.
+   */
   void controller_commands_callback(const rosplane2_msgs::msg::ControllerCommands::SharedPtr msg);
 
+  /**
+   * Callback for the new state of the aircraft published to the vehicle_state_sub_.
+   * This saves the message as the member variable vehicle_state_ for sue in control loops.
+   * @param msg
+   */
   void vehicle_state_callback(const rosplane2_msgs::msg::State::SharedPtr msg);
 
+  /**
+   * ROS2 parameter system interface. This connects ROS2 parameters with the defined update callback, parametersCallback.
+   */
+  OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
+
+  /**
+   * Callback for when parameters are changed using ROS2 parameter system.
+   * This takes all new changed params and updates the appropiate parameters in the params_ object.
+   * @param parameters Set of updated parameters.
+   * @return Service result object that tells the requester the result of the param update.
+   */
   rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter> &parameters);
 
-  void set_parameters();
-
+  /**
+   * This declares each parameter as a parameter so that the ROS2 parameter system can recognize each parameter.
+   */
   void declare_parameters();
+
+  /**
+   * This sets the parameters with the values in the params_ object from the supplied parameter file, or sets them to
+   * the default if no value is given for a parameter.
+   */
+  void set_parameters();
 
 };
 } //end namespace
