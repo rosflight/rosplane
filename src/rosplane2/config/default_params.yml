@@ -1,3 +1,6 @@
+# Descriptions of each param are found on rosflight.org -> User Guide -> Parameter Configuration.
+# link: https://docs.rosflight.org/user-guide/parameter-configuration/
+
 - {name: ACC_LPF_ALPHA, type: 9, value: 0.5}
 - {name: ACC_X_BIAS, type: 9, value: -0.34897023439407349}
 - {name: ACC_X_TEMP_COMP, type: 9, value: 0}
