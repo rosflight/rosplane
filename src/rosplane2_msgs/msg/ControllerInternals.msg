@@ -1,5 +1,8 @@
 # Controller internals (inner loops, states) output from the autopilot controller, for now just for debuging and ploting
 
+# header
+std_msgs/Header header
+
 # @warning theta_c, phi_c and alt_zone have always to be valid, the aux array is optional
 float32 theta_c		# Commanded pitch (rad)
 float32 phi_c		# Commanded roll (rad)

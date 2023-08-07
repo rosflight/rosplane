@@ -1,5 +1,8 @@
 # Current path output from the path manager, input to path follower
 
+# header
+std_msgs/Header header
+
 # @warning va_d must always be valid,
 # r and q need to be valid if path_type == LINE_PATH
 # c, rho, and, lambda need to be valid if path_type == ORBIT_PATH

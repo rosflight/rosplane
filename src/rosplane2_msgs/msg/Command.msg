@@ -1,7 +1,5 @@
 # Offboard control command message
 
-
-
 # control mode flags
 uint8 MODE_PASS_THROUGH = 0
 uint8 MODE_ROLLRATE_PITCHRATE_YAWRATE_THROTTLE = 1

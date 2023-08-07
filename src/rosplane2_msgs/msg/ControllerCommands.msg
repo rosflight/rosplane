@@ -1,5 +1,8 @@
 # Controller commands output from the path follower, input to autopilot controller
 
+# header
+std_msgs/Header header
+
 # @warning Va_c, h_c and chi_c have always to be valid, the aux array is optional
 float32 va_c		# Commanded airspeed (m/s)
 float32 h_c		# Commanded altitude (m)
