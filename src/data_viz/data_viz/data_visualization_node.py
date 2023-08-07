@@ -69,8 +69,8 @@ class StatePlotter:
         ))
         self._plotters.append(PlotNav(
             true_data=self._data.true.p_alt, true_xdata=self._data.true.time,
-            nav_data=self._data.est.p_alt, nav_xdata=self._data.est.time, cmd_data=self._data.cmd_state.altitude,
-            cmd_xdata=self._data.cmd_state.time, cmd_label="$alt_{cmd}$",
+            nav_data=self._data.est.p_alt, nav_xdata=self._data.est.time, cmd_data=self._data.con_cmd.alt_c,
+            cmd_xdata=self._data.con_cmd.time, cmd_label="$alt_{cmd}$",
             true_label="alt-True", nav_label="alt-Est", show_legend=True,
             ax=state_axis[0,2], title="z-axis", ylabel="$m$", widget=widget
         ))
@@ -109,8 +109,8 @@ class StatePlotter:
             true_color="darkorange", nav_color="forestgreen", widget=widget
         ))
         self._plotters.append(PlotNav(
-            true_data=self._data.true.chi, true_xdata=self._data.true.time, cmd_data=self._data.cmd_state.course,
-            cmd_xdata=self._data.cmd_state.time, ax=state_axis[1,3], title="", ylabel="rad",
+            true_data=self._data.true.chi, true_xdata=self._data.true.time, cmd_data=self._data.con_cmd.course_c,
+            cmd_xdata=self._data.con_cmd.time, ax=state_axis[1,3], title="", ylabel="rad",
             true_label="$\\chi$", cmd_label="$\\chi_{cmd}$", show_legend=True,
             true_color="sienna", widget=widget
         ))
@@ -118,14 +118,14 @@ class StatePlotter:
         # Create attitude plots
         self._plotters.append(PlotNav(
             true_data=self._data.true.phi, true_xdata=self._data.true.time,
-            nav_data=self._data.est.phi, nav_xdata=self._data.est.time, cmd_data=self._data.cmd_state.roll,
-            cmd_xdata=self._data.cmd_state.time, true_label="$\\phi$-True", nav_label="$\\phi$-Est",
+            nav_data=self._data.est.phi, nav_xdata=self._data.est.time, cmd_data=self._data.con_inners.roll_c,
+            cmd_xdata=self._data.con_inners.time, true_label="$\\phi$-True", nav_label="$\\phi$-Est",
             cmd_label="$\\phi_{cmd}$", show_legend=True, ax=state_axis[2,0], title="", ylabel="$rad$", widget=widget
         ))
         self._plotters.append(PlotNav(
             true_data=self._data.true.theta, true_xdata=self._data.true.time,
-            nav_data=self._data.est.theta, nav_xdata=self._data.est.time,  cmd_data=self._data.cmd_state.pitch,
-            cmd_xdata=self._data.cmd_state.time, true_label="$\\theta$-True",
+            nav_data=self._data.est.theta, nav_xdata=self._data.est.time,  cmd_data=self._data.con_inners.pitch_c,
+            cmd_xdata=self._data.con_inners.time, true_label="$\\theta$-True",
             nav_label="$\\theta$-Est", show_legend=True, cmd_label="$\\theta_{cmd}$",
             ax=state_axis[2,1], title="", ylabel="$rad$", widget=widget
         ))
@@ -138,7 +138,7 @@ class StatePlotter:
         self._plotters.append(PlotNav(
             true_data=self._data.true.v_a, true_xdata=self._data.true.time,
             nav_data=self._data.est.v_a, nav_xdata=self._data.est.time,
-            cmd_data=self._data.cmd_state.airspeed, cmd_xdata=self._data.cmd_state.time,
+            cmd_data=self._data.con_cmd.airspeed_c, cmd_xdata=self._data.con_cmd.time,
             true_label="$V_a$-True", nav_label="$V_a$-Est", cmd_label="$V_a$-Cmd", show_legend=True,
             ax=state_axis[2,3], title="", ylabel="$m/s$", widget=widget
         ))

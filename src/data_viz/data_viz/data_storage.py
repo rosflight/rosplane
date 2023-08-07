@@ -128,11 +128,11 @@ class CommandStorage:
         self.rudder: list[float] = []
         self.throttle: list[float] = []
 
-    def append(self, cmd: Command, time: Time) -> None:
+    def append(self, cmd: Command) -> None:
         """ Stores the command data and trims the vectors
         """
         # Append data
-        self.time.append(time.nanoseconds*1.e-9)
+        self.time.append(time_to_seconds(cmd.header.stamp))
         self.elevator.append(cmd.y)
         self.aileron.append(cmd.x)
         self.rudder.append(cmd.z)
@@ -147,39 +147,58 @@ class CommandStorage:
             del self.rudder[0:ind]
             del self.throttle[0:ind]
 
-class CommandedStateStorage:
+class ControllerInternalsStorage:
 
     def __init__(self, t_horizon: float) -> None:
 
         self.t_horizon = t_horizon
 
         self.time: list[float] = []     # Time values (seconds)
-        self.pitch: list[float] = []
-        self.roll: list[float] = []
-        self.course: list[float] = []
-        self.altitude: list[float] = []
-        self.airspeed: list[float] = []
+        self.pitch_c: list[float] = []
+        self.roll_c: list[float] = []
 
-    def append(self, cmd_state: list, time: Time) -> None:
+    def append(self, internals: ControllerInternals) -> None:
         """ Stores the command data and trims the vectors
         """
         # Append data
-        self.time.append(time.nanoseconds*1.e-9)
-        self.pitch.append(cmd_state[0])
-        self.roll.append(cmd_state[1])
-        self.course.append(cmd_state[2])
-        self.altitude.append(cmd_state[3])
-        self.airspeed.append(cmd_state[4])
+        self.time.append(time_to_seconds(internals.header.stamp))
+        self.pitch_c.append(internals.theta_c)
+        self.roll_c.append(internals.phi_c)
 
         # Trim the data
         ind = bisect.bisect_left(self.time, self.time[-1] - self.t_horizon)
         if ind > 0:
             del self.time[0:ind]
-            del self.pitch[0:ind]
-            del self.roll[0:ind]
-            del self.course[0:ind]
-            del self.altitude[0:ind]
-            del self.airspeed[0:ind]
+            del self.pitch_c[0:ind]
+            del self.roll_c[0:ind]
+
+class ControllerCommandsStorage:
+
+    def __init__(self, t_horizon: float) -> None:
+
+        self.t_horizon = t_horizon
+
+        self.time: list[float] = []     # Time values (seconds)
+        self.course_c: list[float] = []
+        self.alt_c: list[float] = []
+        self.airspeed_c: list[float] = []
+
+    def append(self, con_cmd: ControllerCommands) -> None:
+        """ Stores the command data and trims the vectors
+        """
+        # Append data
+        self.time.append(time_to_seconds(con_cmd.header.stamp))
+        self.course_c.append(con_cmd.chi_c)
+        self.alt_c.append(con_cmd.h_c)
+        self.airspeed_c.append(con_cmd.va_c)
+
+        # Trim the data
+        ind = bisect.bisect_left(self.time, self.time[-1] - self.t_horizon)
+        if ind > 0:
+            del self.time[0:ind]
+            del self.course_c[0:ind]
+            del self.alt_c[0:ind]
+            del self.airspeed_c[0:ind]
 
 
 class RosStorageInterface:
@@ -217,7 +236,8 @@ class RosStorageInterface:
         self.true = StateStorage(t_horizon=self.t_horizon)
         self.cmd = CommandStorage(t_horizon=self.t_horizon)
         self.est = StateStorage(t_horizon=self.t_horizon)
-        self.cmd_state = CommandedStateStorage(t_horizon=self.t_horizon)
+        self.con_inners = ControllerInternalsStorage(t_horizon=self.t_horizon)
+        self.con_cmd = ControllerCommandsStorage(t_horizon=self.t_horizon)
 
     def state_callback(self, msg: State) -> None:
         """Stores the latest state data
@@ -237,22 +257,15 @@ class RosStorageInterface:
         """Stores the latest command data
         """
         with self.lock:
-            self.cmd.append(cmd=msg, time=self.node.get_clock().now())
+            self.cmd.append(cmd=msg)
 
 
     def cmd_internal_callback(self, msg: ControllerInternals) -> None:
 
-        update = []
-
-        update.append(msg.theta_c)
-        update.append(msg.phi_c)
-        update.append(self.con_cmd.chi_c)
-        update.append(self.con_cmd.h_c)
-        update.append(self.con_cmd.va_c)
-
         with self.lock:
-            self.cmd_state.append(cmd_state=update, time=self.node.get_clock().now())
+            self.con_inners.append(internals=msg)
 
     def con_command_callback(self, msg: ControllerCommands) -> None:
 
-        self.con_cmd = msg
+        with self.lock:
+            self.con_cmd.append(con_cmd=msg)
