@@ -115,6 +115,9 @@ void controller_base::actuator_controls_publish()
     if (internals_pub_->get_subscription_count() > 0)
     {
       rosplane2_msgs::msg::ControllerInternals inners;
+
+      inners.header.stamp = now;
+
       inners.phi_c = output.phi_c;
       inners.theta_c = output.theta_c;
       switch (output.current_zone)

@@ -88,6 +88,10 @@ void path_manager_base::current_path_publish() //const rclcpp::TimerEvent &
 
   rosplane2_msgs::msg::CurrentPath current_path;
 
+  rclcpp::Time now = this->get_clock()->now();
+
+  current_path.header.stamp = now;
+
   if (output.flag)
     current_path.path_type = current_path.LINE_PATH;
   else

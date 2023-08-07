@@ -37,6 +37,10 @@ void path_follower_base::update()
     follow(params_, input_, output);
     rosplane2_msgs::msg::ControllerCommands msg;
 
+    rclcpp::Time now = this->get_clock()->now();
+
+    msg.header.stamp = now;
+
     msg.chi_c = output.chi_c;
     msg.va_c = output.Va_c;
     msg.h_c = output.h_c;

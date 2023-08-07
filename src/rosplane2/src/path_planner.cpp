@@ -24,7 +24,11 @@ int main(int argc, char **argv)
 
     wait.sleep_for(rclcpp::Duration(0,int(5e8)));
 
-    rosplane2_msgs::msg::Waypoint new_waypoint; 
+    rosplane2_msgs::msg::Waypoint new_waypoint;
+
+    rclcpp::Time now = node->get_clock()->now();
+
+    new_waypoint.header.stamp = now;
 
     new_waypoint.w[0] = wps[i*5 + 0];
     new_waypoint.w[1] = wps[i*5 + 1];
