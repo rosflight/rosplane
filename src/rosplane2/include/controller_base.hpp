@@ -32,12 +32,16 @@ enum class alt_zones
   ALTITUDE_HOLD             /**< In the altitude hold zone the aircraft keeps altitude and follows commanded course */
 };
 
+/**
+ * This class implements all of the basic functionality of a controller interfacing with ROS2.
+ */
+
 class controller_base : public rclcpp::Node
 {
 public:
 
   /**
-   * Constructor for the base functionality.
+   * Constructor for ROS2 setup and parameter initialization.
    */
   controller_base();
 
@@ -82,46 +86,47 @@ protected:
    */
   struct params_s
   {
-    double alt_hz;           /**< altitude hold zone */
-    double alt_toz;          /**< altitude takeoff zone */
-    double tau;              /**< servo response time constant */
-    double c_kp;             /**< course hold proportional gain */
-    double c_kd;             /**< course hold derivative gain */
-    double c_ki;             /**< course hold integral gain */
-    double r_kp;             /**< roll hold proportional gain */
-    double r_kd;             /**< roll hold derivative gain */
-    double r_ki;             /**< roll hold integral gain */
-    double p_kp;             /**< pitch hold proportional gain */
-    double p_kd;             /**< pitch hold derivative gain */
-    double p_ki;             /**< pitch hold integral gain */
-    double p_ff;             /**< pitch feedforward */
-    double a_p_kp;           /**< airspeed with pitch hold proportional gain */
-    double a_p_kd;           /**< airspeed with pitch hold derivative gain */
-    double a_p_ki;           /**< airspeed with pitch hold integral gain */
-    double a_t_kp;           /**< airspeed with throttle hold proportional gain */
-    double a_t_kd;           /**< airspeed with throttle hold derivative gain */
-    double a_t_ki;           /**< airspeed with throttle hold integral gain */
-    double a_kp;             /**< altitude hold proportional gain */
-    double a_kd;             /**< altitude hold derivative gain */
-    double a_ki;             /**< altitude hold integral gain */
-    double b_kp;             /**< coordinated turn proportional gain */
-    double b_kd;             /**< coordinated turn derivative gain */
-    double b_ki;             /**< coordinated turn integral gain */
-    double trim_e;           /**< trim value for elevator */
-    double trim_a;           /**< trim value for aileron */
-    double trim_r;           /**< trim value for rudder */
-    double trim_t;           /**< trim value for throttle */
-    double max_e;            /**< maximum value for elevator */
-    double max_a;            /**< maximum value for aileron */
-    double max_r;            /**< maximum value for rudder */
-    double max_t;            /**< maximum value for throttle */
-    double pwm_rad_e;        /**< conversion to pwm from radians for output of control loops */
-    double pwm_rad_a;        /**< conversion to pwm from radians for output of control loops */
-    double pwm_rad_r;        /**< conversion to pwm from radians for output of control loops */
+    double alt_hz;               /**< altitude hold zone */
+    double alt_toz;              /**< altitude takeoff zone */
+    double tau;                  /**< servo response time constant */
+    double c_kp;                 /**< course hold proportional gain */
+    double c_kd;                 /**< course hold derivative gain */
+    double c_ki;                 /**< course hold integral gain */
+    double r_kp;                 /**< roll hold proportional gain */
+    double r_kd;                 /**< roll hold derivative gain */
+    double r_ki;                 /**< roll hold integral gain */
+    double p_kp;                 /**< pitch hold proportional gain */
+    double p_kd;                 /**< pitch hold derivative gain */
+    double p_ki;                 /**< pitch hold integral gain */
+    double p_ff;                 /**< pitch feedforward */
+    double a_p_kp;               /**< airspeed with pitch hold proportional gain */
+    double a_p_kd;               /**< airspeed with pitch hold derivative gain */
+    double a_p_ki;               /**< airspeed with pitch hold integral gain */
+    double a_t_kp;               /**< airspeed with throttle hold proportional gain */
+    double a_t_kd;               /**< airspeed with throttle hold derivative gain */
+    double a_t_ki;               /**< airspeed with throttle hold integral gain */
+    double a_kp;                 /**< altitude hold proportional gain */
+    double a_kd;                 /**< altitude hold derivative gain */
+    double a_ki;                 /**< altitude hold integral gain */
+    double b_kp;                 /**< coordinated turn proportional gain */
+    double b_kd;                 /**< coordinated turn derivative gain */
+    double b_ki;                 /**< coordinated turn integral gain */
+    double trim_e;               /**< trim value for elevator */
+    double trim_a;               /**< trim value for aileron */
+    double trim_r;               /**< trim value for rudder */
+    double trim_t;               /**< trim value for throttle */
+    double max_e;                /**< maximum value for elevator */
+    double max_a;                /**< maximum value for aileron */
+    double max_r;                /**< maximum value for rudder */
+    double max_t;                /**< maximum value for throttle */
+    double pwm_rad_e;            /**< conversion to pwm from radians for output of control loops */
+    double pwm_rad_a;            /**< conversion to pwm from radians for output of control loops */
+    double pwm_rad_r;            /**< conversion to pwm from radians for output of control loops */
+    double max_takeoff_throttle; /**< maximum throttle allowed at takeoff */
   };
 
   /**
-   * Interface for control algorithm to interface with the given ROS2 functionality.
+   * Interface for control algorithm.
    * @param params Parameters used to calculate.
    * @param input Inputs to the control algorithm.
    * @param output Outputs of the controller, including selected intermediate values and final control efforts.
@@ -184,15 +189,16 @@ private:
           /* b_ki */ -0.0037111,
           /* trim_e */ 0.02,
           /* trim_a */ 0.0,
-          /* trim_r */ 0.0,
-          /* trim_t */ 0.7,
+          /* trim_r */ 0.0
+          /* trim_t */ 0.5,
           /* max_e */ 0.61,
           /* max_a */ 0.15,
           /* max_r */ 0.523,
           /* max_t */ 1.0,
           /* pwm_rad_e */ 1.0,
           /* pwm_rad_a */ 1.0,
-          /* pwm_rad_r */ 1.0};
+          /* pwm_rad_r */ 1.0,
+          /* max_takeoff_throttle */ .55};
 
   /**
    * The stored value for the most up to date commands for the controller.
@@ -210,12 +216,13 @@ private:
   bool command_recieved_;
 
   /**
-   * Convert from deflection angle in radians to pwm
+   * Convert from deflection angle in radians to pwm.
    */
   void convert_to_pwm(struct output_s &output);
 
   /**
-   * Publish the outputs to the command topic
+   * Calls the control function and publishes outputs and intermediate values to the command and controller internals
+   * topics.
    */
   void actuator_controls_publish();
 

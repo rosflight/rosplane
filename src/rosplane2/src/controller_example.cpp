@@ -40,8 +40,8 @@ void controller_example::control(const params_s &params, const input_s &input, o
     output.phi_c = 0;
     output.delta_a = roll_hold(0.0, input.phi, input.p, params, input.Ts);
 
-    // Set throttle to full to maximize acceleration to trim speed.
-    output.delta_t = params.max_t;
+    // Set throttle to maximum value to not overshoot altitude.
+    output.delta_t = sat(airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts), params.max_takeoff_throttle, 0);
 
     // Command a shallow pitch angle to gain altitude.
     output.theta_c = 3.0 * 3.14 / 180.0;
