@@ -10,11 +10,11 @@ int main(int argc, char **argv)
 
   auto waypoint_publisher = node->create_publisher<rosplane2_msgs::msg::Waypoint>("waypoint_path", 10); // !!! n vs nh_ example I am following used n 
   rclcpp::Rate loop_rate(10);
-  float va = 35;
+  float va = 20;
   float wps[5*num_waypoints] =
   {
-    200, 0, -100, 45*M_PI/180, va,
-    0, 200, -100, 45*M_PI/180, va,
+    200, 0, -30, 45*M_PI/180, va,
+    0, 200, -30, 45*M_PI/180, va,
     200, 200, -100, 225*M_PI/180, va,
   };
 
