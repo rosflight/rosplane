@@ -37,7 +37,7 @@ include_directories(  #use this if you need .h files for include statements.  Th
   ${GAZEBO_INCLUDE_DIRS}
 )
 
-install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
+install(DIRECTORY launch params DESTINATION share/${PROJECT_NAME}/)
 
 ### START OF REAL EXECUTABLES ###
 
