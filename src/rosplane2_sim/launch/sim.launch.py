@@ -30,6 +30,11 @@ def generate_launch_description():
 
     return LaunchDescription([
         base_launch_include,
+        Node (
+            package = 'rosplane2_sim',
+            executable='rosplane2_gazebo_truth_publisher',
+            name='gazebo_truth'
+        ),
         Node(
             package='data_viz',
             executable='viz_data',
