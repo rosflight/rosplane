@@ -15,7 +15,7 @@ int main(int argc, char **argv)
   {
     200, 0, -30, 45*M_PI/180, va,
     0, 200, -30, 45*M_PI/180, va,
-    200, 200, -100, 225*M_PI/180, va,
+    200, 200, -30, 225*M_PI/180, va,
   };
 
   rclcpp::Clock wait;
