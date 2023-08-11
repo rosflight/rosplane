@@ -98,7 +98,7 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   }
 
   // low pass filter diff pressure sensor and invert to estimate Va
-  lpf_diff_ = input.diff_pres;
+  lpf_diff_ = alpha1_*lpf_diff_ + (1 - alpha1_)*input.diff_pres;
 
   // when the plane isn't moving or moving slowly, the noise in the sensor
   // will cause the differential pressure to go negative. This will catch
