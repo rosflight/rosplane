@@ -1,12 +1,12 @@
 #ifndef CONTROLLER_EXAMPLE_H
 #define CONTROLLER_EXAMPLE_H
 
-#include "controller_base.hpp"
+#include "controller_state_machine.hpp"
 
 namespace rosplane2
 {
 
-class controller_example : public controller_base
+class controller_example : public controller_state_machine
 {
 public:
   /**
@@ -14,20 +14,18 @@ public:
    */
   controller_example();
 
+protected:
+
+  virtual void take_off(const struct params_s &params, const struct input_s &input, struct output_s &output);
+  virtual void climb(const struct params_s &params, const struct input_s &input, struct output_s &output);
+  virtual void altitude_hold(const struct params_s &params, const struct input_s &input, struct output_s &output);
+
+  virtual void take_off_exit();
+  virtual void climb_exit();
+  virtual void altitude_hold_exit();
+
+
 private:
-
-  /**
-   * The control algorithm for the autopilot.
-   * @param params The parameters that define the algorithm such as control gains.
-   * @param input The command inputs to the controller such as course and airspeed.
-   * @param output The control efforts calculated and selected intermediate values.
-   */
-  virtual void control(const struct params_s &params, const struct input_s &input, struct output_s &output);
-
-  /**
-   * The current part of the control algorithm based on altitude.
-   */
-  alt_zones current_zone;
 
   /**
    * The control loop for moving to and holding a commanded course.
@@ -152,7 +150,7 @@ private:
    * @param Ts The sampling period
    * @return The commanded pitch angle to maintain and achieve the commanded altitude.
    */
-  float altitiude_hold(float h_c, float h, const struct params_s &params, float Ts);
+  float altitude_hold_control(float h_c, float h, const struct params_s &params, float Ts);
 
   /**
    * The difference between the commanded altitude and the current altitude.

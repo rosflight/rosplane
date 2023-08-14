@@ -1,5 +1,6 @@
 #include "controller_base.hpp"
 #include "controller_example.hpp"
+#include "controller_state_machine.hpp"
 
 #include <iostream>
 

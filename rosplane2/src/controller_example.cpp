@@ -5,11 +5,8 @@
 namespace rosplane2
 {
 
-controller_example::controller_example() : controller_base()
+controller_example::controller_example() : controller_state_machine()
 {
-
-  // Initialize controller in take_off zone.
-  current_zone = alt_zones::TAKE_OFF;
 
   // Initialize course hold, roll hold and pitch hold errors and integrators to zero.
   c_error_ = 0;
@@ -21,8 +18,86 @@ controller_example::controller_example() : controller_base()
 
 }
 
-void controller_example::control(const params_s &params, const input_s &input, output_s &output)
+void controller_example::take_off(const struct params_s &params, const struct input_s &input, struct output_s &output)
 {
+
+  // In the take-off zone maintain level straight flight by commanding a roll angle of 0 and rudder of 0.
+  output.delta_r = 0;
+  output.phi_c = 0;
+  output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params, input.Ts);
+
+  // Set throttle to not overshoot altitude.
+  output.delta_t = sat(airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts), params.max_takeoff_throttle, 0);
+
+  // Command a shallow pitch angle to gain altitude.
+  output.theta_c = 3.0 * 3.14 / 180.0;
+  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params, input.Ts);
+
+}
+
+void controller_example::take_off_exit()
+{
+  // Put any code that should run as the airplane exits take off mode.
+}
+
+void controller_example::climb(const struct params_s &params, const struct input_s &input, struct output_s &output)
+{
+  double adjusted_hc;
+  double max_alt;
+
+  // Set the commanded altitude to a maximum of half the size of the altitude hold zone. Using adjusted_hc.
+  max_alt = params.alt_hz/2.0;
+
+  // If the error in altitude is larger than the max altitude, adjust it to the max with the correct sign.
+  // Otherwise, proceed as normal.
+  if (abs(input.h_c - input.h) > max_alt){
+    adjusted_hc = input.h + copysign(max_alt, input.h_c - input.h);
+  }
+  else{
+    adjusted_hc = input.h_c;
+  }
+
+  // Find the control efforts for throttle and find the commanded pitch angle.
+  output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts);
+  output.theta_c = altitude_hold_control(adjusted_hc, input.h, params, input.Ts);
+  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params, input.Ts);
+
+  // Maintain straight flight while gaining altitude.
+  output.phi_c = 0;
+  output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params, input.Ts);
+  output.delta_r = 0;
+}
+
+void controller_example::climb_exit()
+{
+  // Reset differentiators, integrators and errors.
+  at_error_ = 0;
+  at_integrator_ = 0;
+  at_differentiator_ = 0;
+  a_error_ = 0;
+  a_integrator_ = 0;
+  a_differentiator_ = 0;
+}
+
+void controller_example::altitude_hold(const struct params_s &params, const struct input_s &input, struct output_s &output)
+{
+  double adjusted_hc;
+  double max_alt;
+
+  max_alt = params.alt_hz;
+
+  // Adjust the altitude command if too large or too small to a maximum or minimum value. Otherwise,
+  // continue as normal.
+  if (abs(input.h_c - input.h) > max_alt){
+    adjusted_hc = input.h + copysign(max_alt, input.h_c - input.h);
+  }
+  else{
+    adjusted_hc = input.h_c;
+  }
+
+  // calculate the control effort to maintain airspeed and the required pitch angle to maintain altitude.
+  output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts);
+  output.theta_c = altitude_hold_control(adjusted_hc, input.h, params, input.Ts);
 
   // Set rudder command to zero, can use cooridinated_turn_hold if implemented.
   // Find commanded roll angle in order to achieve commanded course.
@@ -31,108 +106,13 @@ void controller_example::control(const params_s &params, const input_s &input, o
   output.phi_c = course_hold(input.chi_c, input.chi, input.phi_ff, input.r, params, input.Ts);
   output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params, input.Ts);
 
-  // This state machine changes the controls used based on the zone of flight path the aircraft is currently on.
-  switch (current_zone)
-  {
-  case alt_zones::TAKE_OFF:
-
-    // In the take-off zone maintain level flight by commanding a roll angle of 0.
-    output.phi_c = 0;
-    output.delta_a = roll_hold(0.0, input.phi, input.p, params, input.Ts);
-
-    // Set throttle to maximum value to not overshoot altitude.
-    output.delta_t = sat(airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts), params.max_takeoff_throttle, 0);
-
-    // Command a shallow pitch angle to gain altitude.
-    output.theta_c = 3.0 * 3.14 / 180.0;
-
-    // If the current altitude is outside the take-off zone (toz) then move to the climb state.
-    if (input.h >= params.alt_toz)
-    {
-
-      // Set zone to climb.
-      RCLCPP_INFO(this->get_logger(), "climb");
-      current_zone = alt_zones::CLIMB;
-    }
-    break;
-  case alt_zones::CLIMB:
-    double adjusted_hc;
-    double max_alt;
-
-    // Set the commanded altitude to a maximum of half the size of the altitude hold zone. Using adjusted_hc.
-    max_alt = params.alt_hz/2.0;
-
-    // If the error in altitude is larger than the max altitude, adjust it to the max with the correct sign.
-    // Otherwise, proceed as normal.
-    if (abs(input.h_c - input.h) > max_alt){
-        adjusted_hc = input.h + copysign(max_alt, input.h_c - input.h);
-    }
-    else{
-        adjusted_hc = input.h_c;
-    }
-
-    // Find the control efforts for throttle and roll, and find the commanded pitch angle.
-    output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts);
-    output.theta_c = altitiude_hold(adjusted_hc, input.h, params, input.Ts);
-    output.delta_a = roll_hold(0.0, input.phi, input.p, params, input.Ts);
-
-    // Check to see if we have exited the climb zone.
-    if (input.h >= input.h_c - params.alt_hz)
-    {
-      // Set the zone to altitude hold if we have enough altitude and reset errors, integrators and derivatives.
-      RCLCPP_INFO(this->get_logger(), "hold");
-      current_zone = alt_zones::ALTITUDE_HOLD;
-      at_error_ = 0;
-      at_integrator_ = 0;
-      at_differentiator_ = 0;
-      a_error_ = 0;
-      a_integrator_ = 0;
-      a_differentiator_ = 0;
-    }
-    else if (input.h <= params.alt_toz)
-    {
-      // Set to take off if too close to the ground.
-      RCLCPP_INFO(this->get_logger(), "takeoff");
-      current_zone = alt_zones::TAKE_OFF;
-    }
-    break;
-  case alt_zones::ALTITUDE_HOLD:
-    max_alt = params.alt_hz;
-
-    // Adjust the altitude command if too large or too small to a maximum or minimum value. Otherwise,
-    // continue as normal.
-    if (abs(input.h_c - input.h) > max_alt){
-      adjusted_hc = input.h + copysign(max_alt, input.h_c - input.h);
-    }
-    else{
-      adjusted_hc = input.h_c;
-    }
-
-    // calculate the control effort to maintain airspeed and the required pitch angle to maintain altitude.
-    output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts);
-    output.theta_c = altitiude_hold(adjusted_hc, input.h, params, input.Ts);
-
-    // Check to see if you have gotten too close to the ground.
-    if (input.h <= params.alt_toz)
-    {
-      // Set the control zone back to take off to regain altitude. and reset integral for course.
-      RCLCPP_INFO(this->get_logger(), "take off");
-      current_zone = alt_zones::TAKE_OFF;
-
-      c_integrator_ = 0;
-
-    }
-    break;
-  default:
-    break;
-  }
-
-  // Record current zone, to publish to controller internals.
-  // Calculate the control effort to reach the commanded pitch angle.
-  output.current_zone = current_zone;
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params, input.Ts);
 }
 
+void controller_example::altitude_hold_exit()
+{
+  c_integrator_ = 0;
+}
 
 /// All the following control loops follow this basic outline.
 /*
@@ -237,29 +217,6 @@ float controller_example::pitch_hold(float theta_c, float theta, float q, const 
   return -delta_e; // TODO explain subtraction.
 }
 
-float controller_example::airspeed_with_pitch_hold(float Va_c, float Va, const params_s &params, float Ts)
-{
-  float error = Va_c - Va;
-
-  ap_integrator_ = ap_integrator_ + (Ts/2.0)*(error + ap_error_);
-  ap_differentiator_ = (2.0*params.tau - Ts)/(2.0*params.tau + Ts)*ap_differentiator_ + (2.0 /
-                       (2.0*params.tau + Ts))*(error - ap_error_);
-
-  float up = params.a_p_kp*error;
-  float ui = params.a_p_ki*ap_integrator_;
-  float ud = params.a_p_kd*ap_differentiator_;
-
-  float theta_c = sat(up + ui + ud, 20.0*3.14/180.0, -25.0*3.14/180.0);
-  if (fabs(params.a_p_ki) >= 0.00001)
-  {
-    float theta_c_unsat = up + ui + ud;
-    ap_integrator_ = ap_integrator_ + (Ts/params.a_p_ki)*(theta_c - theta_c_unsat);
-  }
-
-  ap_error_ = error;
-  return theta_c;
-}
-
 float controller_example::airspeed_with_throttle_hold(float Va_c, float Va, const params_s &params, float Ts)
 {
   float error = Va_c - Va;
@@ -283,7 +240,7 @@ float controller_example::airspeed_with_throttle_hold(float Va_c, float Va, cons
   return delta_t;
 }
 
-float controller_example::altitiude_hold(float h_c, float h, const params_s &params, float Ts)
+float controller_example::altitude_hold_control(float h_c, float h, const params_s &params, float Ts)
 {
   float error = h_c - h;
 
