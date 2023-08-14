@@ -1,11 +1,11 @@
-#include "controller_example.hpp"
+#include "controller_successive_loop.hpp"
 
 #include "iostream"
 
 namespace rosplane2
 {
 
-controller_example::controller_example() : controller_state_machine()
+controller_successive_loop::controller_successive_loop() : controller_state_machine()
 {
 
   // Initialize course hold, roll hold and pitch hold errors and integrators to zero.
@@ -18,57 +18,26 @@ controller_example::controller_example() : controller_state_machine()
 
 }
 
-void controller_example::take_off(const struct params_s &params, const struct input_s &input, struct output_s &output)
+void controller_successive_loop::take_off(const struct params_s &params, const struct input_s &input, struct output_s &output)
 {
 
-  // In the take-off zone maintain level straight flight by commanding a roll angle of 0 and rudder of 0.
-  output.delta_r = 0;
-  output.phi_c = 0;
-  output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params, input.Ts);
-
-  // Set throttle to not overshoot altitude.
-  output.delta_t = sat(airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts), params.max_takeoff_throttle, 0);
-
-  // Command a shallow pitch angle to gain altitude.
-  output.theta_c = 3.0 * 3.14 / 180.0;
-  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params, input.Ts);
+  take_off_lateral_control(params, input, output);
+  take_off_longitudinal_control(params, input, output);
 
 }
 
-void controller_example::take_off_exit()
+void controller_successive_loop::take_off_exit()
 {
   // Put any code that should run as the airplane exits take off mode.
 }
 
-void controller_example::climb(const struct params_s &params, const struct input_s &input, struct output_s &output)
+void controller_successive_loop::climb(const struct params_s &params, const struct input_s &input, struct output_s &output)
 {
-  double adjusted_hc;
-  double max_alt;
-
-  // Set the commanded altitude to a maximum of half the size of the altitude hold zone. Using adjusted_hc.
-  max_alt = params.alt_hz/2.0;
-
-  // If the error in altitude is larger than the max altitude, adjust it to the max with the correct sign.
-  // Otherwise, proceed as normal.
-  if (abs(input.h_c - input.h) > max_alt){
-    adjusted_hc = input.h + copysign(max_alt, input.h_c - input.h);
-  }
-  else{
-    adjusted_hc = input.h_c;
-  }
-
-  // Find the control efforts for throttle and find the commanded pitch angle.
-  output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts);
-  output.theta_c = altitude_hold_control(adjusted_hc, input.h, params, input.Ts);
-  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params, input.Ts);
-
-  // Maintain straight flight while gaining altitude.
-  output.phi_c = 0;
-  output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params, input.Ts);
-  output.delta_r = 0;
+  climb_lateral_control(params, input, output);
+  climb_longitudinal_control(params, input, output);
 }
 
-void controller_example::climb_exit()
+void controller_successive_loop::climb_exit()
 {
   // Reset differentiators, integrators and errors.
   at_error_ = 0;
@@ -79,44 +48,79 @@ void controller_example::climb_exit()
   a_differentiator_ = 0;
 }
 
-void controller_example::altitude_hold(const struct params_s &params, const struct input_s &input, struct output_s &output)
+void controller_successive_loop::altitude_hold(const struct params_s &params, const struct input_s &input, struct output_s &output)
 {
-  double adjusted_hc;
-  double max_alt;
 
-  max_alt = params.alt_hz;
+  alt_hold_lateral_control(params, input, output);
+  alt_hold_longitudinal_control(params, input, output);
 
-  // Adjust the altitude command if too large or too small to a maximum or minimum value. Otherwise,
-  // continue as normal.
-  if (abs(input.h_c - input.h) > max_alt){
-    adjusted_hc = input.h + copysign(max_alt, input.h_c - input.h);
-  }
-  else{
-    adjusted_hc = input.h_c;
-  }
+}
 
-  // calculate the control effort to maintain airspeed and the required pitch angle to maintain altitude.
-  output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts);
-  output.theta_c = altitude_hold_control(adjusted_hc, input.h, params, input.Ts);
+void controller_successive_loop::altitude_hold_exit()
+{
+  c_integrator_ = 0;
+}
 
+void controller_successive_loop::alt_hold_lateral_control(const struct params_s &params, const struct input_s &input, struct output_s &output)
+{
   // Set rudder command to zero, can use cooridinated_turn_hold if implemented.
   // Find commanded roll angle in order to achieve commanded course.
   // Find aileron deflection required to acheive required roll angle.
   output.delta_r = 0; //cooridinated_turn_hold(input.beta, params, input.Ts)
   output.phi_c = course_hold(input.chi_c, input.chi, input.phi_ff, input.r, params, input.Ts);
   output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params, input.Ts);
+}
 
+void controller_successive_loop::alt_hold_longitudinal_control(const struct params_s &params, const struct input_s &input, struct output_s &output)
+{
+  // Saturate the altitude command.
+  double adjusted_hc = adjust_h_c(input.h_c, input.h, params.alt_hz);
+
+  output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts);
+  output.theta_c = altitude_hold_control(adjusted_hc, input.h, params, input.Ts);
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params, input.Ts);
 }
 
-void controller_example::altitude_hold_exit()
+void controller_successive_loop::climb_lateral_control(const struct params_s &params, const struct input_s &input, struct output_s &output)
 {
-  c_integrator_ = 0;
+  // Maintain straight flight while gaining altitude.
+  output.phi_c = 0;
+  output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params, input.Ts);
+  output.delta_r = 0;
+}
+
+void controller_successive_loop::climb_longitudinal_control(const struct params_s &params, const struct input_s &input, struct output_s &output)
+{
+  // Saturate the altitude command.
+  double adjusted_hc = adjust_h_c(input.h_c, input.h, params.alt_hz);
+
+  // Find the control efforts for throttle and find the commanded pitch angle.
+  output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts);
+  output.theta_c = altitude_hold_control(adjusted_hc, input.h, params, input.Ts);
+  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params, input.Ts);
+}
+
+void controller_successive_loop::take_off_lateral_control(const struct params_s &params, const struct input_s &input, struct output_s &output)
+{
+  // In the take-off zone maintain level straight flight by commanding a roll angle of 0 and rudder of 0.
+  output.delta_r = 0;
+  output.phi_c = 0;
+  output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params, input.Ts);
+}
+
+void controller_successive_loop::take_off_longitudinal_control(const struct params_s &params, const struct input_s &input, struct output_s &output)
+{
+  // Set throttle to not overshoot altitude.
+  output.delta_t = sat(airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts), params.max_takeoff_throttle, 0);
+
+  // Command a shallow pitch angle to gain altitude.
+  output.theta_c = 3.0 * 3.14 / 180.0;
+  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params, input.Ts);
 }
 
 /// All the following control loops follow this basic outline.
 /*
-    float controller_example::pid_control(float command_val, float actual_val, float rate, // Not all loops use rate.
+    float controller_successive_loop::pid_control(float command_val, float actual_val, float rate, // Not all loops use rate.
                                           const params_s &params, float Ts)
     {
       // Find the error between the commanded and actual value.
@@ -151,7 +155,7 @@ void controller_example::altitude_hold_exit()
     }
 */
 
-float controller_example::course_hold(float chi_c, float chi, float phi_ff, float r, const params_s &params, float Ts)
+float controller_successive_loop::course_hold(float chi_c, float chi, float phi_ff, float r, const params_s &params, float Ts)
 {
   float error = chi_c - chi;
 
@@ -172,7 +176,7 @@ float controller_example::course_hold(float chi_c, float chi, float phi_ff, floa
   return phi_c;
 }
 
-float controller_example::roll_hold(float phi_c, float phi, float p, const params_s &params, float Ts)
+float controller_successive_loop::roll_hold(float phi_c, float phi, float p, const params_s &params, float Ts)
 {
   float error = phi_c - phi;
 
@@ -193,7 +197,7 @@ float controller_example::roll_hold(float phi_c, float phi, float p, const param
   return delta_a;
 }
 
-float controller_example::pitch_hold(float theta_c, float theta, float q, const params_s &params, float Ts)
+float controller_successive_loop::pitch_hold(float theta_c, float theta, float q, const params_s &params, float Ts)
 {
   float error = theta_c - theta;
 
@@ -217,7 +221,7 @@ float controller_example::pitch_hold(float theta_c, float theta, float q, const 
   return -delta_e; // TODO explain subtraction.
 }
 
-float controller_example::airspeed_with_throttle_hold(float Va_c, float Va, const params_s &params, float Ts)
+float controller_successive_loop::airspeed_with_throttle_hold(float Va_c, float Va, const params_s &params, float Ts)
 {
   float error = Va_c - Va;
 
@@ -240,7 +244,7 @@ float controller_example::airspeed_with_throttle_hold(float Va_c, float Va, cons
   return delta_t;
 }
 
-float controller_example::altitude_hold_control(float h_c, float h, const params_s &params, float Ts)
+float controller_successive_loop::altitude_hold_control(float h_c, float h, const params_s &params, float Ts)
 {
   float error = h_c - h;
 
@@ -270,13 +274,13 @@ float controller_example::altitude_hold_control(float h_c, float h, const params
   return theta_c;
 }
 
-//float controller_example::cooridinated_turn_hold(float v, const params_s &params, float Ts)
+//float controller_successive_loop::cooridinated_turn_hold(float v, const params_s &params, float Ts)
 //{
 //    //todo finish this if you want...
 //    return 0;
 //}
 
-float controller_example::sat(float value, float up_limit, float low_limit)
+float controller_successive_loop::sat(float value, float up_limit, float low_limit)
 {
   // Set to upper limit if larger than that limit.
   // Set to lower limit if smaller than that limit.
@@ -291,6 +295,21 @@ float controller_example::sat(float value, float up_limit, float low_limit)
 
   // Return the saturated value.
   return rVal;
+}
+
+float controller_successive_loop::adjust_h_c(float h_c, float h, float max_diff) {
+  double adjusted_h_c;
+
+  // If the error in altitude is larger than the max altitude, adjust it to the max with the correct sign.
+  // Otherwise, proceed as normal.
+  if (abs(h_c - h) > max_diff){
+    adjusted_h_c = h + copysign(max_diff, h_c - h);
+  }
+  else{
+    adjusted_h_c = h_c;
+  }
+
+  return adjusted_h_c;
 }
 
 } //end namespace

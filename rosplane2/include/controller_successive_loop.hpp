@@ -6,13 +6,13 @@
 namespace rosplane2
 {
 
-class controller_example : public controller_state_machine
+class controller_successive_loop : public controller_state_machine
 {
 public:
   /**
    * Constructor to initialize node.
    */
-  controller_example();
+  controller_successive_loop();
 
 protected:
 
@@ -24,8 +24,14 @@ protected:
   virtual void climb_exit();
   virtual void altitude_hold_exit();
 
+  void alt_hold_lateral_control(const struct params_s &params, const struct input_s &input, struct output_s &output);
+  void alt_hold_longitudinal_control(const struct params_s &params, const struct input_s &input, struct output_s &output);
 
-private:
+  void climb_lateral_control(const struct params_s &params, const struct input_s &input, struct output_s &output);
+  void climb_longitudinal_control(const struct params_s &params, const struct input_s &input, struct output_s &output);
+
+  void take_off_lateral_control(const struct params_s &params, const struct input_s &input, struct output_s &output);
+  void take_off_longitudinal_control(const struct params_s &params, const struct input_s &input, struct output_s &output);
 
   /**
    * The control loop for moving to and holding a commanded course.
@@ -92,32 +98,6 @@ private:
   float p_integrator_;
 
   /**
-   * The control loop that calculates the commanded pitch angle based on maintaining a commanded airspeed. While
-   * maintaining full throttle.
-   * @param Va_c The commanded airspeed.
-   * @param Va The current airspeed
-   * @param params The parameters for the control algorithm, including the control gains.
-   * @param Ts The sampling period.
-   * @return The commanded pitch angle to achieve the airspeed commanded.
-   */
-  float airspeed_with_pitch_hold(float Va_c, float Va, const struct params_s &params, float Ts);
-
-  /**
-   * The difference in the commanded airspeed and the current airspeed.
-   */
-  float ap_error_;
-
-  /**
-   * The integral of the error in airspeed.
-   */
-  float ap_integrator_;
-
-  /**
-   * The deriviative of the error in airspeed.
-   */
-  float ap_differentiator_;
-
-  /**
    * The control loop that calculates the required throttle level to move to and maintain a commanded airspeed.
    * @param Va_c The commanded airspeed.
    * @param Va The current airspeed.
@@ -181,6 +161,9 @@ private:
  */
 
   float sat(float value, float up_limit, float low_limit);
+
+  float adjust_h_c(float h_c, float h, float max_diff);
+
 };
 } //end namespace
 

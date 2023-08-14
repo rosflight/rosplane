@@ -45,11 +45,21 @@ install(DIRECTORY launch params DESTINATION share/${PROJECT_NAME}/)
 add_executable(rosplane2_controller
             src/controller_base.cpp
             src/controller_state_machine.cpp
-            src/controller_example.cpp)
+        src/controller_successive_loop.cpp)
 ament_target_dependencies(rosplane2_controller rosplane2_msgs rosflight_msgs rclcpp rclpy Eigen3)
 install(TARGETS
   rosplane2_controller
   DESTINATION lib/${PROJECT_NAME})
+
+# Total Energy Controller
+add_executable(rosplane2_total_energy_controller
+        src/controller_base.cpp
+        src/controller_state_machine.cpp
+        src/controller_successive_loop.cpp)
+ament_target_dependencies(rosplane2_total_energy_controller rosplane2_msgs rosflight_msgs rclcpp rclpy Eigen3)
+install(TARGETS
+        rosplane2_total_energy_controller
+        DESTINATION lib/${PROJECT_NAME})
 
 # Follower
 add_executable(rosplane2_path_follower

@@ -1,5 +1,5 @@
 #include "controller_base.hpp"
-#include "controller_example.hpp"
+#include "controller_successive_loop.hpp"
 #include "controller_state_machine.hpp"
 
 #include <iostream>
@@ -296,7 +296,7 @@ int main(int argc, char **argv)
 
   // Initialize ROS2 and then begin to spin control node.
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<rosplane2::controller_example>());
+  rclcpp::spin(std::make_shared<rosplane2::controller_successive_loop>());
 
   return 0;
 }
