@@ -1,0 +1,3 @@
+[submodule "rosflight_msgs"]
+	path = rosflight_msgs
+	url = https://github.com/rosflight/rosflight_msgs.git

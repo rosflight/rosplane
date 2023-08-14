@@ -13,13 +13,13 @@ estimator_example::estimator_example() :
   estimator_base(),
   xhat_a_(Eigen::Vector2f::Zero()),
   P_a_(Eigen::Matrix2f::Zero()),
-  Q_a_(Eigen::Matrix2f::Identity()),
-  Q_g_(Eigen::Matrix3f::Identity()),
   xhat_p_(Eigen::VectorXf::Zero(7)),
   P_p_(Eigen::MatrixXf::Identity(7, 7)),
+  Q_a_(Eigen::Matrix2f::Identity()),
+  Q_g_(Eigen::Matrix3f::Identity()),
+  R_accel_(Eigen::Matrix3f::Identity()),
   Q_p_(Eigen::MatrixXf::Identity(7, 7)),
   R_p_(Eigen::MatrixXf::Zero(7, 7)),
-  R_accel_(Eigen::Matrix3f::Identity()),
   f_p_(7),
   A_p_(7, 7),
   C_p_(7),
@@ -199,8 +199,8 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   for (int i = 0; i < N_; i++)
   {
 
-    float pn = xhat_p_(0);
-    float pe = xhat_p_(1);
+//    float pn = xhat_p_(0);
+//    float pe = xhat_p_(1);
     float Vg = xhat_p_(2);
     float chi = xhat_p_(3);
     float wn = xhat_p_(4);
@@ -336,7 +336,7 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   }
 
   bool problem = false;
-  int prob_index;
+//  int prob_index;
   for (int i = 0; i < 7; i++)
   {
     if (!std::isfinite(xhat_p_(i)))
@@ -344,7 +344,7 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
       if (!problem)
       {
         problem = true;
-        prob_index = i;
+//        prob_index = i;
       }
       switch (i)
       {

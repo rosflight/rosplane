@@ -1,22 +1,30 @@
-# ROSplane2 Workspace Setup
+# ROSplane2
+
+[![ROS2 CI](https://github.com/rosflight/rosplane2/actions/workflows/ros2-ci.yml/badge.svg)](https://github.com/rosflight/rosplane2/actions/workflows/ros2-ci.yml)
+
+ROSplane2 is a basic fixed-wing autopilot build around ROS2 for use with the ROSflight autopilot. It is a continuation of 
+the original [ROSplane](https://github.com/byu-magicc/rosplane) project. It is built according to the methods published 
+in Small Unmanned Aircraft: Theory and Practice by Dr. Randy Beard and Dr. Tim McLain. 
+
+## ROSplane2 Workspace Setup
 To set up the workspace to run ROSPlane with ROSFlight, do the following:
 1. Follow the instructions for setup up ROSFlight found here:
    https://github.com/byu-magicc/rosflight2.git
 2. Clone the rosplane2 Gitlab repo into the same workspace folder as ROSFlight:
-    `git clone https://github.com/byu-magicc/rosplane2.git`
+    `git clone --recursive https://github.com/byu-magicc/rosplane2.git`
    1. This will have a file structure like this:
-        ```bash
+      ```
       workspace_dir
       ├── rosflight2
-      └── rosplane2
+      └── rosplane2 
+      ```
 
-   ```
 3. Enter the rosplane2 folder `cd rosplane2`
 4. Build the repository with `colcon build` -- *rosflight2 must be sourced for this to work.* 
 5. Source the `setup.bash` and add it to the `.bashrc` with `echo "source workspace_dir/rosplane2/install/setup.bash" >> ~/.bashrc`
 6. Ensure that both the `rosflight2` and the `rosplane2` are sourced.
 
-# Running ROSplane2 SIL
+## Running ROSplane2 SIL
 
 To run ROSplane2 in simulation do the following:
 1. Launch Gazebo and firmware simulation with `ros2 launch rosflight_sim fixedwing.launch.py`
@@ -31,7 +39,7 @@ To run ROSplane2 in simulation do the following:
 8. Finally, arm the aircraft with channel 4 and then disable throttle and attitude override with channel 5. If not using a controller use `ros2 service call /arm std_srvs/srv/Trigger` and then disable RC override with `ros2 service call /disable_override std_srvs/srv/Trigger`.
 9. The aircraft should now be airborne!
 
-# Running ROSplane2 on hardware.
+## Running ROSplane2 on hardware.
 
 To run ROSplane2 on hardware:
 1. Launch ROSplane2 while rosflight_io is running on the flight controller using `ros2 launch rosplane2 rosplane2.launch.py`
