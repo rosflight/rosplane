@@ -99,18 +99,12 @@ protected:
     double p_kd;                 /**< pitch hold derivative gain */
     double p_ki;                 /**< pitch hold integral gain */
     double p_ff;                 /**< pitch feedforward */
-    double a_p_kp;               /**< airspeed with pitch hold proportional gain */
-    double a_p_kd;               /**< airspeed with pitch hold derivative gain */
-    double a_p_ki;               /**< airspeed with pitch hold integral gain */
     double a_t_kp;               /**< airspeed with throttle hold proportional gain */
     double a_t_kd;               /**< airspeed with throttle hold derivative gain */
     double a_t_ki;               /**< airspeed with throttle hold integral gain */
     double a_kp;                 /**< altitude hold proportional gain */
     double a_kd;                 /**< altitude hold derivative gain */
     double a_ki;                 /**< altitude hold integral gain */
-    double b_kp;                 /**< coordinated turn proportional gain */
-    double b_kd;                 /**< coordinated turn derivative gain */
-    double b_ki;                 /**< coordinated turn integral gain */
     double trim_e;               /**< trim value for elevator */
     double trim_a;               /**< trim value for aileron */
     double trim_r;               /**< trim value for rudder */
@@ -175,18 +169,12 @@ private:
           /* p_kd */ -.05,
           /* p_ki */ 0.0,
           /* p_ff */ 0.0,
-          /* a_p_kp */ -0.0713,
-          /* a_p_kd */ -0.0635,
-          /* a_p_ki */ 0.00,
           /* a_t_kp */ .05,
           /* a_t_kd */ 0.0,
           /* a_t_ki */ .005,
           /* a_kp */ 0.015,
           /* a_kd */ 0.0,
           /* a_ki */ 0.003,
-          /* b_kp */ -0.1164,
-          /* b_kd */ 0.0,
-          /* b_ki */ -0.0037111,
           /* trim_e */ 0.02,
           /* trim_a */ 0.0,
           /* trim_r */ 0.0,
