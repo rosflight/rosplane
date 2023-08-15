@@ -59,7 +59,9 @@ install(TARGETS
 add_executable(rosplane2_total_energy_controller
         src/controller_base.cpp
         src/controller_state_machine.cpp
-        src/controller_successive_loop.cpp)
+        src/controller_successive_loop.cpp
+        src/controller_total_energy.cpp
+        )
 ament_target_dependencies(rosplane2_total_energy_controller rosplane2_msgs rosflight_msgs rclcpp rclpy Eigen3)
 install(TARGETS
         rosplane2_total_energy_controller

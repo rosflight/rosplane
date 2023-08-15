@@ -13,7 +13,7 @@ controller_total_energy::controller_total_energy() : controller_successive_loop(
 void controller_total_energy::take_off_longitudinal_control(const struct params_s &params, const struct input_s &input, struct output_s &output)
 {
   // Set throttle to not overshoot altitude.
-  output.delta_t = sat(total_energy_throttle(input.Va_c, input.va, input.h_c, input.h params, input.Ts), params.max_takeoff_throttle, 0);
+  output.delta_t = sat(total_energy_throttle(input.Va_c, input.va, input.h_c, input.h, params, input.Ts), params.max_takeoff_throttle, 0);
 
   // Command a shallow pitch angle to gain altitude.
   output.theta_c = 3.0 * 3.14 / 180.0;
@@ -33,7 +33,7 @@ void controller_total_energy::climb_longitudinal_control(const struct params_s &
 
   // Find the control efforts for throttle and find the commanded pitch angle.
   output.delta_t = total_energy_throttle(input.Va_c, input.va, adjusted_hc, input.h, params, input.Ts);
-  output.theta_c = total_energy_pitch(ipnut.Va_c, input.va, adjusted_hc, input.h, params, input.Ts);
+  output.theta_c = total_energy_pitch(input.Va_c, input.va, adjusted_hc, input.h, params, input.Ts);
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params, input.Ts);
 }
 
@@ -45,7 +45,7 @@ void controller_total_energy::climb_exit()
   E_integrator_ = 0;
 }
 
-void controller_total_energy::alt_longitudinal_control(const struct params_s &params, const struct input_s &input, struct output_s &output){
+void controller_total_energy::alt_hold_longitudinal_control(const struct params_s &params, const struct input_s &input, struct output_s &output){
 
   double adjusted_hc = adjust_h_c(input.h_c, input.h, params.alt_hz);
 
@@ -61,8 +61,8 @@ void controller_total_energy::altitude_hold_exit()
 {
   controller_successive_loop::altitude_hold_exit();
 
-  L_integrator = 0;
-  E_integrator = 0;
+  L_integrator_ = 0;
+  E_integrator_ = 0;
 }
 
 float controller_total_energy::total_energy_throttle(float va_c, float va, float h_c, float h,
