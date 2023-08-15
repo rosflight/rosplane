@@ -23,8 +23,9 @@ void controller_total_energy::take_off_longitudinal_control(const struct params_
 
 void controller_total_energy::take_off_exit()
 {
-  L_integrator_ = 0;
-  E_integrator_ = 0;
+  controller_successive_loop::climb_exit();
+
+// Place any controller code that should run as you exit the take-off regime here.
 }
 
 void controller_total_energy::climb_longitudinal_control(const struct params_s &params, const struct input_s &input, struct output_s &output)
@@ -41,8 +42,7 @@ void controller_total_energy::climb_exit()
 {
   controller_successive_loop::climb_exit();
 
-  L_integrator_ = 0;
-  E_integrator_ = 0;
+// Place any controller code that should run as you exit the climb regime here.
 }
 
 void controller_total_energy::alt_hold_longitudinal_control(const struct params_s &params, const struct input_s &input, struct output_s &output){
@@ -60,6 +60,8 @@ void controller_total_energy::alt_hold_longitudinal_control(const struct params_
 void controller_total_energy::altitude_hold_exit()
 {
   controller_successive_loop::altitude_hold_exit();
+
+  // Reset the integrators in the event of returning to the take-off regime (likely a crash).
 
   L_integrator_ = 0;
   E_integrator_ = 0;
