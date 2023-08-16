@@ -2,7 +2,8 @@
 Changelog for package rosplane2_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1.0.0 (2023-08-11)
+2.0.0 (Pre-release)
 ------------------
-* TODO: Put changelog here
-* Contributors:
+* Updated messages for ROS2 Humble.
+* Added timestamps to all messages to improve data tracking and plotting.
+* Contributors: Ian Reid, Carter Noh

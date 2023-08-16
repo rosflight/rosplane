@@ -2,7 +2,9 @@
 Changelog for package rosplane2_sim
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1.0.0 (2023-08-11)
+2.0.0 (pre-release)
 ------------------
-* TODO: Put changelog here
-* Contributors:
+* Moved simulation to rosflight_sim to reduce code duplication.
+* Created true state transcription layer.
+* Added updated launch file, to reduce code duplication.
+* Contributors: Ian Reid, Brandon Sutherland
