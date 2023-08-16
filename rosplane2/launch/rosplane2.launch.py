@@ -1,4 +1,5 @@
 import os
+import sys
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
@@ -13,6 +14,12 @@ def generate_launch_description():
         'succesive_loop_controller_params.yaml'
     )
 
+    # Determine the appropriate control scheme.
+    control_type = "default"
+
+    for arg in sys.argv:
+        if arg.startswith("control_type:="):
+            control_type = arg.split(":=")[1]
 
     return LaunchDescription([
         Node(
@@ -20,6 +27,8 @@ def generate_launch_description():
             executable='rosplane2_controller',
             name='autopilot',
             parameters = [autopilot_params],
+            output = 'screen',
+            arguments = [control_type]
         ),
         Node(
             package='rosplane2',

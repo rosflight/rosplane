@@ -36,6 +36,9 @@ void controller_total_energy::climb_longitudinal_control(const struct params_s &
   output.delta_t = total_energy_throttle(input.Va_c, input.va, adjusted_hc, input.h, params, input.Ts);
   output.theta_c = total_energy_pitch(input.Va_c, input.va, adjusted_hc, input.h, params, input.Ts);
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params, input.Ts);
+
+  RCLCPP_INFO_STREAM(this->get_logger(), "total energy stuff!");
+
 }
 
 void controller_total_energy::climb_exit()
@@ -53,6 +56,8 @@ void controller_total_energy::alt_hold_longitudinal_control(const struct params_
   output.delta_t = total_energy_throttle(input.Va_c, input.va, adjusted_hc, input.h, params, input.Ts);
   output.theta_c = total_energy_pitch(input.Va_c, input.va, adjusted_hc, input.h, params, input.Ts); // TODO remove capital from Va_c
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params, input.Ts);
+
+  RCLCPP_INFO_STREAM(this->get_logger(), "total energy stuff!");
 
 
 }

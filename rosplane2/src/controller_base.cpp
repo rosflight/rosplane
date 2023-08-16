@@ -1,8 +1,6 @@
 #include "controller_base.hpp"
 #include "controller_successive_loop.hpp"
-#include "controller_state_machine.hpp"
-
-#include <iostream>
+#include "controller_total_energy.hpp"
 
 namespace rosplane2
 {
@@ -273,12 +271,29 @@ void controller_base::convert_to_pwm(controller_base::output_s &output) {
 
 } //end namespace
 
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
 
   // Initialize ROS2 and then begin to spin control node.
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<rosplane2::controller_successive_loop>());
+
+  std::cout << argv[1] << std::endl;
+
+  if (strcmp(argv[1],"total_energy") == 0){
+    auto node = std::make_shared<rosplane2::controller_total_energy>();
+    RCLCPP_INFO_STREAM(node->get_logger(), "Using total energy control.");
+    rclcpp::spin(node);
+  }
+  else if(strcmp(argv[1], "default") == 0){
+    auto node = std::make_shared<rosplane2::controller_successive_loop>();
+    RCLCPP_INFO_STREAM(node->get_logger(), "Using default control.");
+    rclcpp::spin(node);
+  }
+  else{
+    auto node = std::make_shared<rosplane2::controller_successive_loop>();
+    RCLCPP_INFO_STREAM(node->get_logger(), "Invalid control type, using default control.");
+    rclcpp::spin(node);
+  }
 
   return 0;
 }
