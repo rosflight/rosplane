@@ -34,7 +34,7 @@ To run ROSplane2 in simulation do the following:
 4. Write the new parameters to memory for convenience with `ros2 service call /param_write std_srvs/srv/Trigger`
    - Note: the firmware will time out and not allow takeoff after 100 seconds, so you may need to redo steps one and two.
 5. Calibrate the IMU to allow the airplane to be armed with `ros2 service call /calibrate_imu std_srvs/srv/Trigger`
-6. Then launch ROSplane2 with `ros2 launch rosplane2_sim sim.launch.py`
+6. Then launch ROSplane2 with `ros2 launch rosplane2_sim sim.launch.py`, this will run with the default controller. To use the total energy controller add the argument `control_type:=total_energy`.
 7. Connect a controller with `ros2 run rosflight_utils rc_joy.py --ros-args --remap /RC:=/fixedwing/RC` or if you do not want to use a controller, run `python3 rc_sim.py --ros-args --remap RC:=/fixedwing/RC` while inside `rosflight2/rosflight_utils/src`.
 8. Finally, arm the aircraft with channel 4 and then disable throttle and attitude override with channel 5. If not using a controller use `ros2 service call /arm std_srvs/srv/Trigger` and then disable RC override with `ros2 service call /disable_override std_srvs/srv/Trigger`.
 9. The aircraft should now be airborne!
