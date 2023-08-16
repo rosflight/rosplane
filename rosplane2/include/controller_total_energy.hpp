@@ -27,9 +27,16 @@ namespace rosplane2
   float total_energy_throttle(float va_c, float va, float h_c, float h, const struct params_s &params, float Ts);
   float total_energy_pitch(float va_c, float va, float h_c, float h, const struct params_s &params, float Ts);
 
+  void update_energies(float va_c, float va, float h_c, float h, const struct params_s &params);
+
   float E_integrator_;
 
   float L_integrator_;
+
+  float K_ref;
+  float K_error;
+
+  float U_error;
 
 
 };

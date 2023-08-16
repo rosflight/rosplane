@@ -75,45 +75,34 @@ void controller_total_energy::altitude_hold_exit()
 float controller_total_energy::total_energy_throttle(float va_c, float va, float h_c, float h,
                                                      const struct params_s &params, float Ts)
 {
-  float mass = 2.28; // TODO add to params.
-  float gravity = 9.8; // TODO add to params.
 
-  float K_error = 0.5 * mass * (pow(va_c,2) - pow(va,2));
-  float K_ref = 0.5 * mass * pow(va_c,2);
-
-  float U_error = mass * gravity * sat(h_c - h, -20, 20); // TODO add limits to param
+  update_energies(va_c, va, h_c, h, params);
 
   float E_error = (K_error + U_error) / K_ref;
 
-  float E_kp = 5.0;
-
-  float E_ki = .9;
-
   E_integrator_ = E_integrator_ + (Ts/2.0)*(E_error + E_error);
 
-  return sat(E_kp * E_error + E_ki * E_integrator_, params.max_t, 0.0) + params.trim_t;
+  return sat(params.e_kp * E_error + params.e_ki * E_integrator_, params.max_t, 0.0) + params.trim_t;
 }
 
 float controller_total_energy::total_energy_pitch(float va_c, float va, float h_c, float h,
-                                                  const struct params_s &params,
-                                                  float Ts) {
-  float mass = 2.28; // TODO add to params.
-  float gravity = 9.8; // TODO add to params.
+                                                  const struct params_s &params, float Ts) {
 
-  float K_error = 0.5 * mass * (pow(va_c,2) - pow(va,2));
-  float K_ref = 0.5 * mass * pow(va_c,2);
-
-  float U_error = mass * gravity * sat(h_c - h, -5, 5); // TODO add limits to param
+  update_energies(va_c, va, h_c, h, params);
 
   float L_error = (U_error - K_error) / K_ref;
 
-  float L_kp = 5.0; // TODO add to params.
-
-  float L_ki = 1.0; // TODO add to params.
-
   L_integrator_ = L_integrator_ + (Ts/2.0)*(L_error + L_error);
 
-  return sat(L_kp * L_error + L_ki * L_integrator_, 25.0, 0.0); // TODO remove hard coded bounds from all of rosplane!!!!
+  return sat(params.l_kp * L_error + params.l_ki * L_integrator_, 25.0, 0.0); // TODO remove hard coded bounds from all of rosplane!!!!
+}
+
+void controller_total_energy::update_energies(float va_c, float va, float h_c, float h, const struct params_s &params)
+{
+  K_error = 0.5 * params.mass * (pow(va_c,2) - pow(va,2));
+  K_ref = 0.5 * params.mass * pow(va_c,2);
+
+  U_error = params.mass * params.gravity * sat(h_c - h, -5, 5); // TODO add limits to param
 }
 
 } //end namespace

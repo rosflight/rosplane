@@ -107,6 +107,12 @@ protected:
     double a_kp;                 /**< altitude hold proportional gain */
     double a_kd;                 /**< altitude hold derivative gain */
     double a_ki;                 /**< altitude hold integral gain */
+    double l_kp;                 /**< energy balance proportional gain */
+    double l_kd;                 /**< energy balance derivative gain */
+    double l_ki;                 /**< energy balance integral gain */
+    double e_kp;                 /**< total energy proportional gain */
+    double e_kd;                 /**< total energy derivative gain */
+    double e_ki;                 /**< total energy integral gain */
     double trim_e;               /**< trim value for elevator */
     double trim_a;               /**< trim value for aileron */
     double trim_r;               /**< trim value for rudder */
@@ -119,6 +125,8 @@ protected:
     double pwm_rad_a;            /**< conversion to pwm from radians for output of control loops */
     double pwm_rad_r;            /**< conversion to pwm from radians for output of control loops */
     double max_takeoff_throttle; /**< maximum throttle allowed at takeoff */
+    double mass;                 /**< mass of the aircraft */
+    double gravity;              /**< gravity in m/s^2 */
   };
 
   /**
@@ -177,6 +185,12 @@ private:
           /* a_kp */ 0.015,
           /* a_kd */ 0.0,
           /* a_ki */ 0.003,
+          /* l_kp */ 5.0,
+          /* l_kd */ 0.0,
+          /* l_ki */ 1.0,
+          /* e_kp */ 5.0,
+          /* e_kd */ 0.0,
+          /* e_ki */ .9,
           /* trim_e */ 0.02,
           /* trim_a */ 0.0,
           /* trim_r */ 0.0,
@@ -188,7 +202,9 @@ private:
           /* pwm_rad_e */ 1.0,
           /* pwm_rad_a */ 1.0,
           /* pwm_rad_r */ 1.0,
-          /* max_takeoff_throttle */ .55};
+          /* max_takeoff_throttle */ .55,
+          /* mass */ 2.28,
+          /* gravity */ 9.8};
 
   /**
    * The stored value for the most up to date commands for the controller.

@@ -139,6 +139,50 @@ void controller_base::actuator_controls_publish()
   }
 }
 
+    void controller_base::declare_parameters() {
+
+      // Declare each of the parameters, making it visible to the ROS2 param system.
+      this->declare_parameter("alt_hz", params_.alt_hz);
+      this->declare_parameter("alt_toz", params_.alt_toz);
+      this->declare_parameter("tau", params_.tau);
+      this->declare_parameter("c_kp", params_.c_kp);
+      this->declare_parameter("c_kd", params_.c_kd);
+      this->declare_parameter("c_ki", params_.c_ki);
+      this->declare_parameter("r_kp", params_.r_kp);
+      this->declare_parameter("r_kd", params_.r_kd);
+      this->declare_parameter("r_ki", params_.r_ki);
+      this->declare_parameter("p_kp", params_.p_kp);
+      this->declare_parameter("p_kd", params_.p_kd);
+      this->declare_parameter("p_ki", params_.p_ki);
+      this->declare_parameter("p_ff", params_.p_ff);
+      this->declare_parameter("a_t_kp", params_.a_t_kp);
+      this->declare_parameter("a_t_kd", params_.a_t_kd);
+      this->declare_parameter("a_t_ki", params_.a_t_ki);
+      this->declare_parameter("a_kp", params_.a_kp);
+      this->declare_parameter("a_kd", params_.a_kd);
+      this->declare_parameter("a_ki", params_.a_ki);
+      this->declare_parameter("l_kp", params_.l_kp);
+      this->declare_parameter("l_kd", params_.l_kd);
+      this->declare_parameter("l_ki", params_.l_ki);
+      this->declare_parameter("e_kp", params_.e_kp);
+      this->declare_parameter("e_kd", params_.e_kd);
+      this->declare_parameter("e_ki", params_.e_ki);
+      this->declare_parameter("trim_e", params_.trim_e);
+      this->declare_parameter("trim_a", params_.trim_a);
+      this->declare_parameter("trim_r", params_.trim_r);
+      this->declare_parameter("trim_t", params_.trim_t);
+      this->declare_parameter("max_e", params_.max_e);
+      this->declare_parameter("max_a", params_.max_a);
+      this->declare_parameter("max_r", params_.max_r);
+      this->declare_parameter("max_t", params_.max_t);
+      this->declare_parameter("pwm_rad_e", params_.pwm_rad_e);
+      this->declare_parameter("pwm_rad_a", params_.pwm_rad_a);
+      this->declare_parameter("pwm_rad_r", params_.pwm_rad_r);
+      this->declare_parameter("max_takeoff_throttle", params_.max_takeoff_throttle);
+      this->declare_parameter("mass", params_.mass);
+      this->declare_parameter("gravity", params_.gravity);
+    }
+
 void controller_base::set_parameters() {
 
   // Get the parameters from the launch file, if given.
@@ -162,6 +206,12 @@ void controller_base::set_parameters() {
   params_.a_kp = this->get_parameter("a_kp").as_double();
   params_.a_kd = this->get_parameter("a_kd").as_double();
   params_.a_ki = this->get_parameter("a_ki").as_double();
+  params_.l_kp = this->get_parameter("l_kp").as_double();
+  params_.l_kd = this->get_parameter("l_kd").as_double();
+  params_.l_ki = this->get_parameter("l_ki").as_double();
+  params_.e_kp = this->get_parameter("e_kp").as_double();
+  params_.e_kd = this->get_parameter("e_kd").as_double();
+  params_.e_ki = this->get_parameter("e_ki").as_double();
   params_.trim_e = this->get_parameter("trim_e").as_double();
   params_.trim_a = this->get_parameter("trim_a").as_double();
   params_.trim_r = this->get_parameter("trim_r").as_double();
@@ -173,41 +223,10 @@ void controller_base::set_parameters() {
   params_.pwm_rad_e = this->get_parameter("pwm_rad_e").as_double();
   params_.pwm_rad_a = this->get_parameter("pwm_rad_a").as_double();
   params_.pwm_rad_r = this->get_parameter("pwm_rad_r").as_double();
-}
+  params_.max_takeoff_throttle = this->get_parameter("pwm_rad_r").as_double();
+  params_.mass = this->get_parameter("mass").as_double();
+  params_.gravity = this->get_parameter("gravity").as_double();
 
-void controller_base::declare_parameters() {
-
-  // Declare each of the parameters, making it visible to the ROS2 param system.
-  this->declare_parameter("alt_hz", params_.alt_hz);
-  this->declare_parameter("alt_toz", params_.alt_toz);
-  this->declare_parameter("tau", params_.tau);
-  this->declare_parameter("c_kp", params_.c_kp);
-  this->declare_parameter("c_kd", params_.c_kd);
-  this->declare_parameter("c_ki", params_.c_ki);
-  this->declare_parameter("r_kp", params_.r_kp);
-  this->declare_parameter("r_kd", params_.r_kd);
-  this->declare_parameter("r_ki", params_.r_ki);
-  this->declare_parameter("p_kp", params_.p_kp);
-  this->declare_parameter("p_kd", params_.p_kd);
-  this->declare_parameter("p_ki", params_.p_ki);
-  this->declare_parameter("p_ff", params_.p_ff);
-  this->declare_parameter("a_t_kp", params_.a_t_kp);
-  this->declare_parameter("a_t_kd", params_.a_t_kd);
-  this->declare_parameter("a_t_ki", params_.a_t_ki);
-  this->declare_parameter("a_kp", params_.a_kp);
-  this->declare_parameter("a_kd", params_.a_kd);
-  this->declare_parameter("a_ki", params_.a_ki);
-  this->declare_parameter("trim_e", params_.trim_e);
-  this->declare_parameter("trim_a", params_.trim_a);
-  this->declare_parameter("trim_r", params_.trim_r);
-  this->declare_parameter("trim_t", params_.trim_t);
-  this->declare_parameter("max_e", params_.max_e);
-  this->declare_parameter("max_a", params_.max_a);
-  this->declare_parameter("max_r", params_.max_r);
-  this->declare_parameter("max_t", params_.max_t);
-  this->declare_parameter("pwm_rad_e", params_.pwm_rad_e);
-  this->declare_parameter("pwm_rad_a", params_.pwm_rad_a);
-  this->declare_parameter("pwm_rad_r", params_.pwm_rad_r);
 }
 
 rcl_interfaces::msg::SetParametersResult controller_base::parametersCallback(const std::vector<rclcpp::Parameter> &parameters) {
@@ -237,6 +256,12 @@ rcl_interfaces::msg::SetParametersResult controller_base::parametersCallback(con
     else if (param.get_name() == "a_kp") params_.a_kp = param.as_double();
     else if (param.get_name() == "a_kd") params_.a_kd = param.as_double();
     else if (param.get_name() == "a_ki") params_.a_ki = param.as_double();
+    else if (param.get_name() == "l_kp") params_.l_kp = param.as_double();
+    else if (param.get_name() == "l_kd") params_.l_kd = param.as_double();
+    else if (param.get_name() == "l_ki") params_.l_ki = param.as_double();
+    else if (param.get_name() == "l_kp") params_.e_kp = param.as_double();
+    else if (param.get_name() == "l_kd") params_.e_kd = param.as_double();
+    else if (param.get_name() == "l_ki") params_.e_ki = param.as_double();
     else if (param.get_name() == "trim_e") params_.trim_e = param.as_double();
     else if (param.get_name() == "trim_a") params_.trim_a = param.as_double();
     else if (param.get_name() == "trim_r") params_.trim_r = param.as_double();
@@ -248,6 +273,9 @@ rcl_interfaces::msg::SetParametersResult controller_base::parametersCallback(con
     else if (param.get_name() == "pwm_rad_e") params_.pwm_rad_e = param.as_double();
     else if (param.get_name() == "pwm_rad_a") params_.pwm_rad_a = param.as_double();
     else if (param.get_name() == "pwm_rad_r") params_.pwm_rad_r = param.as_double();
+    else if (param.get_name() == "max_takeoff_throttle") params_.max_takeoff_throttle = param.as_double();
+    else if (param.get_name() == "mass") params_.mass = param.as_double();
+    else if (param.get_name() == "gravity") params_.gravity = param.as_double();
     else{
 
       // If the parameter given doesn't match any of the parameters return false.
