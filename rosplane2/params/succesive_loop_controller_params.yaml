@@ -19,12 +19,12 @@ autopilot: # node name.
     a_kp: 0.015
     a_kd: 0.0
     a_ki: 0.003
-    l_kp: 5.0
+    l_kp: .5
     l_kd: 0.0
-    l_ki: 1.0
-    e_kp: 5.0
+    l_ki: 0.005
+    e_kp: .5
     e_kd: 0.0
-    e_ki: .9
+    e_ki: .01
     trim_e: 0.02
     trim_a: 0.0
     trim_r: 0.0

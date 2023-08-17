@@ -7,7 +7,6 @@ namespace rosplane2
 
 controller_successive_loop::controller_successive_loop() : controller_state_machine()
 {
-
   // Initialize course hold, roll hold and pitch hold errors and integrators to zero.
   c_error_ = 0;
   c_integrator_ = 0;
@@ -15,15 +14,13 @@ controller_successive_loop::controller_successive_loop() : controller_state_mach
   r_integrator = 0;
   p_error_ = 0;
   p_integrator_ = 0;
-
 }
 
 void controller_successive_loop::take_off(const struct params_s &params, const struct input_s &input, struct output_s &output)
 {
-
+  // Run lateral and longitudinal controls.
   take_off_lateral_control(params, input, output);
   take_off_longitudinal_control(params, input, output);
-
 }
 
 void controller_successive_loop::take_off_exit()
@@ -33,6 +30,7 @@ void controller_successive_loop::take_off_exit()
 
 void controller_successive_loop::climb(const struct params_s &params, const struct input_s &input, struct output_s &output)
 {
+  // Run lateral and longitudinal controls.
   climb_lateral_control(params, input, output);
   climb_longitudinal_control(params, input, output);
 }
@@ -50,14 +48,14 @@ void controller_successive_loop::climb_exit()
 
 void controller_successive_loop::altitude_hold(const struct params_s &params, const struct input_s &input, struct output_s &output)
 {
-
+  // Run lateral and longitudinal controls.
   alt_hold_lateral_control(params, input, output);
   alt_hold_longitudinal_control(params, input, output);
-
 }
 
 void controller_successive_loop::altitude_hold_exit()
 {
+  // Reset integrators.
   c_integrator_ = 0;
 }
 
@@ -76,6 +74,7 @@ void controller_successive_loop::alt_hold_longitudinal_control(const struct para
   // Saturate the altitude command.
   double adjusted_hc = adjust_h_c(input.h_c, input.h, params.alt_hz);
 
+  // Control airspeed with throttle loop and altitude with commanded pitch and drive aircraft to commanded pitch.
   output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts);
   output.theta_c = altitude_hold_control(adjusted_hc, input.h, params, input.Ts);
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params, input.Ts);
@@ -114,7 +113,7 @@ void controller_successive_loop::take_off_longitudinal_control(const struct para
   output.delta_t = sat(airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts), params.max_takeoff_throttle, 0);
 
   // Command a shallow pitch angle to gain altitude.
-  output.theta_c = 3.0 * 3.14 / 180.0;
+  output.theta_c = 5.0 * 3.14 / 180.0; // TODO add to params.
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params, input.Ts);
 }
 

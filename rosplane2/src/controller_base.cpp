@@ -259,9 +259,9 @@ rcl_interfaces::msg::SetParametersResult controller_base::parametersCallback(con
     else if (param.get_name() == "l_kp") params_.l_kp = param.as_double();
     else if (param.get_name() == "l_kd") params_.l_kd = param.as_double();
     else if (param.get_name() == "l_ki") params_.l_ki = param.as_double();
-    else if (param.get_name() == "l_kp") params_.e_kp = param.as_double();
-    else if (param.get_name() == "l_kd") params_.e_kd = param.as_double();
-    else if (param.get_name() == "l_ki") params_.e_ki = param.as_double();
+    else if (param.get_name() == "e_kp") params_.e_kp = param.as_double();
+    else if (param.get_name() == "e_kd") params_.e_kd = param.as_double();
+    else if (param.get_name() == "e_ki") params_.e_ki = param.as_double();
     else if (param.get_name() == "trim_e") params_.trim_e = param.as_double();
     else if (param.get_name() == "trim_a") params_.trim_a = param.as_double();
     else if (param.get_name() == "trim_r") params_.trim_r = param.as_double();
