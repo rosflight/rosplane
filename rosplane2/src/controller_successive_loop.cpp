@@ -269,7 +269,7 @@ float controller_successive_loop::altitude_hold_control(float h_c, float h, cons
   }
 
 
-  at_error_ = error;
+  a_error_ = error;
   return theta_c;
 }
 
