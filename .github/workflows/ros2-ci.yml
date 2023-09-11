@@ -11,7 +11,7 @@ env:
 
 jobs:
   build:
-    name: Build on ros2 ${{ matrix.ros_distro }} and ${{ matrix.os }}
+    name: Build on ROS2 ${{ matrix.ros_distro }} and ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -24,25 +24,31 @@ jobs:
             os: ubuntu-22.04
 
     steps:
-      - uses: ros-tooling/setup-ros@v0.7
+      - name: Setup ROS
+        uses: ros-tooling/setup-ros@v0.7
         with:
           required-ros-distributions: ${{ matrix.ros_distro }}
 
-      - name: Setup ros2 workspace
+      - name: Setup ROS2 workspace
         run: |
           source /opt/ros/${{ matrix.ros_distro }}/setup.bash
           mkdir -p ${{github.workspace}}/ros2_ws/src
           cd ${{github.workspace}}/ros2_ws
           colcon build
 
-      - uses: actions/checkout@v3
+      - name: Checkout ROSplane
+        uses: actions/checkout@v3
         with:
-          path: 'ros2_ws/src/rosplane2'
+          path: 'ros2_ws/src/rosplane'
 
-      - uses: actions/checkout@v3
+      - name: Checkout rosflight_msgs
+        uses: actions/checkout@v4
         with:
-          repository: rosflight/rosflight_msgs
-          path: 'ros2_ws/src/rosflight_msgs'
+          repository: rosflight/rosflight
+          path: 'ros2_ws/src/rosflight'
+          sparse-checkout: |
+            rosflight_msgs
+          sparse-checkout-cone-mode: false
 
       - name: Install dependencies
         run: |
@@ -50,7 +56,7 @@ jobs:
           rosdep update
           rosdep install --from-paths ./ -i -y -r --rosdistro ${{ matrix.ros_distro }}
 
-      - name: colcon build
+      - name: Build ROSplane
         run: |
           source /opt/ros/${{ matrix.ros_distro }}/setup.bash
           cd ${{github.workspace}}/ros2_ws

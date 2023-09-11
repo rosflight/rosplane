@@ -3,10 +3,10 @@ from rclpy.node import Node
 from rclpy.time import Time
 from builtin_interfaces.msg import Time as TimeMsg
 import threading
-from rosplane2_msgs.msg import State
+from rosplane_msgs.msg import State
 from rosflight_msgs.msg import Command
-from rosplane2_msgs.msg import ControllerInternals
-from rosplane2_msgs.msg import ControllerCommands
+from rosplane_msgs.msg import ControllerInternals
+from rosplane_msgs.msg import ControllerCommands
 
 
 def trim_data(time: list[float], data: list[float], val_thresh: float) -> None:
