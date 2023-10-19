@@ -1,6 +1,8 @@
 #include "controller_base.hpp"
 #include "controller_successive_loop.hpp"
 #include "controller_total_energy.hpp"
+#include <functional>
+#include <rosplane_msgs/msg/detail/controller_internals_debug__struct.hpp>
 
 namespace rosplane
 {
@@ -10,7 +12,7 @@ controller_base::controller_base() : Node("controller_base")
 
   // Advertise published topics.
   actuators_pub_ = this->create_publisher<rosflight_msgs::msg::Command>("command",10);
-  internals_pub_ = this->create_publisher<rosplane_msgs::msg::ControllerInternalsDebug>("controller_inners",10);
+  internals_pub_ = this->create_publisher<rosplane_msgs::msg::ControllerInternalsDebug>("controller_inners_debug",10);
 
   // Set timer to trigger bound callback (actuator_controls_publish) at the given periodicity.
   timer_ = this->create_wall_timer(10ms, std::bind(&controller_base::actuator_controls_publish, this)); // TODO add the period to the params.
@@ -29,8 +31,13 @@ controller_base::controller_base() : Node("controller_base")
 
   // Set the values for the parameters, from the param file or use the deafault value.
   set_parameters();
+  
+  if (params_.tuning_debug_override){
+    tuning_debug_sub_ = this->create_subscription<rosplane_msgs::msg::ControllerInternalsDebug>(
+              "/tuning_debug", 10, std::bind(&controller_base::tuning_debug_callback, this, _1));
+  }
 
-  // Set the parameter callback, for when callbacks are changed.
+  // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
             std::bind(&controller_base::parametersCallback, this, std::placeholders::_1));
 
@@ -52,6 +59,12 @@ void controller_base::vehicle_state_callback(const rosplane_msgs::msg::State::Sh
 
   // Save the message to use in calculations.
   vehicle_state_ = *msg;
+}
+
+void controller_base::tuning_debug_callback(const rosplane_msgs::msg::ControllerInternalsDebug::SharedPtr msg)
+{
+  // Save the message to use in calculations.
+  tuning_debug_override_msg_ = *msg;
 }
 
 void controller_base::actuator_controls_publish()

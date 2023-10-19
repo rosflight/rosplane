@@ -11,6 +11,7 @@
 #define CONTROLLER_BASE_H
 
 #include <rclcpp/rclcpp.hpp>
+#include <rosplane_msgs/msg/detail/controller_internals_debug__struct.hpp>
 #include <rosplane_msgs/msg/state.hpp>
 #include <rosplane_msgs/msg/controller_commands.hpp>
 #include <rosplane_msgs/msg/controller_internals_debug.hpp>
@@ -160,6 +161,7 @@ private:
    */
   rclcpp::Subscription<rosplane_msgs::msg::State>::SharedPtr vehicle_state_sub_;
 
+  rclcpp::Subscription<rosplane_msgs::msg::ControllerInternalsDebug>::SharedPtr tuning_debug_sub_;
   /**
    * This timer controls how often commands are published by the autopilot.
    */
@@ -217,6 +219,11 @@ private:
    * The stored value for the most up to date vehicle state (pose).
    */
   rosplane_msgs::msg::State vehicle_state_;
+  
+  /**
+   * The override for the intermediate values for the controller.
+   */
+  rosplane_msgs::msg::ControllerInternalsDebug tuning_debug_override_msg_;
 
   /**
    * Flag to indicate if the first command has been received.
@@ -247,6 +254,13 @@ private:
    * @param msg
    */
   void vehicle_state_callback(const rosplane_msgs::msg::State::SharedPtr msg);
+
+  /**
+   * Callback for the overrided intermediate values of the controller interface for tuning.
+   * This saves the message as the member variable tuing_debug_override_msg_.
+   * @param msg
+   */
+  void tuning_debug_callback(const rosplane_msgs::msg::ControllerInternalsDebug::SharedPtr msg);
 
   /**
    * ROS2 parameter system interface. This connects ROS2 parameters with the defined update callback, parametersCallback.
