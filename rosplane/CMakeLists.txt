@@ -92,6 +92,13 @@ install(TARGETS
         rosplane_estimator_node
         DESTINATION lib/${PROJECT_NAME})
 
+add_executable(tuning_signal_generator
+               src/tuning_signal_generator.cpp)
+ament_target_dependencies(tuning_signal_generator rosplane_msgs rclcpp)
+install(TARGETS
+        tuning_signal_generator
+        DESTINATION lib/${PROJECT_NAME})
+
 #### END OF EXECUTABLES ###
 
 
