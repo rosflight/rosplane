@@ -227,7 +227,7 @@ class RosStorageInterface:
         self._sub_state = self.node.create_subscription(State, "/state", self.state_callback, 1)
         self._sub_est = self.node.create_subscription(State, "/estimated_state", self.estimate_callback, 1)
         self._sub_cmd = self.node.create_subscription(Command, "/command", self.command_callback, 1)
-        self._sub_cmd_internals = self.node.create_subscription(ControllerInternalsDebug, "/controller_inners", self.cmd_internal_callback, 1)
+        self._sub_cmd_internals = self.node.create_subscription(ControllerInternalsDebug, "/controller_inners_debug", self.cmd_internal_callback, 1)
         self._sub_con_cmd = self.node.create_subscription(ControllerCommands, "/controller_commands", self.con_command_callback, 1)
 
         self.con_cmd = ControllerCommands()

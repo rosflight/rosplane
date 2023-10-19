@@ -139,6 +139,11 @@ protected:
    */
   virtual void control(const struct params_s &params, const struct input_s &input, struct output_s &output) = 0;
 
+  /**
+   * The override for the intermediate values for the controller.
+   */
+  rosplane_msgs::msg::ControllerInternalsDebug tuning_debug_override_msg_; // TODO find a better and more permanent place for this.
+
 private:
 
   /**
@@ -219,11 +224,6 @@ private:
    * The stored value for the most up to date vehicle state (pose).
    */
   rosplane_msgs::msg::State vehicle_state_;
-  
-  /**
-   * The override for the intermediate values for the controller.
-   */
-  rosplane_msgs::msg::ControllerInternalsDebug tuning_debug_override_msg_;
 
   /**
    * Flag to indicate if the first command has been received.
