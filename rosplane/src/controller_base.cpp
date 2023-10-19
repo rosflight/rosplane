@@ -10,7 +10,7 @@ controller_base::controller_base() : Node("controller_base")
 
   // Advertise published topics.
   actuators_pub_ = this->create_publisher<rosflight_msgs::msg::Command>("command",10);
-  internals_pub_ = this->create_publisher<rosplane_msgs::msg::ControllerInternals>("controller_inners",10);
+  internals_pub_ = this->create_publisher<rosplane_msgs::msg::ControllerInternalsDebug>("controller_inners",10);
 
   // Set timer to trigger bound callback (actuator_controls_publish) at the given periodicity.
   timer_ = this->create_wall_timer(10ms, std::bind(&controller_base::actuator_controls_publish, this)); // TODO add the period to the params.
@@ -113,7 +113,7 @@ void controller_base::actuator_controls_publish()
     // control values, phi_c (commanded roll angle), and theta_c (commanded pitch angle).
     if (internals_pub_->get_subscription_count() > 0)
     {
-      rosplane_msgs::msg::ControllerInternals inners;
+      rosplane_msgs::msg::ControllerInternalsDebug inners;
 
       inners.header.stamp = now;
 
@@ -181,6 +181,7 @@ void controller_base::actuator_controls_publish()
       this->declare_parameter("max_takeoff_throttle", params_.max_takeoff_throttle);
       this->declare_parameter("mass", params_.mass);
       this->declare_parameter("gravity", params_.gravity);
+      this->declare_parameter("tuning_debug_override", params_.tuning_debug_override);
     }
 
 void controller_base::set_parameters() {
@@ -226,6 +227,7 @@ void controller_base::set_parameters() {
   params_.max_takeoff_throttle = this->get_parameter("pwm_rad_r").as_double();
   params_.mass = this->get_parameter("mass").as_double();
   params_.gravity = this->get_parameter("gravity").as_double();
+  params_.gravity = this->get_parameter("tuning_debug_override").as_bool();
 
 }
 
@@ -276,6 +278,7 @@ rcl_interfaces::msg::SetParametersResult controller_base::parametersCallback(con
     else if (param.get_name() == "max_takeoff_throttle") params_.max_takeoff_throttle = param.as_double();
     else if (param.get_name() == "mass") params_.mass = param.as_double();
     else if (param.get_name() == "gravity") params_.gravity = param.as_double();
+    else if (param.get_name() == "tuning_debug_override") params_.tuning_debug_override = param.as_bool();
     else{
 
       // If the parameter given doesn't match any of the parameters return false.

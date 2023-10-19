@@ -13,7 +13,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rosplane_msgs/msg/state.hpp>
 #include <rosplane_msgs/msg/controller_commands.hpp>
-#include <rosplane_msgs/msg/controller_internals.hpp>
+#include <rosplane_msgs/msg/controller_internals_debug.hpp>
 #include <rosflight_msgs/msg/command.hpp>
 #include <chrono>
 #include <iostream>
@@ -127,6 +127,7 @@ protected:
     double max_takeoff_throttle; /**< maximum throttle allowed at takeoff */
     double mass;                 /**< mass of the aircraft */
     double gravity;              /**< gravity in m/s^2 */
+    bool tuning_debug_override;
   };
 
   /**
@@ -147,7 +148,7 @@ private:
     /**
    * This publisher publishes the intermediate commands in the control algorithm.
    */
-  rclcpp::Publisher<rosplane_msgs::msg::ControllerInternals>::SharedPtr internals_pub_;
+  rclcpp::Publisher<rosplane_msgs::msg::ControllerInternalsDebug>::SharedPtr internals_pub_;
 
   /**
    * This subscriber subscribes to the commands the controller uses to calculate control effort.
@@ -204,7 +205,8 @@ private:
           /* pwm_rad_r */ 1.0,
           /* max_takeoff_throttle */ .55,
           /* mass */ 2.28,
-          /* gravity */ 9.8};
+          /* gravity */ 9.8,
+          /* tuning_debug_override*/ false};
 
   /**
    * The stored value for the most up to date commands for the controller.

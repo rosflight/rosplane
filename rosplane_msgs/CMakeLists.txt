@@ -27,7 +27,7 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Command.msg"
   "msg/ControllerCommands.msg"
-  "msg/ControllerInternals.msg"
+  "msg/ControllerInternalsDebug.msg"
   "msg/CurrentPath.msg"
   "msg/State.msg"
   "msg/Waypoint.msg"
