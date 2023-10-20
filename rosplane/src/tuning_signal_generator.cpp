@@ -39,6 +39,7 @@
 
 #include <chrono>
 #include <string>
+#include <cmath>
 
 #include "tuning_signal_generator.hpp"
 
@@ -67,6 +68,19 @@ TuningSignalGenerator::TuningSignalGenerator() :
   publish_timer_ = this->create_wall_timer(
       std::chrono::milliseconds(static_cast<long>(1000 / dt_hz_)), 
       std::bind(&TuningSignalGenerator::publish_timer_callback, this));
+
+  reset_service_ = this->create_service<std_srvs::srv::Trigger>("reset_signal", 
+      std::bind(&TuningSignalGenerator::reset_service_callback, this, 
+                std::placeholders::_1, std::placeholders::_2));
+  pause_service_ = this->create_service<std_srvs::srv::Trigger>("pause_signal",
+      std::bind(&TuningSignalGenerator::pause_service_callback, this, 
+                std::placeholders::_1, std::placeholders::_2));
+  start_continuous_service_ = this->create_service<std_srvs::srv::Trigger>("start_continuous_signal",
+      std::bind(&TuningSignalGenerator::start_continuous_service_callback, this,
+                std::placeholders::_1, std::placeholders::_2));
+  start_single_service_ = this->create_service<std_srvs::srv::Trigger>("start_single_period",
+      std::bind(&TuningSignalGenerator::start_single_service_callback, this,
+                std::placeholders::_1, std::placeholders::_2));
 }
 
 
@@ -99,9 +113,11 @@ void TuningSignalGenerator::publish_timer_callback() {
       internals_publisher_ = 
           this->create_publisher<rosplane_msgs::msg::ControllerInternalsDebug>("/tuning_debug", 1);
     }
-  } else if (command_publisher_ == nullptr) {
-    command_publisher_ = 
-        this->create_publisher<rosplane_msgs::msg::ControllerCommands>("/controller_command", 1);
+  } else {
+    if (command_publisher_ == nullptr) {
+      command_publisher_ = 
+          this->create_publisher<rosplane_msgs::msg::ControllerCommands>("/controller_command", 1);
+    }
   }
 
   // Publish message
@@ -142,6 +158,42 @@ void TuningSignalGenerator::publish_timer_callback() {
         break;
       }
   }
+}
+
+
+bool TuningSignalGenerator::reset_service_callback(
+    const std_srvs::srv::Trigger::Request::SharedPtr & req,
+    const std_srvs::srv::Trigger::Response::SharedPtr & res) {
+
+  res->success = true;
+  return true;
+}
+
+
+bool TuningSignalGenerator::pause_service_callback(
+    const std_srvs::srv::Trigger::Request::SharedPtr & req,
+    const std_srvs::srv::Trigger::Response::SharedPtr & res) {
+
+  res->success = true;
+  return true;
+}
+
+
+bool TuningSignalGenerator::start_continuous_service_callback(
+    const std_srvs::srv::Trigger::Request::SharedPtr & req,
+    const std_srvs::srv::Trigger::Response::SharedPtr & res) {
+
+  res->success = true;
+  return true;
+}
+
+
+bool TuningSignalGenerator::start_single_service_callback(
+    const std_srvs::srv::Trigger::Request::SharedPtr & req,
+    const std_srvs::srv::Trigger::Response::SharedPtr & res) {
+
+  res->success = true;
+  return true;
 }
 
 

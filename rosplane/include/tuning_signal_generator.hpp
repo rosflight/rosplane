@@ -43,6 +43,7 @@
 #define TUNING_SIGNAL_GENERATOR_HPP
 
 #include <rclcpp/rclcpp.hpp>
+#include <std_srvs/srv/trigger.hpp>
 #include "rosplane_msgs/msg/controller_commands.hpp"
 #include "rosplane_msgs/msg/controller_internals_debug.hpp"
 
@@ -84,6 +85,7 @@ private:
   double frequency_hz_;                 ///< Frequency of the signal.
   double offset_;                       ///< Offset of signal from 0.
   double initial_time_;                 ///< Initial time of the signal.
+  bool is_paused_;                      ///< Flag to specify if signal should be paused.
 
   /// Controller command ROS message publisher.
   rclcpp::Publisher<rosplane_msgs::msg::ControllerCommands>::SharedPtr command_publisher_;
@@ -93,8 +95,30 @@ private:
   /// ROS timer to run timer callback, which publishes commands
   rclcpp::TimerBase::SharedPtr publish_timer_;
 
+  /// ROS service for reset signal
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr reset_service_;
+  /// ROS service for pause signal
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr pause_service_;
+  /// ROS service for start signal continuously
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_continuous_service_;
+  /// ROS service for start signal for one period
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_single_service_;
+
   /// Callback to publish command on topic.
   void publish_timer_callback();
+
+  /// Callback to reset signal
+  bool reset_service_callback(const std_srvs::srv::Trigger::Request::SharedPtr & req,
+                              const std_srvs::srv::Trigger::Response::SharedPtr & res);
+  /// Callback to pause signal
+  bool pause_service_callback(const std_srvs::srv::Trigger::Request::SharedPtr & req,
+                              const std_srvs::srv::Trigger::Response::SharedPtr & res);
+  /// Callback to start signal continuously
+  bool start_continuous_service_callback(const std_srvs::srv::Trigger::Request::SharedPtr & req,
+                                         const std_srvs::srv::Trigger::Response::SharedPtr & res);
+  /// Callback to start signal for a single period
+  bool start_single_service_callback(const std_srvs::srv::Trigger::Request::SharedPtr & req,
+                                     const std_srvs::srv::Trigger::Response::SharedPtr & res);
 
   /**
    * @brief Get the value for a square signal at the given time with the given conditions.
