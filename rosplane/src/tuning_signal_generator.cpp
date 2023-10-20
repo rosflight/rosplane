@@ -69,6 +69,7 @@ TuningSignalGenerator::TuningSignalGenerator() :
       std::bind(&TuningSignalGenerator::publish_timer_callback, this));
 }
 
+
 void TuningSignalGenerator::publish_timer_callback() {
   update_params();
 
@@ -92,10 +93,12 @@ void TuningSignalGenerator::publish_timer_callback() {
   }
   
   // Create required publishers if they don't already exist
-  if ((controller_output_ == ControllerOutput::ROLL || 
-       controller_output_ == ControllerOutput::PITCH) && internals_publisher_ == nullptr) {
-    internals_publisher_ = 
-        this->create_publisher<rosplane_msgs::msg::ControllerInternalsDebug>("/tuning_debug", 1);
+  if (controller_output_ == ControllerOutput::ROLL || 
+      controller_output_ == ControllerOutput::PITCH) {
+    if (internals_publisher_ == nullptr) {
+      internals_publisher_ = 
+          this->create_publisher<rosplane_msgs::msg::ControllerInternalsDebug>("/tuning_debug", 1);
+    }
   } else if (command_publisher_ == nullptr) {
     command_publisher_ = 
         this->create_publisher<rosplane_msgs::msg::ControllerCommands>("/controller_command", 1);
@@ -144,25 +147,31 @@ void TuningSignalGenerator::publish_timer_callback() {
 
 double TuningSignalGenerator::get_square_signal(double elapsed_time, double amplitude, 
                                                 double frequency, double offset) {
-  return 1;
+  // amplitude * (1 to -1 switching value) + offset
+  return amplitude * ((static_cast<int>(elapsed_time * frequency * 2) % 2) * 2 - 1) + offset;
 }
 
 
 double TuningSignalGenerator::get_sawtooth_signal(double elapsed_time, double amplitude, 
                                                   double frequency, double offset) {
-  return 2;
+  // slope * elapsed_time - num_cycles * offset_per_cycle + offset
+  return 2 * amplitude * (elapsed_time * frequency - static_cast<int>(elapsed_time * frequency) - 
+      0.5) + offset;
 }
 
 
 double TuningSignalGenerator::get_triangle_signal(double elapsed_time, double amplitude,
                                                   double frequency, double offset) {
-  return 3;
+  // (1 to -1 switching value) * sawtooth_at_twice_the_rate + offset
+  return ((static_cast<int>(elapsed_time * frequency * 2) % 2) * 2 - 1) * 2 * 
+      amplitude * (2 * elapsed_time * frequency - static_cast<int>(2 * elapsed_time * frequency) - 
+      0.5) + offset;
 }
 
 
 double TuningSignalGenerator::get_sine_signal(double elapsed_time, double amplitude, 
                                               double frequency, double offset) {
-  return 4;
+  return sin(elapsed_time * frequency * 2 * M_PI) * amplitude + offset;
 }
 
 
