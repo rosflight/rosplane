@@ -53,7 +53,10 @@ TuningSignalGenerator::TuningSignalGenerator() :
     amplitude_(0),
     frequency_hz_(0),
     offset_(0),
-    initial_time_(0)
+    initial_time_(0),
+    is_paused_(true),
+    paused_time_(0),
+    single_period_start_time_(0)
 {
   this->declare_parameter("controller_output", "roll");
   this->declare_parameter("signal_type", "square");
@@ -78,7 +81,7 @@ TuningSignalGenerator::TuningSignalGenerator() :
   start_continuous_service_ = this->create_service<std_srvs::srv::Trigger>("start_continuous_signal",
       std::bind(&TuningSignalGenerator::start_continuous_service_callback, this,
                 std::placeholders::_1, std::placeholders::_2));
-  start_single_service_ = this->create_service<std_srvs::srv::Trigger>("start_single_period",
+  start_single_service_ = this->create_service<std_srvs::srv::Trigger>("start_single_period_signal",
       std::bind(&TuningSignalGenerator::start_single_service_callback, this,
                 std::placeholders::_1, std::placeholders::_2));
 }
@@ -87,10 +90,23 @@ TuningSignalGenerator::TuningSignalGenerator() :
 void TuningSignalGenerator::publish_timer_callback() {
   update_params();
 
-  double signal_value = 0;
-  double elapsed_time = this->get_clock()->now().seconds() - initial_time_;
+  double elapsed_time = this->get_clock()->now().seconds() - initial_time_ - paused_time_;
+
+  // Check if only suppose to run for single period, pausing when complete
+  if (abs(single_period_start_time_) > 0.01 && 
+      (single_period_start_time_ + (1 / frequency_hz_)) <= this->get_clock()->now().seconds()) {
+    single_period_start_time_ = 0;
+    is_paused_ = true;
+    RCLCPP_INFO(this->get_logger(), "Single period active!");
+  }
+  
+  // If paused, negate passing of time but keep publishing
+  if (is_paused_) {
+    paused_time_ += 1 / dt_hz_;
+  }
 
   // Get value for signal
+  double signal_value = 0;
   switch (signal_type_) {
     case SignalType::SQUARE:
       signal_value = get_square_signal(elapsed_time, amplitude_, frequency_hz_, offset_);
@@ -164,6 +180,10 @@ void TuningSignalGenerator::publish_timer_callback() {
 bool TuningSignalGenerator::reset_service_callback(
     const std_srvs::srv::Trigger::Request::SharedPtr & req,
     const std_srvs::srv::Trigger::Response::SharedPtr & res) {
+  initial_time_ = this->get_clock()->now().seconds();
+  paused_time_ = 0;
+  is_paused_ = true;
+  single_period_start_time_ = 0;
 
   res->success = true;
   return true;
@@ -173,6 +193,8 @@ bool TuningSignalGenerator::reset_service_callback(
 bool TuningSignalGenerator::pause_service_callback(
     const std_srvs::srv::Trigger::Request::SharedPtr & req,
     const std_srvs::srv::Trigger::Response::SharedPtr & res) {
+  is_paused_ = true;
+  single_period_start_time_ = 0;
 
   res->success = true;
   return true;
@@ -182,6 +204,8 @@ bool TuningSignalGenerator::pause_service_callback(
 bool TuningSignalGenerator::start_continuous_service_callback(
     const std_srvs::srv::Trigger::Request::SharedPtr & req,
     const std_srvs::srv::Trigger::Response::SharedPtr & res) {
+  is_paused_ = false;
+  single_period_start_time_ = 0;
 
   res->success = true;
   return true;
@@ -191,6 +215,8 @@ bool TuningSignalGenerator::start_continuous_service_callback(
 bool TuningSignalGenerator::start_single_service_callback(
     const std_srvs::srv::Trigger::Request::SharedPtr & req,
     const std_srvs::srv::Trigger::Response::SharedPtr & res) {
+  is_paused_ = false;
+  single_period_start_time_ = this->get_clock()->now().seconds();
 
   res->success = true;
   return true;

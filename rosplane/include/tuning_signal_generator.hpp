@@ -84,8 +84,11 @@ private:
   double amplitude_;                    ///< Amplitude of signal.
   double frequency_hz_;                 ///< Frequency of the signal.
   double offset_;                       ///< Offset of signal from 0.
+
   double initial_time_;                 ///< Initial time of the signal.
   bool is_paused_;                      ///< Flag to specify if signal should be paused.
+  double paused_time_;                  ///< Amount of time that has been spent paused.
+  double single_period_start_time_;     ///< Epoch time of when single period start was called.
 
   /// Controller command ROS message publisher.
   rclcpp::Publisher<rosplane_msgs::msg::ControllerCommands>::SharedPtr command_publisher_;
