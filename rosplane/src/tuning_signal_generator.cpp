@@ -38,25 +38,25 @@
  */
 
 #include <chrono>
-#include <string>
 #include <cmath>
+#include <string>
 
 #include "tuning_signal_generator.hpp"
 
 namespace rosplane
 {
-TuningSignalGenerator::TuningSignalGenerator() :
-    Node("signal_generator"),
-    controller_output_(ControllerOutput::ROLL),
-    signal_type_(SignalType::SQUARE),
-    dt_hz_(0),
-    amplitude_(0),
-    frequency_hz_(0),
-    offset_(0),
-    initial_time_(0),
-    is_paused_(true),
-    paused_time_(0),
-    single_period_start_time_(0)
+TuningSignalGenerator::TuningSignalGenerator()
+    : Node("signal_generator")
+    , controller_output_(ControllerOutput::ROLL)
+    , signal_type_(SignalType::SQUARE)
+    , dt_hz_(0)
+    , amplitude_(0)
+    , frequency_hz_(0)
+    , offset_(0)
+    , initial_time_(0)
+    , is_paused_(true)
+    , paused_time_(0)
+    , single_period_start_time_(0)
 {
   this->declare_parameter("controller_output", "roll");
   this->declare_parameter("signal_type", "square");
@@ -68,42 +68,44 @@ TuningSignalGenerator::TuningSignalGenerator() :
   update_params();
   initial_time_ = this->get_clock()->now().seconds();
 
-  publish_timer_ = this->create_wall_timer(
-      std::chrono::milliseconds(static_cast<long>(1000 / dt_hz_)), 
-      std::bind(&TuningSignalGenerator::publish_timer_callback, this));
+  publish_timer_ =
+    this->create_wall_timer(std::chrono::milliseconds(static_cast<long>(1000 / dt_hz_)),
+                            std::bind(&TuningSignalGenerator::publish_timer_callback, this));
 
-  reset_service_ = this->create_service<std_srvs::srv::Trigger>("reset_signal", 
-      std::bind(&TuningSignalGenerator::reset_service_callback, this, 
-                std::placeholders::_1, std::placeholders::_2));
-  pause_service_ = this->create_service<std_srvs::srv::Trigger>("pause_signal",
-      std::bind(&TuningSignalGenerator::pause_service_callback, this, 
-                std::placeholders::_1, std::placeholders::_2));
-  start_continuous_service_ = this->create_service<std_srvs::srv::Trigger>("start_continuous_signal",
-      std::bind(&TuningSignalGenerator::start_continuous_service_callback, this,
-                std::placeholders::_1, std::placeholders::_2));
-  start_single_service_ = this->create_service<std_srvs::srv::Trigger>("start_single_period_signal",
-      std::bind(&TuningSignalGenerator::start_single_service_callback, this,
-                std::placeholders::_1, std::placeholders::_2));
+  reset_service_ = this->create_service<std_srvs::srv::Trigger>(
+    "reset_signal",
+    std::bind(&TuningSignalGenerator::reset_service_callback, this, std::placeholders::_1,
+              std::placeholders::_2));
+  pause_service_ = this->create_service<std_srvs::srv::Trigger>(
+    "pause_signal",
+    std::bind(&TuningSignalGenerator::pause_service_callback, this, std::placeholders::_1,
+              std::placeholders::_2));
+  start_continuous_service_ = this->create_service<std_srvs::srv::Trigger>(
+    "start_continuous_signal",
+    std::bind(&TuningSignalGenerator::start_continuous_service_callback, this,
+              std::placeholders::_1, std::placeholders::_2));
+  start_single_service_ = this->create_service<std_srvs::srv::Trigger>(
+    "start_single_period_signal",
+    std::bind(&TuningSignalGenerator::start_single_service_callback, this, std::placeholders::_1,
+              std::placeholders::_2));
 }
 
-
-void TuningSignalGenerator::publish_timer_callback() {
+void TuningSignalGenerator::publish_timer_callback()
+{
   update_params();
 
   double elapsed_time = this->get_clock()->now().seconds() - initial_time_ - paused_time_;
 
   // Check if only suppose to run for single period, pausing when complete
-  if (abs(single_period_start_time_) > 0.01 && 
-      (single_period_start_time_ + (1 / frequency_hz_)) <= this->get_clock()->now().seconds()) {
+  if (abs(single_period_start_time_) > 0.01
+      && (single_period_start_time_ + (1 / frequency_hz_)) <= this->get_clock()->now().seconds()) {
     single_period_start_time_ = 0;
     is_paused_ = true;
     RCLCPP_INFO(this->get_logger(), "Single period active!");
   }
-  
+
   // If paused, negate passing of time but keep publishing
-  if (is_paused_) {
-    paused_time_ += 1 / dt_hz_;
-  }
+  if (is_paused_) { paused_time_ += 1 / dt_hz_; }
 
   // Get value for signal
   double signal_value = 0;
@@ -121,65 +123,65 @@ void TuningSignalGenerator::publish_timer_callback() {
       signal_value = get_sine_signal(elapsed_time, amplitude_, frequency_hz_, offset_);
       break;
   }
-  
+
   // Create required publishers if they don't already exist
-  if (controller_output_ == ControllerOutput::ROLL || 
-      controller_output_ == ControllerOutput::PITCH) {
+  if (controller_output_ == ControllerOutput::ROLL
+      || controller_output_ == ControllerOutput::PITCH) {
     if (internals_publisher_ == nullptr) {
-      internals_publisher_ = 
-          this->create_publisher<rosplane_msgs::msg::ControllerInternalsDebug>("/tuning_debug", 1);
+      internals_publisher_ =
+        this->create_publisher<rosplane_msgs::msg::ControllerInternalsDebug>("/tuning_debug", 1);
     }
   } else {
     if (command_publisher_ == nullptr) {
-      command_publisher_ = 
-          this->create_publisher<rosplane_msgs::msg::ControllerCommands>("/controller_command", 1);
+      command_publisher_ =
+        this->create_publisher<rosplane_msgs::msg::ControllerCommands>("/controller_command", 1);
     }
   }
 
   // Publish message
   switch (controller_output_) {
     case ControllerOutput::ROLL: {
-        rosplane_msgs::msg::ControllerInternalsDebug message; 
-        message.header.stamp = this->get_clock()->now();
-        message.phi_c = signal_value;
-        internals_publisher_->publish(message);
-        break;
-      }
+      rosplane_msgs::msg::ControllerInternalsDebug message;
+      message.header.stamp = this->get_clock()->now();
+      message.phi_c = signal_value;
+      internals_publisher_->publish(message);
+      break;
+    }
     case ControllerOutput::PITCH: {
-        rosplane_msgs::msg::ControllerInternalsDebug message; 
-        message.header.stamp = this->get_clock()->now();
-        message.theta_c = signal_value;
-        internals_publisher_->publish(message);
-        break;
-      }
+      rosplane_msgs::msg::ControllerInternalsDebug message;
+      message.header.stamp = this->get_clock()->now();
+      message.theta_c = signal_value;
+      internals_publisher_->publish(message);
+      break;
+    }
     case ControllerOutput::ALTITUDE: {
-        rosplane_msgs::msg::ControllerCommands message; 
-        message.header.stamp = this->get_clock()->now();
-        message.h_c = signal_value;
-        command_publisher_->publish(message);
-        break;
-      }
+      rosplane_msgs::msg::ControllerCommands message;
+      message.header.stamp = this->get_clock()->now();
+      message.h_c = signal_value;
+      command_publisher_->publish(message);
+      break;
+    }
     case ControllerOutput::HEADING: {
-        rosplane_msgs::msg::ControllerCommands message; 
-        message.header.stamp = this->get_clock()->now();
-        message.chi_c = signal_value;
-        command_publisher_->publish(message);
-        break;
-      }
+      rosplane_msgs::msg::ControllerCommands message;
+      message.header.stamp = this->get_clock()->now();
+      message.chi_c = signal_value;
+      command_publisher_->publish(message);
+      break;
+    }
     case ControllerOutput::AIRSPEED: {
-        rosplane_msgs::msg::ControllerCommands message; 
-        message.header.stamp = this->get_clock()->now();
-        message.va_c = signal_value;
-        command_publisher_->publish(message);
-        break;
-      }
+      rosplane_msgs::msg::ControllerCommands message;
+      message.header.stamp = this->get_clock()->now();
+      message.va_c = signal_value;
+      command_publisher_->publish(message);
+      break;
+    }
   }
 }
 
-
 bool TuningSignalGenerator::reset_service_callback(
-    const std_srvs::srv::Trigger::Request::SharedPtr & req,
-    const std_srvs::srv::Trigger::Response::SharedPtr & res) {
+  const std_srvs::srv::Trigger::Request::SharedPtr & req,
+  const std_srvs::srv::Trigger::Response::SharedPtr & res)
+{
   initial_time_ = this->get_clock()->now().seconds();
   paused_time_ = 0;
   is_paused_ = true;
@@ -189,10 +191,10 @@ bool TuningSignalGenerator::reset_service_callback(
   return true;
 }
 
-
 bool TuningSignalGenerator::pause_service_callback(
-    const std_srvs::srv::Trigger::Request::SharedPtr & req,
-    const std_srvs::srv::Trigger::Response::SharedPtr & res) {
+  const std_srvs::srv::Trigger::Request::SharedPtr & req,
+  const std_srvs::srv::Trigger::Response::SharedPtr & res)
+{
   is_paused_ = true;
   single_period_start_time_ = 0;
 
@@ -200,10 +202,10 @@ bool TuningSignalGenerator::pause_service_callback(
   return true;
 }
 
-
 bool TuningSignalGenerator::start_continuous_service_callback(
-    const std_srvs::srv::Trigger::Request::SharedPtr & req,
-    const std_srvs::srv::Trigger::Response::SharedPtr & res) {
+  const std_srvs::srv::Trigger::Request::SharedPtr & req,
+  const std_srvs::srv::Trigger::Response::SharedPtr & res)
+{
   is_paused_ = false;
   single_period_start_time_ = 0;
 
@@ -211,10 +213,10 @@ bool TuningSignalGenerator::start_continuous_service_callback(
   return true;
 }
 
-
 bool TuningSignalGenerator::start_single_service_callback(
-    const std_srvs::srv::Trigger::Request::SharedPtr & req,
-    const std_srvs::srv::Trigger::Response::SharedPtr & res) {
+  const std_srvs::srv::Trigger::Request::SharedPtr & req,
+  const std_srvs::srv::Trigger::Response::SharedPtr & res)
+{
   is_paused_ = false;
   single_period_start_time_ = this->get_clock()->now().seconds();
 
@@ -222,41 +224,41 @@ bool TuningSignalGenerator::start_single_service_callback(
   return true;
 }
 
-
-double TuningSignalGenerator::get_square_signal(double elapsed_time, double amplitude, 
-                                                double frequency, double offset) {
+double TuningSignalGenerator::get_square_signal(double elapsed_time, double amplitude,
+                                                double frequency, double offset)
+{
   // amplitude * (1 to -1 switching value) + offset
   return amplitude * ((static_cast<int>(elapsed_time * frequency * 2) % 2) * 2 - 1) + offset;
 }
 
-
-double TuningSignalGenerator::get_sawtooth_signal(double elapsed_time, double amplitude, 
-                                                  double frequency, double offset) {
+double TuningSignalGenerator::get_sawtooth_signal(double elapsed_time, double amplitude,
+                                                  double frequency, double offset)
+{
   // slope * elapsed_time - num_cycles * offset_per_cycle + offset
-  return 2 * amplitude * (elapsed_time * frequency - static_cast<int>(elapsed_time * frequency) - 
-      0.5) + offset;
+  return 2 * amplitude
+    * (elapsed_time * frequency - static_cast<int>(elapsed_time * frequency) - 0.5)
+    + offset;
 }
-
 
 double TuningSignalGenerator::get_triangle_signal(double elapsed_time, double amplitude,
-                                                  double frequency, double offset) {
+                                                  double frequency, double offset)
+{
   // (1 to -1 switching value) * sawtooth_at_twice_the_rate + offset
-  return ((static_cast<int>(elapsed_time * frequency * 2) % 2) * 2 - 1) * 2 * 
-      amplitude * (2 * elapsed_time * frequency - static_cast<int>(2 * elapsed_time * frequency) - 
-      0.5) + offset;
+  return ((static_cast<int>(elapsed_time * frequency * 2) % 2) * 2 - 1) * 2 * amplitude
+    * (2 * elapsed_time * frequency - static_cast<int>(2 * elapsed_time * frequency) - 0.5)
+    + offset;
 }
 
-
-double TuningSignalGenerator::get_sine_signal(double elapsed_time, double amplitude, 
-                                              double frequency, double offset) {
+double TuningSignalGenerator::get_sine_signal(double elapsed_time, double amplitude,
+                                              double frequency, double offset)
+{
   return sin(elapsed_time * frequency * 2 * M_PI) * amplitude + offset;
 }
 
-
-void TuningSignalGenerator::update_params() {
+void TuningSignalGenerator::update_params()
+{
   // controller output
-  std::string controller_output_string = 
-      this->get_parameter("controller_output").as_string();
+  std::string controller_output_string = this->get_parameter("controller_output").as_string();
   if (controller_output_string == "roll") {
     controller_output_ = ControllerOutput::ROLL;
   } else if (controller_output_string == "pitch") {
@@ -268,7 +270,7 @@ void TuningSignalGenerator::update_params() {
   } else if (controller_output_string == "airspeed") {
     controller_output_ = ControllerOutput::AIRSPEED;
   } else {
-    RCLCPP_ERROR(this->get_logger(), "Param controller_output set to invalid type %s!", 
+    RCLCPP_ERROR(this->get_logger(), "Param controller_output set to invalid type %s!",
                  controller_output_string.c_str());
   }
 
@@ -295,15 +297,15 @@ void TuningSignalGenerator::update_params() {
     // Parameter has changed, create new timer with updated value
     if (dt_hz_ != dt_hz_value) {
       dt_hz_ = dt_hz_value;
-      publish_timer_ = this->create_wall_timer(
-          std::chrono::milliseconds(static_cast<long>(1000 / dt_hz_)), 
-          std::bind(&TuningSignalGenerator::publish_timer_callback, this));
+      publish_timer_ =
+        this->create_wall_timer(std::chrono::milliseconds(static_cast<long>(1000 / dt_hz_)),
+                                std::bind(&TuningSignalGenerator::publish_timer_callback, this));
     }
   }
-  
+
   // amplitude
   amplitude_ = this->get_parameter("amplitude").as_double();
-  
+
   // frequency hz
   double frequency_hz_value = this->get_parameter("frequency_hz").as_double();
   if (frequency_hz_value <= 0) {
@@ -311,12 +313,11 @@ void TuningSignalGenerator::update_params() {
   } else {
     frequency_hz_ = frequency_hz_value;
   }
-  
+
   // offset
   offset_ = this->get_parameter("offset").as_double();
 }
 } // namespace rosplane
-
 
 int main(int argc, char ** argv)
 {

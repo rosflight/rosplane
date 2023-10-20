@@ -42,10 +42,10 @@
 #ifndef TUNING_SIGNAL_GENERATOR_HPP
 #define TUNING_SIGNAL_GENERATOR_HPP
 
-#include <rclcpp/rclcpp.hpp>
-#include <std_srvs/srv/trigger.hpp>
 #include "rosplane_msgs/msg/controller_commands.hpp"
 #include "rosplane_msgs/msg/controller_internals_debug.hpp"
+#include <rclcpp/rclcpp.hpp>
+#include <std_srvs/srv/trigger.hpp>
 
 namespace rosplane
 {
@@ -56,45 +56,47 @@ namespace rosplane
  */
 class TuningSignalGenerator : public rclcpp::Node
 {
-public: 
+public:
   /// Contructor for signal generator.
   TuningSignalGenerator();
 
 private:
   /// This defines what controller to publish the generated signal to.
-  enum class ControllerOutput {
+  enum class ControllerOutput
+  {
     ROLL,
     PITCH,
     ALTITUDE,
     HEADING,
     AIRSPEED
   };
-  
+
   /// This defines what type of signal to publish to the selected controller.
-  enum class SignalType {
+  enum class SignalType
+  {
     SQUARE,
     SAWTOOTH,
     TRIANGLE,
     SINE
   };
 
-  ControllerOutput controller_output_;  ///< Controller to output command signals to.
-  SignalType signal_type_;              ///< Signal type to output.
-  double dt_hz_;                        ///< Frequency to publish commands.
-  double amplitude_;                    ///< Amplitude of signal.
-  double frequency_hz_;                 ///< Frequency of the signal.
-  double offset_;                       ///< Offset of signal from 0.
+  ControllerOutput controller_output_; ///< Controller to output command signals to.
+  SignalType signal_type_;             ///< Signal type to output.
+  double dt_hz_;                       ///< Frequency to publish commands.
+  double amplitude_;                   ///< Amplitude of signal.
+  double frequency_hz_;                ///< Frequency of the signal.
+  double offset_;                      ///< Offset of signal from 0.
 
-  double initial_time_;                 ///< Initial time of the signal.
-  bool is_paused_;                      ///< Flag to specify if signal should be paused.
-  double paused_time_;                  ///< Amount of time that has been spent paused.
-  double single_period_start_time_;     ///< Epoch time of when single period start was called.
+  double initial_time_;             ///< Initial time of the signal.
+  bool is_paused_;                  ///< Flag to specify if signal should be paused.
+  double paused_time_;              ///< Amount of time that has been spent paused.
+  double single_period_start_time_; ///< Epoch time of when single period start was called.
 
   /// Controller command ROS message publisher.
   rclcpp::Publisher<rosplane_msgs::msg::ControllerCommands>::SharedPtr command_publisher_;
   /// Controller internals ROS message publisher.
   rclcpp::Publisher<rosplane_msgs::msg::ControllerInternalsDebug>::SharedPtr internals_publisher_;
-  
+
   /// ROS timer to run timer callback, which publishes commands
   rclcpp::TimerBase::SharedPtr publish_timer_;
 
@@ -132,7 +134,7 @@ private:
    * @param frequency The frequency of the signal.
    * @param initial_value Inital value of the signal. The in other words, the signal 'offset'.
    */
-  static double get_square_signal(double elapsed_time, double amplitude, double frequency, 
+  static double get_square_signal(double elapsed_time, double amplitude, double frequency,
                                   double initial_value);
   /**
    * @brief Get the value for a sawtooth signal at the given time with the given conditions.
