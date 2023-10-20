@@ -44,7 +44,7 @@
 
 namespace rosplane
 {
-  TuningSignalGenerator::TuningSignalGenerator() :
+TuningSignalGenerator::TuningSignalGenerator() :
     Node("signal_generator"),
     controller_output_(ControllerOutput::ROLL),
     signal_type_(SignalType::SQUARE),
@@ -53,44 +53,118 @@ namespace rosplane
     frequency_hz_(0),
     offset_(0),
     initial_time_(0)
-  {
-    this->declare_parameter("controller_output", "roll");
-    this->declare_parameter("signal_type", "square");
-    this->declare_parameter("dt_hz", 100.0);
-    this->declare_parameter("amplitude", 1.0);
-    this->declare_parameter("frequency_hz", 0.2);
-    this->declare_parameter("offset", 0.0);
+{
+  this->declare_parameter("controller_output", "roll");
+  this->declare_parameter("signal_type", "square");
+  this->declare_parameter("dt_hz", 100.0);
+  this->declare_parameter("amplitude", 1.0);
+  this->declare_parameter("frequency_hz", 0.2);
+  this->declare_parameter("offset", 0.0);
 
-    update_params();
+  update_params();
+  initial_time_ = this->get_clock()->now().seconds();
 
-    publish_timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(static_cast<long>(1000 / dt_hz_)), 
-        std::bind(&TuningSignalGenerator::publish_timer_callback, this));
-  }
+  publish_timer_ = this->create_wall_timer(
+      std::chrono::milliseconds(static_cast<long>(1000 / dt_hz_)), 
+      std::bind(&TuningSignalGenerator::publish_timer_callback, this));
+}
 
 void TuningSignalGenerator::publish_timer_callback() {
   update_params();
+
+  double signal_value = 0;
+  double elapsed_time = this->get_clock()->now().seconds() - initial_time_;
+
+  // Get value for signal
+  switch (signal_type_) {
+    case SignalType::SQUARE:
+      signal_value = get_square_signal(elapsed_time, amplitude_, frequency_hz_, offset_);
+      break;
+    case SignalType::SAWTOOTH:
+      signal_value = get_sawtooth_signal(elapsed_time, amplitude_, frequency_hz_, offset_);
+      break;
+    case SignalType::TRIANGLE:
+      signal_value = get_triangle_signal(elapsed_time, amplitude_, frequency_hz_, offset_);
+      break;
+    case SignalType::SINE:
+      signal_value = get_sine_signal(elapsed_time, amplitude_, frequency_hz_, offset_);
+      break;
+  }
+  
+  // Create required publishers if they don't already exist
+  if ((controller_output_ == ControllerOutput::ROLL || 
+       controller_output_ == ControllerOutput::PITCH) && internals_publisher_ == nullptr) {
+    internals_publisher_ = 
+        this->create_publisher<rosplane_msgs::msg::ControllerInternalsDebug>("/tuning_debug", 1);
+  } else if (command_publisher_ == nullptr) {
+    command_publisher_ = 
+        this->create_publisher<rosplane_msgs::msg::ControllerCommands>("/controller_command", 1);
+  }
+
+  // Publish message
+  switch (controller_output_) {
+    case ControllerOutput::ROLL: {
+        rosplane_msgs::msg::ControllerInternalsDebug message; 
+        message.header.stamp = this->get_clock()->now();
+        message.phi_c = signal_value;
+        internals_publisher_->publish(message);
+        break;
+      }
+    case ControllerOutput::PITCH: {
+        rosplane_msgs::msg::ControllerInternalsDebug message; 
+        message.header.stamp = this->get_clock()->now();
+        message.theta_c = signal_value;
+        internals_publisher_->publish(message);
+        break;
+      }
+    case ControllerOutput::ALTITUDE: {
+        rosplane_msgs::msg::ControllerCommands message; 
+        message.header.stamp = this->get_clock()->now();
+        message.h_c = signal_value;
+        command_publisher_->publish(message);
+        break;
+      }
+    case ControllerOutput::HEADING: {
+        rosplane_msgs::msg::ControllerCommands message; 
+        message.header.stamp = this->get_clock()->now();
+        message.chi_c = signal_value;
+        command_publisher_->publish(message);
+        break;
+      }
+    case ControllerOutput::AIRSPEED: {
+        rosplane_msgs::msg::ControllerCommands message; 
+        message.header.stamp = this->get_clock()->now();
+        message.va_c = signal_value;
+        command_publisher_->publish(message);
+        break;
+      }
+  }
 }
+
 
 double TuningSignalGenerator::get_square_signal(double elapsed_time, double amplitude, 
-                                                double frequency, double initial_value) {
-
+                                                double frequency, double offset) {
+  return 1;
 }
+
 
 double TuningSignalGenerator::get_sawtooth_signal(double elapsed_time, double amplitude, 
-                                                  double frequency, double initial_value) {
-
+                                                  double frequency, double offset) {
+  return 2;
 }
+
 
 double TuningSignalGenerator::get_triangle_signal(double elapsed_time, double amplitude,
-                                                  double frequency, double initial_value) {
-
+                                                  double frequency, double offset) {
+  return 3;
 }
+
 
 double TuningSignalGenerator::get_sine_signal(double elapsed_time, double amplitude, 
-                                              double frequency, double initial_value) {
-
+                                              double frequency, double offset) {
+  return 4;
 }
+
 
 void TuningSignalGenerator::update_params() {
   // controller output
@@ -154,8 +228,8 @@ void TuningSignalGenerator::update_params() {
   // offset
   offset_ = this->get_parameter("offset").as_double();
 }
-
 } // namespace rosplane
+
 
 int main(int argc, char ** argv)
 {
