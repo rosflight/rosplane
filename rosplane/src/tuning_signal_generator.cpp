@@ -69,7 +69,7 @@ namespace rosplane
   }
 
 void TuningSignalGenerator::publish_timer_callback() {
-
+  update_params();
 }
 
 double TuningSignalGenerator::get_square_signal(double elapsed_time, double amplitude, 
@@ -108,7 +108,7 @@ void TuningSignalGenerator::update_params() {
     controller_output_ = ControllerOutput::AIRSPEED;
   } else {
     RCLCPP_ERROR(this->get_logger(), "Param controller_output set to invalid type %s!", 
-                 controller_output_string);
+                 controller_output_string.c_str());
   }
 
   // signal type
@@ -123,17 +123,33 @@ void TuningSignalGenerator::update_params() {
     signal_type_ = SignalType::SINE;
   } else {
     RCLCPP_ERROR(this->get_logger(), "Param signal_type set to invalid type %s!",
-                 signal_type_string);
+                 signal_type_string.c_str());
   }
 
   // dt hz
-  dt_hz_ = this->get_parameter("dt_hz").as_double();
+  double dt_hz_value = this->get_parameter("dt_hz").as_double();
+  if (dt_hz_value <= 0) {
+    RCLCPP_ERROR(this->get_logger(), "Param dt_hz must be greater than 0!");
+  } else {
+    // Parameter has changed, create new timer with updated value
+    if (dt_hz_ != dt_hz_value) {
+      dt_hz_ = dt_hz_value;
+      publish_timer_ = this->create_wall_timer(
+          std::chrono::milliseconds(static_cast<long>(1000 / dt_hz_)), 
+          std::bind(&TuningSignalGenerator::publish_timer_callback, this));
+    }
+  }
   
   // amplitude
   amplitude_ = this->get_parameter("amplitude").as_double();
   
   // frequency hz
-  frequency_hz_ = this->get_parameter("frequency_hz").as_double();
+  double frequency_hz_value = this->get_parameter("frequency_hz").as_double();
+  if (frequency_hz_value <= 0) {
+    RCLCPP_ERROR(this->get_logger(), "Param frequency_hz must be greater than 0!");
+  } else {
+    frequency_hz_ = frequency_hz_value;
+  }
   
   // offset
   offset_ = this->get_parameter("offset").as_double();

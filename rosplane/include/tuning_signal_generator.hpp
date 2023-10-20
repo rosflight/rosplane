@@ -56,15 +56,11 @@ namespace rosplane
 class TuningSignalGenerator : public rclcpp::Node
 {
 public: 
-  /**
-   * @brief Contructor for signal generator.
-   */
+  /// Contructor for signal generator.
   TuningSignalGenerator();
 
 private:
-  /**
-   * This defines what controller to publish the generated signal to.
-   */
+  /// This defines what controller to publish the generated signal to.
   enum class ControllerOutput {
     ROLL,
     PITCH,
@@ -73,9 +69,7 @@ private:
     AIRSPEED
   };
   
-  /**
-   * This defines what type of signal to publish to the selected controller.
-   */
+  /// This defines what type of signal to publish to the selected controller.
   enum class SignalType {
     SQUARE,
     SAWTOOTH,
@@ -99,9 +93,7 @@ private:
   /// ROS timer to run timer callback, which publishes commands
   rclcpp::TimerBase::SharedPtr publish_timer_;
 
-  /**
-   * Callback to publish command on topic.
-   */
+  /// Callback to publish command on topic.
   void publish_timer_callback();
 
   /**
@@ -149,9 +141,7 @@ private:
   static double get_sine_signal(double elapsed_time, double amplitude, double frequency,
                                 double initial_value);
 
-  /**
-   * Updates the parameters within the class with the latest values from ROS.
-   */
+  /// Updates the parameters within the class with the latest values from ROS.
   void update_params();
 };
 } // namespace rosplane
