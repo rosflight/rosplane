@@ -72,6 +72,11 @@ TuningSignalGenerator::TuningSignalGenerator()
     this->create_wall_timer(std::chrono::milliseconds(static_cast<long>(1000 / dt_hz_)),
                             std::bind(&TuningSignalGenerator::publish_timer_callback, this));
 
+  internals_publisher_ = 
+    this->create_publisher<rosplane_msgs::msg::ControllerInternalsDebug>("/tuning_debug", 1);
+  command_publisher_ =
+    this->create_publisher<rosplane_msgs::msg::ControllerCommands>("/controller_command", 1);
+
   reset_service_ = this->create_service<std_srvs::srv::Trigger>(
     "reset_signal",
     std::bind(&TuningSignalGenerator::reset_service_callback, this, std::placeholders::_1,
@@ -101,7 +106,6 @@ void TuningSignalGenerator::publish_timer_callback()
       && (single_period_start_time_ + (1 / frequency_hz_)) <= this->get_clock()->now().seconds()) {
     single_period_start_time_ = 0;
     is_paused_ = true;
-    RCLCPP_INFO(this->get_logger(), "Single period active!");
   }
 
   // If paused, negate passing of time but keep publishing
@@ -124,58 +128,39 @@ void TuningSignalGenerator::publish_timer_callback()
       break;
   }
 
-  // Create required publishers if they don't already exist
-  if (controller_output_ == ControllerOutput::ROLL
-      || controller_output_ == ControllerOutput::PITCH) {
-    if (internals_publisher_ == nullptr) {
-      internals_publisher_ =
-        this->create_publisher<rosplane_msgs::msg::ControllerInternalsDebug>("/tuning_debug", 1);
-    }
-  } else {
-    if (command_publisher_ == nullptr) {
-      command_publisher_ =
-        this->create_publisher<rosplane_msgs::msg::ControllerCommands>("/controller_command", 1);
-    }
-  }
+  // Creates message with default values
+  rosplane_msgs::msg::ControllerCommands command_message; 
+  command_message.header.stamp = this->get_clock()->now();
+  command_message.va_c = 0;
+  command_message.h_c = 0;
+  command_message.chi_c = 0;
+  command_message.phi_ff = 0;
+  rosplane_msgs::msg::ControllerInternalsDebug internals_message;
+  internals_message.header.stamp = this->get_clock()->now();
+  internals_message.theta_c = 0;
+  internals_message.phi_c = 0;
+  internals_message.alt_zone = 0;
 
   // Publish message
   switch (controller_output_) {
-    case ControllerOutput::ROLL: {
-      rosplane_msgs::msg::ControllerInternalsDebug message;
-      message.header.stamp = this->get_clock()->now();
-      message.phi_c = signal_value;
-      internals_publisher_->publish(message);
+    case ControllerOutput::ROLL:
+      internals_message.phi_c = signal_value;
       break;
-    }
-    case ControllerOutput::PITCH: {
-      rosplane_msgs::msg::ControllerInternalsDebug message;
-      message.header.stamp = this->get_clock()->now();
-      message.theta_c = signal_value;
-      internals_publisher_->publish(message);
+    case ControllerOutput::PITCH:
+      internals_message.theta_c = signal_value;
       break;
-    }
-    case ControllerOutput::ALTITUDE: {
-      rosplane_msgs::msg::ControllerCommands message;
-      message.header.stamp = this->get_clock()->now();
-      message.h_c = signal_value;
-      command_publisher_->publish(message);
+    case ControllerOutput::ALTITUDE:
+      command_message.h_c = signal_value;
       break;
-    }
-    case ControllerOutput::HEADING: {
-      rosplane_msgs::msg::ControllerCommands message;
-      message.header.stamp = this->get_clock()->now();
-      message.chi_c = signal_value;
-      command_publisher_->publish(message);
+    case ControllerOutput::HEADING:
+      command_message.chi_c = signal_value;
       break;
-    }
-    case ControllerOutput::AIRSPEED: {
-      rosplane_msgs::msg::ControllerCommands message;
-      message.header.stamp = this->get_clock()->now();
-      message.va_c = signal_value;
-      command_publisher_->publish(message);
+    case ControllerOutput::AIRSPEED:
+      command_message.va_c = signal_value;
       break;
-    }
   }
+  command_publisher_->publish(command_message);
+  internals_publisher_->publish(internals_message);
 }
 
 bool TuningSignalGenerator::reset_service_callback(
