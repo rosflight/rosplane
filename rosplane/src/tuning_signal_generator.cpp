@@ -64,6 +64,11 @@ TuningSignalGenerator::TuningSignalGenerator()
   this->declare_parameter("amplitude", 1.0);
   this->declare_parameter("frequency_hz", 0.2);
   this->declare_parameter("offset", 0.0);
+  this->declare_parameter("default_va_c", 15.0);
+  this->declare_parameter("default_h_c", 40.0);
+  this->declare_parameter("default_chi_c", 0.0);
+  this->declare_parameter("default_theta_c", 0.0);
+  this->declare_parameter("default_phi_c", 0.0);
 
   update_params();
   initial_time_ = this->get_clock()->now().seconds();
@@ -131,15 +136,13 @@ void TuningSignalGenerator::publish_timer_callback()
   // Creates message with default values
   rosplane_msgs::msg::ControllerCommands command_message; 
   command_message.header.stamp = this->get_clock()->now();
-  command_message.va_c = 0;
-  command_message.h_c = 0;
-  command_message.chi_c = 0;
-  command_message.phi_ff = 0;
+  command_message.va_c = default_va_c_;
+  command_message.h_c = default_h_c_;
+  command_message.chi_c = default_chi_c_;
   rosplane_msgs::msg::ControllerInternalsDebug internals_message;
   internals_message.header.stamp = this->get_clock()->now();
-  internals_message.theta_c = 0;
-  internals_message.phi_c = 0;
-  internals_message.alt_zone = 0;
+  internals_message.theta_c = default_theta_c_;
+  internals_message.phi_c = default_phi_c_;
 
   // Publish message
   switch (controller_output_) {
@@ -242,7 +245,7 @@ double TuningSignalGenerator::get_sine_signal(double elapsed_time, double amplit
 
 void TuningSignalGenerator::update_params()
 {
-  // controller output
+  // controller_output
   std::string controller_output_string = this->get_parameter("controller_output").as_string();
   if (controller_output_string == "roll") {
     controller_output_ = ControllerOutput::ROLL;
@@ -259,7 +262,7 @@ void TuningSignalGenerator::update_params()
                  controller_output_string.c_str());
   }
 
-  // signal type
+  // signal_type
   std::string signal_type_string = this->get_parameter("signal_type").as_string();
   if (signal_type_string == "square") {
     signal_type_ = SignalType::SQUARE;
@@ -274,7 +277,7 @@ void TuningSignalGenerator::update_params()
                  signal_type_string.c_str());
   }
 
-  // dt hz
+  // dt_hz
   double dt_hz_value = this->get_parameter("dt_hz").as_double();
   if (dt_hz_value <= 0) {
     RCLCPP_ERROR(this->get_logger(), "Param dt_hz must be greater than 0!");
@@ -291,7 +294,7 @@ void TuningSignalGenerator::update_params()
   // amplitude
   amplitude_ = this->get_parameter("amplitude").as_double();
 
-  // frequency hz
+  // frequency_hz
   double frequency_hz_value = this->get_parameter("frequency_hz").as_double();
   if (frequency_hz_value <= 0) {
     RCLCPP_ERROR(this->get_logger(), "Param frequency_hz must be greater than 0!");
@@ -301,6 +304,21 @@ void TuningSignalGenerator::update_params()
 
   // offset
   offset_ = this->get_parameter("offset").as_double();
+
+  // default_va_c
+  default_va_c_ = this->get_parameter("default_va_c").as_double();
+  
+  // default_h_c
+  default_h_c_ = this->get_parameter("default_h_c").as_double();
+
+  // default_chi_c
+  default_chi_c_ = this->get_parameter("default_chi_c").as_double();
+
+  // default_theta_c
+  default_theta_c_ = this->get_parameter("default_theta_c").as_double();
+
+  // default_phi_c
+  default_phi_c_ = this->get_parameter("default_phi_c").as_double();
 }
 } // namespace rosplane
 
