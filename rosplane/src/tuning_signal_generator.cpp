@@ -117,6 +117,11 @@ void TuningSignalGenerator::publish_timer_callback()
     is_paused_ = true;
   }
 
+  // Check if step toggle needs to be reset
+  if (signal_type_ != SignalType::STEP) {
+    step_toggled_ = false;
+  }
+
   // If paused, negate passing of time but keep publishing
   if (is_paused_) { paused_time_ += 1 / dt_hz_; }
 
@@ -234,7 +239,7 @@ bool TuningSignalGenerator::start_single_service_callback(
 double TuningSignalGenerator::get_step_signal(bool step_toggled, double amplitude,
                                               double center_value)
 {
-  return (step_toggled - 0.5) * amplitude + center_value;
+  return (step_toggled - 0.5) * 2 * amplitude + center_value;
 }
 
 double TuningSignalGenerator::get_square_signal(double elapsed_time, double amplitude,
