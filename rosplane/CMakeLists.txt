@@ -97,6 +97,7 @@ install(TARGETS
 add_executable(tuning_signal_generator
                src/tuning_signal_generator.cpp)
 ament_target_dependencies(tuning_signal_generator rosplane_msgs std_srvs rclcpp)
+target_compile_options(tuning_signal_generator PRIVATE -Wno-unused-parameter)
 install(TARGETS
         tuning_signal_generator
         DESTINATION lib/${PROJECT_NAME})
