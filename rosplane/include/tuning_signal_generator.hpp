@@ -107,6 +107,8 @@ private:
   /// ROS timer to run timer callback, which publishes commands
   rclcpp::TimerBase::SharedPtr publish_timer_;
 
+  /// ROS service for toggling step signal
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr step_toggle_service_;
   /// ROS service for reset signal
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr reset_service_;
   /// ROS service for pause signal
@@ -119,6 +121,9 @@ private:
   /// Callback to publish command on topic.
   void publish_timer_callback();
 
+  /// Callback to toggle step signal
+  bool step_toggle_service_callback(const std_srvs::srv::Trigger::Request::SharedPtr & req,
+                                    const std_srvs::srv::Trigger::Response::SharedPtr & res);
   /// Callback to reset signal
   bool reset_service_callback(const std_srvs::srv::Trigger::Request::SharedPtr & req,
                               const std_srvs::srv::Trigger::Response::SharedPtr & res);

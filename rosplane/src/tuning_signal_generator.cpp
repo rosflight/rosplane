@@ -82,6 +82,10 @@ TuningSignalGenerator::TuningSignalGenerator()
   command_publisher_ =
     this->create_publisher<rosplane_msgs::msg::ControllerCommands>("/controller_command", 1);
 
+  step_toggle_service_ = this->create_service<std_srvs::srv::Trigger>(
+    "toggle_step_signal",
+    std::bind(&TuningSignalGenerator::step_toggle_service_callback, this, std::placeholders::_1,
+              std::placeholders::_2));
   reset_service_ = this->create_service<std_srvs::srv::Trigger>(
     "reset_signal",
     std::bind(&TuningSignalGenerator::reset_service_callback, this, std::placeholders::_1,
@@ -164,6 +168,14 @@ void TuningSignalGenerator::publish_timer_callback()
   }
   command_publisher_->publish(command_message);
   internals_publisher_->publish(internals_message);
+}
+
+bool TuningSignalGenerator::step_toggle_service_callback(
+  const std_srvs::srv::Trigger::Request::SharedPtr & req,
+  const std_srvs::srv::Trigger::Response::SharedPtr & res)
+{
+  RCLCPP_INFO(this->get_logger(), "Toggle callback called!");
+  return true; 
 }
 
 bool TuningSignalGenerator::reset_service_callback(
