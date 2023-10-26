@@ -49,7 +49,7 @@ TuningSignalGenerator::TuningSignalGenerator()
     : Node("signal_generator")
     , controller_output_(ControllerOutput::ROLL)
     , signal_type_(SignalType::SQUARE)
-    , dt_hz_(0)
+    , publish_rate_hz_(0)
     , amplitude_(0)
     , frequency_hz_(0)
     , center_value_(0)
@@ -60,7 +60,7 @@ TuningSignalGenerator::TuningSignalGenerator()
 {
   this->declare_parameter("controller_output", "roll");
   this->declare_parameter("signal_type", "step");
-  this->declare_parameter("dt_hz", 100.0);
+  this->declare_parameter("publish_rate_hz", 100.0);
   this->declare_parameter("amplitude", 1.0);
   this->declare_parameter("frequency_hz", 0.2);
   this->declare_parameter("center_value", 0.0);
@@ -74,7 +74,7 @@ TuningSignalGenerator::TuningSignalGenerator()
   initial_time_ = this->get_clock()->now().seconds();
 
   publish_timer_ =
-    this->create_wall_timer(std::chrono::milliseconds(static_cast<long>(1000 / dt_hz_)),
+    this->create_wall_timer(std::chrono::milliseconds(static_cast<long>(1000 / publish_rate_hz_)),
                             std::bind(&TuningSignalGenerator::publish_timer_callback, this));
 
   internals_publisher_ = 
@@ -123,7 +123,7 @@ void TuningSignalGenerator::publish_timer_callback()
   }
 
   // If paused, negate passing of time but keep publishing
-  if (is_paused_) { paused_time_ += 1 / dt_hz_; }
+  if (is_paused_) { paused_time_ += 1 / publish_rate_hz_; }
 
   // Get value for signal
   double signal_value = 0;
@@ -309,17 +309,17 @@ void TuningSignalGenerator::update_params()
                  signal_type_string.c_str());
   }
 
-  // dt_hz
-  double dt_hz_value = this->get_parameter("dt_hz").as_double();
-  if (dt_hz_value <= 0) {
-    RCLCPP_ERROR(this->get_logger(), "Param dt_hz must be greater than 0!");
+  // publish_rate_hz
+  double publish_rate_hz_value = this->get_parameter("publish_rate_hz").as_double();
+  if (publish_rate_hz_value <= 0) {
+    RCLCPP_ERROR(this->get_logger(), "Param publish_rate_hz must be greater than 0!");
   } else {
     // Parameter has changed, create new timer with updated value
-    if (dt_hz_ != dt_hz_value) {
-      dt_hz_ = dt_hz_value;
-      publish_timer_ =
-        this->create_wall_timer(std::chrono::milliseconds(static_cast<long>(1000 / dt_hz_)),
-                                std::bind(&TuningSignalGenerator::publish_timer_callback, this));
+    if (publish_rate_hz_ != publish_rate_hz_value) {
+      publish_rate_hz_ = publish_rate_hz_value;
+      publish_timer_ = this->create_wall_timer(
+        std::chrono::milliseconds(static_cast<long>(1000 / publish_rate_hz_)),
+        std::bind(&TuningSignalGenerator::publish_timer_callback, this));
     }
   }
 

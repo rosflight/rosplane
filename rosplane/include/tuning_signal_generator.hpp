@@ -84,7 +84,7 @@ private:
   // Parameters
   ControllerOutput controller_output_; ///< Controller to output command signals to.
   SignalType signal_type_;             ///< Signal type to output.
-  double dt_hz_;                       ///< Frequency to publish commands.
+  double publish_rate_hz_;             ///< Frequency to publish commands.
   double amplitude_;                   ///< Amplitude of signal.
   double frequency_hz_;                ///< Frequency of the signal.
   double center_value_;                ///< Offset of signal from 0.
