@@ -52,18 +52,18 @@ TuningSignalGenerator::TuningSignalGenerator()
     , dt_hz_(0)
     , amplitude_(0)
     , frequency_hz_(0)
-    , offset_(0)
+    , center_value_(0)
     , initial_time_(0)
     , is_paused_(true)
     , paused_time_(0)
     , single_period_start_time_(0)
 {
   this->declare_parameter("controller_output", "roll");
-  this->declare_parameter("signal_type", "square");
+  this->declare_parameter("signal_type", "step");
   this->declare_parameter("dt_hz", 100.0);
   this->declare_parameter("amplitude", 1.0);
   this->declare_parameter("frequency_hz", 0.2);
-  this->declare_parameter("offset", 0.0);
+  this->declare_parameter("center_value", 0.0);
   this->declare_parameter("default_va_c", 15.0);
   this->declare_parameter("default_h_c", 40.0);
   this->declare_parameter("default_chi_c", 0.0);
@@ -123,17 +123,20 @@ void TuningSignalGenerator::publish_timer_callback()
   // Get value for signal
   double signal_value = 0;
   switch (signal_type_) {
+    case SignalType::STEP:
+      signal_value = get_step_signal(step_toggled_, amplitude_, center_value_);
+      break;
     case SignalType::SQUARE:
-      signal_value = get_square_signal(elapsed_time, amplitude_, frequency_hz_, offset_);
+      signal_value = get_square_signal(elapsed_time, amplitude_, frequency_hz_, center_value_);
       break;
     case SignalType::SAWTOOTH:
-      signal_value = get_sawtooth_signal(elapsed_time, amplitude_, frequency_hz_, offset_);
+      signal_value = get_sawtooth_signal(elapsed_time, amplitude_, frequency_hz_, center_value_);
       break;
     case SignalType::TRIANGLE:
-      signal_value = get_triangle_signal(elapsed_time, amplitude_, frequency_hz_, offset_);
+      signal_value = get_triangle_signal(elapsed_time, amplitude_, frequency_hz_, center_value_);
       break;
     case SignalType::SINE:
-      signal_value = get_sine_signal(elapsed_time, amplitude_, frequency_hz_, offset_);
+      signal_value = get_sine_signal(elapsed_time, amplitude_, frequency_hz_, center_value_);
       break;
   }
 
@@ -174,8 +177,12 @@ bool TuningSignalGenerator::step_toggle_service_callback(
   const std_srvs::srv::Trigger::Request::SharedPtr & req,
   const std_srvs::srv::Trigger::Response::SharedPtr & res)
 {
-  RCLCPP_INFO(this->get_logger(), "Toggle callback called!");
-  return true; 
+  if (step_toggled_) {
+      step_toggled_ = false;
+  } else {
+      step_toggled_ = true;
+  }
+  return true;
 }
 
 bool TuningSignalGenerator::reset_service_callback(
@@ -224,35 +231,41 @@ bool TuningSignalGenerator::start_single_service_callback(
   return true;
 }
 
-double TuningSignalGenerator::get_square_signal(double elapsed_time, double amplitude,
-                                                double frequency, double offset)
+double TuningSignalGenerator::get_step_signal(bool step_toggled, double amplitude,
+                                              double center_value)
 {
-  // amplitude * (1 to -1 switching value) + offset
-  return amplitude * ((static_cast<int>(elapsed_time * frequency * 2) % 2) * 2 - 1) + offset;
+  return (step_toggled - 0.5) * amplitude + center_value;
+}
+
+double TuningSignalGenerator::get_square_signal(double elapsed_time, double amplitude,
+                                                double frequency, double center_value)
+{
+  // amplitude * (1 to -1 switching value) + center value
+  return amplitude * ((static_cast<int>(elapsed_time * frequency * 2) % 2) * 2 - 1) + center_value;
 }
 
 double TuningSignalGenerator::get_sawtooth_signal(double elapsed_time, double amplitude,
-                                                  double frequency, double offset)
+                                                  double frequency, double center_value)
 {
-  // slope * elapsed_time - num_cycles * offset_per_cycle + offset
+  // slope * elapsed_time - num_cycles * offset_per_cycle + center value 
   return 2 * amplitude
     * (elapsed_time * frequency - static_cast<int>(elapsed_time * frequency) - 0.5)
-    + offset;
+    + center_value;
 }
 
 double TuningSignalGenerator::get_triangle_signal(double elapsed_time, double amplitude,
-                                                  double frequency, double offset)
+                                                  double frequency, double center_value)
 {
-  // (1 to -1 switching value) * sawtooth_at_twice_the_rate + offset
+  // (1 to -1 switching value) * sawtooth_at_twice_the_rate + center_value
   return ((static_cast<int>(elapsed_time * frequency * 2) % 2) * 2 - 1) * 2 * amplitude
     * (2 * elapsed_time * frequency - static_cast<int>(2 * elapsed_time * frequency) - 0.5)
-    + offset;
+    + center_value;
 }
 
 double TuningSignalGenerator::get_sine_signal(double elapsed_time, double amplitude,
-                                              double frequency, double offset)
+                                              double frequency, double center_value)
 {
-  return sin(elapsed_time * frequency * 2 * M_PI) * amplitude + offset;
+  return sin(elapsed_time * frequency * 2 * M_PI) * amplitude + center_value;
 }
 
 void TuningSignalGenerator::update_params()
@@ -276,7 +289,9 @@ void TuningSignalGenerator::update_params()
 
   // signal_type
   std::string signal_type_string = this->get_parameter("signal_type").as_string();
-  if (signal_type_string == "square") {
+  if (signal_type_string == "step") {
+    signal_type_ = SignalType::STEP;
+  } else if (signal_type_string == "square") {
     signal_type_ = SignalType::SQUARE;
   } else if (signal_type_string == "sawtooth") {
     signal_type_ = SignalType::SAWTOOTH;
@@ -314,8 +329,8 @@ void TuningSignalGenerator::update_params()
     frequency_hz_ = frequency_hz_value;
   }
 
-  // offset
-  offset_ = this->get_parameter("offset").as_double();
+  // center_value
+  center_value_ = this->get_parameter("center_value").as_double();
 
   // default_va_c
   default_va_c_ = this->get_parameter("default_va_c").as_double();

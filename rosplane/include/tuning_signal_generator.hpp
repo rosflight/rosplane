@@ -74,6 +74,7 @@ private:
   /// This defines what type of signal to publish to the selected controller.
   enum class SignalType
   {
+    STEP,
     SQUARE,
     SAWTOOTH,
     TRIANGLE,
@@ -86,7 +87,7 @@ private:
   double dt_hz_;                       ///< Frequency to publish commands.
   double amplitude_;                   ///< Amplitude of signal.
   double frequency_hz_;                ///< Frequency of the signal.
-  double offset_;                      ///< Offset of signal from 0.
+  double center_value_;                ///< Offset of signal from 0.
   double default_va_c_;                ///< Default for va_c, used when not controlling airspeed.
   double default_h_c_;                 ///< Default for h_c, used when not controlling altitude.
   double default_chi_c_;               ///< Default for chi_c, used when not controlling heading.
@@ -94,6 +95,7 @@ private:
   double default_phi_c_;               ///< Default for phi_c, used when not controlling roll.
 
   // Internal values
+  bool step_toggled_;               ///< Flag for when step signal has been toggled.
   double initial_time_;             ///< Initial time of the signal.
   bool is_paused_;                  ///< Flag to specify if signal should be paused.
   double paused_time_;              ///< Amount of time that has been spent paused.
@@ -138,16 +140,26 @@ private:
                                      const std_srvs::srv::Trigger::Response::SharedPtr & res);
 
   /**
+   * @brief Get the value for a step signal at the given time with the given conditions.
+   *
+   * @param step_toggled Flag to specify if signal is "stepped up" or not.
+   * @param amplitude The amplitude of the signal.
+   * @param center_value The central value of the signal. Not the initial value of the signal,
+   *  but the value directly in the middle of the step values.
+   */
+  static double get_step_signal(bool step_toggled, double amplitude, double center_value);
+
+  /**
    * @brief Get the value for a square signal at the given time with the given conditions.
    *
    * @param elapsed_time The amount of time that has passed since the 'start' of the signal
    *   in seconds.
    * @param amplitude The amplitude of the signal.
    * @param frequency The frequency of the signal.
-   * @param initial_value Inital value of the signal. The in other words, the signal 'offset'.
+   * @param center_value The central value of the signal. The in other words, the signal 'offset'.
    */
   static double get_square_signal(double elapsed_time, double amplitude, double frequency,
-                                  double initial_value);
+                                  double center_value);
   /**
    * @brief Get the value for a sawtooth signal at the given time with the given conditions.
    *
@@ -155,10 +167,10 @@ private:
    *   in seconds.
    * @param amplitude The amplitude of the signal.
    * @param frequency The frequency of the signal.
-   * @param initial_value Inital value of the signal. The in other words, the signal 'offset'.
+   * @param center_value The central value of the signal. The in other words, the signal 'offset'.
    */
   static double get_sawtooth_signal(double elapsed_time, double amplitude, double frequency,
-                                    double initial_value);
+                                    double center_value);
   /**
    * @brief Get the value for a triangle signal at the given time with the given conditions.
    *
@@ -166,10 +178,10 @@ private:
    *   in seconds.
    * @param amplitude The amplitude of the signal.
    * @param frequency The frequency of the signal.
-   * @param initial_value Inital value of the signal. The in other words, the signal 'offset'.
+   * @param center_value The central value of the signal. The in other words, the signal 'offset'.
    */
   static double get_triangle_signal(double elapsed_time, double amplitude, double frequency,
-                                    double initial_value);
+                                    double center_value);
   /**
    * @brief Get the value for a sine signal at the given time with the given conditions.
    *
@@ -177,10 +189,10 @@ private:
    *   in seconds.
    * @param amplitude The amplitude of the signal.
    * @param frequency The frequency of the signal.
-   * @param initial_value Inital value of the signal. The in other words, the signal 'offset'.
+   * @param center_value The central value of the signal. The in other words, the signal 'offset'.
    */
   static double get_sine_signal(double elapsed_time, double amplitude, double frequency,
-                                double initial_value);
+                                double center_value);
 
   /// Updates the parameters within the class with the latest values from ROS.
   void update_params();
