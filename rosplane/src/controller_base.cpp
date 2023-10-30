@@ -32,7 +32,7 @@ controller_base::controller_base() : Node("controller_base")
   // Set the values for the parameters, from the param file or use the deafault value.
   set_parameters();
   
-  if (params_.tuning_debug_override){
+  if (params_.roll_tuning_debug_override || params_.pitch_tuning_debug_override){
     tuning_debug_sub_ = this->create_subscription<rosplane_msgs::msg::ControllerInternalsDebug>(
               "/tuning_debug", 10, std::bind(&controller_base::tuning_debug_callback, this, _1));
   }
@@ -194,7 +194,8 @@ void controller_base::actuator_controls_publish()
       this->declare_parameter("max_takeoff_throttle", params_.max_takeoff_throttle);
       this->declare_parameter("mass", params_.mass);
       this->declare_parameter("gravity", params_.gravity);
-      this->declare_parameter("tuning_debug_override", params_.tuning_debug_override);
+      this->declare_parameter("pitch_tuning_debug_override", params_.pitch_tuning_debug_override);
+      this->declare_parameter("roll_tuning_debug_override", params_.roll_tuning_debug_override);
     }
 
 void controller_base::set_parameters() {
@@ -240,7 +241,8 @@ void controller_base::set_parameters() {
   params_.max_takeoff_throttle = this->get_parameter("pwm_rad_r").as_double();
   params_.mass = this->get_parameter("mass").as_double();
   params_.gravity = this->get_parameter("gravity").as_double();
-  params_.gravity = this->get_parameter("tuning_debug_override").as_bool();
+  params_.roll_tuning_debug_override = this->get_parameter("roll_tuning_debug_override").as_bool();
+  params_.pitch_tuning_debug_override = this->get_parameter("pitch_tuning_debug_override").as_bool();
 
 }
 
@@ -291,7 +293,8 @@ rcl_interfaces::msg::SetParametersResult controller_base::parametersCallback(con
     else if (param.get_name() == "max_takeoff_throttle") params_.max_takeoff_throttle = param.as_double();
     else if (param.get_name() == "mass") params_.mass = param.as_double();
     else if (param.get_name() == "gravity") params_.gravity = param.as_double();
-    else if (param.get_name() == "tuning_debug_override") params_.tuning_debug_override = param.as_bool();
+    else if (param.get_name() == "roll_tuning_debug_override") params_.roll_tuning_debug_override = param.as_bool();
+    else if (param.get_name() == "pitch_tuning_debug_override") params_.pitch_tuning_debug_override = param.as_bool();
     else{
 
       // If the parameter given doesn't match any of the parameters return false.

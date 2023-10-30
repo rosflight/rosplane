@@ -80,7 +80,7 @@ TuningSignalGenerator::TuningSignalGenerator()
   internals_publisher_ = 
     this->create_publisher<rosplane_msgs::msg::ControllerInternalsDebug>("/tuning_debug", 1);
   command_publisher_ =
-    this->create_publisher<rosplane_msgs::msg::ControllerCommands>("/controller_command", 1);
+    this->create_publisher<rosplane_msgs::msg::ControllerCommands>("/controller_commands", 1);
 
   step_toggle_service_ = this->create_service<std_srvs::srv::Trigger>(
     "toggle_step_signal",

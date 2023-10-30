@@ -128,7 +128,8 @@ protected:
     double max_takeoff_throttle; /**< maximum throttle allowed at takeoff */
     double mass;                 /**< mass of the aircraft */
     double gravity;              /**< gravity in m/s^2 */
-    bool tuning_debug_override;
+    bool pitch_tuning_debug_override;
+    bool roll_tuning_debug_override;
   };
 
   /**
@@ -213,7 +214,9 @@ private:
           /* max_takeoff_throttle */ .55,
           /* mass */ 2.28,
           /* gravity */ 9.8,
-          /* tuning_debug_override*/ false};
+          /* pitch_tuning_debug_override*/ false,
+          /* roll_tuning_debug_override*/ false
+    };
 
   /**
    * The stored value for the most up to date commands for the controller.
