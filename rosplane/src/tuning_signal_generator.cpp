@@ -262,7 +262,7 @@ double TuningSignalGenerator::get_triangle_signal(double elapsed_time, double am
                                                   double frequency, double center_value)
 {
   // (1 to -1 switching value) * sawtooth_at_twice_the_rate + center_value
-  return ((static_cast<int>(elapsed_time * frequency * 2) % 2) * 2 - 1) * 2 * amplitude
+  return -((static_cast<int>(elapsed_time * frequency * 2) % 2) * 2 - 1) * 2 * amplitude
     * (2 * elapsed_time * frequency - static_cast<int>(2 * elapsed_time * frequency) - 0.5)
     + center_value;
 }
@@ -270,7 +270,7 @@ double TuningSignalGenerator::get_triangle_signal(double elapsed_time, double am
 double TuningSignalGenerator::get_sine_signal(double elapsed_time, double amplitude,
                                               double frequency, double center_value)
 {
-  return sin(elapsed_time * frequency * 2 * M_PI) * amplitude + center_value;
+  return -cos(elapsed_time * frequency * 2 * M_PI) * amplitude + center_value;
 }
 
 void TuningSignalGenerator::update_params()
