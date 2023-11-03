@@ -108,41 +108,41 @@ private:
 
   /// ROS timer to run timer callback, which publishes commands
   rclcpp::TimerBase::SharedPtr publish_timer_;
-  
+
   /// ROS parameter change callback handler.
   OnSetParametersCallbackHandle::SharedPtr param_callback_handle_;
 
-  /// ROS service for toggling step signal
+  /// ROS service for toggling step signal.
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr step_toggle_service_;
-  /// ROS service for reset signal
+  /// ROS service for reset signal.
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr reset_service_;
-  /// ROS service for pause signal
+  /// ROS service for pause signal.
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr pause_service_;
-  /// ROS service for start signal continuously
+  /// ROS service for start signal continuously.
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_continuous_service_;
-  /// ROS service for start signal for one period
+  /// ROS service for start signal for one period.
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_single_service_;
 
   /// Callback to publish command on topic.
   void publish_timer_callback();
 
   /// Callback for parameter changes.
-  rcl_interfaces::msg::SetParametersResult param_callback(
-    const std::vector<rclcpp::Parameter> & params);
+  rcl_interfaces::msg::SetParametersResult
+  param_callback(const std::vector<rclcpp::Parameter> & params);
 
-  /// Callback to toggle step signal
+  /// Callback to toggle step signal.
   bool step_toggle_service_callback(const std_srvs::srv::Trigger::Request::SharedPtr & req,
                                     const std_srvs::srv::Trigger::Response::SharedPtr & res);
-  /// Callback to reset signal
+  /// Callback to reset signal.
   bool reset_service_callback(const std_srvs::srv::Trigger::Request::SharedPtr & req,
                               const std_srvs::srv::Trigger::Response::SharedPtr & res);
-  /// Callback to pause signal
+  /// Callback to pause signal.
   bool pause_service_callback(const std_srvs::srv::Trigger::Request::SharedPtr & req,
                               const std_srvs::srv::Trigger::Response::SharedPtr & res);
-  /// Callback to start signal continuously
+  /// Callback to start signal continuously.
   bool start_continuous_service_callback(const std_srvs::srv::Trigger::Request::SharedPtr & req,
                                          const std_srvs::srv::Trigger::Response::SharedPtr & res);
-  /// Callback to start signal for a single period
+  /// Callback to start signal for a single period.
   bool start_single_service_callback(const std_srvs::srv::Trigger::Request::SharedPtr & req,
                                      const std_srvs::srv::Trigger::Response::SharedPtr & res);
 
@@ -204,7 +204,7 @@ private:
   /// Updates the parameters within the class with the latest values from ROS.
   void update_params();
 
-  /// Reset the signal generator
+  /// Reset the signal generator.
   void reset();
 };
 } // namespace rosplane

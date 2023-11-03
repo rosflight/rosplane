@@ -71,11 +71,11 @@ TuningSignalGenerator::TuningSignalGenerator()
   update_params();
   initial_time_ = this->get_clock()->now().seconds();
 
-  internals_publisher_ = 
+  internals_publisher_ =
     this->create_publisher<rosplane_msgs::msg::ControllerInternalsDebug>("/tuning_debug", 1);
   command_publisher_ =
     this->create_publisher<rosplane_msgs::msg::ControllerCommands>("/controller_commands", 1);
-  
+
   publish_timer_ =
     this->create_wall_timer(std::chrono::milliseconds(static_cast<long>(1000 / publish_rate_hz_)),
                             std::bind(&TuningSignalGenerator::publish_timer_callback, this));
@@ -119,9 +119,7 @@ void TuningSignalGenerator::publish_timer_callback()
   }
 
   // Check if step toggle needs to be reset
-  if (signal_type_ != SignalType::STEP) {
-    step_toggled_ = false;
-  }
+  if (signal_type_ != SignalType::STEP) { step_toggled_ = false; }
 
   // If paused, negate passing of time but keep publishing
   if (is_paused_) { paused_time_ += 1 / publish_rate_hz_; }
@@ -167,7 +165,7 @@ void TuningSignalGenerator::publish_timer_callback()
   }
 
   // Creates message with default values
-  rosplane_msgs::msg::ControllerCommands command_message; 
+  rosplane_msgs::msg::ControllerCommands command_message;
   command_message.header.stamp = this->get_clock()->now();
   command_message.va_c = default_va_c_;
   command_message.h_c = default_h_c_;
@@ -199,15 +197,12 @@ void TuningSignalGenerator::publish_timer_callback()
   internals_publisher_->publish(internals_message);
 }
 
-rcl_interfaces::msg::SetParametersResult TuningSignalGenerator::param_callback(
-  const std::vector<rclcpp::Parameter> & params) 
+rcl_interfaces::msg::SetParametersResult
+TuningSignalGenerator::param_callback(const std::vector<rclcpp::Parameter> & params)
 {
-  for (const auto & param : params)
-    {
-      if (param.get_name() == "controller_output" || param.get_name() == "signal_type") {
-        reset();
-      }
-    }
+  for (const auto & param : params) {
+    if (param.get_name() == "controller_output" || param.get_name() == "signal_type") { reset(); }
+  }
 
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
@@ -310,7 +305,7 @@ double TuningSignalGenerator::get_square_signal(double elapsed_time, double ampl
 double TuningSignalGenerator::get_sawtooth_signal(double elapsed_time, double amplitude,
                                                   double frequency, double center_value)
 {
-  // slope * elapsed_time - num_cycles * offset_per_cycle + center value 
+  // slope * elapsed_time - num_cycles * offset_per_cycle + center value
   return 2 * amplitude
     * (elapsed_time * frequency - static_cast<int>(elapsed_time * frequency) - 0.5)
     + center_value;
@@ -394,7 +389,7 @@ void TuningSignalGenerator::update_params()
 
   // default_va_c
   default_va_c_ = this->get_parameter("default_va_c").as_double();
-  
+
   // default_h_c
   default_h_c_ = this->get_parameter("default_h_c").as_double();
 
@@ -408,7 +403,8 @@ void TuningSignalGenerator::update_params()
   default_phi_c_ = this->get_parameter("default_phi_c").as_double();
 }
 
-void TuningSignalGenerator::reset() {
+void TuningSignalGenerator::reset()
+{
   initial_time_ = this->get_clock()->now().seconds();
   paused_time_ = 0;
   is_paused_ = true;
