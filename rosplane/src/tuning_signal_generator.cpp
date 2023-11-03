@@ -200,11 +200,19 @@ bool TuningSignalGenerator::step_toggle_service_callback(
   const std_srvs::srv::Trigger::Request::SharedPtr & req,
   const std_srvs::srv::Trigger::Response::SharedPtr & res)
 {
-  if (step_toggled_) {
-      step_toggled_ = false;
-  } else {
-      step_toggled_ = true;
+  if (signal_type_ != SignalType::STEP) {
+    res->success = false;
+    res->message = "Service valid only for step type signal";
+    return true;
   }
+
+  if (step_toggled_) {
+    step_toggled_ = false;
+  } else {
+    step_toggled_ = true;
+  }
+
+  res->success = true;
   return true;
 }
 
@@ -216,6 +224,7 @@ bool TuningSignalGenerator::reset_service_callback(
   paused_time_ = 0;
   is_paused_ = true;
   single_period_start_time_ = 0;
+  step_toggled_ = false;
 
   res->success = true;
   return true;
@@ -225,6 +234,12 @@ bool TuningSignalGenerator::pause_service_callback(
   const std_srvs::srv::Trigger::Request::SharedPtr & req,
   const std_srvs::srv::Trigger::Response::SharedPtr & res)
 {
+  if (signal_type_ == SignalType::STEP) {
+    res->success = false;
+    res->message = "Service not valid for step type signal";
+    return true;
+  }
+
   is_paused_ = true;
   single_period_start_time_ = 0;
 
@@ -236,6 +251,12 @@ bool TuningSignalGenerator::start_continuous_service_callback(
   const std_srvs::srv::Trigger::Request::SharedPtr & req,
   const std_srvs::srv::Trigger::Response::SharedPtr & res)
 {
+  if (signal_type_ == SignalType::STEP) {
+    res->success = false;
+    res->message = "Service not valid for step type signal";
+    return true;
+  }
+
   is_paused_ = false;
   single_period_start_time_ = 0;
 
@@ -247,6 +268,12 @@ bool TuningSignalGenerator::start_single_service_callback(
   const std_srvs::srv::Trigger::Request::SharedPtr & req,
   const std_srvs::srv::Trigger::Response::SharedPtr & res)
 {
+  if (signal_type_ == SignalType::STEP) {
+    res->success = false;
+    res->message = "Service not valid for step type signal";
+    return true;
+  }
+
   is_paused_ = false;
   single_period_start_time_ = this->get_clock()->now().seconds();
 
