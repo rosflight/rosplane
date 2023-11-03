@@ -44,6 +44,7 @@
 
 #include "rosplane_msgs/msg/controller_commands.hpp"
 #include "rosplane_msgs/msg/controller_internals_debug.hpp"
+#include <rcl_interfaces/msg/set_parameters_result.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/trigger.hpp>
 
@@ -107,6 +108,9 @@ private:
 
   /// ROS timer to run timer callback, which publishes commands
   rclcpp::TimerBase::SharedPtr publish_timer_;
+  
+  /// ROS parameter change callback handler.
+  OnSetParametersCallbackHandle::SharedPtr param_callback_handle_;
 
   /// ROS service for toggling step signal
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr step_toggle_service_;
@@ -121,6 +125,10 @@ private:
 
   /// Callback to publish command on topic.
   void publish_timer_callback();
+
+  /// Callback for parameter changes.
+  rcl_interfaces::msg::SetParametersResult param_callback(
+    const std::vector<rclcpp::Parameter> & params);
 
   /// Callback to toggle step signal
   bool step_toggle_service_callback(const std_srvs::srv::Trigger::Request::SharedPtr & req,
@@ -195,6 +203,9 @@ private:
 
   /// Updates the parameters within the class with the latest values from ROS.
   void update_params();
+
+  /// Reset the signal generator
+  void reset();
 };
 } // namespace rosplane
 

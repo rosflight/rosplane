@@ -71,14 +71,17 @@ TuningSignalGenerator::TuningSignalGenerator()
   update_params();
   initial_time_ = this->get_clock()->now().seconds();
 
-  publish_timer_ =
-    this->create_wall_timer(std::chrono::milliseconds(static_cast<long>(1000 / publish_rate_hz_)),
-                            std::bind(&TuningSignalGenerator::publish_timer_callback, this));
-
   internals_publisher_ = 
     this->create_publisher<rosplane_msgs::msg::ControllerInternalsDebug>("/tuning_debug", 1);
   command_publisher_ =
     this->create_publisher<rosplane_msgs::msg::ControllerCommands>("/controller_commands", 1);
+  
+  publish_timer_ =
+    this->create_wall_timer(std::chrono::milliseconds(static_cast<long>(1000 / publish_rate_hz_)),
+                            std::bind(&TuningSignalGenerator::publish_timer_callback, this));
+
+  param_callback_handle_ = this->add_on_set_parameters_callback(
+    std::bind(&TuningSignalGenerator::param_callback, this, std::placeholders::_1));
 
   step_toggle_service_ = this->create_service<std_srvs::srv::Trigger>(
     "toggle_step_signal",
@@ -196,6 +199,21 @@ void TuningSignalGenerator::publish_timer_callback()
   internals_publisher_->publish(internals_message);
 }
 
+rcl_interfaces::msg::SetParametersResult TuningSignalGenerator::param_callback(
+  const std::vector<rclcpp::Parameter> & params) 
+{
+  for (const auto & param : params)
+    {
+      if (param.get_name() == "controller_output" || param.get_name() == "signal_type") {
+        reset();
+      }
+    }
+
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+  return result;
+}
+
 bool TuningSignalGenerator::step_toggle_service_callback(
   const std_srvs::srv::Trigger::Request::SharedPtr & req,
   const std_srvs::srv::Trigger::Response::SharedPtr & res)
@@ -220,12 +238,7 @@ bool TuningSignalGenerator::reset_service_callback(
   const std_srvs::srv::Trigger::Request::SharedPtr & req,
   const std_srvs::srv::Trigger::Response::SharedPtr & res)
 {
-  initial_time_ = this->get_clock()->now().seconds();
-  paused_time_ = 0;
-  is_paused_ = true;
-  single_period_start_time_ = 0;
-  step_toggled_ = false;
-
+  reset();
   res->success = true;
   return true;
 }
@@ -394,6 +407,15 @@ void TuningSignalGenerator::update_params()
   // default_phi_c
   default_phi_c_ = this->get_parameter("default_phi_c").as_double();
 }
+
+void TuningSignalGenerator::reset() {
+  initial_time_ = this->get_clock()->now().seconds();
+  paused_time_ = 0;
+  is_paused_ = true;
+  single_period_start_time_ = 0;
+  step_toggled_ = false;
+}
+
 } // namespace rosplane
 
 int main(int argc, char ** argv)
