@@ -85,14 +85,13 @@ private:
   ControllerOutput controller_output_; ///< Controller to output command signals to.
   SignalType signal_type_;             ///< Signal type to output.
   double publish_rate_hz_;             ///< Frequency to publish commands.
-  double amplitude_;                   ///< Amplitude of signal.
+  double signal_magnitude_;            ///< The the magnitude of the signal being generated.
   double frequency_hz_;                ///< Frequency of the signal.
-  double center_value_;                ///< Offset of signal from 0.
-  double default_va_c_;                ///< Default for va_c, used when not controlling airspeed.
-  double default_h_c_;                 ///< Default for h_c, used when not controlling altitude.
-  double default_chi_c_;               ///< Default for chi_c, used when not controlling heading.
-  double default_theta_c_;             ///< Default for theta_c, used when not controlling pitch.
-  double default_phi_c_;               ///< Default for phi_c, used when not controlling roll.
+  double default_va_c_;                ///< Default for va_c.
+  double default_h_c_;                 ///< Default for h_c.
+  double default_chi_c_;               ///< Default for chi_c.
+  double default_theta_c_;             ///< Default for theta_c.
+  double default_phi_c_;               ///< Default for phi_c.
 
   // Internal values
   bool step_toggled_;               ///< Flag for when step signal has been toggled.

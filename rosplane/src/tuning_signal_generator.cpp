@@ -50,9 +50,8 @@ TuningSignalGenerator::TuningSignalGenerator()
     , controller_output_(ControllerOutput::ROLL)
     , signal_type_(SignalType::SQUARE)
     , publish_rate_hz_(0)
-    , amplitude_(0)
+    , signal_magnitude_(0)
     , frequency_hz_(0)
-    , center_value_(0)
     , initial_time_(0)
     , is_paused_(true)
     , paused_time_(0)
@@ -61,9 +60,8 @@ TuningSignalGenerator::TuningSignalGenerator()
   this->declare_parameter("controller_output", "roll");
   this->declare_parameter("signal_type", "step");
   this->declare_parameter("publish_rate_hz", 100.0);
-  this->declare_parameter("amplitude", 1.0);
+  this->declare_parameter("signal_magnitude", 1.0);
   this->declare_parameter("frequency_hz", 0.2);
-  this->declare_parameter("center_value", 0.0);
   this->declare_parameter("default_va_c", 15.0);
   this->declare_parameter("default_h_c", 40.0);
   this->declare_parameter("default_chi_c", 0.0);
@@ -126,22 +124,42 @@ void TuningSignalGenerator::publish_timer_callback()
   if (is_paused_) { paused_time_ += 1 / publish_rate_hz_; }
 
   // Get value for signal
+  double amplitude = signal_magnitude_ / 2;
+  double center_value = 0;
+  switch (controller_output_) {
+    case ControllerOutput::ROLL:
+      center_value = default_phi_c_;
+      break;
+    case ControllerOutput::PITCH:
+      center_value = default_theta_c_;
+      break;
+    case ControllerOutput::ALTITUDE:
+      center_value = default_h_c_;
+      break;
+    case ControllerOutput::HEADING:
+      center_value = default_chi_c_;
+      break;
+    case ControllerOutput::AIRSPEED:
+      center_value = default_va_c_;
+      break;
+  }
+  center_value += amplitude;
   double signal_value = 0;
   switch (signal_type_) {
     case SignalType::STEP:
-      signal_value = get_step_signal(step_toggled_, amplitude_, center_value_);
+      signal_value = get_step_signal(step_toggled_, amplitude, center_value);
       break;
     case SignalType::SQUARE:
-      signal_value = get_square_signal(elapsed_time, amplitude_, frequency_hz_, center_value_);
+      signal_value = get_square_signal(elapsed_time, amplitude, frequency_hz_, center_value);
       break;
     case SignalType::SAWTOOTH:
-      signal_value = get_sawtooth_signal(elapsed_time, amplitude_, frequency_hz_, center_value_);
+      signal_value = get_sawtooth_signal(elapsed_time, amplitude, frequency_hz_, center_value);
       break;
     case SignalType::TRIANGLE:
-      signal_value = get_triangle_signal(elapsed_time, amplitude_, frequency_hz_, center_value_);
+      signal_value = get_triangle_signal(elapsed_time, amplitude, frequency_hz_, center_value);
       break;
     case SignalType::SINE:
-      signal_value = get_sine_signal(elapsed_time, amplitude_, frequency_hz_, center_value_);
+      signal_value = get_sine_signal(elapsed_time, amplitude, frequency_hz_, center_value);
       break;
   }
 
@@ -323,8 +341,8 @@ void TuningSignalGenerator::update_params()
     }
   }
 
-  // amplitude
-  amplitude_ = this->get_parameter("amplitude").as_double();
+  // signal_magnitude_
+  signal_magnitude_ = this->get_parameter("signal_magnitude").as_double();
 
   // frequency_hz
   double frequency_hz_value = this->get_parameter("frequency_hz").as_double();
@@ -333,9 +351,6 @@ void TuningSignalGenerator::update_params()
   } else {
     frequency_hz_ = frequency_hz_value;
   }
-
-  // center_value
-  center_value_ = this->get_parameter("center_value").as_double();
 
   // default_va_c
   default_va_c_ = this->get_parameter("default_va_c").as_double();
