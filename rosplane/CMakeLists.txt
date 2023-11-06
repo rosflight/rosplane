@@ -24,6 +24,7 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -90,6 +91,15 @@ add_executable(rosplane_estimator_node
 ament_target_dependencies(rosplane_estimator_node rosplane_msgs rosflight_msgs rclcpp Eigen3)
 install(TARGETS
         rosplane_estimator_node
+        DESTINATION lib/${PROJECT_NAME})
+
+# Signal Generator
+add_executable(tuning_signal_generator
+               src/tuning_signal_generator.cpp)
+ament_target_dependencies(tuning_signal_generator rosplane_msgs std_srvs rclcpp)
+target_compile_options(tuning_signal_generator PRIVATE -Wno-unused-parameter)
+install(TARGETS
+        tuning_signal_generator
         DESTINATION lib/${PROJECT_NAME})
 
 #### END OF EXECUTABLES ###

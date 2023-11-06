@@ -5,7 +5,7 @@ from builtin_interfaces.msg import Time as TimeMsg
 import threading
 from rosplane_msgs.msg import State
 from rosflight_msgs.msg import Command
-from rosplane_msgs.msg import ControllerInternals
+from rosplane_msgs.msg import ControllerInternalsDebug
 from rosplane_msgs.msg import ControllerCommands
 
 
@@ -147,7 +147,7 @@ class CommandStorage:
             del self.rudder[0:ind]
             del self.throttle[0:ind]
 
-class ControllerInternalsStorage:
+class ControllerInternalsDebugStorage:
 
     def __init__(self, t_horizon: float) -> None:
 
@@ -157,7 +157,7 @@ class ControllerInternalsStorage:
         self.pitch_c: list[float] = []
         self.roll_c: list[float] = []
 
-    def append(self, internals: ControllerInternals) -> None:
+    def append(self, internals: ControllerInternalsDebug) -> None:
         """ Stores the command data and trims the vectors
         """
         # Append data
@@ -227,7 +227,7 @@ class RosStorageInterface:
         self._sub_state = self.node.create_subscription(State, "/state", self.state_callback, 1)
         self._sub_est = self.node.create_subscription(State, "/estimated_state", self.estimate_callback, 1)
         self._sub_cmd = self.node.create_subscription(Command, "/command", self.command_callback, 1)
-        self._sub_cmd_internals = self.node.create_subscription(ControllerInternals, "/controller_inners", self.cmd_internal_callback, 1)
+        self._sub_cmd_internals = self.node.create_subscription(ControllerInternalsDebug, "/controller_inners_debug", self.cmd_internal_callback, 1)
         self._sub_con_cmd = self.node.create_subscription(ControllerCommands, "/controller_commands", self.con_command_callback, 1)
 
         self.con_cmd = ControllerCommands()
@@ -236,7 +236,7 @@ class RosStorageInterface:
         self.true = StateStorage(t_horizon=self.t_horizon)
         self.cmd = CommandStorage(t_horizon=self.t_horizon)
         self.est = StateStorage(t_horizon=self.t_horizon)
-        self.con_inners = ControllerInternalsStorage(t_horizon=self.t_horizon)
+        self.con_inners = ControllerInternalsDebugStorage(t_horizon=self.t_horizon)
         self.con_cmd = ControllerCommandsStorage(t_horizon=self.t_horizon)
 
     def state_callback(self, msg: State) -> None:
@@ -260,7 +260,7 @@ class RosStorageInterface:
             self.cmd.append(cmd=msg)
 
 
-    def cmd_internal_callback(self, msg: ControllerInternals) -> None:
+    def cmd_internal_callback(self, msg: ControllerInternalsDebug) -> None:
 
         with self.lock:
             self.con_inners.append(internals=msg)

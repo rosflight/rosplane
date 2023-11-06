@@ -66,6 +66,11 @@ void controller_successive_loop::alt_hold_lateral_control(const struct params_s 
   // Find aileron deflection required to acheive required roll angle.
   output.delta_r = 0; //cooridinated_turn_hold(input.beta, params, input.Ts)
   output.phi_c = course_hold(input.chi_c, input.chi, input.phi_ff, input.r, params, input.Ts);
+
+  if (params.roll_tuning_debug_override){
+    output.phi_c = tuning_debug_override_msg_.phi_c;
+  }
+
   output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params, input.Ts);
 }
 
@@ -77,6 +82,11 @@ void controller_successive_loop::alt_hold_longitudinal_control(const struct para
   // Control airspeed with throttle loop and altitude with commanded pitch and drive aircraft to commanded pitch.
   output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts);
   output.theta_c = altitude_hold_control(adjusted_hc, input.h, params, input.Ts);
+
+  if (params.pitch_tuning_debug_override){
+    output.theta_c = tuning_debug_override_msg_.theta_c;
+  }
+
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params, input.Ts);
 }
 

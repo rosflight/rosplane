@@ -1,6 +1,8 @@
 #include "controller_base.hpp"
 #include "controller_successive_loop.hpp"
 #include "controller_total_energy.hpp"
+#include <functional>
+#include <rosplane_msgs/msg/detail/controller_internals_debug__struct.hpp>
 
 namespace rosplane
 {
@@ -10,7 +12,7 @@ controller_base::controller_base() : Node("controller_base")
 
   // Advertise published topics.
   actuators_pub_ = this->create_publisher<rosflight_msgs::msg::Command>("command",10);
-  internals_pub_ = this->create_publisher<rosplane_msgs::msg::ControllerInternals>("controller_inners",10);
+  internals_pub_ = this->create_publisher<rosplane_msgs::msg::ControllerInternalsDebug>("controller_inners_debug",10);
 
   // Set timer to trigger bound callback (actuator_controls_publish) at the given periodicity.
   timer_ = this->create_wall_timer(10ms, std::bind(&controller_base::actuator_controls_publish, this)); // TODO add the period to the params.
@@ -29,8 +31,13 @@ controller_base::controller_base() : Node("controller_base")
 
   // Set the values for the parameters, from the param file or use the deafault value.
   set_parameters();
+  
+  if (params_.roll_tuning_debug_override || params_.pitch_tuning_debug_override){
+    tuning_debug_sub_ = this->create_subscription<rosplane_msgs::msg::ControllerInternalsDebug>(
+              "/tuning_debug", 10, std::bind(&controller_base::tuning_debug_callback, this, _1));
+  }
 
-  // Set the parameter callback, for when callbacks are changed.
+  // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
             std::bind(&controller_base::parametersCallback, this, std::placeholders::_1));
 
@@ -52,6 +59,12 @@ void controller_base::vehicle_state_callback(const rosplane_msgs::msg::State::Sh
 
   // Save the message to use in calculations.
   vehicle_state_ = *msg;
+}
+
+void controller_base::tuning_debug_callback(const rosplane_msgs::msg::ControllerInternalsDebug::SharedPtr msg)
+{
+  // Save the message to use in calculations.
+  tuning_debug_override_msg_ = *msg;
 }
 
 void controller_base::actuator_controls_publish()
@@ -113,7 +126,7 @@ void controller_base::actuator_controls_publish()
     // control values, phi_c (commanded roll angle), and theta_c (commanded pitch angle).
     if (internals_pub_->get_subscription_count() > 0)
     {
-      rosplane_msgs::msg::ControllerInternals inners;
+      rosplane_msgs::msg::ControllerInternalsDebug inners;
 
       inners.header.stamp = now;
 
@@ -181,6 +194,8 @@ void controller_base::actuator_controls_publish()
       this->declare_parameter("max_takeoff_throttle", params_.max_takeoff_throttle);
       this->declare_parameter("mass", params_.mass);
       this->declare_parameter("gravity", params_.gravity);
+      this->declare_parameter("pitch_tuning_debug_override", params_.pitch_tuning_debug_override);
+      this->declare_parameter("roll_tuning_debug_override", params_.roll_tuning_debug_override);
     }
 
 void controller_base::set_parameters() {
@@ -226,6 +241,8 @@ void controller_base::set_parameters() {
   params_.max_takeoff_throttle = this->get_parameter("pwm_rad_r").as_double();
   params_.mass = this->get_parameter("mass").as_double();
   params_.gravity = this->get_parameter("gravity").as_double();
+  params_.roll_tuning_debug_override = this->get_parameter("roll_tuning_debug_override").as_bool();
+  params_.pitch_tuning_debug_override = this->get_parameter("pitch_tuning_debug_override").as_bool();
 
 }
 
@@ -276,6 +293,8 @@ rcl_interfaces::msg::SetParametersResult controller_base::parametersCallback(con
     else if (param.get_name() == "max_takeoff_throttle") params_.max_takeoff_throttle = param.as_double();
     else if (param.get_name() == "mass") params_.mass = param.as_double();
     else if (param.get_name() == "gravity") params_.gravity = param.as_double();
+    else if (param.get_name() == "roll_tuning_debug_override") params_.roll_tuning_debug_override = param.as_bool();
+    else if (param.get_name() == "pitch_tuning_debug_override") params_.pitch_tuning_debug_override = param.as_bool();
     else{
 
       // If the parameter given doesn't match any of the parameters return false.
