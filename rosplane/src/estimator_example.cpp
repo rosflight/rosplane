@@ -9,7 +9,7 @@ float radians(float degrees)
   return M_PI*degrees/180.0;
 }
 
-double wrap(double fixed_heading, double wrapped_heading) {
+double wrap_within_180(double fixed_heading, double wrapped_heading) {
     // wrapped_heading - number_of_times_to_wrap * 2pi
     return wrapped_heading - floor((wrapped_heading - fixed_heading) / (2 * M_PI) + 0.5) * 2 * M_PI;
 }
@@ -243,18 +243,14 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
     P_p_ = (A_d_*P_p_*A_d_.transpose() + Q_p_*pow(params.Ts/N_, 2));
   }
     
-    xhat_p_(3) = wrap(0.0, xhat_p_(3));
-    // while(xhat_p_(3) > radians(180.0f)) xhat_p_(3) = xhat_p_(3) - radians(360.0f);
-    // while(xhat_p_(3) < radians(-180.0f)) xhat_p_(3) = xhat_p_(3) + radians(360.0f);
+    xhat_p_(3) = wrap_within_180(0.0, xhat_p_(3));
     if(xhat_p_(3) > radians(180.0f) || xhat_p_(3) < radians(-180.0f))
     {
         RCLCPP_WARN(this->get_logger(), "Course estimate not wrapped from -pi to pi");
         xhat_p_(3) = 0;
     }
 
-    xhat_p_(6) = wrap(0.0, xhat_p_(6));
-    // while(xhat_p_(6) > radians(180.0f)) xhat_p_(6) = xhat_p_(6) - radians(360.0f);
-    // while(xhat_p_(6) < radians(-180.0f)) xhat_p_(6) = xhat_p_(6) + radians(360.0f);
+    xhat_p_(6) = wrap_within_180(0.0, xhat_p_(6));
     if(xhat_p_(6) > radians(180.0f) || xhat_p_(6) < radians(-180.0f))
     {
         RCLCPP_WARN(this->get_logger(), "Psi estimate not wrapped from -pi to pi");
