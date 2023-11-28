@@ -175,18 +175,18 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
           -params.gravity*cp*ct,    -rhat*Vahat*st - phat*Vahat*ct + params.gravity*sp*st,
           params.gravity*sp*ct,     (qhat*Vahat + params.gravity*cp) * st;
 
+  // This calculates the Kalman Gain for all of the attitude states at once rather than one at a time.
+
   Eigen::Vector3f y;
 
   y << lpf_accel_x_, lpf_accel_y_, lpf_accel_z_;
 
   Eigen::MatrixXf S_inv = (R_accel_ + C_a_ * P_a_ * C_a_.transpose()).inverse();
+  Eigen::MatrixXf L_a_ = P_a_ * C_a_.transpose() * S_inv;
+  Eigen::MatrixXf temp = Eigen::MatrixXf::Identity(2,2) - L_a_ * C_a_;
 
-  if ((y-h_a_).transpose() * S_inv * (y-h_a_) < 10000000.0){
-    Eigen::MatrixXf L = P_a_ * C_a_.transpose() * S_inv;
-    Eigen::MatrixXf temp = Eigen::MatrixXf::Identity(2,2) - L * C_a_;
-    P_a_ = temp * P_a_ * temp.transpose() + L * R_accel_ * L.transpose();
-    xhat_a_ = xhat_a_ + L * (y - h_a_);
-  }
+  P_a_ = temp * P_a_ * temp.transpose() + L_a_ * R_accel_ *L_a_.transpose();
+  xhat_a_ = xhat_a_ + L_a_ * (y - h_a_);
 
   check_xhat_a();
 
@@ -204,8 +204,6 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   for (int i = 0; i < N_; i++)
   {
 
-//    float pn = xhat_p_(0);
-//    float pe = xhat_p_(1);
     float Vg = xhat_p_(2);
     float chi = xhat_p_(3);
     float wn = xhat_p_(4);
@@ -259,6 +257,7 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
 
 
   // measurement updates
+  // These calculate the Kalman gain and applies them to each state individually.
   if (input.gps_new)
   {
 
