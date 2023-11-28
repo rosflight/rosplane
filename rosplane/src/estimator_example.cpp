@@ -338,7 +338,7 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   }
 
   bool problem = false;
-//  int prob_index;
+  int prob_index;
   for (int i = 0; i < 7; i++)
   {
     if (!std::isfinite(xhat_p_(i)))
@@ -346,7 +346,7 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
       if (!problem)
       {
         problem = true;
-//        prob_index = i;
+        prob_index = i;
       }
       switch (i)
       {
@@ -380,7 +380,7 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   }
   if (problem)
   {
-//    RCLCPP_WARN(this->get_logger(), "position estimator reinitialized due to non-finite state %d", prob_index); TODO come back and track down why pn is going infinite.
+    RCLCPP_WARN(this->get_logger(), "position estimator reinitialized due to non-finite state %d", prob_index);
   }
   if (xhat_p_(6) - xhat_p_(3) > radians(360.0f) || xhat_p_(6) - xhat_p_(3) < radians(-360.0f))
   {
@@ -395,9 +395,6 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   float wnhat = xhat_p_(4);
   float wehat = xhat_p_(5);
   float psihat = xhat_p_(6);
-
-
-//    RCLCPP_INFO_STREAM(this->get_logger(), "chihat: " << chihat);
 
   output.pn = pnhat;
   output.pe = pehat;
