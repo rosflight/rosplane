@@ -86,8 +86,8 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   }
 
   // low pass filter gyros to estimate angular rates
-  lpf_gyro_x_ = input.gyro_x;
-  lpf_gyro_y_ = input.gyro_y; // alpha_*lpf_gyro_y_ + (1 - alpha_)*input.gyro_y;
+  lpf_gyro_x_ = alpha_*lpf_gyro_x_ + (1 - alpha_)*input.gyro_x;
+  lpf_gyro_y_ = alpha_*lpf_gyro_y_ + (1 - alpha_)*input.gyro_y;
   lpf_gyro_z_ = alpha_*lpf_gyro_z_ + (1 - alpha_)*input.gyro_z;
 
   float phat = lpf_gyro_x_;
