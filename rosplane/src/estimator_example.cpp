@@ -293,9 +293,7 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
     //wrap course measurement
     float gps_course = fmodf(input.gps_course, radians(360.0f));
 
-    xhat_p_(3) = wrap(xhat_p_(3), gps_course);
-    // while (gps_course - xhat_p_(3) > radians(180.0f)) gps_course = gps_course - radians(360.0f);
-    // while (gps_course - xhat_p_(3) < radians(-180.0f)) gps_course = gps_course + radians(360.0f);
+    xhat_p_(3) = wrap_within_180(xhat_p_(3), gps_course);
     h_p_ = xhat_p_(3);
 
     C_p_ = Eigen::VectorXf::Zero(7);
