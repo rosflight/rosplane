@@ -9,6 +9,11 @@ float radians(float degrees)
   return M_PI*degrees/180.0;
 }
 
+double wrap_within_180(double fixed_heading, double wrapped_heading) {
+    // wrapped_heading - number_of_times_to_wrap * 2pi
+    return wrapped_heading - floor((wrapped_heading - fixed_heading) / (2 * M_PI) + 0.5) * 2 * M_PI;
+}
+
 estimator_example::estimator_example() :
   estimator_base(),
   xhat_a_(Eigen::Vector2f::Zero()),
@@ -81,8 +86,8 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   }
 
   // low pass filter gyros to estimate angular rates
-  lpf_gyro_x_ = input.gyro_x;
-  lpf_gyro_y_ = input.gyro_y; // alpha_*lpf_gyro_y_ + (1 - alpha_)*input.gyro_y;
+  lpf_gyro_x_ = alpha_*lpf_gyro_x_ + (1 - alpha_)*input.gyro_x;
+  lpf_gyro_y_ = alpha_*lpf_gyro_y_ + (1 - alpha_)*input.gyro_y;
   lpf_gyro_z_ = alpha_*lpf_gyro_z_ + (1 - alpha_)*input.gyro_z;
 
   float phat = lpf_gyro_x_;
@@ -170,18 +175,18 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
           -params.gravity*cp*ct,    -rhat*Vahat*st - phat*Vahat*ct + params.gravity*sp*st,
           params.gravity*sp*ct,     (qhat*Vahat + params.gravity*cp) * st;
 
+  // This calculates the Kalman Gain for all of the attitude states at once rather than one at a time.
+
   Eigen::Vector3f y;
 
   y << lpf_accel_x_, lpf_accel_y_, lpf_accel_z_;
 
   Eigen::MatrixXf S_inv = (R_accel_ + C_a_ * P_a_ * C_a_.transpose()).inverse();
+  Eigen::MatrixXf L_a_ = P_a_ * C_a_.transpose() * S_inv;
+  Eigen::MatrixXf temp = Eigen::MatrixXf::Identity(2,2) - L_a_ * C_a_;
 
-  if ((y-h_a_).transpose() * S_inv * (y-h_a_) < 10000000.0){
-    Eigen::MatrixXf L = P_a_ * C_a_.transpose() * S_inv;
-    Eigen::MatrixXf temp = Eigen::MatrixXf::Identity(2,2) - L * C_a_;
-    P_a_ = temp * P_a_ * temp.transpose() + L * R_accel_ * L.transpose();
-    xhat_a_ = xhat_a_ + L * (y - h_a_);
-  }
+  P_a_ = temp * P_a_ * temp.transpose() + L_a_ * R_accel_ *L_a_.transpose();
+  xhat_a_ = xhat_a_ + L_a_ * (y - h_a_);
 
   check_xhat_a();
 
@@ -199,8 +204,6 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   for (int i = 0; i < N_; i++)
   {
 
-//    float pn = xhat_p_(0);
-//    float pe = xhat_p_(1);
     float Vg = xhat_p_(2);
     float chi = xhat_p_(3);
     float wn = xhat_p_(4);
@@ -237,17 +240,15 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
 
     P_p_ = (A_d_*P_p_*A_d_.transpose() + Q_p_*pow(params.Ts/N_, 2));
   }
-
-    while(xhat_p_(3) > radians(180.0f)) xhat_p_(3) = xhat_p_(3) - radians(360.0f);
-    while(xhat_p_(3) < radians(-180.0f)) xhat_p_(3) = xhat_p_(3) + radians(360.0f);
+    
+    xhat_p_(3) = wrap_within_180(0.0, xhat_p_(3));
     if(xhat_p_(3) > radians(180.0f) || xhat_p_(3) < radians(-180.0f))
     {
         RCLCPP_WARN(this->get_logger(), "Course estimate not wrapped from -pi to pi");
         xhat_p_(3) = 0;
     }
 
-    while(xhat_p_(6) > radians(180.0f)) xhat_p_(6) = xhat_p_(6) - radians(360.0f);
-    while(xhat_p_(6) < radians(-180.0f)) xhat_p_(6) = xhat_p_(6) + radians(360.0f);
+    xhat_p_(6) = wrap_within_180(0.0, xhat_p_(6));
     if(xhat_p_(6) > radians(180.0f) || xhat_p_(6) < radians(-180.0f))
     {
         RCLCPP_WARN(this->get_logger(), "Psi estimate not wrapped from -pi to pi");
@@ -256,6 +257,7 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
 
 
   // measurement updates
+  // These calculate the Kalman gain and applies them to each state individually.
   if (input.gps_new)
   {
 
@@ -290,8 +292,7 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
     //wrap course measurement
     float gps_course = fmodf(input.gps_course, radians(360.0f));
 
-    while (gps_course - xhat_p_(3) > radians(180.0f)) gps_course = gps_course - radians(360.0f);
-    while (gps_course - xhat_p_(3) < radians(-180.0f)) gps_course = gps_course + radians(360.0f);
+    xhat_p_(3) = wrap_within_180(xhat_p_(3), gps_course);
     h_p_ = xhat_p_(3);
 
     C_p_ = Eigen::VectorXf::Zero(7);
@@ -336,7 +337,7 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   }
 
   bool problem = false;
-//  int prob_index;
+  int prob_index;
   for (int i = 0; i < 7; i++)
   {
     if (!std::isfinite(xhat_p_(i)))
@@ -344,7 +345,7 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
       if (!problem)
       {
         problem = true;
-//        prob_index = i;
+        prob_index = i;
       }
       switch (i)
       {
@@ -378,7 +379,7 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   }
   if (problem)
   {
-//    RCLCPP_WARN(this->get_logger(), "position estimator reinitialized due to non-finite state %d", prob_index); TODO come back and track down why pn is going infinite.
+    RCLCPP_WARN(this->get_logger(), "position estimator reinitialized due to non-finite state %d", prob_index);
   }
   if (xhat_p_(6) - xhat_p_(3) > radians(360.0f) || xhat_p_(6) - xhat_p_(3) < radians(-360.0f))
   {
@@ -393,9 +394,6 @@ void estimator_example::estimate(const params_s &params, const input_s &input, o
   float wnhat = xhat_p_(4);
   float wehat = xhat_p_(5);
   float psihat = xhat_p_(6);
-
-
-//    RCLCPP_INFO_STREAM(this->get_logger(), "chihat: " << chihat);
 
   output.pn = pnhat;
   output.pe = pehat;
