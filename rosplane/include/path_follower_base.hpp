@@ -40,6 +40,7 @@ protected:
     float h;                /** altitude */
     float Va;               /** airspeed */
     float chi;              /** course angle */
+    float psi;              /** heading angle */
   };
 
   struct output_s
