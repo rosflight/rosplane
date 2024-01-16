@@ -196,6 +196,7 @@ void controller_base::actuator_controls_publish()
       this->declare_parameter("gravity", params_.gravity);
       this->declare_parameter("pitch_tuning_debug_override", params_.pitch_tuning_debug_override);
       this->declare_parameter("roll_tuning_debug_override", params_.roll_tuning_debug_override);
+      this->declare_parameter("max_roll", params_.max_roll);
     }
 
 void controller_base::set_parameters() {
@@ -243,6 +244,7 @@ void controller_base::set_parameters() {
   params_.gravity = this->get_parameter("gravity").as_double();
   params_.roll_tuning_debug_override = this->get_parameter("roll_tuning_debug_override").as_bool();
   params_.pitch_tuning_debug_override = this->get_parameter("pitch_tuning_debug_override").as_bool();
+  params_.max_roll = this->get_parameter("max_roll").as_double();
 
 }
 
@@ -295,6 +297,7 @@ rcl_interfaces::msg::SetParametersResult controller_base::parametersCallback(con
     else if (param.get_name() == "gravity") params_.gravity = param.as_double();
     else if (param.get_name() == "roll_tuning_debug_override") params_.roll_tuning_debug_override = param.as_bool();
     else if (param.get_name() == "pitch_tuning_debug_override") params_.pitch_tuning_debug_override = param.as_bool();
+    else if (param.get_name() == "max_roll") params_.max_roll = param.as_double();
     else{
 
       // If the parameter given doesn't match any of the parameters return false.
