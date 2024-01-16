@@ -3,9 +3,9 @@ autopilot: # node name.
     alt_hz: 10.0
     alt_toz: 5.0
     tau: 50.0
-    c_kp: 2.37
+    c_kp: 3.5
     c_kd: 0.0
-    c_ki: 0.4
+    c_ki: 0.1
     r_kp: 0.06
     r_kd: 0.04
     r_ki: 0.0
@@ -40,3 +40,8 @@ autopilot: # node name.
     mass: 2.28
     gravity: 9.8
     max_roll: 25.0
+
+path_manager:
+  ros__parameters:
+    R_min: 100.0
+    orbit_last: True
