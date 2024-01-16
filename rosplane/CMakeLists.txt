@@ -79,7 +79,7 @@ install(TARGETS
 # Planner
 add_executable(rosplane_path_planner
             src/path_planner.cpp)
-ament_target_dependencies(rosplane_path_planner rosplane_msgs rclcpp rclpy Eigen3)
+ament_target_dependencies(rosplane_path_planner rosplane_msgs std_srvs rclcpp rclpy Eigen3)
 install(TARGETS
   rosplane_path_planner
   DESTINATION lib/${PROJECT_NAME})
