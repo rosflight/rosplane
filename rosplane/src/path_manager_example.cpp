@@ -3,6 +3,8 @@
 #include "path_manager_example.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include <cmath>
+#include <rclcpp/logging.hpp>
+#include <string>
 
 namespace rosplane
 {
@@ -53,6 +55,34 @@ void path_manager_example::manage_line(const params_s &params, const input_s &in
   int idx_c;
   if (idx_a_ == num_waypoints_ - 1)
   {
+    
+    if (params.orbit_last)
+    {
+      output.flag = false;
+      output.va_d = waypoints_[idx_a_].va_d;
+      output.c[0] = waypoints_[idx_a_].w[0]; 
+      output.c[1] = waypoints_[idx_a_].w[1];
+      output.c[2] = waypoints_[idx_a_].w[2];
+      output.r[0] = 0.0;
+      output.r[1] = 0.0;
+      output.r[2] = 0.0;
+      output.q[0] = 0.0;
+      output.q[1] = 0.0;
+      output.q[2] = 0.0;
+      output.rho = params.R_min;
+
+      if (waypoints_[idx_a_].chi_d < M_PI)
+      {
+        output.lamda = 1; 
+      }
+      else 
+      {
+        output.lamda = -1;
+      }
+
+      return;
+    }
+
     idx_b = 0;
     idx_c = 1;
   }
@@ -64,8 +94,7 @@ void path_manager_example::manage_line(const params_s &params, const input_s &in
   else
   {
     idx_b = idx_a_ + 1;
-    idx_c = idx_b + 1;
-  }
+    idx_c = idx_b + 1; }
 
   Eigen::Vector3f w_im1(waypoints_[idx_a_].w);
   Eigen::Vector3f w_i(waypoints_[idx_b].w);
@@ -86,9 +115,13 @@ void path_manager_example::manage_line(const params_s &params, const input_s &in
   if ((p - w_i).dot(n_i) > 0.0f)
   {
     if (idx_a_ == num_waypoints_ - 1)
+    {
       idx_a_ = 0;
+    }
     else
+    {
       idx_a_++;
+    }
   }
 
 }
@@ -108,13 +141,51 @@ void path_manager_example::manage_fillet(const params_s &params, const input_s &
   int idx_c;
   if (idx_a_ == num_waypoints_ - 1)
   {
+
+    if (params.orbit_last)
+    {
+      output.flag = false;
+      output.va_d = waypoints_[idx_a_].va_d;
+      output.c[0] = waypoints_[idx_a_].w[0]; 
+      output.c[1] = waypoints_[idx_a_].w[1];
+      output.c[2] = waypoints_[idx_a_].w[2];
+      output.r[0] = 0.0;
+      output.r[1] = 0.0;
+      output.r[2] = 0.0;
+      output.q[0] = 0.0;
+      output.q[1] = 0.0;
+      output.q[2] = 0.0;
+      output.rho = params.R_min;
+
+      if (waypoints_[idx_a_].chi_d < M_PI)
+      {
+        output.lamda = 1; 
+      }
+      else 
+      {
+        output.lamda = -1;
+      }
+
+      return;
+    }
+
     idx_b = 0;
     idx_c = 1;
   }
   else if (idx_a_ == num_waypoints_ - 2)
   {
     idx_b = num_waypoints_ - 1;
-    idx_c = 0;
+
+    if (params.orbit_last)
+    {
+      idx_c = 0;
+      idx_a_ = idx_b;
+      return;
+    }
+    else 
+    {
+      idx_c = 0;
+    }
   }
   else
   {

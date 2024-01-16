@@ -67,6 +67,7 @@ protected:
   struct params_s
   {
     double R_min;
+    bool orbit_last;
   };
 
   virtual void manage(const struct params_s &params, const struct input_s &input, struct output_s &output) = 0;
@@ -87,7 +88,10 @@ private:
   void vehicle_state_callback(const rosplane_msgs::msg::State &msg);
   bool state_init_;
   void new_waypoint_callback(const rosplane_msgs::msg::Waypoint &msg);
-  void current_path_publish(); 
+  void current_path_publish();
+
+  OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
+  rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter> &parameters);
 };
 } //end namespace
 #endif // PATH_MANAGER_BASE_H

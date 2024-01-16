@@ -174,7 +174,7 @@ float controller_successive_loop::course_hold(float chi_c, float chi, float phi_
   float ui = params.c_ki*c_integrator_;
   float ud = params.c_kd*r;
 
-  float phi_c = sat(up + ui + ud + phi_ff, 15.0*3.14/180.0, -15.0*3.14/180.0);
+  float phi_c = sat(up + ui + ud + phi_ff, params.max_roll*3.14/180.0, -params.max_roll*3.14/180.0);
   if (fabs(params.c_ki) >= 0.00001)
   {
     float phi_c_unsat = up + ui + ud + phi_ff;

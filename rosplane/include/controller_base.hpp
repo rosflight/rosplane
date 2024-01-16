@@ -130,6 +130,7 @@ protected:
     double gravity;              /**< gravity in m/s^2 */
     bool pitch_tuning_debug_override;
     bool roll_tuning_debug_override;
+    double max_roll;
   };
 
   /**
@@ -215,7 +216,8 @@ private:
           /* mass */ 2.28,
           /* gravity */ 9.8,
           /* pitch_tuning_debug_override*/ false,
-          /* roll_tuning_debug_override*/ false
+          /* roll_tuning_debug_override*/ false,
+          /* max_roll*/ 25.0
     };
 
   /**

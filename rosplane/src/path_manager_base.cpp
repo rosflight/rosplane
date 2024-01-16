@@ -2,6 +2,7 @@
 #include "path_manager_example.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "iostream"
+#include <rclcpp/logging.hpp>
 
 
 namespace rosplane
@@ -15,14 +16,43 @@ path_manager_base::path_manager_base() : Node("rosplane_path_manager")
   update_timer_      = this->create_wall_timer(10ms, std::bind(&path_manager_base::current_path_publish, this));
   // interesting read on wall timer
   // https://answers.ros.org/question/375561/create-wall-timer-using-callback-with-parameters-ros2-c/
+  //
+  // Set the parameter callback, for when parameters are changed.
+  parameter_callback_handle_ = this->add_on_set_parameters_callback(
+            std::bind(&path_manager_base::parametersCallback, this, std::placeholders::_1));
 
   this->declare_parameter("R_min", 25.0);
+  this->declare_parameter("orbit_last", false);
 
   params_.R_min = this->get_parameter("R_min").as_double();
+  params_.orbit_last = this->get_parameter("orbit_last").as_bool();
 
   num_waypoints_ = 0;
 
   state_init_ = false;
+}
+
+rcl_interfaces::msg::SetParametersResult path_manager_base::parametersCallback(const std::vector<rclcpp::Parameter> &parameters) {
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+  result.reason = "success";
+
+  // Check each parameter in the incoming vector of parameters to change, and change the appropriate parameter.
+  for (const auto &param : parameters) {
+
+    if (param.get_name() == "R_min") params_.R_min = param.as_double();
+    else if (param.get_name() == "orbit_last") params_.orbit_last = param.as_bool();
+    else{
+
+      // If the parameter given doesn't match any of the parameters return false.
+      result.successful = false;
+      result.reason = "One of the parameters given does not is not a parameter of the controller node.";
+      break;
+    }
+
+  }
+
+  return result;
 }
 
 void path_manager_base::vehicle_state_callback(const rosplane_msgs::msg::State &msg)

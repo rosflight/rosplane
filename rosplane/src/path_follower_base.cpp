@@ -68,6 +68,7 @@ void path_follower_base::vehicle_state_callback(const rosplane_msgs::msg::State:
   input_.pe = msg->position[1];               /** position east */
   input_.h = -msg->position[2];                /** altitude */
   input_.chi = msg->chi;
+  input_.psi = msg->psi;
   input_.Va = msg->va;
 
   RCLCPP_DEBUG_STREAM(this->get_logger(), "FROM STATE -- input.chi: " << input_.chi);
@@ -95,33 +96,33 @@ void path_follower_base::current_path_callback(const rosplane_msgs::msg::Current
   current_path_init_ = true;
 }
 
-    rcl_interfaces::msg::SetParametersResult path_follower_base::parametersCallback(const std::vector<rclcpp::Parameter> &parameters) {
-        rcl_interfaces::msg::SetParametersResult result;
-        result.successful = false;
-        result.reason = "";
+rcl_interfaces::msg::SetParametersResult path_follower_base::parametersCallback(const std::vector<rclcpp::Parameter> &parameters) {
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = false;
+    result.reason = "";
 
-        for (const auto &param : parameters) {
+    for (const auto &param : parameters) {
 
-            if (param.get_name() == "CHI_INFTY"){
-                params_.chi_infty = param.as_double();
-                result.successful = true;
-                result.reason = "success";
-            }
-            else if (param.get_name() == "K_PATH"){
-                params_.k_path = param.as_double();
-                result.successful = true;
-                result.reason = "success";
-            }
-            else if (param.get_name() == "K_ORBIT"){
-                params_.k_orbit = param.as_double();
-                result.successful = true;
-                result.reason = "success";
-            }
-
+        if (param.get_name() == "CHI_INFTY"){
+            params_.chi_infty = param.as_double();
+            result.successful = true;
+            result.reason = "success";
+        }
+        else if (param.get_name() == "K_PATH"){
+            params_.k_path = param.as_double();
+            result.successful = true;
+            result.reason = "success";
+        }
+        else if (param.get_name() == "K_ORBIT"){
+            params_.k_orbit = param.as_double();
+            result.successful = true;
+            result.reason = "success";
         }
 
-        return result;
     }
+
+    return result;
+}
 
 } //end namespace
 

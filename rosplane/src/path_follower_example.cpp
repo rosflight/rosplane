@@ -1,4 +1,5 @@
 #include "path_follower_example.hpp"
+#include <rclcpp/logging.hpp>
 
 
 namespace rosplane
@@ -54,7 +55,8 @@ void path_follower_example::follow(const params_s &params, const input_s &input,
     // commanded altitude is the height of the orbit
     float h_d = -input.c_orbit[2];
     output.h_c = h_d;
-    output.phi_ff = (norm_orbit_error < 0.5 ? input.lam_orbit*atanf(input.Va*input.Va/(9.8*input.rho_orbit)) : 0);
+    output.phi_ff = input.lam_orbit * std::atan(pow(input.Va, 2)/(9.81*input.rho_orbit*std::cos(input.chi - input.psi)));
+
   }
   output.Va_c = input.Va_d;
 }
