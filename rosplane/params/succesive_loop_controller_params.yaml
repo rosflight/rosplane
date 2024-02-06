@@ -9,16 +9,16 @@ autopilot: # node name.
     r_kp: 0.06
     r_kd: 0.04
     r_ki: 0.0
-    p_kp: -0.15
-    p_kd: -0.05
+    p_kp: -0.2
+    p_kd: -0.09
     p_ki: 0.0
     p_ff: 0.0
     a_t_kp: 0.05
     a_t_kd: 0.0
     a_t_ki: 0.005
-    a_kp: 0.015
+    a_kp: 0.02
     a_kd: 0.0
-    a_ki: 0.003
+    a_ki: 0.01
     l_kp: .5
     l_kd: 0.0
     l_ki: 0.005
@@ -44,4 +44,4 @@ autopilot: # node name.
 path_manager:
   ros__parameters:
     R_min: 100.0
-    orbit_last: True
+    orbit_last: False
