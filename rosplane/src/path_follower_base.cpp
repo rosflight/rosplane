@@ -1,5 +1,6 @@
 #include "path_follower_base.hpp"
 #include "path_follower_example.hpp"
+#include <rclcpp/logging.hpp>
 
 namespace rosplane
 {
@@ -14,6 +15,10 @@ path_follower_base::path_follower_base(): Node("path_follower_base")
 
   update_timer_ = this->create_wall_timer(100ms, std::bind(&path_follower_base::update, this)); // TODO change this duration to change based on update rate.
   controller_commands_pub_  = this->create_publisher<rosplane_msgs::msg::ControllerCommands>("controller_commands",1);
+
+
+  parameter_callback_handle_ = this->add_on_set_parameters_callback(
+            std::bind(&path_follower_base::parametersCallback, this, std::placeholders::_1));
 
   this->declare_parameter("CHI_INFTY", params_.chi_infty);
   this->declare_parameter("K_PATH", params_.k_path);
@@ -104,19 +109,21 @@ rcl_interfaces::msg::SetParametersResult path_follower_base::parametersCallback(
     for (const auto &param : parameters) {
 
         if (param.get_name() == "CHI_INFTY"){
-            params_.chi_infty = param.as_double();
-            result.successful = true;
-            result.reason = "success";
+          params_.chi_infty = param.as_double();
+          result.successful = true;
+          result.reason = "success";
         }
         else if (param.get_name() == "K_PATH"){
-            params_.k_path = param.as_double();
-            result.successful = true;
-            result.reason = "success";
+          RCLCPP_INFO_STREAM(this->get_logger(), "K_PATH Orginal: " << params_.k_path);
+          params_.k_path = param.as_double();
+          result.successful = true;
+          result.reason = "success";
+          RCLCPP_INFO_STREAM(this->get_logger(), "K_PATH Changed: " << params_.k_path);
         }
         else if (param.get_name() == "K_ORBIT"){
-            params_.k_orbit = param.as_double();
-            result.successful = true;
-            result.reason = "success";
+          params_.k_orbit = param.as_double();
+          result.successful = true;
+          result.reason = "success";
         }
 
     }

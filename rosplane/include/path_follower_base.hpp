@@ -59,6 +59,7 @@ protected:
   };
 
   virtual void follow(const struct params_s &params, const struct input_s &input, struct output_s &output) = 0;
+  struct params_s  params_ = {.5, 0.05, 4.0};            /**< params */
 
 private:
 
@@ -70,7 +71,6 @@ private:
   double update_rate_ = 100.0;
 
   rosplane_msgs::msg::ControllerCommands controller_commands_;
-  struct params_s  params_ = {1.0472, 0.025, 4.0};            /**< params */
   struct input_s input_;
 
   void vehicle_state_callback(const rosplane_msgs::msg::State::SharedPtr msg);
@@ -81,6 +81,9 @@ private:
 
 
   void update();
+
+
+  OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
 
   rcl_interfaces::msg::SetParametersResult parametersCallback(
             const std::vector<rclcpp::Parameter> &parameters);
