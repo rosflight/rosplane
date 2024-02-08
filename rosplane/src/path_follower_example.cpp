@@ -5,6 +5,11 @@
 namespace rosplane
 {
 
+double wrap_within_180(double fixed_heading, double wrapped_heading) {
+    // wrapped_heading - number_of_times_to_wrap * 2pi
+    return wrapped_heading - floor((wrapped_heading - fixed_heading) / (2 * M_PI) + 0.5) * 2 * M_PI;
+}
+
 path_follower_example::path_follower_example()
 {
 }
@@ -15,11 +20,8 @@ void path_follower_example::follow(const params_s &params, const input_s &input,
   {
     // compute wrapped version of the path angle
     float chi_q = atan2f(input.q_path[1], input.q_path[0]);
-
-    while (chi_q - input.chi < -M_PI)
-      chi_q += 2.0*M_PI;
-    while (chi_q - input.chi > M_PI)
-      chi_q -= 2.0*M_PI;
+    
+    chi_q = wrap_within_180(input.chi, chi_q);
 
     RCLCPP_DEBUG_STREAM(this->get_logger(), "input.chi: " << input.chi);
 
@@ -28,8 +30,10 @@ void path_follower_example::follow(const params_s &params, const input_s &input,
 
     float path_error = -sinf(chi_q)*(input.pn - input.r_path[0]) + cosf(chi_q)*(input.pe - input.r_path[1]);
 
+    // RCLCPP_INFO_STREAM(this->get_logger(), "k_path: " << params.k_path);
+
     // heading command
-    output.chi_c = chi_q - params.chi_infty*2/M_PI*atanf(params.k_path*path_error);
+    output.chi_c = chi_q - params.chi_infty*2/M_PI*atanf(params_.k_path*path_error);
 
     // desired altitude
     float h_d = -input.r_path[2] - sqrtf(powf((input.r_path[0] - input.pn), 2) + powf((input.r_path[1] - input.pe),
@@ -44,10 +48,9 @@ void path_follower_example::follow(const params_s &params, const input_s &input,
                     2)); // distance from orbit center
     // compute wrapped version of angular position on orbit
     float varphi = atan2f(input.pe - input.c_orbit[1], input.pn - input.c_orbit[0]);
-    while ((varphi - input.chi) < -M_PI)
-      varphi += 2.0*M_PI;
-    while ((varphi - input.chi) > M_PI)
-      varphi -= 2.0*M_PI;
+    
+    varphi = wrap_within_180(input.chi, varphi);
+
     //compute orbit error
     float norm_orbit_error = (d - input.rho_orbit)/input.rho_orbit;
     output.chi_c = varphi + input.lam_orbit*(M_PI/2.0 + atanf(params.k_orbit*norm_orbit_error));
@@ -56,6 +59,8 @@ void path_follower_example::follow(const params_s &params, const input_s &input,
     float h_d = -input.c_orbit[2];
     output.h_c = h_d;
     output.phi_ff = input.lam_orbit * std::atan(pow(input.Va, 2)/(9.81*input.rho_orbit*std::cos(input.chi - input.psi)));
+
+    output.chi_c = wrap_within_180(0.0, output.chi_c);
 
   }
   output.Va_c = input.Va_d;
