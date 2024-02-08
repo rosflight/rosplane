@@ -12,7 +12,7 @@ def generate_launch_description():
     autopilot_params = os.path.join(
         rosplane_dir,
         'params',
-        'succesive_loop_controller_params.yaml'
+        'skyhunter_autopilot_commands.yaml'
     )
 
     # Determine the appropriate control scheme.
