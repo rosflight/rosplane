@@ -37,7 +37,7 @@ autopilot: # node name.
     pwm_rad_a: 1.0
     pwm_rad_r: 1.0
     max_takeoff_throttle: 0.55
-    mass: 2.28
+    mass: 4.5
     gravity: 9.8
     max_roll: 25.0
 
