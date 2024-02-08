@@ -1,9 +1,16 @@
 #include "controller_successive_loop.hpp"
 
 #include "iostream"
+#include <rclcpp/logging.hpp>
 
 namespace rosplane
 {
+
+
+double wrap_within_180(double fixed_heading, double wrapped_heading) {
+    // wrapped_heading - number_of_times_to_wrap * 2pi
+    return wrapped_heading - floor((wrapped_heading - fixed_heading) / (2 * M_PI) + 0.5) * 2 * M_PI;
+}
 
 controller_successive_loop::controller_successive_loop() : controller_state_machine()
 {
@@ -166,7 +173,13 @@ void controller_successive_loop::take_off_longitudinal_control(const struct para
 
 float controller_successive_loop::course_hold(float chi_c, float chi, float phi_ff, float r, const params_s &params, float Ts)
 {
-  float error = chi_c - chi;
+
+  double wrapped_chi_c = wrap_within_180(chi, chi_c);
+  
+
+  float error = wrapped_chi_c - chi;
+
+  // RCLCPP_INFO_STREAM(this->get_logger(), "chi error: " << error);
 
   c_integrator_ = c_integrator_ + (Ts/2.0)*(error + c_error_);
 
@@ -271,7 +284,7 @@ float controller_successive_loop::altitude_hold_control(float h_c, float h, cons
   float ui = params.a_ki*a_integrator_;
   float ud = params.a_kd*a_differentiator_;
 
-  float theta_c = sat(up + ui + ud, 10.0*3.14/180.0, -10.0*3.14/180.0);
+  float theta_c = sat(up + ui + ud, 20.0*3.14/180.0, -20.0*3.14/180.0);
   if (fabs(params.a_ki) >= 0.00001)
   {
     float theta_c_unsat = up + ui + ud;
