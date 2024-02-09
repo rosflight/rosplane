@@ -1,0 +1,48 @@
+autopilot: # node name.
+  ros__parameters:
+    alt_hz: 10.0
+    alt_toz: 5.0
+    tau: 50.0
+    c_kp: 3.5
+    c_kd: 0.0
+    c_ki: 0.1
+    r_kp: 0.06
+    r_kd: 0.04
+    r_ki: 0.0
+    p_kp: -0.2
+    p_kd: -0.09
+    p_ki: 0.0
+    p_ff: 0.0
+    a_t_kp: 0.05
+    a_t_kd: 0.0
+    a_t_ki: 0.005
+    a_kp: 0.02
+    a_kd: 0.0
+    a_ki: 0.01
+    l_kp: .5
+    l_kd: 0.0
+    l_ki: 0.005
+    e_kp: .5
+    e_kd: 0.0
+    e_ki: .01
+    trim_e: 0.02
+    trim_a: 0.0
+    trim_r: 0.0
+    trim_t: 0.5
+    max_e: 0.61
+    max_a: 0.15
+    max_r: 0.523
+    max_t: 1.0
+    pwm_rad_e: 1.0
+    pwm_rad_a: 1.0
+    pwm_rad_r: 1.0
+    max_takeoff_throttle: 0.55
+    mass: 2.28
+    gravity: 9.8
+    max_roll: 25.0
+    frequency: 100
+
+path_manager:
+  ros__parameters:
+    R_min: 100.0
+    orbit_last: False

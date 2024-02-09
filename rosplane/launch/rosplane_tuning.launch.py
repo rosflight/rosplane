@@ -9,18 +9,23 @@ def generate_launch_description():
     # Create the package directory
     rosplane_dir = get_package_share_directory('rosplane')
 
-    autopilot_params = os.path.join(
-        rosplane_dir,
-        'params',
-        'skyhunter_autopilot_commands.yaml'
-    )
-
     # Determine the appropriate control scheme.
     control_type = "default"
+    aircraft = "skyhunter" # Default aircraft 
 
     for arg in sys.argv:
         if arg.startswith("control_type:="):
             control_type = arg.split(":=")[1]
+        
+        if arg.startswith("aircraft:="):
+            aircraft = arg.split(":=")[1]
+    
+    autopilot_params = os.path.join(
+        rosplane_dir,
+        'params',
+        aircraft + '_autopilot_commands.yaml'
+    )
+
 
     return LaunchDescription([
         Node(
