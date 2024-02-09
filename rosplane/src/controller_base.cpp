@@ -2,6 +2,7 @@
 #include "controller_successive_loop.hpp"
 #include "controller_total_energy.hpp"
 #include <functional>
+#include <rclcpp/logging.hpp>
 #include <rosplane_msgs/msg/detail/controller_internals_debug__struct.hpp>
 
 namespace rosplane
@@ -13,9 +14,6 @@ controller_base::controller_base() : Node("controller_base")
   // Advertise published topics.
   actuators_pub_ = this->create_publisher<rosflight_msgs::msg::Command>("command",10);
   internals_pub_ = this->create_publisher<rosplane_msgs::msg::ControllerInternalsDebug>("controller_inners_debug",10);
-
-  // Set timer to trigger bound callback (actuator_controls_publish) at the given periodicity.
-  timer_ = this->create_wall_timer(10ms, std::bind(&controller_base::actuator_controls_publish, this)); // TODO add the period to the params.
 
   // Advertise subscribed topics and set bound callbacks.
   controller_commands_sub_ = this->create_subscription<rosplane_msgs::msg::ControllerCommands>(
@@ -41,6 +39,10 @@ controller_base::controller_base() : Node("controller_base")
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
             std::bind(&controller_base::parametersCallback, this, std::placeholders::_1));
 
+  auto timer_period = std::chrono::microseconds(static_cast<long long>(1.0/params_.frequency * 1'000'000));
+
+  // Set timer to trigger bound callback (actuator_controls_publish) at the given periodicity.
+  timer_ = this->create_wall_timer(timer_period, std::bind(&controller_base::actuator_controls_publish, this)); // TODO add the period to the params.
 
 }
 
@@ -152,52 +154,53 @@ void controller_base::actuator_controls_publish()
   }
 }
 
-    void controller_base::declare_parameters() {
+void controller_base::declare_parameters() {
 
-      // Declare each of the parameters, making it visible to the ROS2 param system.
-      this->declare_parameter("alt_hz", params_.alt_hz);
-      this->declare_parameter("alt_toz", params_.alt_toz);
-      this->declare_parameter("tau", params_.tau);
-      this->declare_parameter("c_kp", params_.c_kp);
-      this->declare_parameter("c_kd", params_.c_kd);
-      this->declare_parameter("c_ki", params_.c_ki);
-      this->declare_parameter("r_kp", params_.r_kp);
-      this->declare_parameter("r_kd", params_.r_kd);
-      this->declare_parameter("r_ki", params_.r_ki);
-      this->declare_parameter("p_kp", params_.p_kp);
-      this->declare_parameter("p_kd", params_.p_kd);
-      this->declare_parameter("p_ki", params_.p_ki);
-      this->declare_parameter("p_ff", params_.p_ff);
-      this->declare_parameter("a_t_kp", params_.a_t_kp);
-      this->declare_parameter("a_t_kd", params_.a_t_kd);
-      this->declare_parameter("a_t_ki", params_.a_t_ki);
-      this->declare_parameter("a_kp", params_.a_kp);
-      this->declare_parameter("a_kd", params_.a_kd);
-      this->declare_parameter("a_ki", params_.a_ki);
-      this->declare_parameter("l_kp", params_.l_kp);
-      this->declare_parameter("l_kd", params_.l_kd);
-      this->declare_parameter("l_ki", params_.l_ki);
-      this->declare_parameter("e_kp", params_.e_kp);
-      this->declare_parameter("e_kd", params_.e_kd);
-      this->declare_parameter("e_ki", params_.e_ki);
-      this->declare_parameter("trim_e", params_.trim_e);
-      this->declare_parameter("trim_a", params_.trim_a);
-      this->declare_parameter("trim_r", params_.trim_r);
-      this->declare_parameter("trim_t", params_.trim_t);
-      this->declare_parameter("max_e", params_.max_e);
-      this->declare_parameter("max_a", params_.max_a);
-      this->declare_parameter("max_r", params_.max_r);
-      this->declare_parameter("max_t", params_.max_t);
-      this->declare_parameter("pwm_rad_e", params_.pwm_rad_e);
-      this->declare_parameter("pwm_rad_a", params_.pwm_rad_a);
-      this->declare_parameter("pwm_rad_r", params_.pwm_rad_r);
-      this->declare_parameter("max_takeoff_throttle", params_.max_takeoff_throttle);
-      this->declare_parameter("mass", params_.mass);
-      this->declare_parameter("gravity", params_.gravity);
-      this->declare_parameter("pitch_tuning_debug_override", params_.pitch_tuning_debug_override);
-      this->declare_parameter("roll_tuning_debug_override", params_.roll_tuning_debug_override);
-      this->declare_parameter("max_roll", params_.max_roll);
-    }
+  // Declare each of the parameters, making it visible to the ROS2 param system.
+  this->declare_parameter("alt_hz", params_.alt_hz);
+  this->declare_parameter("alt_toz", params_.alt_toz);
+  this->declare_parameter("tau", params_.tau);
+  this->declare_parameter("c_kp", params_.c_kp);
+  this->declare_parameter("c_kd", params_.c_kd);
+  this->declare_parameter("c_ki", params_.c_ki);
+  this->declare_parameter("r_kp", params_.r_kp);
+  this->declare_parameter("r_kd", params_.r_kd);
+  this->declare_parameter("r_ki", params_.r_ki);
+  this->declare_parameter("p_kp", params_.p_kp);
+  this->declare_parameter("p_kd", params_.p_kd);
+  this->declare_parameter("p_ki", params_.p_ki);
+  this->declare_parameter("p_ff", params_.p_ff);
+  this->declare_parameter("a_t_kp", params_.a_t_kp);
+  this->declare_parameter("a_t_kd", params_.a_t_kd);
+  this->declare_parameter("a_t_ki", params_.a_t_ki);
+  this->declare_parameter("a_kp", params_.a_kp);
+  this->declare_parameter("a_kd", params_.a_kd);
+  this->declare_parameter("a_ki", params_.a_ki);
+  this->declare_parameter("l_kp", params_.l_kp);
+  this->declare_parameter("l_kd", params_.l_kd);
+  this->declare_parameter("l_ki", params_.l_ki);
+  this->declare_parameter("e_kp", params_.e_kp);
+  this->declare_parameter("e_kd", params_.e_kd);
+  this->declare_parameter("e_ki", params_.e_ki);
+  this->declare_parameter("trim_e", params_.trim_e);
+  this->declare_parameter("trim_a", params_.trim_a);
+  this->declare_parameter("trim_r", params_.trim_r);
+  this->declare_parameter("trim_t", params_.trim_t);
+  this->declare_parameter("max_e", params_.max_e);
+  this->declare_parameter("max_a", params_.max_a);
+  this->declare_parameter("max_r", params_.max_r);
+  this->declare_parameter("max_t", params_.max_t);
+  this->declare_parameter("pwm_rad_e", params_.pwm_rad_e);
+  this->declare_parameter("pwm_rad_a", params_.pwm_rad_a);
+  this->declare_parameter("pwm_rad_r", params_.pwm_rad_r);
+  this->declare_parameter("max_takeoff_throttle", params_.max_takeoff_throttle);
+  this->declare_parameter("mass", params_.mass);
+  this->declare_parameter("gravity", params_.gravity);
+  this->declare_parameter("pitch_tuning_debug_override", params_.pitch_tuning_debug_override);
+  this->declare_parameter("roll_tuning_debug_override", params_.roll_tuning_debug_override);
+  this->declare_parameter("max_roll", params_.max_roll);
+  this->declare_parameter("frequency", params_.frequency);
+}
 
 void controller_base::set_parameters() {
 
@@ -245,6 +248,7 @@ void controller_base::set_parameters() {
   params_.roll_tuning_debug_override = this->get_parameter("roll_tuning_debug_override").as_bool();
   params_.pitch_tuning_debug_override = this->get_parameter("pitch_tuning_debug_override").as_bool();
   params_.max_roll = this->get_parameter("max_roll").as_double();
+  params_.frequency = this->get_parameter("frequency").as_int();
 
 }
 
@@ -298,6 +302,7 @@ rcl_interfaces::msg::SetParametersResult controller_base::parametersCallback(con
     else if (param.get_name() == "roll_tuning_debug_override") params_.roll_tuning_debug_override = param.as_bool();
     else if (param.get_name() == "pitch_tuning_debug_override") params_.pitch_tuning_debug_override = param.as_bool();
     else if (param.get_name() == "max_roll") params_.max_roll = param.as_double();
+    else if (param.get_name() == "frequency") params_.frequency = param.as_int();
     else{
 
       // If the parameter given doesn't match any of the parameters return false.
