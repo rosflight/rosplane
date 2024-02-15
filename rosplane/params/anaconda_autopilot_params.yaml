@@ -9,8 +9,8 @@ autopilot: # node name.
     r_kp: 0.06
     r_kd: 0.04
     r_ki: 0.0
-    p_kp: -0.2
-    p_kd: -0.09
+    p_kp: -0.3
+    p_kd: -0.095
     p_ki: 0.0
     p_ff: 0.0
     a_t_kp: 0.05
