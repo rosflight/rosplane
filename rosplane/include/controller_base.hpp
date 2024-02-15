@@ -293,6 +293,8 @@ private:
    */
   void set_parameters();
 
+  void set_timer();
+
 };
 } //end namespace
 

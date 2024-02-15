@@ -39,11 +39,7 @@ controller_base::controller_base() : Node("controller_base")
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
             std::bind(&controller_base::parametersCallback, this, std::placeholders::_1));
 
-  auto timer_period = std::chrono::microseconds(static_cast<long long>(1.0/params_.frequency * 1'000'000));
-
-  // Set timer to trigger bound callback (actuator_controls_publish) at the given periodicity.
-  timer_ = this->create_wall_timer(timer_period, std::bind(&controller_base::actuator_controls_publish, this)); // TODO add the period to the params.
-
+  set_timer();
 }
 
 void controller_base::controller_commands_callback(const rosplane_msgs::msg::ControllerCommands::SharedPtr msg)
@@ -302,7 +298,11 @@ rcl_interfaces::msg::SetParametersResult controller_base::parametersCallback(con
     else if (param.get_name() == "roll_tuning_debug_override") params_.roll_tuning_debug_override = param.as_bool();
     else if (param.get_name() == "pitch_tuning_debug_override") params_.pitch_tuning_debug_override = param.as_bool();
     else if (param.get_name() == "max_roll") params_.max_roll = param.as_double();
-    else if (param.get_name() == "frequency") params_.frequency = param.as_int();
+    else if (param.get_name() == "frequency"){
+      params_.frequency = param.as_int();
+      timer_->cancel();
+      set_timer();
+    } 
     else{
 
       // If the parameter given doesn't match any of the parameters return false.
@@ -314,6 +314,15 @@ rcl_interfaces::msg::SetParametersResult controller_base::parametersCallback(con
   }
 
   return result;
+}
+
+void controller_base::set_timer()
+{
+  auto timer_period = std::chrono::microseconds(static_cast<long long>(1.0/params_.frequency * 1'000'000));
+
+  // Set timer to trigger bound callback (actuator_controls_publish) at the given periodicity.
+  timer_ = this->create_wall_timer(timer_period, std::bind(&controller_base::actuator_controls_publish, this)); // TODO add the period to the params.
+
 }
 
 void controller_base::convert_to_pwm(controller_base::output_s &output) {
