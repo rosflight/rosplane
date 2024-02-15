@@ -71,14 +71,14 @@ void controller_successive_loop::alt_hold_lateral_control(const struct params_s 
   // Set rudder command to zero, can use cooridinated_turn_hold if implemented.
   // Find commanded roll angle in order to achieve commanded course.
   // Find aileron deflection required to acheive required roll angle.
-  output.delta_r = 0; //cooridinated_turn_hold(input.beta, params, input.Ts)
-  output.phi_c = course_hold(input.chi_c, input.chi, input.phi_ff, input.r, params, input.Ts);
+  output.delta_r = 0; //cooridinated_turn_hold(input.beta, params)
+  output.phi_c = course_hold(input.chi_c, input.chi, input.phi_ff, input.r, params);
 
   if (params.roll_tuning_debug_override){
     output.phi_c = tuning_debug_override_msg_.phi_c;
   }
 
-  output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params, input.Ts);
+  output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params);
 }
 
 void controller_successive_loop::alt_hold_longitudinal_control(const struct params_s &params, const struct input_s &input, struct output_s &output)
@@ -87,21 +87,21 @@ void controller_successive_loop::alt_hold_longitudinal_control(const struct para
   double adjusted_hc = adjust_h_c(input.h_c, input.h, params.alt_hz);
 
   // Control airspeed with throttle loop and altitude with commanded pitch and drive aircraft to commanded pitch.
-  output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts);
-  output.theta_c = altitude_hold_control(adjusted_hc, input.h, params, input.Ts);
+  output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params);
+  output.theta_c = altitude_hold_control(adjusted_hc, input.h, params);
 
   if (params.pitch_tuning_debug_override){
     output.theta_c = tuning_debug_override_msg_.theta_c;
   }
 
-  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params, input.Ts);
+  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params);
 }
 
 void controller_successive_loop::climb_lateral_control(const struct params_s &params, const struct input_s &input, struct output_s &output)
 {
   // Maintain straight flight while gaining altitude.
   output.phi_c = 0;
-  output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params, input.Ts);
+  output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params);
   output.delta_r = 0;
 }
 
@@ -111,9 +111,9 @@ void controller_successive_loop::climb_longitudinal_control(const struct params_
   double adjusted_hc = adjust_h_c(input.h_c, input.h, params.alt_hz);
 
   // Find the control efforts for throttle and find the commanded pitch angle.
-  output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts);
-  output.theta_c = altitude_hold_control(adjusted_hc, input.h, params, input.Ts);
-  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params, input.Ts);
+  output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params);
+  output.theta_c = altitude_hold_control(adjusted_hc, input.h, params);
+  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params);
 }
 
 void controller_successive_loop::take_off_lateral_control(const struct params_s &params, const struct input_s &input, struct output_s &output)
@@ -121,26 +121,28 @@ void controller_successive_loop::take_off_lateral_control(const struct params_s 
   // In the take-off zone maintain level straight flight by commanding a roll angle of 0 and rudder of 0.
   output.delta_r = 0;
   output.phi_c = 0;
-  output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params, input.Ts);
+  output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params);
 }
 
 void controller_successive_loop::take_off_longitudinal_control(const struct params_s &params, const struct input_s &input, struct output_s &output)
 {
   // Set throttle to not overshoot altitude.
-  output.delta_t = sat(airspeed_with_throttle_hold(input.Va_c, input.va, params, input.Ts), params.max_takeoff_throttle, 0);
+  output.delta_t = sat(airspeed_with_throttle_hold(input.Va_c, input.va, params), params.max_takeoff_throttle, 0);
 
   // Command a shallow pitch angle to gain altitude.
   output.theta_c = 5.0 * 3.14 / 180.0; // TODO add to params.
-  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params, input.Ts);
+  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params);
 }
 
 /// All the following control loops follow this basic outline.
 /*
     float controller_successive_loop::pid_control(float command_val, float actual_val, float rate, // Not all loops use rate.
-                                          const params_s &params, float Ts)
+                                          const params_s &params)
     {
       // Find the error between the commanded and actual value.
       float error = commanded_val - actual_val;
+
+      float Ts = 1.0/params.frequency;
 
       // Integrate the error of the state by using the trapezoid method with the stored value for the previous error.
       state_integrator_ = state_integrator_ + (Ts/2.0)*(error + state_error_);
@@ -171,7 +173,7 @@ void controller_successive_loop::take_off_longitudinal_control(const struct para
     }
 */
 
-float controller_successive_loop::course_hold(float chi_c, float chi, float phi_ff, float r, const params_s &params, float Ts)
+float controller_successive_loop::course_hold(float chi_c, float chi, float phi_ff, float r, const params_s &params)
 {
 
   double wrapped_chi_c = wrap_within_180(chi, chi_c);
@@ -179,7 +181,7 @@ float controller_successive_loop::course_hold(float chi_c, float chi, float phi_
 
   float error = wrapped_chi_c - chi;
 
-  // RCLCPP_INFO_STREAM(this->get_logger(), "chi error: " << error);
+  float Ts = 1.0/params.frequency;
 
   c_integrator_ = c_integrator_ + (Ts/2.0)*(error + c_error_);
 
@@ -198,9 +200,11 @@ float controller_successive_loop::course_hold(float chi_c, float chi, float phi_
   return phi_c;
 }
 
-float controller_successive_loop::roll_hold(float phi_c, float phi, float p, const params_s &params, float Ts)
+float controller_successive_loop::roll_hold(float phi_c, float phi, float p, const params_s &params)
 {
   float error = phi_c - phi;
+
+  float Ts = 1.0/params.frequency;
 
   r_integrator = r_integrator + (Ts/2.0)*(error + r_error_);
 
@@ -219,9 +223,11 @@ float controller_successive_loop::roll_hold(float phi_c, float phi, float p, con
   return delta_a;
 }
 
-float controller_successive_loop::pitch_hold(float theta_c, float theta, float q, const params_s &params, float Ts)
+float controller_successive_loop::pitch_hold(float theta_c, float theta, float q, const params_s &params)
 {
   float error = theta_c - theta;
+
+  float Ts = 1.0/params.frequency;
 
   p_integrator_ = p_integrator_ + (Ts/2.0)*(error + p_error_);
 
@@ -243,9 +249,11 @@ float controller_successive_loop::pitch_hold(float theta_c, float theta, float q
   return -delta_e; // TODO explain subtraction.
 }
 
-float controller_successive_loop::airspeed_with_throttle_hold(float Va_c, float Va, const params_s &params, float Ts)
+float controller_successive_loop::airspeed_with_throttle_hold(float Va_c, float Va, const params_s &params)
 {
   float error = Va_c - Va;
+
+  float Ts = 1.0/params.frequency;
 
   at_integrator_ = at_integrator_ + (Ts/2.0)*(error + at_error_);
   at_differentiator_ = (2.0*params.tau - Ts)/(2.0*params.tau + Ts)*at_differentiator_ + (2.0 /
@@ -266,9 +274,11 @@ float controller_successive_loop::airspeed_with_throttle_hold(float Va_c, float 
   return delta_t;
 }
 
-float controller_successive_loop::altitude_hold_control(float h_c, float h, const params_s &params, float Ts)
+float controller_successive_loop::altitude_hold_control(float h_c, float h, const params_s &params)
 {
   float error = h_c - h;
+
+  float Ts = 1.0/params.frequency;
 
   if (-params.alt_hz + .01 < error && error < params.alt_hz - .01) {
     a_integrator_ = a_integrator_ + (Ts / 2.0) * (error + a_error_);

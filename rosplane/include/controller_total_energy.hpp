@@ -70,7 +70,7 @@ namespace rosplane
    * @param Ts The sampling period in seconds.
    * @return The throttle value saturated between 0 and the parameter of max throttle.
    */
-  float total_energy_throttle(float va_c, float va, float h_c, float h, const struct params_s &params, float Ts);
+  float total_energy_throttle(float va_c, float va, float h_c, float h, const struct params_s &params);
   
   /**
    * This uses the error in the balance of energy to find the necessary elevator deflection to acheive that energy.
@@ -82,7 +82,7 @@ namespace rosplane
    * @param Ts The sampling period in seconds.
    * @return The pitch command value saturated between min and max pitch.
    */
-  float total_energy_pitch(float va_c, float va, float h_c, float h, const struct params_s &params, float Ts);
+  float total_energy_pitch(float va_c, float va, float h_c, float h, const struct params_s &params);
 
   /**
    * This calculates and updates the kinetic energy reference and error, the potential energy error.

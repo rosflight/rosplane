@@ -13,11 +13,11 @@ controller_total_energy::controller_total_energy() : controller_successive_loop(
 void controller_total_energy::take_off_longitudinal_control(const struct params_s &params, const struct input_s &input, struct output_s &output)
 {
   // Set throttle to not overshoot altitude.
-  output.delta_t = sat(total_energy_throttle(input.Va_c, input.va, input.h_c, input.h, params, input.Ts), params.max_takeoff_throttle, 0);
+  output.delta_t = sat(total_energy_throttle(input.Va_c, input.va, input.h_c, input.h, params), params.max_takeoff_throttle, 0);
 
   // Command a shallow pitch angle to gain altitude.
   output.theta_c = 5.0 * 3.14 / 180.0; //TODO add to params.
-  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params, input.Ts);
+  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params);
 }
 
 void controller_total_energy::take_off_exit()
@@ -36,9 +36,9 @@ void controller_total_energy::climb_longitudinal_control(const struct params_s &
   double adjusted_hc = adjust_h_c(input.h_c, input.h, params.alt_hz/2.0);
 
   // Find the control efforts for throttle and find the commanded pitch angle using total energy.
-  output.delta_t = total_energy_throttle(input.Va_c, input.va, adjusted_hc, input.h, params, input.Ts);
-  output.theta_c = total_energy_pitch(input.Va_c, input.va, adjusted_hc, input.h, params, input.Ts);
-  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params, input.Ts);
+  output.delta_t = total_energy_throttle(input.Va_c, input.va, adjusted_hc, input.h, params);
+  output.theta_c = total_energy_pitch(input.Va_c, input.va, adjusted_hc, input.h, params);
+  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params);
 }
 
 void controller_total_energy::climb_exit()
@@ -58,9 +58,9 @@ void controller_total_energy::alt_hold_longitudinal_control(const struct params_
   double adjusted_hc = adjust_h_c(input.h_c, input.h, params.alt_hz);
 
   // Calculate the control effort to maintain airspeed and the required pitch angle to maintain altitude.
-  output.delta_t = total_energy_throttle(input.Va_c, input.va, adjusted_hc, input.h, params, input.Ts);
-  output.theta_c = total_energy_pitch(input.Va_c, input.va, adjusted_hc, input.h, params, input.Ts); // TODO remove capital from Va_c
-  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params, input.Ts);
+  output.delta_t = total_energy_throttle(input.Va_c, input.va, adjusted_hc, input.h, params);
+  output.theta_c = total_energy_pitch(input.Va_c, input.va, adjusted_hc, input.h, params); // TODO remove capital from Va_c
+  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params);
 }
 
 void controller_total_energy::altitude_hold_exit()
@@ -74,13 +74,15 @@ void controller_total_energy::altitude_hold_exit()
 }
 
 float controller_total_energy::total_energy_throttle(float va_c, float va, float h_c, float h,
-                                                     const struct params_s &params, float Ts)
+                                                     const struct params_s &params)
 {
   // Update energies based off of most recent data.
   update_energies(va_c, va, h_c, h, params);
 
   // Calculate total energy error, and normalize relative to the desired kinetic energy.
   float E_error = (K_error + U_error) / K_ref;
+
+  float Ts = 1.0/params.frequency;
 
   // Integrate error.
   E_integrator_ = E_integrator_ + (Ts/2.0)*(E_error + E_error_prev_);
@@ -96,7 +98,7 @@ float controller_total_energy::total_energy_throttle(float va_c, float va, float
 }
 
 float controller_total_energy::total_energy_pitch(float va_c, float va, float h_c, float h,
-                                                  const struct params_s &params, float Ts)
+                                                  const struct params_s &params)
 {
   // Update energies based off of most recent data.
   update_energies(va_c, va, h_c, h, params);
@@ -104,6 +106,8 @@ float controller_total_energy::total_energy_pitch(float va_c, float va, float h_
   // Calculate energy balance error, and normalize relative to the desired kinetic energy.
 
   float L_error = (U_error - K_error) / K_ref;
+
+  float Ts = 1.0/params.frequency;
 
   // Integrate error.
   L_integrator_ = L_integrator_ + (Ts/2.0)*(L_error + L_error_prev_);

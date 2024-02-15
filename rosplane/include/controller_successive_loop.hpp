@@ -117,10 +117,9 @@ protected:
    * @param phi_ff The roll angle feedforward term. This allows for faster convergence.   // TODO add reference to book?
    * @param r The yaw rate taken from the gyro.
    * @param params The parameters for the control algorithm, including the control gains.
-   * @param Ts The sampling period.
    * @return The commanded roll angle, to achieve the course angle.
    */
-  float course_hold(float chi_c, float chi, float phi_ff, float r, const struct params_s &params, float Ts);
+  float course_hold(float chi_c, float chi, float phi_ff, float r, const struct params_s &params);
 
   /**
    * The difference between the commanded course angle and the current course angle.
@@ -138,10 +137,9 @@ protected:
    * @param phi The current roll angle.
    * @param p The roll rate taken from the gyro.
    * @param params The parameters for the control algorithm, including the control gains and max deflection.
-   * @param Ts The sampling period.
    * @return The aileron deflection in radians required to achieve the commanded roll angle.
    */
-  float roll_hold(float phi_c, float phi, float p, const struct params_s &params, float Ts);
+  float roll_hold(float phi_c, float phi, float p, const struct params_s &params);
 
   /**
    * The difference between the commanded roll angle and the current roll angle.
@@ -159,10 +157,9 @@ protected:
    * @param theta The current pitch angle.
    * @param q The pitch rate taken from the gyro.
    * @param params The parameters for the control algorithm, including the control gains and max deflection.
-   * @param Ts The sampling period
    * @return The elevator deflection in radians required to achieve the commanded pitch.
    */
-  float pitch_hold(float theta_c, float theta, float q, const struct params_s &params, float Ts);
+  float pitch_hold(float theta_c, float theta, float q, const struct params_s &params);
 
   /**
    * The difference between the commanded pitch angle and the current pitch angle.
@@ -179,10 +176,9 @@ protected:
    * @param Va_c The commanded airspeed.
    * @param Va The current airspeed.
    * @param params The parameters for the control algorithm, including control gains.
-   * @param Ts The sampling period.
    * @return The required throttle between 0 (no throttle) and 1 (full throttle).
    */
-  float airspeed_with_throttle_hold(float Va_c, float Va, const struct params_s &params, float Ts);
+  float airspeed_with_throttle_hold(float Va_c, float Va, const struct params_s &params);
 
   /**
    * The difference between the commanded airspeed and the current airspeed.
@@ -204,10 +200,9 @@ protected:
    * @param h_c The commanded altitude.
    * @param h The current altitude.
    * @param params The parameters for the control algorithm, including control gains.
-   * @param Ts The sampling period
    * @return The commanded pitch angle to maintain and achieve the commanded altitude.
    */
-  float altitude_hold_control(float h_c, float h, const struct params_s &params, float Ts);
+  float altitude_hold_control(float h_c, float h, const struct params_s &params);
 
   /**
    * The difference between the commanded altitude and the current altitude.

@@ -82,7 +82,6 @@ void controller_base::actuator_controls_publish()
   input.h_c = controller_commands_.h_c;
   input.chi_c = controller_commands_.chi_c;
   input.phi_ff = controller_commands_.phi_ff;
-  input.Ts = 0.01f;
 
 
   struct output_s output;
