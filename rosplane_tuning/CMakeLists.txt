@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(rosplane)
+project(rosplane_tuning)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -39,58 +39,19 @@ ament_export_include_directories(include)
 include_directories(  #use this if you need .h files for include statements.  The include will need to have the directories where each .h is respectively.
   include
   ${EIGEN3_INCLUDE_DIRS}
-  ${GAZEBO_INCLUDE_DIRS}
 )
 
-install(DIRECTORY launch params DESTINATION share/${PROJECT_NAME}/)
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
 
 ### START OF REAL EXECUTABLES ###
 
-# Controller
-add_executable(rosplane_controller
-            src/controller_base.cpp
-            src/controller_state_machine.cpp
-            src/controller_successive_loop.cpp
-            src/controller_total_energy.cpp)
-ament_target_dependencies(rosplane_controller rosplane_msgs rosflight_msgs rclcpp rclpy Eigen3)
+# Signal Generator
+add_executable(tuning_signal_generator
+               src/tuning_signal_generator.cpp)
+ament_target_dependencies(tuning_signal_generator rosplane_msgs std_srvs rclcpp)
+target_compile_options(tuning_signal_generator PRIVATE -Wno-unused-parameter)
 install(TARGETS
-  rosplane_controller
-  DESTINATION lib/${PROJECT_NAME})
-
-
-# Follower
-add_executable(rosplane_path_follower
-            src/path_follower_example.cpp
-            src/path_follower_base.cpp)
-ament_target_dependencies(rosplane_path_follower rosplane_msgs rclcpp rclpy Eigen3)
-install(TARGETS
-  rosplane_path_follower
-  DESTINATION lib/${PROJECT_NAME})
-
-# Manager
-add_executable(rosplane_path_manager
-            src/path_manager_base.cpp
-            src/path_manager_example.cpp)
-ament_target_dependencies(rosplane_path_manager rosplane_msgs rclcpp rclpy Eigen3)
-install(TARGETS
-  rosplane_path_manager
-  DESTINATION lib/${PROJECT_NAME})
-
-# Planner
-add_executable(rosplane_path_planner
-            src/path_planner.cpp)
-ament_target_dependencies(rosplane_path_planner rosplane_msgs std_srvs rclcpp rclpy Eigen3)
-install(TARGETS
-  rosplane_path_planner
-  DESTINATION lib/${PROJECT_NAME})
-
-# Estimator
-add_executable(rosplane_estimator_node
-              src/estimator_base.cpp
-              src/estimator_example.cpp)
-ament_target_dependencies(rosplane_estimator_node rosplane_msgs rosflight_msgs rclcpp Eigen3)
-install(TARGETS
-        rosplane_estimator_node
+        tuning_signal_generator
         DESTINATION lib/${PROJECT_NAME})
 
 #### END OF EXECUTABLES ###
