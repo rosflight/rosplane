@@ -41,7 +41,7 @@
 #include <cmath>
 #include <string>
 
-#include "tuning_signal_generator.hpp"
+#include "signal_generator.hpp"
 
 namespace rosplane
 {

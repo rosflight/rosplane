@@ -1,0 +1,82 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="620" height="530" font-family="DejaVu Sans" font-size="16" font-stretch="condensed" text-anchor="middle">
+<switch transform="translate(560 38)">
+	<text systemLanguage="de" id="trsvg60"><tspan id="trsvg1">Sinus</tspan></text>
+	<text systemLanguage="en" id="trsvg61"><tspan id="trsvg2">Sine</tspan></text>
+	<text systemLanguage="es" id="trsvg62"><tspan id="trsvg3">Seno</tspan></text>
+	<text systemLanguage="et" id="trsvg63"><tspan id="trsvg4">Sinusoid</tspan></text>
+	<text systemLanguage="fr" id="trsvg64"><tspan id="trsvg5">Sinuso&#xEF;dale</tspan></text>
+	<text systemLanguage="id" id="trsvg65"><tspan id="trsvg6">Sinus</tspan></text>
+	<text systemLanguage="jv" id="trsvg66"><tspan id="trsvg7">Sinus</tspan></text>
+	<text systemLanguage="mk" id="trsvg67"><tspan id="trsvg8">&#x441;&#x438;&#x43D;&#x443;&#x441;&#x435;&#x43D;</tspan></text>
+	<text systemLanguage="pl" id="trsvg68"><tspan id="trsvg9">Sinusoidalna</tspan></text>
+	<text systemLanguage="ru" id="trsvg69"><tspan id="trsvg10">&#x421;&#x438;&#x43D;&#x443;&#x441;&#x43E;&#x438;&#x434;&#x430;</tspan></text>
+	<text systemLanguage="sv" id="trsvg70"><tspan id="trsvg11">Sinus</tspan></text>
+	<text systemLanguage="tr" id="trsvg71"><tspan id="trsvg12">Sin&#xFC;s</tspan></text>
+	<text systemLanguage="uk" id="trsvg72"><tspan id="trsvg13">&#x421;&#x438;&#x43D;&#x443;&#x441;&#x43E;&#x457;&#x434;&#x430;</tspan></text>
+	
+<text id="trsvg73-ca" systemLanguage="ca"><tspan id="trsvg14-ca">Sinusoidal</tspan></text><text id="trsvg73"><tspan id="trsvg14">Sine</tspan></text></switch>
+<switch transform="translate(560 168)">
+	<text systemLanguage="de" id="trsvg74"><tspan id="trsvg15">Rechteck</tspan></text>
+	<text systemLanguage="en" id="trsvg75"><tspan id="trsvg16">Square</tspan></text>
+	<text systemLanguage="es" id="trsvg76"><tspan id="trsvg17">Cuadrada</tspan></text>
+	<text systemLanguage="et" id="trsvg77"><tspan id="trsvg18">Nelinurklaine</tspan></text>
+	<text systemLanguage="fr" id="trsvg78"><tspan id="trsvg19">Carr&#xE9;e</tspan></text>
+	<text systemLanguage="id" id="trsvg79"><tspan id="trsvg20">Persegi</tspan></text>
+	<text systemLanguage="jv" id="trsvg80"><tspan id="trsvg21">Pasagi</tspan></text>
+	<text systemLanguage="mk" id="trsvg81"><tspan id="trsvg22">&#x43A;&#x432;&#x430;&#x434;&#x440;&#x430;&#x442;&#x435;&#x43D;</tspan></text>
+	<text systemLanguage="pl" id="trsvg82"><tspan id="trsvg23">Prostok&#x105;tna</tspan></text>
+	<text systemLanguage="ru" id="trsvg83"><tspan id="trsvg24">&#x41C;&#x435;&#x430;&#x43D;&#x434;&#x440;</tspan></text>
+	<text systemLanguage="sv" id="trsvg84"><tspan id="trsvg25">Fyrkant</tspan></text>
+	<text systemLanguage="tr" id="trsvg85"><tspan id="trsvg26">Kare</tspan></text>
+	<text systemLanguage="uk" id="trsvg86"><tspan id="trsvg27">&#x41F;&#x440;&#x44F;&#x43C;&#x43E;&#x43A;&#x443;&#x442;&#x43D;&#x438;&#x43A;</tspan></text>
+	
+<text id="trsvg87-ca" systemLanguage="ca"><tspan id="trsvg28-ca">Quadrada</tspan></text><text id="trsvg87"><tspan id="trsvg28">Square</tspan></text></switch>
+<switch transform="translate(560 298)">
+	<text systemLanguage="de" id="trsvg88"><tspan id="trsvg29">Dreieck</tspan></text>
+	<text systemLanguage="en" id="trsvg89"><tspan id="trsvg30">Triangle</tspan></text>
+	<text systemLanguage="es" id="trsvg90"><tspan id="trsvg31">Triangular</tspan></text>
+	<text systemLanguage="et" id="trsvg91"><tspan id="trsvg32">Kolmnurk-</tspan><tspan x="0" y="16" id="trsvg33">laine</tspan></text>
+	<text systemLanguage="fr" id="trsvg92"><tspan id="trsvg34">Triangulaire</tspan></text>
+	<text systemLanguage="id" id="trsvg93"><tspan id="trsvg35">Segitiga</tspan></text>
+	<text systemLanguage="jv" id="trsvg94"><tspan id="trsvg36">Maju-telu</tspan></text>
+	<text systemLanguage="mk" id="trsvg95"><tspan id="trsvg37">&#x442;&#x440;&#x438;&#x430;&#x433;&#x43E;&#x43B;&#x435;&#x43D;</tspan></text>
+	<text systemLanguage="pl" id="trsvg96"><tspan id="trsvg38">Tr&#xF3;jk&#x105;tna</tspan></text>
+	<text systemLanguage="ru" id="trsvg97"><tspan id="trsvg39">&#x422;&#x440;&#x435;&#x443;&#x433;&#x43E;&#x43B;&#x44C;&#x43D;&#x430;&#x44F;</tspan></text>
+	<text systemLanguage="sv" id="trsvg98"><tspan id="trsvg40">Triangel</tspan></text>
+	<text systemLanguage="tr" id="trsvg99"><tspan id="trsvg41">&#xDC;&#xE7;gen</tspan></text>
+	<text systemLanguage="uk" id="trsvg100"><tspan id="trsvg42">&#x422;&#x440;&#x438;&#x43A;&#x443;&#x442;&#x43D;&#x438;&#x43A;</tspan></text>
+	
+<text id="trsvg101-ca" systemLanguage="ca"><tspan id="trsvg43-ca">Triangular</tspan></text><text id="trsvg101"><tspan id="trsvg43">Triangle</tspan></text></switch>
+<switch transform="translate(560 428)">
+	<text systemLanguage="de" id="trsvg102"><tspan id="trsvg44">S&#xE4;gezahn</tspan></text>
+	<text systemLanguage="en" id="trsvg103"><tspan id="trsvg45">Sawtooth</tspan></text>
+	<text systemLanguage="es" id="trsvg104"><tspan id="trsvg46">Dientes</tspan><tspan x="0" y="16" id="trsvg47">de sierra</tspan></text>
+	<text systemLanguage="et" id="trsvg105"><tspan id="trsvg48">Saehammas-</tspan><tspan x="0" y="16" id="trsvg49">laine</tspan></text>
+	<text systemLanguage="fr" id="trsvg106"><tspan id="trsvg50">Dents de scie</tspan></text>
+	<text systemLanguage="id" id="trsvg107"><tspan id="trsvg51">Gigi gergaji</tspan></text>
+	<text systemLanguage="jv" id="trsvg108"><tspan id="trsvg52">Untu graji</tspan></text>
+	<text systemLanguage="mk" id="trsvg109"><tspan id="trsvg53">&#x43D;&#x430;&#x437;&#x430;&#x431;&#x435;&#x43D;</tspan></text>
+	<text systemLanguage="pl" id="trsvg110"><tspan id="trsvg54">Pi&#x142;okszta&#x142;tna</tspan></text>
+	<text systemLanguage="ru" id="trsvg111"><tspan id="trsvg55">&#x41F;&#x438;&#x43B;&#x430;</tspan></text>
+	<text systemLanguage="sv" id="trsvg112"><tspan id="trsvg56">S&#xE5;gtand</tspan></text>
+	<text systemLanguage="tr" id="trsvg113"><tspan id="trsvg57">Testere di&#x15F;i</tspan></text>
+	<text systemLanguage="uk" id="trsvg114"><tspan id="trsvg58">&#x41F;&#x438;&#x43B;&#x43A;&#x43E;&#x43F;&#x43E;&#x434;&#x456;&#x431;&#x43D;&#x430;</tspan></text>
+	
+<text id="trsvg115-ca" systemLanguage="ca"><tspan id="trsvg59-ca">De serra</tspan></text><text id="trsvg115"><tspan id="trsvg59">Sawtooth</tspan></text></switch>
+
+<g id="b">
+	<g id="a" fill="none" stroke-linecap="round" stroke-linejoin="round">
+		<path stroke="#222" stroke-dasharray="2,4" stroke-width=".5" d="m10,30h501m99,40H10m0,40h600M110,10v120m100,0V10m100,0v120m100,0V10m100,0v120"/>
+		<rect x="10" y="10" width="600" height="120" stroke="#666" stroke-width="1.5"/>
+	</g>
+	<use transform="translate(0,130)" xlink:href="#a"/>
+</g>
+<use transform="translate(0,260)" xlink:href="#b"/>
+<g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" stroke="#f00">
+	<path d="m10 70c15-20 30-40 50-40 40 0 60 80 100 80s60-80 100-80 60 80 100 80 60-80 100-80 60 80 100 80c20 0 35-20 50-40"/>
+	<path d="m10 160h100v80h100v-80h100v80h100v-80h100v80h100" stroke="#090"/>
+	<path d="m10 330 50-40 100 80 100-80 100 80 100-80 100 80 50-40" stroke="#33f"/>
+	<path d="m10 460 100-40v80l200-80v80l200-80v80l100-40" stroke="#c0c"/>
+</g>
+</svg>
