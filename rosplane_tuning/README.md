@@ -2,6 +2,8 @@
 
 This ROS2 package contains tools useful for tuning the autopilot performance of ROSplane.
 
+We recommend using [PlotJuggler](https://github.com/facontidavide/PlotJuggler) to visualize command input and response.
+
 ## Signal Generator
 
 Signal generator is a ROS2 node that will generate step inputs, square waves, sine waves, sawtooth waves, and triangle waves to be used as command input for ROSplane. It has support for roll, pitch, altitude, heading, and airspeed command input.
@@ -55,3 +57,9 @@ To call a service from the command line use this command, replacing <service> wi
 ros2 service call <service> std_srvs/srv/Trigger
 ```
 
+## Data Viz
+
+Data viz is a python utility that can be used to plot the controller commands and response, as an alternative to PlotJuggler. To run data viz,
+```
+ros2 run rosplane_tuning data_viz.py
+```

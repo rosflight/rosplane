@@ -58,7 +58,7 @@ install(TARGETS
 # Data viz
 install(PROGRAMS
   src/data_viz/data_storage.py
-  src/data_viz/data_visualization_node.py
+  src/data_viz/data_viz.py
   src/data_viz/plot_window.py
   DESTINATION lib/${PROJECT_NAME}
 )

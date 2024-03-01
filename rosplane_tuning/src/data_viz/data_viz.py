@@ -8,8 +8,8 @@ import rclpy
 from rclpy.executors import SingleThreadedExecutor
 import time as pytime
 import threading
-from data_viz.plot_window import PlotWindow, PlotNav, PlotAxis, PlotDiff
-from data_viz.data_storage import RosStorageInterface
+from plot_window import PlotWindow, PlotNav, PlotAxis, PlotDiff
+from data_storage import RosStorageInterface
 
 class StatePlotter:
     """ Creates a plotting windows and repeatedly plots the data
