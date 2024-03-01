@@ -44,8 +44,8 @@ def generate_launch_description():
             name='estimator'
         ),
         Node(
-            package='rosplane',
-            executable='tuning_signal_generator',
+            package='rosplane_tuning',
+            executable='signal_generator',
             name='signal_generator',
             output = 'screen'
         )
