@@ -16,10 +16,10 @@ def generate_launch_description():
     for arg in sys.argv:
         if arg.startswith("control_type:="):
             control_type = arg.split(":=")[1]
-        
+
         if arg.startswith("aircraft:="):
             aircraft = arg.split(":=")[1]
-    
+
     autopilot_params = os.path.join(
         rosplane_dir,
         'params',
@@ -44,8 +44,8 @@ def generate_launch_description():
             name='estimator'
         ),
         Node(
-            package='rosplane',
-            executable='tuning_signal_generator',
+            package='rosplane_tuning',
+            executable='signal_generator',
             name='signal_generator',
             output = 'screen'
         )
