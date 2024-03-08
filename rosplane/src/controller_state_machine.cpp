@@ -1,16 +1,20 @@
 
 #include "controller_state_machine.hpp"
 
-namespace rosplane {
+namespace rosplane
+{
 
-controller_state_machine::controller_state_machine() : controller_base() {
+controller_state_machine::controller_state_machine()
+    : controller_base()
+{
 
   // Initialize controller in take_off zone.
   current_zone = alt_zones::TAKE_OFF;
-
 }
 
-void controller_state_machine::control(const params_s &params, const input_s &input, output_s &output) {
+void controller_state_machine::control(const params_s & params, const input_s & input,
+                                       output_s & output)
+{
 
   // This state machine changes the controls used based on the zone of flight path the aircraft is currently on.
   switch (current_zone) {
@@ -69,7 +73,6 @@ void controller_state_machine::control(const params_s &params, const input_s &in
         // Set the control zone back to take off to regain altitude. and reset integral for course.
         RCLCPP_INFO(this->get_logger(), "take off");
         current_zone = alt_zones::TAKE_OFF;
-
       }
       break;
     default:
@@ -80,4 +83,4 @@ void controller_state_machine::control(const params_s &params, const input_s &in
   output.current_zone = current_zone;
 }
 
-} // end namespace
+} // namespace rosplane

@@ -10,9 +10,11 @@ class path_follower_example : public path_follower_base
 {
 public:
   path_follower_example();
+
 private:
-  virtual void follow(const struct params_s &params, const struct input_s &input, struct output_s &output);
+  virtual void follow(const struct params_s & params, const struct input_s & input,
+                      struct output_s & output);
 };
 
-} //end namespace
+} // namespace rosplane
 #endif // PATH_FOLLOWER_EXAMPLE_H

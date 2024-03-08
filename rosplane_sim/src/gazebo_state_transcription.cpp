@@ -1,31 +1,33 @@
 #include <memory>
 
-#include "rclcpp/rclcpp.hpp"
-#include "nav_msgs/msg/odometry.hpp"
-#include "geometry_msgs/msg/vector3_stamped.hpp"
-#include "rosplane_msgs/msg/state.hpp"
 #include "Eigen/Geometry"
+#include "geometry_msgs/msg/vector3_stamped.hpp"
+#include "nav_msgs/msg/odometry.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "rosplane_msgs/msg/state.hpp"
 
 #include "chrono"
 
 using namespace std::chrono_literals;
-using std::placeholders::_1;
 using rosplane_msgs::msg::State;
+using std::placeholders::_1;
 
 class gazebo_transcription : public rclcpp::Node
 {
 public:
   gazebo_transcription()
-          : Node("gazebo_state")
+      : Node("gazebo_state")
   {
-    odom_subscription_ = this->create_subscription<nav_msgs::msg::Odometry>("/fixedwing/truth/NED", 10, std::bind(&gazebo_transcription::publish_truth, this, _1));
+    odom_subscription_ = this->create_subscription<nav_msgs::msg::Odometry>(
+      "/fixedwing/truth/NED", 10, std::bind(&gazebo_transcription::publish_truth, this, _1));
 
     publisher_ = this->create_publisher<rosplane_msgs::msg::State>("state", 10);
   }
 
 private:
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_subscription_;
-  rclcpp::Subscription<geometry_msgs::msg::Vector3Stamped>::SharedPtr euler_sub_; // TODO is there going to be gitter between the times each of these collected?
+  rclcpp::Subscription<geometry_msgs::msg::Vector3Stamped>::SharedPtr
+    euler_sub_; // TODO is there going to be gitter between the times each of these collected?
 
   rclcpp::Publisher<State>::SharedPtr publisher_;
 
@@ -34,9 +36,8 @@ private:
   double we = 0.0;
   double wd = 0.0;
 
-
-
-  void publish_truth(const nav_msgs::msg::Odometry &msg){
+  void publish_truth(const nav_msgs::msg::Odometry & msg)
+  {
 
     rosplane_msgs::msg::State state;
 
@@ -58,9 +59,11 @@ private:
     q.z() = msg.pose.pose.orientation.z;
 
     Eigen::Vector3f euler;
-    euler(0) = atan2(2.0*(q.w()*q.x() + q.y()*q.z()), pow(q.w(), 2) + pow(q.z(),2) - pow(q.x(), 2) - pow(q.y(), 2));
-    euler(1) = asin(2.0* (q.w()*q.y() - q.x()*q.z()));
-    euler(2) = atan2(2.0*(q.w()*q.z() + q.x()*q.y()), pow(q.w(), 2) + pow(q.x(), 2) - pow(q.y(), 2) - pow(q.z(), 2));
+    euler(0) = atan2(2.0 * (q.w() * q.x() + q.y() * q.z()),
+                     pow(q.w(), 2) + pow(q.z(), 2) - pow(q.x(), 2) - pow(q.y(), 2));
+    euler(1) = asin(2.0 * (q.w() * q.y() - q.x() * q.z()));
+    euler(2) = atan2(2.0 * (q.w() * q.z() + q.x() * q.y()),
+                     pow(q.w(), 2) + pow(q.x(), 2) - pow(q.y(), 2) - pow(q.z(), 2));
 
     state.phi = euler(0);
     state.theta = euler(1);
@@ -89,9 +92,9 @@ private:
 
     state.va = std::sqrt(pow(ur, 2) + pow(vr, 2) + pow(wr, 2));
 
-    state.chi = atan2(state.va*sin(state.psi), state.va*cos(state.psi));
+    state.chi = atan2(state.va * sin(state.psi), state.va * cos(state.psi));
     state.alpha = atan2(wr, ur);
-    state.beta = asin(vr/state.va);
+    state.beta = asin(vr / state.va);
 
     state.quat_valid = true;
 
@@ -100,18 +103,15 @@ private:
     state.quat[2] = msg.pose.pose.orientation.y;
     state.quat[3] = msg.pose.pose.orientation.z;
 
-//    state.psi_deg = state.psi * TODO implement the deg into the state.
+    //    state.psi_deg = state.psi * TODO implement the deg into the state.
 
     publisher_->publish(state);
-
   }
-
-
 };
 
 int main(int argc, char * argv[])
 {
-  rclcpp:: init(argc, argv);
+  rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<gazebo_transcription>());
   rclcpp::shutdown();
   return 0;

@@ -10,15 +10,15 @@
 #ifndef CONTROLLER_BASE_H
 #define CONTROLLER_BASE_H
 
+#include <chrono>
+#include <cstring>
+#include <iostream>
 #include <rclcpp/rclcpp.hpp>
-#include <rosplane_msgs/msg/detail/controller_internals_debug__struct.hpp>
-#include <rosplane_msgs/msg/state.hpp>
+#include <rosflight_msgs/msg/command.hpp>
 #include <rosplane_msgs/msg/controller_commands.hpp>
 #include <rosplane_msgs/msg/controller_internals_debug.hpp>
-#include <rosflight_msgs/msg/command.hpp>
-#include <chrono>
-#include <iostream>
-#include <cstring>
+#include <rosplane_msgs/msg/detail/controller_internals_debug__struct.hpp>
+#include <rosplane_msgs/msg/state.hpp>
 
 using std::placeholders::_1;
 using namespace std::chrono_literals;
@@ -30,9 +30,9 @@ namespace rosplane
  */
 enum class alt_zones
 {
-  TAKE_OFF,                 /**< In the take off zone where the aircraft gains speed and altitude */
-  CLIMB,                    /**< In the climb zone the aircraft proceeds to commanded altitude without course change. */
-  ALTITUDE_HOLD             /**< In the altitude hold zone the aircraft keeps altitude and follows commanded course */
+  TAKE_OFF, /**< In the take off zone where the aircraft gains speed and altitude */
+  CLIMB, /**< In the climb zone the aircraft proceeds to commanded altitude without course change. */
+  ALTITUDE_HOLD /**< In the altitude hold zone the aircraft keeps altitude and follows commanded course */
 };
 
 /**
@@ -42,32 +42,30 @@ enum class alt_zones
 class controller_base : public rclcpp::Node
 {
 public:
-
   /**
    * Constructor for ROS2 setup and parameter initialization.
    */
   controller_base();
 
 protected:
-
   /**
    * This struct holds all of the inputs to the control algorithm.
    */
   struct input_s
   {
-    float Ts;               /**< time step */
-    float h;                /**< altitude */
-    float va;               /**< airspeed */
-    float phi;              /**< roll angle */
-    float theta;            /**< pitch angle */
-    float chi;              /**< course angle */
-    float p;                /**< body frame roll rate */
-    float q;                /**< body frame pitch rate */
-    float r;                /**< body frame yaw rate */
-    float Va_c;             /**< commanded airspeed (m/s) */
-    float h_c;              /**< commanded altitude (m) */
-    float chi_c;            /**< commanded course (rad) */
-    float phi_ff;           /**< feed forward term for orbits (rad) */
+    float Ts;     /**< time step */
+    float h;      /**< altitude */
+    float va;     /**< airspeed */
+    float phi;    /**< roll angle */
+    float theta;  /**< pitch angle */
+    float chi;    /**< course angle */
+    float p;      /**< body frame roll rate */
+    float q;      /**< body frame pitch rate */
+    float r;      /**< body frame yaw rate */
+    float Va_c;   /**< commanded airspeed (m/s) */
+    float h_c;    /**< commanded altitude (m) */
+    float chi_c;  /**< commanded course (rad) */
+    float phi_ff; /**< feed forward term for orbits (rad) */
   };
 
   /**
@@ -140,21 +138,22 @@ protected:
    * @param input Inputs to the control algorithm.
    * @param output Outputs of the controller, including selected intermediate values and final control efforts.
    */
-  virtual void control(const struct params_s &params, const struct input_s &input, struct output_s &output) = 0;
+  virtual void control(const struct params_s & params, const struct input_s & input,
+                       struct output_s & output) = 0;
 
   /**
    * The override for the intermediate values for the controller.
    */
-  rosplane_msgs::msg::ControllerInternalsDebug tuning_debug_override_msg_; // TODO find a better and more permanent place for this.
+  rosplane_msgs::msg::ControllerInternalsDebug
+    tuning_debug_override_msg_; // TODO find a better and more permanent place for this.
 
 private:
-
   /**
    * This publisher publishes the final calculated control surface deflections.
    */
   rclcpp::Publisher<rosflight_msgs::msg::Command>::SharedPtr actuators_pub_;
 
-    /**
+  /**
    * This publisher publishes the intermediate commands in the control algorithm.
    */
   rclcpp::Publisher<rosplane_msgs::msg::ControllerInternalsDebug>::SharedPtr internals_pub_;
@@ -169,58 +168,60 @@ private:
    */
   rclcpp::Subscription<rosplane_msgs::msg::State>::SharedPtr vehicle_state_sub_;
 
+  /**
+   * Subscribes to the tuning messages for later use in the control calculations
+  */
   rclcpp::Subscription<rosplane_msgs::msg::ControllerInternalsDebug>::SharedPtr tuning_debug_sub_;
+
   /**
    * This timer controls how often commands are published by the autopilot.
    */
   rclcpp::TimerBase::SharedPtr timer_;
 
   /** Parameters for use in control loops.*/
-  struct params_s params_ = {
-          /* alt_hz */ 10.0,
-          /* alt_toz */ 5.0,
-          /* tau */ 50.0,
-          /* c_kp */ 2.37,
-          /* c_kd */ 0.0,
-          /* c_ki */ 0.4,
-          /* r_kp */ .06,
-          /* r_kd */ 0.04,
-          /* r_ki */ 0.0,
-          /* p_kp */ -.15,
-          /* p_kd */ -.05,
-          /* p_ki */ 0.0,
-          /* p_ff */ 0.0,
-          /* a_t_kp */ .05,
-          /* a_t_kd */ 0.0,
-          /* a_t_ki */ .005,
-          /* a_kp */ 0.015,
-          /* a_kd */ 0.0,
-          /* a_ki */ 0.003,
-          /* l_kp */ 1.0,
-          /* l_kd */ 0.0,
-          /* l_ki */ 0.05,
-          /* e_kp */ 5.0,
-          /* e_kd */ 0.0,
-          /* e_ki */ .9,
-          /* trim_e */ 0.02,
-          /* trim_a */ 0.0,
-          /* trim_r */ 0.0,
-          /* trim_t */ 0.5,
-          /* max_e */ 0.61,
-          /* max_a */ 0.15,
-          /* max_r */ 0.523,
-          /* max_t */ 1.0,
-          /* pwm_rad_e */ 1.0,
-          /* pwm_rad_a */ 1.0,
-          /* pwm_rad_r */ 1.0,
-          /* max_takeoff_throttle */ .55,
-          /* mass */ 2.28,
-          /* gravity */ 9.8,
-          /* pitch_tuning_debug_override*/ false,
-          /* roll_tuning_debug_override*/ false,
-          /* max_roll*/ 25.0,
-          /* frequency of contorl loop */ 100
-    };
+  struct params_s params_ = {/* alt_hz */ 10.0,
+                             /* alt_toz */ 5.0,
+                             /* tau */ 50.0,
+                             /* c_kp */ 2.37,
+                             /* c_kd */ 0.0,
+                             /* c_ki */ 0.4,
+                             /* r_kp */ .06,
+                             /* r_kd */ 0.04,
+                             /* r_ki */ 0.0,
+                             /* p_kp */ -.15,
+                             /* p_kd */ -.05,
+                             /* p_ki */ 0.0,
+                             /* p_ff */ 0.0,
+                             /* a_t_kp */ .05,
+                             /* a_t_kd */ 0.0,
+                             /* a_t_ki */ .005,
+                             /* a_kp */ 0.015,
+                             /* a_kd */ 0.0,
+                             /* a_ki */ 0.003,
+                             /* l_kp */ 1.0,
+                             /* l_kd */ 0.0,
+                             /* l_ki */ 0.05,
+                             /* e_kp */ 5.0,
+                             /* e_kd */ 0.0,
+                             /* e_ki */ .9,
+                             /* trim_e */ 0.02,
+                             /* trim_a */ 0.0,
+                             /* trim_r */ 0.0,
+                             /* trim_t */ 0.5,
+                             /* max_e */ 0.61,
+                             /* max_a */ 0.15,
+                             /* max_r */ 0.523,
+                             /* max_t */ 1.0,
+                             /* pwm_rad_e */ 1.0,
+                             /* pwm_rad_a */ 1.0,
+                             /* pwm_rad_r */ 1.0,
+                             /* max_takeoff_throttle */ .55,
+                             /* mass */ 2.28,
+                             /* gravity */ 9.8,
+                             /* pitch_tuning_debug_override*/ false,
+                             /* roll_tuning_debug_override*/ false,
+                             /* max_roll*/ 25.0,
+                             /* frequency of contorl loop */ 100};
 
   /**
    * The stored value for the most up to date commands for the controller.
@@ -240,7 +241,7 @@ private:
   /**
    * Convert from deflection angle in radians to pwm.
    */
-  void convert_to_pwm(struct output_s &output);
+  void convert_to_pwm(struct output_s & output);
 
   /**
    * Calls the control function and publishes outputs and intermediate values to the command and controller internals
@@ -280,7 +281,8 @@ private:
    * @param parameters Set of updated parameters.
    * @return Service result object that tells the requester the result of the param update.
    */
-  rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter> &parameters);
+  rcl_interfaces::msg::SetParametersResult
+  parametersCallback(const std::vector<rclcpp::Parameter> & parameters);
 
   /**
    * This declares each parameter as a parameter so that the ROS2 parameter system can recognize each parameter.
@@ -293,9 +295,11 @@ private:
    */
   void set_parameters();
 
+  /**
+   * This creates a wall timer that calls the controller publisher.
+  */
   void set_timer();
-
 };
-} //end namespace
+} // namespace rosplane
 
 #endif // CONTROLLER_BASE_H
