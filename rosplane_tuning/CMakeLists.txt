@@ -55,6 +55,15 @@ install(TARGETS
         signal_generator
         DESTINATION lib/${PROJECT_NAME})
 
+# Signal Generator
+add_executable(tuning_node
+               src/tuning_node.cpp)
+ament_target_dependencies(tuning_node rosflight_msgs std_srvs rclcpp)
+target_compile_options(tuning_node PRIVATE -Wno-unused-parameter)
+install(TARGETS
+        tuning_node
+        DESTINATION lib/${PROJECT_NAME})
+
 # Data viz
 install(PROGRAMS
   src/data_viz/data_storage.py
