@@ -63,6 +63,12 @@ install(PROGRAMS
   DESTINATION lib/${PROJECT_NAME}
 )
 
+# Autotune
+install(PROGRAMS
+  src/autotune.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 #### END OF EXECUTABLES ###
 
 ament_package()
