@@ -10,11 +10,20 @@ controller_state_machine::controller_state_machine()
 
   // Initialize controller in take_off zone.
   current_zone = alt_zones::TAKE_OFF;
+
+  // Declare parameters associated with this controller, controller_state_machine
+  declare_parameters();
+
+  // Set parameters according to the parameters in the launch file, otherwise use the default values
+  set_parameters();
 }
 
 void controller_state_machine::control(const params_s & params, const input_s & input,
                                        output_s & output)
 {
+  
+  double alt_toz = get_double("alt_toz");
+  double alt_hz = get_double("alt_hz");
 
   // This state machine changes the controls used based on the zone of flight path the aircraft is currently on.
   switch (current_zone) {
@@ -24,7 +33,7 @@ void controller_state_machine::control(const params_s & params, const input_s & 
       take_off(params, input, output);
 
       // If the current altitude is outside the take-off zone (toz) then move to the climb state.
-      if (input.h >= params.alt_toz) {
+      if (input.h >= alt_toz) {
 
         // Perform any exit tasks.
         take_off_exit();
@@ -40,7 +49,7 @@ void controller_state_machine::control(const params_s & params, const input_s & 
       climb(params, input, output);
 
       // Check to see if we have exited the climb zone.
-      if (input.h >= input.h_c - params.alt_hz) {
+      if (input.h >= input.h_c - alt_hz) {
 
         // Perform any exit tasks.
         climb_exit();
@@ -49,7 +58,7 @@ void controller_state_machine::control(const params_s & params, const input_s & 
         RCLCPP_INFO(this->get_logger(), "hold");
         current_zone = alt_zones::ALTITUDE_HOLD;
 
-      } else if (input.h <= params.alt_toz) {
+      } else if (input.h <= alt_toz) {
 
         // Perform any exit tasks.
         climb_exit();
@@ -65,7 +74,7 @@ void controller_state_machine::control(const params_s & params, const input_s & 
       altitude_hold(params, input, output);
 
       // Check to see if you have gotten too close to the ground.
-      if (input.h <= params.alt_toz) {
+      if (input.h <= alt_toz) {
 
         // Perform any exit tasks.
         altitude_hold_exit();
@@ -81,6 +90,12 @@ void controller_state_machine::control(const params_s & params, const input_s & 
 
   // Record current zone, to publish to controller internals.
   output.current_zone = current_zone;
+}
+
+void controller_state_machine::declare_parameters()
+{
+  declare_param("alt_toz", 5.0);
+  declare_param("alt_hz", 10.0);
 }
 
 } // namespace rosplane

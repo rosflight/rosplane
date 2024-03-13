@@ -71,6 +71,13 @@ protected:
    * It is implemented by the child.
    */
   virtual void altitude_hold_exit() = 0;
+
+private:
+  /**
+   * Declares the parameters associated to this controller, controller_state_machine, so that ROS2 can see them.
+   * Also declares default values before they are set to the values set in the launch script.
+  */
+  void declare_parameters();
 };
 
 } // namespace rosplane
