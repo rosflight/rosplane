@@ -8,8 +8,6 @@ from std_srvs.srv import Trigger
 import rclpy
 from rclpy.node import Node
 
-import numpy as np
-
 
 class Autotune(Node):
     """
@@ -65,6 +63,8 @@ class Autotune(Node):
             'run_tuning_iteration',
             self.run_tuning_iteration_callback)
 
+        # Clients
+        self.toggle_step_signal_client = self.create_client(Trigger, 'toggle_step_signal')
 
     ## ROS Callbacks ##
     def state_callback(self, msg):
@@ -136,6 +136,9 @@ class Autotune(Node):
                 int(self.get_parameter('error_collection_period').value * 1e9)
         self.error_collection_timer.reset()
 
+        # Step the command signal
+        self.call_toggle_step_signal()
+
     def stop_error_collection(self):
         """
         Stop the error collection timer and stop storing state and command data.
@@ -143,6 +146,18 @@ class Autotune(Node):
 
         self.collecting_data = False
         self.error_collection_timer.cancel()
+        self.call_toggle_step_signal()
+
+    def call_toggle_step_signal(self):
+        """
+        Call the signal_generator's toggle step service to toggle the step input.
+        """
+        while not self.toggle_step_signal_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info(f'service {self.toggle_step_signal_client.srv_name} ' +
+            'not available, waiting...')
+
+        request = Trigger.Request()
+        self.toggle_step_signal_client.call_async(request)
 
 
 def main(args=None):
