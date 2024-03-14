@@ -8,12 +8,17 @@ from std_srvs.srv import Trigger
 import rclpy
 from rclpy.node import Node
 
+from optimizer import Optimizer
+
 
 class Autotune(Node):
     """
-    This class is an auto-tuning node for the ROSplane autopilot. It calculates the error between
-    the state estimate of the system response and the commanded setpoint for an autopilot. A
-    gradient-based optimization is then run to find the optimal gains to minimize the error.
+    This class is an auto-tuning node for the ROSplane autopilot. The node calculates the error
+    between the state estimate of the system and the commanded setpoint for a given autopilot.
+    A gradient-based optimization is then run to find the optimal gains to minimize the error.
+
+    This class itself contians the ROS-specific code for the autotune node. The optimization
+    algorithms are contained in the Optimizer class.
 
     Va is airspeed, phi is roll angle, chi is course angle, theta is pitch angle, and h is altitude.
     """
@@ -27,6 +32,8 @@ class Autotune(Node):
         self.state = []
         self.commands = []
         self.internals_debug = []
+
+        self.optimizer = Optimizer()
 
         # ROS parameters
         # The amount of time to collect data for calculating the error
@@ -66,6 +73,7 @@ class Autotune(Node):
         # Clients
         self.toggle_step_signal_client = self.create_client(Trigger, 'toggle_step_signal')
 
+
     ## ROS Callbacks ##
     def state_callback(self, msg):
         """
@@ -75,7 +83,8 @@ class Autotune(Node):
 
         if self.collecting_data:
             time = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
-            self.state.append([time, msg.va, msg.phi, msg.chi, msg.theta, -msg.position[2]])  # h = -msg.position[2]
+            self.state.append([time, msg.va, msg.phi, msg.chi, msg.theta, 
+                               -msg.position[2]])  # h = -msg.position[2]
 
     def commands_callback(self, msg):
         """
@@ -107,8 +116,8 @@ class Autotune(Node):
 
     def run_tuning_iteration_callback(self, request, response):
         """
-        This function is called when the run_tuning_iteration service is called. It steps the autopilot
-        command with the signal_generator node and begins the error collection process.
+        This function is called when the run_tuning_iteration service is called. It steps the
+        autopilot command with the signal_generator node and begins the error collection process.
         """
 
         self.get_logger().info('Starting tuning iteration...')
@@ -124,8 +133,8 @@ class Autotune(Node):
     ## Helper Functions ##
     def start_error_collection(self):
         """
-        Start the error collection timer and begin storing state and command data for the time specified
-        by the error_collection_period parameter.
+        Start the error collection timer and begin storing state and command data for the time 
+        specified by the error_collection_period parameter.
         """
 
         # Start data collection
@@ -152,6 +161,7 @@ class Autotune(Node):
         """
         Call the signal_generator's toggle step service to toggle the step input.
         """
+
         while not self.toggle_step_signal_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info(f'service {self.toggle_step_signal_client.srv_name} ' +
             'not available, waiting...')
