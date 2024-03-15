@@ -28,16 +28,15 @@ class Autotune(Node):
 
         # Class variables
         self.collecting_data = False
-
         self.state = []
         self.commands = []
         self.internals_debug = []
-
-        self.optimizer = Optimizer()
+        self.new_gains = []  # TODO: Get gains from ROS parameters
+        self.optimizer = Optimizer(self.new_gains)
 
         # ROS parameters
         # The amount of time to collect data for calculating the error
-        self.declare_parameter('error_collection_period', rclpy.Parameter.Type.DOUBLE)
+        self.declare_parameter('stabilize_period', rclpy.Parameter.Type.DOUBLE)
         # The autopilot that is currently being tuned
         self.declare_parameter('current_tuning_autopilot', rclpy.Parameter.Type.STRING)
 
@@ -59,10 +58,10 @@ class Autotune(Node):
             10)
 
         # Timers
-        self.error_collection_timer = self.create_timer(
-            self.get_parameter('error_collection_period').value,
-            self.error_collection_callback)
-        self.error_collection_timer.cancel()
+        self.stabilize_period_timer = self.create_timer(
+            self.get_parameter('stabilize_period').value,
+            self.stabilize_period_timer_callback)
+        self.stabilize_period_timer.cancel()
 
         # Services
         self.run_tuning_iteration_service = self.create_service(
@@ -106,57 +105,53 @@ class Autotune(Node):
             time = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
             self.internals_debug.append([time, msg.phi_c, msg.theta_c])
 
-    def error_collection_callback(self):
+    def stabilize_period_timer_callback(self):
         """
-        This function is called when the error collection timer expires. It stops the error
-        collection process and begins the optimization process.
+        This function is called when the stability timer callback occurs. It starts/stops data
+        collection and sets up ROSplane to perform a step manuever.
         """
 
-        self.stop_error_collection()
+        if not self.collecting_data:
+            # Stabilization period is over, start collecting data
+            self.get_logger().info('Stepping command and collecting data for '
+                                   + str(self.get_parameter('stabilize_period').value)
+                                   + ' seconds...')
+            self.collecting_data = True
+            self.call_toggle_step_signal()
+        else:
+            # Data collection is over, stop collecting data and calculate gains for next iteration
+            self.get_logger().info('Data collection complete.')
+            self.collecting_data = False
+            self.stabilize_period_timer.cancel()
+            self.call_toggle_step_signal()
+            self.new_gains = self.optimizer.get_next_parameter_set(self.calculate_error())
+
 
     def run_tuning_iteration_callback(self, request, response):
         """
-        This function is called when the run_tuning_iteration service is called. It steps the
-        autopilot command with the signal_generator node and begins the error collection process.
+        This function is called when the run_tuning_iteration service is called. It starts the
+        next iteration of the optimization process.
         """
 
-        self.get_logger().info('Starting tuning iteration...')
+        if not self.optimizer.optimization_terminated():
+            self.get_logger().info('Setting gains: ' + str(self.new_gains))
+            self.set_gains(self.new_gains)
 
-        self.start_error_collection()
+            self.stabilize_period_timer.timer_period_ns = \
+                    int(self.get_parameter('stabilize_period').value * 1e9)
+            self.stabilize_period_timer.reset()
+
+            self.get_logger().info('Stabilizing autopilot for '
+                                   + str(self.get_parameter('stabilize_period').value)
+                                   + ' seconds...')
 
         response.success = True
-        response.message = 'Tuning iteration started!'
+        response.message = self.optimizer.get_optimiztion_status()
 
         return response
 
 
     ## Helper Functions ##
-    def start_error_collection(self):
-        """
-        Start the error collection timer and begin storing state and command data for the time 
-        specified by the error_collection_period parameter.
-        """
-
-        # Start data collection
-        self.collecting_data = True
-
-        # Start the timer
-        self.error_collection_timer.timer_period_ns = \
-                int(self.get_parameter('error_collection_period').value * 1e9)
-        self.error_collection_timer.reset()
-
-        # Step the command signal
-        self.call_toggle_step_signal()
-
-    def stop_error_collection(self):
-        """
-        Stop the error collection timer and stop storing state and command data.
-        """
-
-        self.collecting_data = False
-        self.error_collection_timer.cancel()
-        self.call_toggle_step_signal()
-
     def call_toggle_step_signal(self):
         """
         Call the signal_generator's toggle step service to toggle the step input.
@@ -168,6 +163,21 @@ class Autotune(Node):
 
         request = Trigger.Request()
         self.toggle_step_signal_client.call_async(request)
+
+    def set_gains(self, gains):
+        """
+        Set the gains of the autopilot to the given values.
+        """
+        # TODO: Implement this function
+        pass
+
+    def calculate_error(self):
+        """
+        Calculate the error between the state estimate and the commanded setpoint using the
+        collected data.
+        """
+        # TODO: Implement this function
+        pass
 
 
 def main(args=None):
