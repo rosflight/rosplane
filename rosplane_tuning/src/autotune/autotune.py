@@ -17,7 +17,7 @@ class Autotune(Node):
     between the state estimate of the system and the commanded setpoint for a given autopilot.
     A gradient-based optimization is then run to find the optimal gains to minimize the error.
 
-    This class itself contians the ROS-specific code for the autotune node. The optimization
+    This class itself contains the ROS-specific code for the autotune node. The optimization
     algorithms are contained in the Optimizer class.
 
     Va is airspeed, phi is roll angle, chi is course angle, theta is pitch angle, and h is altitude.
@@ -32,7 +32,14 @@ class Autotune(Node):
         self.commands = []
         self.internals_debug = []
         self.new_gains = []  # TODO: Get gains from ROS parameters
-        self.optimizer = Optimizer(self.new_gains)
+        
+        u1 = 10**-4     # 1st Strong Wolfe Condition, must be between 0 and 1.
+        u2 = 0.5        # 2nd Strong Wolfe Condition, must be between u1 and 1.
+        sigma = 1.5     
+        alpha_init = 1  # Typically 1
+        tau = 10**-3    # Convergence tolerance, typically 10^-3
+        self.optimization_params = [u1,u2,sigma,alpha_init,tau]
+        self.optimizer = Optimizer(self.new_gains, self.optimization_params)
 
         # ROS parameters
         # The amount of time to collect data for calculating the error
@@ -71,6 +78,12 @@ class Autotune(Node):
 
         # Clients
         self.toggle_step_signal_client = self.create_client(Trigger, 'toggle_step_signal')
+
+        # Optimization Setup 
+        # TODO: Implement this function
+        # Run iteration at x0 -> phi0 
+        # Run iteration at x0+0.01 -> temp_phi
+        # Do a finite difference to get the gradient -> phi0_prime
 
 
     ## ROS Callbacks ##
@@ -178,6 +191,19 @@ class Autotune(Node):
         """
         # TODO: Implement this function
         pass
+
+    def get_gradient(self, fx, fxh):
+        """
+        This function returns the gradient at the given point using forward finite difference.
+        
+        Parameters:
+        fx (float): The function evaluation at the point of the gradient.
+        fxh (float): The function evaluation at a point slightly offset from the point. 
+
+        Returns:
+        float: The gradient at the given point.
+        """
+        return (fxh - fx) / 0.01
 
 
 def main(args=None):

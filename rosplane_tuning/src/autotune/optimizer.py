@@ -7,11 +7,18 @@ class Optimizer:
     optimize functions of any number of parameters.
     """
 
-    def __init__(self, initial_gains):  # TODO: Add any other optimization parameters needed (e.g. step size, termination criteria)
+    def __init__(self, initial_gains, optimization_params): 
         """
         Parameters:
         initial_gains (list): The starting point for the gains to be optimized (x0).
+        optimization_params (list): Parameters needed for the optimization operation.
+            [u1, u2, sigma, alpha_init, tau]    
         """
+        self.u1         = optimization_params[0]
+        self.u2         = optimization_params[1]
+        self.sigma      = optimization_params[2]
+        self.init_alpha = optimization_params[3]
+        self.tau        = optimization_params[4]
         pass
 
     def optimization_terminated(self):
@@ -45,3 +52,85 @@ class Optimizer:
         """
         pass
 
+    def interpolate(self, alpha1, alpha2):
+        """
+        This function interpolates between two points.
+
+        Parameters:
+        alpha1 (float): The first distance.
+        alpha2 (float): The second distance.
+
+        Returns:
+        float: The interpolated value or alphap.
+        """
+        return (alpha1 + alpha2)/2
+
+    def bracketing(self, phi1, phi1_prime, phi2, phi2_prime):
+        """
+        This function conducts the bracketing part of the optimization.
+
+        Parameters:
+        phi1 (float): The value of the function at point 1.
+        phi1_prime (float): The gradient of the function at point 1.
+        phi2 (float): The value of the function at point 2.
+        phi2_prime (float): The gradient of the function at point 2.
+
+        Returns:
+        alphastar (float): The optimal step size
+        """
+
+        alpha2 = self.init_alpha
+        first = True
+        if(phi2 > phi1 + self.u1*self.init_alpha*phi1_prime) or (first == False and phi2 > phi1):
+            # alphastar = pinpointing()
+            alphastar = 1 # Testing
+            return alphastar
+        
+        if abs(phi2_prime) <= -self.u2*phi1_prime:
+            alphastar = alpha2
+            return alphastar
+        
+        elif phi2_prime >= 0:
+            # alphastar = pinpointing()
+            alphastar = 1 # Testing
+            return alphastar
+        
+        else:
+            alpha1 = alpha2
+            alpha2 = self.sigma*alpha2
+
+        first = False
+
+    def pinpointing(self, alphalow, alphahigh, philow, philow_prime, phihigh, phihigh_prime):
+        """
+        This function conducts the pinpointing part of the optimization.
+
+        Parameters:
+        alpha1 (float): The first distance.
+        alpha2 (float): The second distance.
+        phi1 (float): The value of the function at point 1.
+        phi1_prime (float): The gradient of the function at point 1.
+        phi2 (float): The value of the function at point 2.
+        phi2_prime (float): The gradient of the function at point 2.
+        
+        Returns:
+        alphastar (float): The optimal step size
+        """
+        alphap = self.interpolate(alphalow, alphahigh)
+        # Calculate phip
+        phip = 1
+        # Calculate phip_prime
+        phip_prime = 1
+
+        if alphap > philow + self.u1*alphap*philow_prime or alphap > philow:
+            alphahigh = alphap
+            phihigh = phip
+        else:
+            if abs(phip_prime) <= -self.u2*philow_prime:
+                alphastar = alphap
+                return alphastar
+            
+            elif phip_prime*(alphahigh - alphalow) >= 0:
+                alphahigh = alphalow
+            
+            alphalow = alphap
