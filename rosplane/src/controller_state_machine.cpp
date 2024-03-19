@@ -22,6 +22,7 @@ void controller_state_machine::control(const params_s & params, const input_s & 
                                        output_s & output)
 {
   
+  // For readability, declare parameters that will be used in this controller
   double alt_toz = get_double("alt_toz");
   double alt_hz = get_double("alt_hz");
 
@@ -94,6 +95,7 @@ void controller_state_machine::control(const params_s & params, const input_s & 
 
 void controller_state_machine::declare_parameters()
 {
+  // Declare param with ROS2 and set the default value.
   declare_param("alt_toz", 5.0);
   declare_param("alt_hz", 10.0);
 }

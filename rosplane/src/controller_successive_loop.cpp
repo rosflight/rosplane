@@ -75,13 +75,17 @@ void controller_successive_loop::alt_hold_lateral_control(const struct params_s 
                                                           const struct input_s & input,
                                                           struct output_s & output)
 {
+  // For readability, declare parameters here that will be used in this function
+  bool roll_tuning_debug_override = get_bool("roll_tuning_debug_override");   // Declared in controller_base
+
+
   // Set rudder command to zero, can use cooridinated_turn_hold if implemented.
   // Find commanded roll angle in order to achieve commanded course.
   // Find aileron deflection required to acheive required roll angle.
   output.delta_r = 0; //cooridinated_turn_hold(input.beta, params)
   output.phi_c = course_hold(input.chi_c, input.chi, input.phi_ff, input.r, params);
 
-  if (params.roll_tuning_debug_override) { output.phi_c = tuning_debug_override_msg_.phi_c; }
+  if (roll_tuning_debug_override) { output.phi_c = tuning_debug_override_msg_.phi_c; }
 
   output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params);
 }
@@ -90,14 +94,18 @@ void controller_successive_loop::alt_hold_longitudinal_control(const struct para
                                                                const struct input_s & input,
                                                                struct output_s & output)
 {
+  // For readability, declare parameters here that will be used in this function
+  double alt_hz = get_double("alt_hz");   // Declared in controller_state_machine
+  bool pitch_tuning_debug_override = get_bool("pitch_tuning_debug_override");   // Declared in controller_base
+
   // Saturate the altitude command.
-  double adjusted_hc = adjust_h_c(input.h_c, input.h, params.alt_hz);
+  double adjusted_hc = adjust_h_c(input.h_c, input.h, alt_hz);
 
   // Control airspeed with throttle loop and altitude with commanded pitch and drive aircraft to commanded pitch.
   output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params);
   output.theta_c = altitude_hold_control(adjusted_hc, input.h, params);
 
-  if (params.pitch_tuning_debug_override) { output.theta_c = tuning_debug_override_msg_.theta_c; }
+  if (pitch_tuning_debug_override) { output.theta_c = tuning_debug_override_msg_.theta_c; }
 
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params);
 }
@@ -116,8 +124,11 @@ void controller_successive_loop::climb_longitudinal_control(const struct params_
                                                             const struct input_s & input,
                                                             struct output_s & output)
 {
+  // For readability, declare parameters here that will be used in this function
+  double alt_hz = get_double("alt_hz");   // Declared in controller_state_machine
+
   // Saturate the altitude command.
-  double adjusted_hc = adjust_h_c(input.h_c, input.h, params.alt_hz);
+  double adjusted_hc = adjust_h_c(input.h_c, input.h, alt_hz);
 
   // Find the control efforts for throttle and find the commanded pitch angle.
   output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params);
@@ -139,9 +150,12 @@ void controller_successive_loop::take_off_longitudinal_control(const struct para
                                                                const struct input_s & input,
                                                                struct output_s & output)
 {
+  // For readability, declare parameters here that will be used in this function
+  double max_takeoff_throttle = get_double("max_takeoff_throttle");
+  
   // Set throttle to not overshoot altitude.
   output.delta_t =
-    sat(airspeed_with_throttle_hold(input.Va_c, input.va, params), params.max_takeoff_throttle, 0);
+    sat(airspeed_with_throttle_hold(input.Va_c, input.va, params), max_takeoff_throttle, 0);
 
   // Command a shallow pitch angle to gain altitude.
   output.theta_c = 5.0 * 3.14 / 180.0; // TODO add to params.
@@ -190,24 +204,30 @@ void controller_successive_loop::take_off_longitudinal_control(const struct para
 float controller_successive_loop::course_hold(float chi_c, float chi, float phi_ff, float r,
                                               const params_s & params)
 {
+  // For readability, declare parameters here that will be used in this function
+  int64_t frequency = get_int("frequency");   // Declared in controller_base
+  double c_kp = get_double("c_kp");
+  double c_ki = get_double("c_ki");
+  double c_kd = get_double("c_kd");
+  double max_roll = get_double("max_roll");
 
   double wrapped_chi_c = wrap_within_180(chi, chi_c);
 
   float error = wrapped_chi_c - chi;
 
-  float Ts = 1.0 / params.frequency;
+  float Ts = 1.0 / frequency;
 
   c_integrator_ = c_integrator_ + (Ts / 2.0) * (error + c_error_);
 
-  float up = params.c_kp * error;
-  float ui = params.c_ki * c_integrator_;
-  float ud = params.c_kd * r;
+  float up = c_kp * error;
+  float ui = c_ki * c_integrator_;
+  float ud = c_kd * r;
 
   float phi_c =
-    sat(up + ui + ud + phi_ff, params.max_roll * 3.14 / 180.0, -params.max_roll * 3.14 / 180.0);
-  if (fabs(params.c_ki) >= 0.00001) {
+    sat(up + ui + ud + phi_ff, max_roll * 3.14 / 180.0, -max_roll * 3.14 / 180.0);
+  if (fabs(c_ki) >= 0.00001) {
     float phi_c_unsat = up + ui + ud + phi_ff;
-    c_integrator_ = c_integrator_ + (Ts / params.c_ki) * (phi_c - phi_c_unsat);
+    c_integrator_ = c_integrator_ + (Ts / c_ki) * (phi_c - phi_c_unsat);
   }
 
   c_error_ = error;
@@ -217,20 +237,27 @@ float controller_successive_loop::course_hold(float chi_c, float chi, float phi_
 float controller_successive_loop::roll_hold(float phi_c, float phi, float p,
                                             const params_s & params)
 {
+  // For readability, declare parameters here that will be used in this function
+  int64_t frequency = get_int("frequency");   // Declared in controller_base
+  double r_kp = get_double("r_kp");
+  double r_ki = get_double("r_ki");
+  double r_kd = get_double("r_kd");
+  double max_a = get_double("max_a");
+
   float error = phi_c - phi;
 
-  float Ts = 1.0 / params.frequency;
+  float Ts = 1.0 / frequency;
 
   r_integrator = r_integrator + (Ts / 2.0) * (error + r_error_);
 
-  float up = params.r_kp * error;
-  float ui = params.r_ki * r_integrator;
-  float ud = params.r_kd * p;
+  float up = r_kp * error;
+  float ui = r_ki * r_integrator;
+  float ud = r_kd * p;
 
-  float delta_a = sat(up + ui - ud, params.max_a, -params.max_a);
-  if (fabs(params.r_ki) >= 0.00001) {
+  float delta_a = sat(up + ui - ud, max_a, -max_a);
+  if (fabs(r_ki) >= 0.00001) {
     float delta_a_unsat = up + ui - ud;
-    r_integrator = r_integrator + (Ts / params.r_ki) * (delta_a - delta_a_unsat);
+    r_integrator = r_integrator + (Ts / r_ki) * (delta_a - delta_a_unsat);
   }
 
   r_error_ = error;
@@ -240,21 +267,31 @@ float controller_successive_loop::roll_hold(float phi_c, float phi, float p,
 float controller_successive_loop::pitch_hold(float theta_c, float theta, float q,
                                              const params_s & params)
 {
+  // For readability, declare parameters here that will be used in this function
+  int64_t frequency = get_int("frequency");   // Declared in controller_base
+  double p_kp = get_double("p_kp");
+  double p_ki = get_double("p_ki");
+  double p_kd = get_double("p_kd");
+  double max_e = get_double("max_e");
+  double trim_e = get_double("trim_e");
+  double pwm_rad_e = get_double("pwm_rad_e");   // Declared in controller_base
+
   float error = theta_c - theta;
 
-  float Ts = 1.0 / params.frequency;
+  float Ts = 1.0 / frequency;
 
   p_integrator_ = p_integrator_ + (Ts / 2.0) * (error + p_error_);
 
-  float up = params.p_kp * error;
-  float ui = params.p_ki * p_integrator_;
-  float ud = params.p_kd * q;
+  float up = p_kp * error;
+  float ui = p_ki * p_integrator_;
+  float ud = p_kd * q;
 
-  float delta_e = sat(params.trim_e / params.pwm_rad_e + up + ui - ud, params.max_e, -params.max_e);
+  float delta_e = sat(trim_e / pwm_rad_e + up + ui - ud, max_e, -max_e);
 
-  if (fabs(params.p_ki) >= 0.00001) {
-    float delta_e_unsat = params.trim_e / params.pwm_rad_e + up + ui - ud;
-    p_integrator_ = p_integrator_ + (Ts / params.p_ki) * (delta_e - delta_e_unsat);
+  // TODO : Why doesn't roll_hold have the trim a on it?
+  if (fabs(p_ki) >= 0.00001) {
+    float delta_e_unsat = trim_e / pwm_rad_e + up + ui - ud;
+    p_integrator_ = p_integrator_ + (Ts / p_ki) * (delta_e - delta_e_unsat);
   }
 
   p_error_ = error;
@@ -264,22 +301,32 @@ float controller_successive_loop::pitch_hold(float theta_c, float theta, float q
 float controller_successive_loop::airspeed_with_throttle_hold(float Va_c, float Va,
                                                               const params_s & params)
 {
+  // For readability, declare parameters here that will be used in this function
+  int64_t frequency = get_int("frequency");   // Declared in controller_base
+  double tau = get_double("tau");
+  double a_t_kp = get_double("a_t_kp");
+  double a_t_ki = get_double("a_t_ki");
+  double a_t_kd = get_double("a_t_kd");
+  double max_t = get_double("max_t");
+  double trim_t = get_double("trim_t");
+
   float error = Va_c - Va;
 
-  float Ts = 1.0 / params.frequency;
+  float Ts = 1.0 / frequency;
 
   at_integrator_ = at_integrator_ + (Ts / 2.0) * (error + at_error_);
-  at_differentiator_ = (2.0 * params.tau - Ts) / (2.0 * params.tau + Ts) * at_differentiator_
-    + (2.0 / (2.0 * params.tau + Ts)) * (error - at_error_);
+  at_differentiator_ = (2.0 * tau - Ts) / (2.0 * tau + Ts) * at_differentiator_
+    + (2.0 / (2.0 * tau + Ts)) * (error - at_error_);
 
-  float up = params.a_t_kp * error;
-  float ui = params.a_t_ki * at_integrator_;
-  float ud = params.a_t_kd * at_differentiator_;
+  float up = a_t_kp * error;
+  float ui = a_t_ki * at_integrator_;
+  float ud = a_t_kd * at_differentiator_;
 
-  float delta_t = sat(params.trim_t + up + ui + ud, params.max_t, 0);
-  if (fabs(params.a_t_ki) >= 0.00001) {
-    float delta_t_unsat = params.trim_t + up + ui + ud;
-    at_integrator_ = at_integrator_ + (Ts / params.a_t_ki) * (delta_t - delta_t_unsat);
+  // Why isn't this one divided by the pwm_rad_t?
+  float delta_t = sat(trim_t + up + ui + ud, max_t, 0);
+  if (fabs(a_t_ki) >= 0.00001) {
+    float delta_t_unsat = trim_t + up + ui + ud;
+    at_integrator_ = at_integrator_ + (Ts / a_t_ki) * (delta_t - delta_t_unsat);
   }
 
   at_error_ = error;
@@ -288,27 +335,35 @@ float controller_successive_loop::airspeed_with_throttle_hold(float Va_c, float 
 
 float controller_successive_loop::altitude_hold_control(float h_c, float h, const params_s & params)
 {
+  // For readability, declare parameters here that will be used in this function
+  int64_t frequency = get_int("frequency");   // Declared in controller_base
+  double alt_hz = get_double("alt_hz");
+  double tau = get_double("tau");
+  double a_kp = get_double("a_kp");
+  double a_ki = get_double("a_ki");
+  double a_kd = get_double("a_kd");
+
   float error = h_c - h;
 
-  float Ts = 1.0 / params.frequency;
+  float Ts = 1.0 / frequency;
 
-  if (-params.alt_hz + .01 < error && error < params.alt_hz - .01) {
+  if (-alt_hz + .01 < error && error < alt_hz - .01) {
     a_integrator_ = a_integrator_ + (Ts / 2.0) * (error + a_error_);
   } else {
     a_integrator_ = 0.0;
   }
 
-  a_differentiator_ = (2.0 * params.tau - Ts) / (2.0 * params.tau + Ts) * a_differentiator_
-    + (2.0 / (2.0 * params.tau + Ts)) * (error - a_error_);
+  a_differentiator_ = (2.0 * tau - Ts) / (2.0 * tau + Ts) * a_differentiator_
+    + (2.0 / (2.0 * tau + Ts)) * (error - a_error_);
 
-  float up = params.a_kp * error;
-  float ui = params.a_ki * a_integrator_;
-  float ud = params.a_kd * a_differentiator_;
+  float up = a_kp * error;
+  float ui = a_ki * a_integrator_;
+  float ud = a_kd * a_differentiator_;
 
   float theta_c = sat(up + ui + ud, 20.0 * 3.14 / 180.0, -20.0 * 3.14 / 180.0);
-  if (fabs(params.a_ki) >= 0.00001) {
+  if (fabs(a_ki) >= 0.00001) {
     float theta_c_unsat = up + ui + ud;
-    a_integrator_ = a_integrator_ + (Ts / params.a_ki) * (theta_c - theta_c_unsat);
+    a_integrator_ = a_integrator_ + (Ts / a_ki) * (theta_c - theta_c_unsat);
   }
 
   a_error_ = error;
@@ -350,6 +405,33 @@ float controller_successive_loop::adjust_h_c(float h_c, float h, float max_diff)
   }
 
   return adjusted_h_c;
+}
+
+void controller_successive_loop::declare_parameters()
+{
+  // Declare param with ROS2 and set the default value.
+  declare_parameter("max_takeoff_throttle", 0.55);
+  declare_parameter("c_kp", 2.37);
+  declare_parameter("c_ki", .4);
+  declare_parameter("c_kd", .0);
+  declare_parameter("max_roll", 25.0);
+
+  declare_parameter("r_kp", .06);
+  declare_parameter("r_ki", .0);
+  declare_parameter("r_kd", .04);
+  declare_parameter("max_a", .15);
+
+  declare_parameter("p_kp", -.15);
+  declare_parameter("p_ki", .0);
+  declare_parameter("p_kd", -.05);
+  declare_parameter("max_e", .15);
+  declare_parameter("trim_e", 0.02)
+
+  declare_parameter("a_t_kp", .05);
+  declare_parameter("a_t_ki", .005);
+  declare_parameter("a_t_kd", 0.0);
+  declare_parameter("max_t", 1.0);
+  declare_parameter("trim_t", 0.5)
 }
 
 } // namespace rosplane
