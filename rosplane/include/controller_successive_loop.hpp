@@ -245,6 +245,13 @@ protected:
   float sat(float value, float up_limit, float low_limit);
 
   float adjust_h_c(float h_c, float h, float max_diff);
+
+private:
+  /**
+   * Declares the parameters associated to this controller, controller_successive_loop, so that ROS2 can see them.
+   * Also declares default values before they are set to the values set in the launch script.
+  */
+  void declare_parameters();
 };
 } // namespace rosplane
 
