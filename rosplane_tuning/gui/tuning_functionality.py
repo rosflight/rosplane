@@ -53,6 +53,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.curr_ki = self.get_param_output('i')
         # Set the sliders to the appropriate values
         self.set_sliders()
+        self.set_SpinBoxes()
         self.initialize_temps()
 
     def rollButtonCallback(self):
@@ -63,6 +64,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.curr_kd = self.get_param_output('d')
         self.curr_ki = self.get_param_output('i')
         self.set_sliders()
+        self.set_SpinBoxes()
         self.initialize_temps()
 
     def pitchButtonCallback(self):
@@ -73,6 +75,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.curr_kd = self.get_param_output('d')
         self.curr_ki = self.get_param_output('i')
         self.set_sliders()
+        self.set_SpinBoxes()
         self.initialize_temps()
 
     def airspeedButtonCallback(self):
@@ -83,6 +86,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.curr_kd = self.get_param_output('d')
         self.curr_ki = self.get_param_output('i')
         self.set_sliders()
+        self.set_SpinBoxes()
         self.initialize_temps()
 
     def altitudeButtonCallback(self):
@@ -93,6 +97,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.curr_kd = self.get_param_output('d')
         self.curr_ki = self.get_param_output('i')
         self.set_sliders()
+        self.set_SpinBoxes()
         self.initialize_temps()
     
     def get_param_output(self, param:str) -> float:
@@ -120,6 +125,21 @@ class Window(QMainWindow, Ui_MainWindow):
         self.kdSlider.setValue(0)
         self.kdSlider.setMinimum(-100)
         self.kdSlider.setMaximum(100)
+
+
+    def set_SpinBoxes(self):
+        # Sliders have an integer range. Set this from +- 100
+        self.kpSpinBox.setValue(0)
+        self.kpSpinBox.setMinimum(-100)
+        self.kpSpinBox.setMaximum(100)
+
+        self.kiSpinBox.setValue(0)
+        self.kiSpinBox.setMinimum(-100)
+        self.kiSpinBox.setMaximum(100)
+
+        self.kdSpinBox.setValue(0)
+        self.kdSpinBox.setMinimum(-100)
+        self.kdSpinBox.setMaximum(100)
     
     def kp_slider_callback(self):
         slider_val = self.kpSlider.value()
