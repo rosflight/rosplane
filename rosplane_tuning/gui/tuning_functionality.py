@@ -10,6 +10,7 @@ import timeit
 # TODO:
 # 1. Add the clear button
 # 2. Add the undo button
+# 3. Add the save button
 # 3. Make the GUI prettier (expanding frames, etc.)
 # 4. Why is it so slow sometimes?
 
@@ -25,6 +26,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.curr_kd = 0.0
         self.curr_ki = 0.0
         self.initialize_temps()
+        self.initialize_undos()
         # This allows us to have different ranges for fine tuning kp, ki, and kd
         self.kp_edit_dist = 2.0
         self.ki_edit_dist = 0.5
@@ -37,6 +39,11 @@ class Window(QMainWindow, Ui_MainWindow):
         self.temp_kp = 0.0
         self.temp_kd = 0.0
         self.temp_ki = 0.0
+
+    def initialize_undos(self):
+        self.undo_kp = self.curr_kp
+        self.undo_kd = self.curr_kd
+        self.undo_ki = self.curr_ki
 
     def connectSignalSlots(self):
         # This is where we define signal slots (callbacks) for when the buttons get clicked
@@ -64,7 +71,6 @@ class Window(QMainWindow, Ui_MainWindow):
             # Set the sliders to the appropriate values
             self.set_sliders()
             self.set_SpinBoxes()
-            self.initialize_temps()
 
     def rollButtonCallback(self):
         if self.rollButton.isChecked():
@@ -76,7 +82,6 @@ class Window(QMainWindow, Ui_MainWindow):
             self.curr_ki = self.get_param_output('i')
             self.set_sliders()
             self.set_SpinBoxes()
-            self.initialize_temps()
 
     def pitchButtonCallback(self):
         if self.pitchButton.isChecked():
@@ -88,7 +93,6 @@ class Window(QMainWindow, Ui_MainWindow):
             self.curr_ki = self.get_param_output('i')
             self.set_sliders()
             self.set_SpinBoxes()
-            self.initialize_temps()
 
     def airspeedButtonCallback(self):
         if self.airspeedButton.isChecked():
@@ -100,7 +104,6 @@ class Window(QMainWindow, Ui_MainWindow):
             self.curr_ki = self.get_param_output('i')
             self.set_sliders()
             self.set_SpinBoxes()
-            self.initialize_temps()
 
     def altitudeButtonCallback(self):
         if self.altitudeButton.isChecked():
@@ -112,7 +115,6 @@ class Window(QMainWindow, Ui_MainWindow):
             self.curr_ki = self.get_param_output('i')
             self.set_sliders()
             self.set_SpinBoxes()
-            self.initialize_temps()
     
     def get_param_output(self, param:str) -> float:
         if self.time: start = timeit.timeit()
@@ -190,6 +192,10 @@ class Window(QMainWindow, Ui_MainWindow):
 
     def runButtonCallback(self):
         #call this if run button is pushed
+        # Set the undo values to be the current values
+        self.undo_kp = self.curr_kp
+        self.undo_ki = self.curr_ki
+        self.undo_kd = self.curr_kd
         # Set current variables to be temp variables
         self.curr_kp = self.temp_kp
         self.curr_ki = self.temp_ki
@@ -210,7 +216,6 @@ class Window(QMainWindow, Ui_MainWindow):
         # Reinitialize the gui
         self.set_sliders()
         self.set_SpinBoxes()
-        self.initialize_temps()
 
 
 # Main loop
