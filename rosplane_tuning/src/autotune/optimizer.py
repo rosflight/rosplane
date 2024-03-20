@@ -11,8 +11,7 @@ class Optimizer:
         """
         Parameters:
         initial_gains (list): The starting point for the gains to be optimized (x0).
-        optimization_params (list): Parameters needed for the optimization operation.
-            [u1, u2, sigma, alpha_init, tau]    
+        optimization_params (list): Parameters needed for the optimization operation.   
         """
         self.u1         = optimization_params[0]
         self.u2         = optimization_params[1]
@@ -51,6 +50,27 @@ class Optimizer:
         list: The next set of gains to be tested. Should be the same length as the initial gains.
         """
         pass
+
+    def calculate_error(self):
+        """
+        Calculate the error between the state estimate and the commanded setpoint using the
+        collected data.
+        """
+        # TODO: Implement this function
+        pass
+
+    def get_gradient(self, fx, fxh):
+        """
+        This function returns the gradient at the given point using forward finite difference.
+        
+        Parameters:
+        fx (float): The function evaluation at the point of the gradient.
+        fxh (float): The function evaluation at a point slightly offset from the point. 
+
+        Returns:
+        float: The gradient at the given point.
+        """
+        return (fxh - fx) / 0.01
 
     def interpolate(self, alpha1, alpha2):
         """
