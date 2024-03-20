@@ -61,10 +61,10 @@ class Window(QMainWindow, Ui_MainWindow):
                 output = subprocess.run(["ros2","param","get","/autopilot",f"{mode}_k{param}"], stdout=subprocess.PIPE)
                 output_list = output.stdout.split()
                 output_val = output_list[-1]
-                
                 # Dynamically generate variable names and assign values
                 var_name = f"orig_{mode}_k{param}"
                 setattr(self, var_name, output_val)
+                print(f'{var_name} set to',output_val)
         
 
     def initialize_temps(self):
@@ -253,26 +253,31 @@ class Window(QMainWindow, Ui_MainWindow):
         for param in params:
             orig_var_name = f"orig_{self.tuning_mode}_k{param}"
                 #get parameter values for orig_var_name
-            original_value = getattr(orig_var_name)
+            original_value = getattr(self,orig_var_name)
                 #generate curr param variable names
             curr_var_name = f"curr_k{param}"
                 #Assign original values to curr parameters
             setattr(self, curr_var_name, original_value)
+            print(f'{curr_var_name} set to {original_value}')
         #run button callback to apply changes
         self.runButtonCallback()
 
     def saveButtonCallback(self):
-        modes = ["c","p","r","a_t","a"]
-        params = ['p','i','d']
+        modes = ["c", "p", "r", "a_t", "a"]
+        params = ['p', 'i', 'd']
         for mode in modes:
             for param in params:
-                output = subprocess.run(["ros2","param","get","/autopilot",f"{mode}_k{param}"], stdout=subprocess.PIPE)
-                output_list = output.stdout.split()
-                output_val = output_list[-1]
-                
-                # Dynamically generate variable names and assign values
-                var_name = f"orig_{mode}_k{param}"
-                setattr(self, var_name, output_val)
+                try:
+                    #Rn this only calls the original param values and renames them
+                    output = subprocess.run(["ros2", "param", "get", "/autopilot", f"{mode}_k{param}"], stdout=subprocess.PIPE, check=True)
+                    output_list = output.stdout.split()
+                    output_val = output_list[-1]
+                    # Dynamically generate variable names and assign values
+                    var_name = f"orig_{mode}_k{param}"
+                    setattr(self, var_name, output_val)
+                    print(f'{var_name} set to {output_val}')
+                except subprocess.CalledProcessError as e:
+                    print(f"Failed to get parameter value for {mode}_k{param}: {e}")
         self.runButtonCallback()
             
 
