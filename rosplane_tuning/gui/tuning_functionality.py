@@ -18,6 +18,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.curr_kp = 0.0
         self.curr_kd = 0.0
         self.curr_ki = 0.0
+        self.initialize_temps()
         # This allows us to have different ranges for fine tuning kp, ki, and kd
         self.kp_edit_dist = 2.0
         self.ki_edit_dist = 0.5
@@ -25,6 +26,11 @@ class Window(QMainWindow, Ui_MainWindow):
         # Boolean values for controlling debugging statements
         self.time = False
         self.disp = True
+    
+    def initialize_temps(self):
+        self.temp_kp = 0.0
+        self.temp_kd = 0.0
+        self.temp_ki = 0.0
 
     def connectSignalSlots(self):
         # This is where we define signal slots (callbacks) for when the buttons get clicked
@@ -47,6 +53,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.curr_ki = self.get_param_output('i')
         # Set the sliders to the appropriate values
         self.set_sliders()
+        self.initialize_temps()
 
     def rollButtonCallback(self):
         # Set the tuning mode
@@ -56,6 +63,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.curr_kd = self.get_param_output('d')
         self.curr_ki = self.get_param_output('i')
         self.set_sliders()
+        self.initialize_temps()
 
     def pitchButtonCallback(self):
         # Set the tuning mode
@@ -65,6 +73,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.curr_kd = self.get_param_output('d')
         self.curr_ki = self.get_param_output('i')
         self.set_sliders()
+        self.initialize_temps()
 
     def airspeedButtonCallback(self):
         # Set the tuning mode
@@ -74,6 +83,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.curr_kd = self.get_param_output('d')
         self.curr_ki = self.get_param_output('i')
         self.set_sliders()
+        self.initialize_temps()
 
     def altitudeButtonCallback(self):
         # Set the tuning mode
@@ -83,6 +93,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.curr_kd = self.get_param_output('d')
         self.curr_ki = self.get_param_output('i')
         self.set_sliders()
+        self.initialize_temps()
     
     def get_param_output(self, param:str) -> float:
         if self.time: start = timeit.timeit()
@@ -112,18 +123,18 @@ class Window(QMainWindow, Ui_MainWindow):
     
     def kp_slider_callback(self):
         slider_val = self.kpSlider.value()
-        self.curr_kp = self.curr_kp + self.kp_edit_dist * 100 / slider_val
-        if self.disp: print(self.curr_kp)
+        self.temp_kp = self.curr_kp + self.kp_edit_dist * slider_val / 100
+        if self.disp: print(self.temp_kp)
     
     def ki_slider_callback(self):
         slider_val = self.kiSlider.value()
-        self.curr_ki = self.curr_ki + self.ki_edit_dist * 100 / slider_val
-        if self.disp: print(self.curr_ki)
-    
+        self.temp_ki = self.curr_ki + self.ki_edit_dist * slider_val / 100
+        if self.disp: print(self.temp_ki)
+   
     def kd_slider_callback(self):
         slider_val = self.kdSlider.value()
-        self.curr_kd = self.curr_kd + self.kd_edit_dist * 100 / slider_val
-        if self.disp: print(self.curr_kd)
+        self.temp_kd = self.curr_kd + self.kd_edit_dist * slider_val / 100
+        if self.disp: print(slider_val, self.temp_kd)
 
     #slider stuff 
     #self.slider.valueChanged.connect(self.slider_callback)
@@ -131,13 +142,22 @@ class Window(QMainWindow, Ui_MainWindow):
 
     def runButtonCallback(self):
         #call this if run button is pushed
+        # Set current variables to be temp variables
+        self.curr_kp = self.temp_kp
+        self.curr_ki = self.temp_ki
+        self.curr_kd = self.temp_kd
         #execute ros param set functions
         executable1 = ["ros2", "param", "set", "/autopilot", f"{self.tuning_mode}_kp", f"{self.curr_kp}"]
         executable2 = ["ros2", "param", "set", "/autopilot", f"{self.tuning_mode}_ki", f"{self.curr_ki}"]
         executable3 = ["ros2", "param", "set", "/autopilot", f"{self.tuning_mode}_kd", f"{self.curr_kd}"]
         executables = [executable1, executable2, executable3]
         for executable in executables:
-            subprocess.run(executable)
+            output = subprocess.run(executable, stdout=subprocess.PIPE)
+            if self.disp: print(output.stdout)
+        if self.disp:
+            print('Kp set to:', self.curr_kp)
+            print('Ki set to:', self.curr_ki)
+            print('Kd set to:', self.curr_kd)
 
 
 # Main loop
