@@ -133,6 +133,13 @@ protected:
    * The previous error in the total energy.
    */
   float E_error_prev_;
+
+private:
+  /**
+   * Declares the parameters associated to this controller, controller_successive_loop, so that ROS2 can see them.
+   * Also declares default values before they are set to the values set in the launch script.
+  */
+  void declare_parameters();
 };
 } // namespace rosplane
 
