@@ -131,7 +131,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Rosplane Tuning GUI"))
         self.CourseButton.setText(_translate("MainWindow", "Course"))
         self.rollButton.setText(_translate("MainWindow", "Roll"))
         self.pitchButton.setText(_translate("MainWindow", "Pitch"))
