@@ -142,6 +142,7 @@ class Ui_MainWindow(object):
         self.altitudeButton.setText(_translate("MainWindow", "Altitude"))
         self.runButton.setText(_translate("MainWindow", "Run"))
         self.clearButton.setText(_translate("MainWindow", "Clear"))
+        self.saveButton.setText(_translate("MainWindow", "Save"))
         self.label_2.setText(_translate("MainWindow", "k_p"))
         self.label.setText(_translate("MainWindow", "k_i"))
         self.label_3.setText(_translate("MainWindow", "k_d"))
