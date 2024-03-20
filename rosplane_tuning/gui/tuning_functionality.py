@@ -125,16 +125,40 @@ class Window(QMainWindow, Ui_MainWindow):
         slider_val = self.kpSlider.value()
         self.temp_kp = self.curr_kp + self.kp_edit_dist * slider_val / 100
         if self.disp: print(self.temp_kp)
+        self.kpSpinBox.setValue(self.temp_kp)
     
     def ki_slider_callback(self):
         slider_val = self.kiSlider.value()
         self.temp_ki = self.curr_ki + self.ki_edit_dist * slider_val / 100
         if self.disp: print(self.temp_ki)
+        self.kiSpinBox.setValue(self.temp_ki)
    
     def kd_slider_callback(self):
         slider_val = self.kdSlider.value()
         self.temp_kd = self.curr_kd + self.kd_edit_dist * slider_val / 100
         if self.disp: print(slider_val, self.temp_kd)
+        self.kdSpinBox.setValue(self.temp_kd)
+
+
+
+    def kpSpinBox_callback(self):
+        kpSpinBox_value = self.kpSpinBox.value()
+        self.temp_kp = kpSpinBox_value
+        slider_val = self.temp_kp*100/self.kp_edit_dist
+        self.kpSlider.setValue(slider_val)
+
+    def kiSpinBox_callback(self):
+        kiSpinBox_value = self.kiSpinBox.value()
+        self.temp_ki = kiSpinBox_value
+        slider_val = self.temp_ki*100/self.ki_edit_dist
+        self.kiSlider.setValue(slider_val)
+
+    def kdSpinBox_callback(self):
+        kdSpinBox_value = self.kdSpinBox.value()
+        self.temp_kd = kdSpinBox_value
+        slider_val = self.temp_kd*100/self.kd_edit_dist
+        self.kdSlider.setValue(slider_val)
+       
 
     #slider stuff 
     #self.slider.valueChanged.connect(self.slider_callback)
