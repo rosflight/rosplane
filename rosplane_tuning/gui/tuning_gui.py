@@ -120,9 +120,9 @@ class Ui_MainWindow(object):
         self.kiSpinBox = QtWidgets.QDoubleSpinBox(self.horizontalLayoutWidget)
         self.kiSpinBox.setObjectName("kiSpinBox")
         self.verticalLayout_5.addWidget(self.kiSpinBox)
-        self.kdSpinBox_2 = QtWidgets.QDoubleSpinBox(self.horizontalLayoutWidget)
-        self.kdSpinBox_2.setObjectName("kdSpinBox_2")
-        self.verticalLayout_5.addWidget(self.kdSpinBox_2)
+        self.kdSpinBox = QtWidgets.QDoubleSpinBox(self.horizontalLayoutWidget)
+        self.kdSpinBox.setObjectName("kdSpinBox")
+        self.verticalLayout_5.addWidget(self.kdSpinBox)
         self.horizontalLayout.addLayout(self.verticalLayout_5)
         MainWindow.setCentralWidget(self.centralwidget)
 

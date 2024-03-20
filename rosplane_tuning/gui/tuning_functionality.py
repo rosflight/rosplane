@@ -129,15 +129,15 @@ class Window(QMainWindow, Ui_MainWindow):
 
     def set_SpinBoxes(self):
         # Sliders have an integer range. Set this from +- 100
-        self.kpSpinBox.setValue(0)
+        self.kpSpinBox.setValue(self.curr_kp)
         self.kpSpinBox.setMinimum(-100)
         self.kpSpinBox.setMaximum(100)
 
-        self.kiSpinBox.setValue(0)
+        self.kiSpinBox.setValue(self.curr_ki)
         self.kiSpinBox.setMinimum(-100)
         self.kiSpinBox.setMaximum(100)
 
-        self.kdSpinBox.setValue(0)
+        self.kdSpinBox.setValue(self.curr_kd)
         self.kdSpinBox.setMinimum(-100)
         self.kdSpinBox.setMaximum(100)
     
@@ -165,7 +165,7 @@ class Window(QMainWindow, Ui_MainWindow):
         kpSpinBox_value = self.kpSpinBox.value()
         self.temp_kp = kpSpinBox_value
         slider_val = self.temp_kp*100/self.kp_edit_dist
-        self.kpSlider.setValue(slider_val)
+        self.kpSlider.setValue(int(slider_val))
 
     def kiSpinBox_callback(self):
         kiSpinBox_value = self.kiSpinBox.value()
