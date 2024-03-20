@@ -19,7 +19,25 @@ class Window(QMainWindow, Ui_MainWindow):
         super().__init__() 
         self.setupUi(self)
         self.connectSignalSlots()
+        self.call_originals()
         
+        # Original parameters saved at init, called with clear button
+        self.orig_c_kp = 0       #original course parameters
+        self.orig_c_ki = 0
+        self.orig_c_kd = 0
+        self.orig_p_kp = 0       #original pitch parameters
+        self.orig_p_ki = 0
+        self.orig_p_kd = 0
+        self.orig_r_kp = 0       #original roll parameters
+        self.orig_r_ki = 0
+        self.orig_r_kd = 0
+        self.orig_a_t_kp = 0     #original airspeed (throttle) parameters
+        self.orig_a_t_ki = 0
+        self.orig_a_t_kd = 0
+        self.orig_a_kp = 0       #original altitude parameters
+        self.orig_a_ki = 0
+        self.orig_a_kd = 0
+
         # Object Attributes that we use, with initializations
         self.tuning_mode = ''
         self.curr_kp = 0.0
@@ -35,6 +53,20 @@ class Window(QMainWindow, Ui_MainWindow):
         self.time = False
         self.disp = True
     
+    def call_originals(self):
+        modes = ["c","p","r","a_t","a"]
+        params = ['p','i','d']
+        for mode in modes:
+            for param in params:
+                output = subprocess.run(["ros2","param","get","/autopilot",f"{mode}_k{param}"], stdout=subprocess.PIPE)
+                output_list = output.stdout.split()
+                output_val = output_list[-1]
+                
+                # Dynamically generate variable names and assign values
+                var_name = f"orig_{mode}_k{param}"
+                setattr(self, var_name, output_val)
+        
+
     def initialize_temps(self):
         self.temp_kp = 0.0
         self.temp_kd = 0.0
@@ -53,6 +85,8 @@ class Window(QMainWindow, Ui_MainWindow):
         self.airspeedButton.toggled.connect(self.airspeedButtonCallback)
         self.altitudeButton.toggled.connect(self.altitudeButtonCallback)
         self.runButton.clicked.connect(self.runButtonCallback)
+        self.clearButton.clicked.connect(self.clearButtonCallback)
+        self.saveButton.clicked.connect(self.saveButtonCallback)
         self.kpSlider.valueChanged.connect(self.kp_slider_callback)
         self.kiSlider.valueChanged.connect(self.ki_slider_callback)
         self.kdSlider.valueChanged.connect(self.kd_slider_callback)
@@ -186,10 +220,6 @@ class Window(QMainWindow, Ui_MainWindow):
         self.kdSlider.setValue(int(slider_val))
        
 
-    #slider stuff 
-    #self.slider.valueChanged.connect(self.slider_callback)
-    #put somewhere else "self.runButton.clicked.connect(self.runButtonCallback)""
-
     def runButtonCallback(self):
         #call this if run button is pushed
         # Set the undo values to be the current values
@@ -216,6 +246,35 @@ class Window(QMainWindow, Ui_MainWindow):
         # Reinitialize the gui
         self.set_sliders()
         self.set_SpinBoxes()
+
+
+    def clearButtonCallback(self):
+        params = ['p','i','d']
+        for param in params:
+            orig_var_name = f"orig_{self.tuning_mode}_k{param}"
+                #get parameter values for orig_var_name
+            original_value = getattr(orig_var_name)
+                #generate curr param variable names
+            curr_var_name = f"curr_k{param}"
+                #Assign original values to curr parameters
+            setattr(self, curr_var_name, original_value)
+        #run button callback to apply changes
+        self.runButtonCallback()
+
+    def saveButtonCallback(self):
+        modes = ["c","p","r","a_t","a"]
+        params = ['p','i','d']
+        for mode in modes:
+            for param in params:
+                output = subprocess.run(["ros2","param","get","/autopilot",f"{mode}_k{param}"], stdout=subprocess.PIPE)
+                output_list = output.stdout.split()
+                output_val = output_list[-1]
+                
+                # Dynamically generate variable names and assign values
+                var_name = f"orig_{mode}_k{param}"
+                setattr(self, var_name, output_val)
+        self.runButtonCallback()
+            
 
 
 # Main loop
