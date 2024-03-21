@@ -19,7 +19,6 @@ class Window(QMainWindow, Ui_MainWindow):
         super().__init__() 
         self.setupUi(self)
         self.connectSignalSlots()
-        self.call_originals()
         
         # Original parameters saved at init, called with clear button
         self.orig_c_kp = 0       #original course parameters
@@ -37,6 +36,8 @@ class Window(QMainWindow, Ui_MainWindow):
         self.orig_a_kp = 0       #original altitude parameters
         self.orig_a_ki = 0
         self.orig_a_kd = 0
+
+        self.call_originals()
 
         # Object Attributes that we use, with initializations
         self.tuning_mode = ''
@@ -248,14 +249,14 @@ class Window(QMainWindow, Ui_MainWindow):
         self.set_SpinBoxes()
 
 
-    def clearButtonCallback(self):
+    def clearButtonCallback(self):      #resets the current mode's inputs to original or last save values
         params = ['p','i','d']
         for param in params:
             orig_var_name = f"orig_{self.tuning_mode}_k{param}"
                 #get parameter values for orig_var_name
             original_value = getattr(self,orig_var_name)
                 #generate curr param variable names
-            curr_var_name = f"curr_k{param}"
+            curr_var_name = f"temp_k{param}"
                 #Assign original values to curr parameters
             setattr(self, curr_var_name, original_value)
             print(f'{curr_var_name} set to {original_value}')
@@ -278,7 +279,7 @@ class Window(QMainWindow, Ui_MainWindow):
                     print(f'{var_name} set to {output_val}')
                 except subprocess.CalledProcessError as e:
                     print(f"Failed to get parameter value for {mode}_k{param}: {e}")
-        self.runButtonCallback()
+        
             
 
 
