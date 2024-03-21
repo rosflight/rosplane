@@ -62,6 +62,9 @@ class Window(QMainWindow, Ui_MainWindow):
         self.kiSlider.setMaximum(100)
         self.kdSlider.setMinimum(-100)
         self.kdSlider.setMaximum(100)
+        self.kpSpinBox.setSingleStep(0.01)
+        self.kiSpinBox.setSingleStep(0.01)
+        self.kdSpinBox.setSingleStep(0.01)
     
     def call_originals(self):
         modes = ["c","p","r","a_t","a"]
