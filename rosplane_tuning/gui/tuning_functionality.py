@@ -19,6 +19,7 @@ class Window(QMainWindow, Ui_MainWindow):
         super().__init__() 
         self.setupUi(self)
         self.connectSignalSlots()
+        self.set_sizes()
         
         # Original parameters saved at init, called with clear button
         self.orig_c_kp = 0       #original course parameters
@@ -53,6 +54,14 @@ class Window(QMainWindow, Ui_MainWindow):
         # Boolean values for controlling debugging statements
         self.time = False
         self.disp = True
+    
+    def set_sizes(self):
+        self.kpSlider.setMinimum(-100)
+        self.kpSlider.setMaximum(100)
+        self.kiSlider.setMinimum(-100)
+        self.kiSlider.setMaximum(100)
+        self.kdSlider.setMinimum(-100)
+        self.kdSlider.setMaximum(100)
     
     def call_originals(self):
         modes = ["c","p","r","a_t","a"]
@@ -96,6 +105,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.kdSpinBox.valueChanged.connect(self.kdSpinBox_callback)
     
     def courseButtonCallback(self):
+        if self.disp: print("COURSE gains selected")
         if self.CourseButton.isChecked():
             # Set the tuning mode
             self.tuning_mode = 'c'
@@ -108,6 +118,7 @@ class Window(QMainWindow, Ui_MainWindow):
             self.set_SpinBoxes()
 
     def rollButtonCallback(self):
+        if self.disp: print("ROLL gains selected")
         if self.rollButton.isChecked():
             # Set the tuning mode
             self.tuning_mode = 'r'
@@ -119,6 +130,7 @@ class Window(QMainWindow, Ui_MainWindow):
             self.set_SpinBoxes()
 
     def pitchButtonCallback(self):
+        if self.disp: print("PITCH gains selected")
         if self.pitchButton.isChecked():
             # Set the tuning mode
             self.tuning_mode = 'p'
@@ -130,6 +142,7 @@ class Window(QMainWindow, Ui_MainWindow):
             self.set_SpinBoxes()
 
     def airspeedButtonCallback(self):
+        if self.disp: print("AIRSPEED gains selected")
         if self.airspeedButton.isChecked():
             # Set the tuning mode
             self.tuning_mode = 'a_t'
@@ -141,6 +154,7 @@ class Window(QMainWindow, Ui_MainWindow):
             self.set_SpinBoxes()
 
     def altitudeButtonCallback(self):
+        if self.disp: print("ALTITUDE gains selected")
         if self.altitudeButton.isChecked():
             # Set the tuning mode
             self.tuning_mode = 'a'
@@ -172,19 +186,19 @@ class Window(QMainWindow, Ui_MainWindow):
     def kp_slider_callback(self):
         slider_val = self.kpSlider.value()
         self.temp_kp = self.curr_kp + self.kp_edit_dist * slider_val / 100
-        if self.disp: print(self.temp_kp)
+        # if self.disp: print(self.temp_kp)
         self.kpSpinBox.setValue(self.temp_kp)
     
     def ki_slider_callback(self):
         slider_val = self.kiSlider.value()
         self.temp_ki = self.curr_ki + self.ki_edit_dist * slider_val / 100
-        if self.disp: print(self.temp_ki)
+        # if self.disp: print(self.temp_ki)
         self.kiSpinBox.setValue(self.temp_ki)
    
     def kd_slider_callback(self):
         slider_val = self.kdSlider.value()
         self.temp_kd = self.curr_kd + self.kd_edit_dist * slider_val / 100
-        if self.disp: print(slider_val, self.temp_kd)
+        # if self.disp: print(self.temp_kd)
         self.kdSpinBox.setValue(self.temp_kd)
 
 
@@ -222,6 +236,7 @@ class Window(QMainWindow, Ui_MainWindow):
        
 
     def runButtonCallback(self):
+        if self.disp: print('RUNNING parameters')
         #call this if run button is pushed
         # Set the undo values to be the current values
         self.undo_kp = self.curr_kp
@@ -250,6 +265,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
 
     def clearButtonCallback(self):      #resets the current mode's inputs to original or last save values
+        if self.disp: print('\nCLEARING <' + self.tuning_mode + '> parameters')
         params = ['p','i','d']
         for param in params:
             orig_var_name = f"orig_{self.tuning_mode}_k{param}"
@@ -258,12 +274,13 @@ class Window(QMainWindow, Ui_MainWindow):
                 #generate curr param variable names
             curr_var_name = f"temp_k{param}"
                 #Assign original values to curr parameters
-            setattr(self, curr_var_name, original_value)
+            setattr(self, curr_var_name, float(original_value))
             print(f'{curr_var_name} set to {original_value}')
         #run button callback to apply changes
         self.runButtonCallback()
 
     def saveButtonCallback(self):
+        if self.disp: print('\nSAVING all parameters')
         modes = ["c", "p", "r", "a_t", "a"]
         params = ['p', 'i', 'd']
         for mode in modes:
@@ -279,9 +296,6 @@ class Window(QMainWindow, Ui_MainWindow):
                     print(f'{var_name} set to {output_val}')
                 except subprocess.CalledProcessError as e:
                     print(f"Failed to get parameter value for {mode}_k{param}: {e}")
-        
-            
-
 
 # Main loop
 if __name__=='__main__':
