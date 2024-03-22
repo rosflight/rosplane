@@ -167,7 +167,7 @@ class Optimizer:
         return (alpha1 + alpha2)/2
 
     # Flag 2 - Pinpointing 
-    def pinpointing(self, alpha1, phi1, phi1_prime, alpha2, phi2, phi2_prime, phip, phip_prime):
+    def pinpointing(self, alpha1, phi1, phi1_prime, alpha2, phi2, phi2_prime, alphap, phip, phip_prime):
         """
         This function conducts the pinpointing part of the optimization.
 
@@ -182,7 +182,6 @@ class Optimizer:
         Returns:
         alphastar (float): The optimal step size
         """
-        alphap = self.interpolate(alpha1, alpha2)
 
         if alphap > phi1 + self.u1*alphap*phi1_prime or alphap > phi1:
             alpha2 = alphap
