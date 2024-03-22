@@ -84,6 +84,7 @@ class Autotune(Node):
         # Run iteration at x0 -> phi0 
         # Run iteration at x0+0.01 -> temp_phi
         # Do a finite difference to get the gradient -> phi0_prime
+        # Repeat for x0+alpha
 
 
     ## ROS Callbacks ##
@@ -183,27 +184,6 @@ class Autotune(Node):
         """
         # TODO: Implement this function
         pass
-
-    def calculate_error(self):
-        """
-        Calculate the error between the state estimate and the commanded setpoint using the
-        collected data.
-        """
-        # TODO: Implement this function
-        pass
-
-    def get_gradient(self, fx, fxh):
-        """
-        This function returns the gradient at the given point using forward finite difference.
-        
-        Parameters:
-        fx (float): The function evaluation at the point of the gradient.
-        fxh (float): The function evaluation at a point slightly offset from the point. 
-
-        Returns:
-        float: The gradient at the given point.
-        """
-        return (fxh - fx) / 0.01
 
 
 def main(args=None):
