@@ -430,14 +430,14 @@ void controller_successive_loop::declare_parameters()
   declare_parameter("p_ki", .0);
   declare_parameter("p_kd", -.05);
   declare_parameter("max_e", .15);
-  declare_parameter("trim_e", 0.02)
+  declare_parameter("trim_e", 0.02);
 
   declare_parameter("tau", 50.0);
   declare_parameter("a_t_kp", .05);
   declare_parameter("a_t_ki", .005);
   declare_parameter("a_t_kd", 0.0);
   declare_parameter("max_t", 1.0);
-  declare_parameter("trim_t", 0.5)
+  declare_parameter("trim_t", 0.5);
 
   declare_parameter("a_kp", 0.015);
   declare_parameter("a_ki", 0.003);
