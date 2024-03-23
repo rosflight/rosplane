@@ -10,6 +10,7 @@ from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.node import Node
 from rclpy.parameter import Parameter
+from rcl_interfaces.msg import ParameterType
 from rcl_interfaces.srv import GetParameters, SetParameters
 from std_srvs.srv import Trigger
 
@@ -73,11 +74,10 @@ class Autotune(Node):
         elif self.get_parameter('/autotune/current_tuning_autopilot').value == 'airspeed':
             self.current_autopilot = CurrentAutopilot.AIRSPEED
         else:
-            self.get_logger().fatal(self.get_parameter('/autotune/current_tuning_autopilot').value +
-                                    ' is not a valid value for current_tuning_autopilot.' +
-                                    ' Please select one of the' +
-                                    ' following: roll, course, pitch, altitude, airspeed.')
-            rclpy.shutdown()
+            raise ValueError(self.get_parameter('/autotune/current_tuning_autopilot').value +
+                             ' is not a valid value for current_tuning_autopilot.' +
+                             ' Please select one of the' +
+                             ' following: roll, course, pitch, altitude, airspeed.')
 
         # Subscriptions
         self.state_subscription = self.create_subscription(
@@ -128,9 +128,14 @@ class Autotune(Node):
                 callback_group=self.external_callback_group)
 
         # Optimization
-        self.new_gains = self.get_gains()
-        self.optimizer = Optimizer(self.new_gains, {'u1': 10**-4, 'u2': 0.5, 'sigma': 1.5,
-                                                    'alpha': 1, 'tau': 10**-3})
+        self.optimization_params = {'u1': 10**-4,
+                                    'u2': 0.5,
+                                    'sigma': 1.5,
+                                    'alpha': 1,
+                                    'tau': 10**-3}
+        self.new_gains = None  # get_gains function cannot be called in __init__ since the node
+                               # has not yet been passed to the executor
+        self.optimizer = None
 
 
     ## ROS Callbacks ##
@@ -186,12 +191,15 @@ class Autotune(Node):
             self.call_toggle_step_signal()
             self.new_gains = self.optimizer.get_next_parameter_set(self.calculate_error())
 
-
     def run_tuning_iteration_callback(self, request, response):
         """
         This function is called when the run_tuning_iteration service is called. It starts the
         next iteration of the optimization process.
         """
+
+        if self.optimizer is None:
+            self.new_gains = self.get_gains()
+            self.optimizer = Optimizer(self.new_gains, self.optimization_params)
 
         if not self.optimizer.optimization_terminated():
             self.get_logger().info('Setting gains: ' + str(self.new_gains))
@@ -231,12 +239,8 @@ class Autotune(Node):
         Returns:
         list of floats: The current gains of the autopilot that is being tuning.
         """
+
         request = GetParameters.Request()
-
-        while not self.get_parameter_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info(f'Service {self.get_parameter_client.srv_name}' +
-                                   ' not available, waiting...')
-
         if self.current_autopilot == CurrentAutopilot.ROLL:
             request.names = ['r_kp', 'r_kd']
         elif self.current_autopilot == CurrentAutopilot.COURSE:
@@ -248,9 +252,35 @@ class Autotune(Node):
         else:  # CurrentAutopilot.AIRSPEED
             request.names = ['a_t_kp', 'a_t_ki']
 
-        self.get_parameter_client.call_async(request)
+        # Call the service
+        while not self.get_parameter_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info(f'Service {self.get_parameter_client.srv_name}' +
+                                   ' not available, waiting...')
+        future = self.get_parameter_client.call_async(request)
 
-        return np.array([1.0, 1.0])  # Placeholder
+        # Wait for the service to complete, exiting if it takes too long
+        call_time = time.time()
+        callback_complete = False
+        while call_time + 5 > time.time():
+            if future.done():
+                callback_complete = True
+                break
+        if not callback_complete or future.result() is None:
+            raise RuntimeError('Unable to get autopilot gains.')
+
+        # Check that values were returned. No values are returned if the parameter does not exist.
+        if len(future.result().values) == 0:
+            raise RuntimeError(f'Parameter values for {request.names} were not returned, ' +
+                               'have they been set?')
+
+        # Put the gains into a numpy array
+        gains = []
+        for value in future.result().values:
+            if value.type != ParameterType.PARAMETER_DOUBLE:
+                raise RuntimeError('Parameter type returned by get_parameters is not DOUBLE.')
+            gains.append(value.double_value)
+
+        return np.array(gains)  # Placeholder
 
     def set_gains(self, gains):
         """
@@ -281,21 +311,19 @@ class Autotune(Node):
         future = self.set_parameter_client.call_async(request)
 
         # Wait for the service to complete, exiting if it takes too long
-        # rclcpp has a function for this, but I couldn't seem to find one for rclpy
         call_time = time.time()
         callback_complete = False
         while call_time + 5 > time.time():
             if future.done():
                 callback_complete = True
                 break
-        if not callback_complete:
-            self.get_logger().error('Unable to set autopilot gains after 5 seconds.')
+        if not callback_complete or future.result() is None:
+            raise RuntimeError('Unable to set autopilot gains.')
 
         # Print any errors that occurred
         for response in future.result().results:
             if not response.successful:
-                self.get_logger().error(f'Failed to set parameter: {response.reason}')
-
+                raise RuntimeError(f'Failed to set parameter: {response.reason}')
 
     def calculate_error(self):
         """
