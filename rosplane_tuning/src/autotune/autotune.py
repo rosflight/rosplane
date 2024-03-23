@@ -107,13 +107,8 @@ class Autotune(Node):
 
         # Optimization
         self.new_gains = self.get_gains()
-        u1 = 10**-4     # 1st Strong Wolfe Condition, must be between 0 and 1.
-        u2 = 0.5        # 2nd Strong Wolfe Condition, must be between u1 and 1.
-        sigma = 1.5
-        alpha_init = 1  # Typically 1
-        tau = 10**-3    # Convergence tolerance, typically 10^-3
-        self.optimization_params = [u1,u2,sigma,alpha_init,tau]
-        self.optimizer = Optimizer(self.new_gain, self.optimization_params)
+        self.optimizer = Optimizer(self.new_gains, {'u1': 10**-4, 'u2': 0.5, 'sigma': 1.5,
+                                                    'alpha': 1, 'tau': 10**-3})
 
 
     ## ROS Callbacks ##
