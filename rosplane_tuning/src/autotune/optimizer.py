@@ -1,5 +1,17 @@
 #!/usr/bin/env python3
 
+from enum import Enum, auto
+
+
+class OptimizerState(Enum):
+    """
+    This class defines the various states that exist within the optimizer.
+    """
+    FINDING_GRADIENT = auto()
+    BRACKETING = auto()
+    PINPOINTING = auto()
+    TERMINATED = auto()
+
 
 class Optimizer:
     """
@@ -21,8 +33,8 @@ class Optimizer:
         self.tau        = optimization_params[4]
         self.flag       = 0 
 
-        pass
-    
+        self.state = OptimizerState.FINDING_GRADIENT
+
     def optimization_terminated(self):
         """
         This function checks if the optimization algorithm has terminated.
@@ -39,28 +51,30 @@ class Optimizer:
         Returns:
         str: The status of the optimization algorithm
         """
-        pass
+        return 'TODO'
 
     def get_next_parameter_set(self, error):
         """
         This function returns the next set of gains to be tested by the optimization algorithm.
 
         Parameters:
-        error (float): The error from the set of gains returned previously. If this is the first
-        iteration, the error of the initial gains will be given.
+        error (list of floats): The error from the list of gains to test that was returned by this
+        function previously. If this is the first iteration, the error of the initial gains will be given.
+            [error1, error2, ...]
 
         Returns:
         list: The next set of gains to be tested. Should be the same length as the initial gains.
         """
-        pass
 
-    def calculate_error(self):
-        """
-        Calculate the error between the state estimate and the commanded setpoint using the
-        collected data.
-        """
-        # TODO: Implement this function
-        pass
+        if self.state == OptimizerState.FINDING_GRADIENT:
+            pass
+        elif self.state == OptimizerState.BRACKETING:
+            pass
+        elif self.state == OptimizerState.PINPOINTING:
+            pass
+        else:  # Terminated
+            pass
+
 
     def get_gradient(self, fx, fxh):
         """

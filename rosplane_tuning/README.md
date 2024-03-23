@@ -6,11 +6,11 @@ We recommend using [PlotJuggler](https://github.com/facontidavide/PlotJuggler) t
 
 ## Signal Generator
 
-Signal generator is a ROS2 node that will generate step inputs, square waves, sine waves, sawtooth waves, and triangle waves to be used as command input for ROSplane. It has support for roll, pitch, altitude, heading, and airspeed command input.
+Signal generator is a ROS2 node that will generate step inputs, square waves, sine waves, sawtooth waves, and triangle waves to be used as command input for ROSplane. It has support for roll, pitch, altitude, course, and airspeed command input.
 
 This is useful for tuning autopilots as we can give a clear and repeatable command to any portion of the autopilot and observe its response to that input. We can then tune gains, re-issue the same commands, and observe whether performance improved or worsened.
 
-Signal generator works by publishing autopilot commands on the ROS network on the `controller_commands` and `tuning_debug` topics. Each control output (roll, pitch, altitude, heading, airspeed) has a default values that is set by a ROS parameter. The signal generator will then add the generated signal to one of the control outputs with a set magnitude and frequency.
+Signal generator works by publishing autopilot commands on the ROS network on the `controller_commands` and `tuning_debug` topics. Each control output (roll, pitch, altitude, course, airspeed) has a default values that is set by a ROS parameter. The signal generator will then add the generated signal to one of the control outputs with a set magnitude and frequency.
 
 ### Signal Types
 - Step: This is a non-continuous signal, where the generated signal will jump between the default value and the default+magnitude every time the `toggle_step_signal` service is called.
@@ -24,14 +24,14 @@ Signal generator works by publishing autopilot commands on the ROS network on th
 *By Omegatron - Own work, CC BY-SA 3.0, https://commons.wikimedia.org/w/index.php?curid=343520*
 
 ### Parameters
-- `controller_output`: Specifies what controller to apply the generated signal to. All other controllers will be constant at their default values. Valid values are `roll`, `pitch`, `altitude`, `heading`, and `airspeed`.
+- `controller_output`: Specifies what controller to apply the generated signal to. All other controllers will be constant at their default values. Valid values are `roll`, `pitch`, `altitude`, `course`, and `airspeed`.
 - `signal_type`: Specified what kind of signal to generate. Valid values are `step`, `square`, `sawtooth`, `triangle`, and `sine`.
 - `publish_rate_hz`: Specifies the rate to publish control commands. Must be greater than 0.
 - `signal_magnitude`: Specifies the magnitude of the signal to generate. The signal will only be added to the default value, rather than subtracted. For example, if the signal has a magnitude of 2 and a default value of 5, the generated signal will range from 5 to 7.
 - `frequency_hz`: Specifies the frequency of the generated signal. Must be greater than 0, and does not apply to step signals. For step signals, manually toggle the signal up and down with the `toggle_step_signal` service.
 - `default_va_c`: The default value for the commanded airspeed, in meters per second.
 - `default_h_c`: The default value for the commanded altitude, in meters above takeoff altitude.
-- `default_chi_c`: The default value for the commanded heading, in radians clockwise from north.
+- `default_chi_c`: The default value for the commanded course, in radians clockwise from north.
 - `default_theta_c`: The default value for the commanded pitch, in radians pitched up from horizontal.
 - `default_phi_c`: The default value for the commanded roll, in radians 'rolled right' from horizontal.
 

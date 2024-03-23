@@ -3,12 +3,26 @@
 from rosplane_msgs.msg import ControllerCommands
 from rosplane_msgs.msg import ControllerInternalsDebug
 from rosplane_msgs.msg import State
-from std_srvs.srv import Trigger
+from optimizer import Optimizer
 
 import rclpy
 from rclpy.node import Node
+from rclpy.parameter import Parameter
+from rcl_interfaces.srv import GetParameters, SetParameters
+from std_srvs.srv import Trigger
 
-from optimizer import Optimizer
+from enum import Enum, auto
+
+
+class CurrentAutopilot(Enum):
+    """
+    This class defines which autopilots are available for tuning.
+    """
+    ROLL = auto()
+    COURSE = auto()
+    PITCH = auto()
+    ALTITUDE = auto()
+    AIRSPEED = auto()
 
 
 class Autotune(Node):
@@ -26,26 +40,36 @@ class Autotune(Node):
     def __init__(self):
         super().__init__('autotune')
 
-        # Class variables
+        # Class state variables
         self.collecting_data = False
+
+        # Data storage
         self.state = []
         self.commands = []
         self.internals_debug = []
-        self.new_gains = []  # TODO: Get gains from ROS parameters
-        
-        u1 = 10**-4     # 1st Strong Wolfe Condition, must be between 0 and 1.
-        u2 = 0.5        # 2nd Strong Wolfe Condition, must be between u1 and 1.
-        sigma = 1.5     
-        alpha_init = 1  # Typically 1
-        tau = 10**-3    # Convergence tolerance, typically 10^-3
-        self.optimization_params = [u1,u2,sigma,alpha_init,tau]
-        self.optimizer = Optimizer(self.new_gains, self.optimization_params)
 
         # ROS parameters
         # The amount of time to collect data for calculating the error
-        self.declare_parameter('stabilize_period', rclpy.Parameter.Type.DOUBLE)
+        self.declare_parameter('/autotune/stabilize_period', rclpy.Parameter.Type.DOUBLE)
         # The autopilot that is currently being tuned
-        self.declare_parameter('current_tuning_autopilot', rclpy.Parameter.Type.STRING)
+        self.declare_parameter('/autotune/current_tuning_autopilot', rclpy.Parameter.Type.STRING)
+        # Get the autopilot to tune
+        if self.get_parameter('/autotune/current_tuning_autopilot').value == 'roll':
+            self.current_autopilot = CurrentAutopilot.ROLL
+        elif self.get_parameter('/autotune/current_tuning_autopilot').value == 'course':
+            self.current_autopilot = CurrentAutopilot.COURSE
+        elif self.get_parameter('/autotune/current_tuning_autopilot').value == 'pitch':
+            self.current_autopilot = CurrentAutopilot.PITCH
+        elif self.get_parameter('/autotune/current_tuning_autopilot').value == 'altitude':
+            self.current_autopilot = CurrentAutopilot.ALTITUDE
+        elif self.get_parameter('/autotune/current_tuning_autopilot').value == 'airspeed':
+            self.current_autopilot = CurrentAutopilot.AIRSPEED
+        else:
+            self.get_logger().fatal(self.get_parameter('/autotune/current_tuning_autopilot').value +
+                                    ' is not a valid value for current_tuning_autopilot.' +
+                                    ' Please select one of the' +
+                                    ' following: roll, course, pitch, altitude, airspeed.')
+            rclpy.shutdown()
 
         # Subscriptions
         self.state_subscription = self.create_subscription(
@@ -66,25 +90,30 @@ class Autotune(Node):
 
         # Timers
         self.stabilize_period_timer = self.create_timer(
-            self.get_parameter('stabilize_period').value,
+            self.get_parameter('/autotune/stabilize_period').value,
             self.stabilize_period_timer_callback)
         self.stabilize_period_timer.cancel()
 
         # Services
         self.run_tuning_iteration_service = self.create_service(
             Trigger,
-            'run_tuning_iteration',
+            '/autotune/run_tuning_iteration',
             self.run_tuning_iteration_callback)
 
         # Clients
-        self.toggle_step_signal_client = self.create_client(Trigger, 'toggle_step_signal')
+        self.toggle_step_signal_client = self.create_client(Trigger, '/autotune/toggle_step_signal')
+        self.get_parameter_client = self.create_client(GetParameters, '/autopilot/get_parameters')
+        self.set_parameter_client = self.create_client(SetParameters, '/autopilot/set_parameters')
 
-        # Optimization Setup 
-        # TODO: Implement this function
-        # Run iteration at x0 -> phi0 
-        # Run iteration at x0+0.01 -> temp_phi
-        # Do a finite difference to get the gradient -> phi0_prime
-        # Repeat for x0+alpha
+        # Optimization
+        self.new_gains = self.get_gains()
+        u1 = 10**-4     # 1st Strong Wolfe Condition, must be between 0 and 1.
+        u2 = 0.5        # 2nd Strong Wolfe Condition, must be between u1 and 1.
+        sigma = 1.5
+        alpha_init = 1  # Typically 1
+        tau = 10**-3    # Convergence tolerance, typically 10^-3
+        self.optimization_params = [u1,u2,sigma,alpha_init,tau]
+        self.optimizer = Optimizer(self.new_gain, self.optimization_params)
 
 
     ## ROS Callbacks ##
@@ -172,15 +201,73 @@ class Autotune(Node):
         """
 
         while not self.toggle_step_signal_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info(f'service {self.toggle_step_signal_client.srv_name} ' +
+            self.get_logger().info(f'Service {self.toggle_step_signal_client.srv_name} ' +
             'not available, waiting...')
 
         request = Trigger.Request()
         self.toggle_step_signal_client.call_async(request)
 
+    def get_gains(self):
+        """
+        Gets the current gains of the autopilot.
+
+        Returns:
+        list of floats: The current gains of the autopilot that is being tuning.
+        """
+        # TODO: Function not complete
+        gains = []
+        request = GetParameters.Request()
+
+        while not self.get_parameter_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service {self.get_parameter_client.srv_name}' + 
+                                   ' not available, waiting...')
+
+        if self.current_autopilot == CurrentAutopilot.ROLL:
+            request.names = ['r_kp', 'r_kd']
+        elif self.current_autopilot == CurrentAutopilot.COURSE:
+            request.names = ['c_kp', 'c_ki']
+        elif self.current_autopilot == CurrentAutopilot.PITCH:
+            request.names = ['p_kp', 'p_kd']
+        elif self.current_autopilot == CurrentAutopilot.ALTITUDE:
+            request.names = ['a_kp', 'a_ki']
+        else:  # CurrentAutopilot.AIRSPEED
+            request.names = ['a_t_kp', 'a_t_ki']
+
+        self.get_parameter_client.call_async(request)
+
     def set_gains(self, gains):
         """
         Set the gains of the autopilot to the given values.
+        """
+        request = SetParameters.Request()
+
+        while not self.set_parameter_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service {self.set_parameter_client.srv_name}' +
+                                   ' not available, waiting...')
+
+        if self.current_autopilot == CurrentAutopilot.ROLL:
+            request.parameters = [Parameter(name='r_kp', value=gains[0]).to_parameter_msg(),
+                                  Parameter(name='r_kd', value=gains[1]).to_parameter_msg()]
+        elif self.current_autopilot == CurrentAutopilot.COURSE:
+            request.parameters = [Parameter(name='c_kp', value=gains[0]).to_parameter_msg(),
+                                  Parameter(name='c_ki', value=gains[1]).to_parameter_msg()]
+        elif self.current_autopilot == CurrentAutopilot.PITCH:
+            request.parameters = [Parameter(name='p_kp', value=gains[0]).to_parameter_msg(),
+                                  Parameter(name='p_kd', value=gains[1]).to_parameter_msg()]
+        elif self.current_autopilot == CurrentAutopilot.ALTITUDE:
+            request.parameters = [Parameter(name='a_kp', value=gains[0]).to_parameter_msg(),
+                                  Parameter(name='a_ki', value=gains[1]).to_parameter_msg()]
+        else:  # CurrentAutopilot.AIRSPEED
+            request.parameters = [Parameter(name='a_t_kp', value=gains[0]).to_parameter_msg(),
+                                  Parameter(name='a_t_ki', value=gains[1]).to_parameter_msg()]
+
+        self.set_parameter_client.call_async(request)
+
+
+    def calculate_error(self):
+        """
+        Calculate the error between the state estimate and the commanded setpoint using the
+        collected data.
         """
         # TODO: Implement this function
         pass

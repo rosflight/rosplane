@@ -10,14 +10,14 @@ from launch_ros.actions import Node
 def generate_launch_description():
 
     # Launch arguments
-    error_collection_period = LaunchConfiguration('error_collection_period')
-    error_collection_period_launch_arg = DeclareLaunchArgument(
-        'error_collection_period',
+    stabilize_period = LaunchConfiguration('/autotune/stabilize_period')
+    stabilize_period_launch_arg = DeclareLaunchArgument(
+        '/autotune/stabilize_period',
         description='Amount of time to collect data for calculating error'
     )
-    current_tuning_autopilot = LaunchConfiguration('current_tuning_autopilot')
+    current_tuning_autopilot = LaunchConfiguration('/autotune/current_tuning_autopilot')
     current_tuning_autopilot_launch_arg = DeclareLaunchArgument(
-        'current_tuning_autopilot',
+        '/autotune/current_tuning_autopilot',
         description='Autopilot to tune'
     )
 
@@ -27,8 +27,8 @@ def generate_launch_description():
         executable='autotune.py',
         output='screen',
         parameters=[
-            {'error_collection_period': error_collection_period},
-            {'current_tuning_autopilot': current_tuning_autopilot}
+            {'/autotune/stabilize_period': stabilize_period},
+            {'/autotune/current_tuning_autopilot': current_tuning_autopilot}
         ]
     )
     rosplane_tuning_launch_include = IncludeLaunchDescription(
@@ -39,7 +39,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        error_collection_period_launch_arg,
+        stabilize_period_launch_arg,
         current_tuning_autopilot_launch_arg,
         autotune_node,
         rosplane_tuning_launch_include

@@ -13,7 +13,7 @@ def generate_launch_description():
                              'launch/autotune.launch.py')
             ),
             launch_arguments={
-                'error_collection_period': '5.0',
-                'current_tuning_autopilot': 'roll'
+                '/autotune/stabilize_period': '5.0',
+                '/autotune/current_tuning_autopilot': 'roll'
             }.items()
         )])

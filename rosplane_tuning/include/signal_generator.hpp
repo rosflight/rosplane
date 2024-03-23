@@ -53,7 +53,7 @@ namespace rosplane
 /**
  * This class is used to generate various input signals to test and tune all the control layers
  * in ROSplane. It currently supports square, sawtooth, triangle, and sine signals, and supports
- * outputting to the roll, pitch, altitude, heading, and airspeed controllers. 
+ * outputting to the roll, pitch, altitude, course, and airspeed controllers. 
  */
 class TuningSignalGenerator : public rclcpp::Node
 {
@@ -68,7 +68,7 @@ private:
     ROLL,
     PITCH,
     ALTITUDE,
-    HEADING,
+    COURSE,
     AIRSPEED
   };
 
