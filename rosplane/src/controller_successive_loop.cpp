@@ -29,12 +29,11 @@ controller_successive_loop::controller_successive_loop()
   set_parameters();
 }
 
-void controller_successive_loop::take_off(const struct params_s & params,
-                                          const struct input_s & input, struct output_s & output)
+void controller_successive_loop::take_off(const struct input_s & input, struct output_s & output)
 {
   // Run lateral and longitudinal controls.
-  take_off_lateral_control(params, input, output);
-  take_off_longitudinal_control(params, input, output);
+  take_off_lateral_control(input, output);
+  take_off_longitudinal_control(input, output);
 }
 
 void controller_successive_loop::take_off_exit()
@@ -42,12 +41,12 @@ void controller_successive_loop::take_off_exit()
   // Put any code that should run as the airplane exits take off mode.
 }
 
-void controller_successive_loop::climb(const struct params_s & params, const struct input_s & input,
+void controller_successive_loop::climb(const struct input_s & input,
                                        struct output_s & output)
 {
   // Run lateral and longitudinal controls.
-  climb_lateral_control(params, input, output);
-  climb_longitudinal_control(params, input, output);
+  climb_lateral_control(input, output);
+  climb_longitudinal_control(input, output);
 }
 
 void controller_successive_loop::climb_exit()
@@ -61,13 +60,12 @@ void controller_successive_loop::climb_exit()
   a_differentiator_ = 0;
 }
 
-void controller_successive_loop::altitude_hold(const struct params_s & params,
-                                               const struct input_s & input,
+void controller_successive_loop::altitude_hold(const struct input_s & input,
                                                struct output_s & output)
 {
   // Run lateral and longitudinal controls.
-  alt_hold_lateral_control(params, input, output);
-  alt_hold_longitudinal_control(params, input, output);
+  alt_hold_lateral_control(input, output);
+  alt_hold_longitudinal_control(input, output);
 }
 
 void controller_successive_loop::altitude_hold_exit()
@@ -76,8 +74,7 @@ void controller_successive_loop::altitude_hold_exit()
   c_integrator_ = 0;
 }
 
-void controller_successive_loop::alt_hold_lateral_control(const struct params_s & params,
-                                                          const struct input_s & input,
+void controller_successive_loop::alt_hold_lateral_control(const struct input_s & input,
                                                           struct output_s & output)
 {
   // For readability, declare parameters here that will be used in this function
@@ -88,15 +85,14 @@ void controller_successive_loop::alt_hold_lateral_control(const struct params_s 
   // Find commanded roll angle in order to achieve commanded course.
   // Find aileron deflection required to acheive required roll angle.
   output.delta_r = 0; //cooridinated_turn_hold(input.beta, params)
-  output.phi_c = course_hold(input.chi_c, input.chi, input.phi_ff, input.r, params);
+  output.phi_c = course_hold(input.chi_c, input.chi, input.phi_ff, input.r);
 
   if (roll_tuning_debug_override) { output.phi_c = tuning_debug_override_msg_.phi_c; }
 
-  output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params);
+  output.delta_a = roll_hold(output.phi_c, input.phi, input.p);
 }
 
-void controller_successive_loop::alt_hold_longitudinal_control(const struct params_s & params,
-                                                               const struct input_s & input,
+void controller_successive_loop::alt_hold_longitudinal_control(const struct input_s & input,
                                                                struct output_s & output)
 {
   // For readability, declare parameters here that will be used in this function
@@ -107,26 +103,24 @@ void controller_successive_loop::alt_hold_longitudinal_control(const struct para
   double adjusted_hc = adjust_h_c(input.h_c, input.h, alt_hz);
 
   // Control airspeed with throttle loop and altitude with commanded pitch and drive aircraft to commanded pitch.
-  output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params);
-  output.theta_c = altitude_hold_control(adjusted_hc, input.h, params);
+  output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va);
+  output.theta_c = altitude_hold_control(adjusted_hc, input.h);
 
   if (pitch_tuning_debug_override) { output.theta_c = tuning_debug_override_msg_.theta_c; }
 
-  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params);
+  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q);
 }
 
-void controller_successive_loop::climb_lateral_control(const struct params_s & params,
-                                                       const struct input_s & input,
+void controller_successive_loop::climb_lateral_control(const struct input_s & input,
                                                        struct output_s & output)
 {
   // Maintain straight flight while gaining altitude.
   output.phi_c = 0;
-  output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params);
+  output.delta_a = roll_hold(output.phi_c, input.phi, input.p);
   output.delta_r = 0;
 }
 
-void controller_successive_loop::climb_longitudinal_control(const struct params_s & params,
-                                                            const struct input_s & input,
+void controller_successive_loop::climb_longitudinal_control(const struct input_s & input,
                                                             struct output_s & output)
 {
   // For readability, declare parameters here that will be used in this function
@@ -136,23 +130,21 @@ void controller_successive_loop::climb_longitudinal_control(const struct params_
   double adjusted_hc = adjust_h_c(input.h_c, input.h, alt_hz);
 
   // Find the control efforts for throttle and find the commanded pitch angle.
-  output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va, params);
-  output.theta_c = altitude_hold_control(adjusted_hc, input.h, params);
-  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params);
+  output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va);
+  output.theta_c = altitude_hold_control(adjusted_hc, input.h);
+  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q);
 }
 
-void controller_successive_loop::take_off_lateral_control(const struct params_s & params,
-                                                          const struct input_s & input,
+void controller_successive_loop::take_off_lateral_control(const struct input_s & input,
                                                           struct output_s & output)
 {
   // In the take-off zone maintain level straight flight by commanding a roll angle of 0 and rudder of 0.
   output.delta_r = 0;
   output.phi_c = 0;
-  output.delta_a = roll_hold(output.phi_c, input.phi, input.p, params);
+  output.delta_a = roll_hold(output.phi_c, input.phi, input.p);
 }
 
-void controller_successive_loop::take_off_longitudinal_control(const struct params_s & params,
-                                                               const struct input_s & input,
+void controller_successive_loop::take_off_longitudinal_control(const struct input_s & input,
                                                                struct output_s & output)
 {
   // For readability, declare parameters here that will be used in this function
@@ -160,11 +152,11 @@ void controller_successive_loop::take_off_longitudinal_control(const struct para
   
   // Set throttle to not overshoot altitude.
   output.delta_t =
-    sat(airspeed_with_throttle_hold(input.Va_c, input.va, params), max_takeoff_throttle, 0);
+    sat(airspeed_with_throttle_hold(input.Va_c, input.va), max_takeoff_throttle, 0);
 
   // Command a shallow pitch angle to gain altitude.
   output.theta_c = 5.0 * 3.14 / 180.0; // TODO add to params.
-  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params);
+  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q);
 }
 
 /// All the following control loops follow this basic outline.
@@ -206,8 +198,7 @@ void controller_successive_loop::take_off_longitudinal_control(const struct para
     }
 */
 
-float controller_successive_loop::course_hold(float chi_c, float chi, float phi_ff, float r,
-                                              const params_s & params)
+float controller_successive_loop::course_hold(float chi_c, float chi, float phi_ff, float r)
 {
   // For readability, declare parameters here that will be used in this function
   int64_t frequency = get_int("frequency");   // Declared in controller_base
@@ -239,8 +230,7 @@ float controller_successive_loop::course_hold(float chi_c, float chi, float phi_
   return phi_c;
 }
 
-float controller_successive_loop::roll_hold(float phi_c, float phi, float p,
-                                            const params_s & params)
+float controller_successive_loop::roll_hold(float phi_c, float phi, float p)
 {
   // For readability, declare parameters here that will be used in this function
   int64_t frequency = get_int("frequency");   // Declared in controller_base
@@ -269,8 +259,7 @@ float controller_successive_loop::roll_hold(float phi_c, float phi, float p,
   return delta_a;
 }
 
-float controller_successive_loop::pitch_hold(float theta_c, float theta, float q,
-                                             const params_s & params)
+float controller_successive_loop::pitch_hold(float theta_c, float theta, float q)
 {
   // For readability, declare parameters here that will be used in this function
   int64_t frequency = get_int("frequency");   // Declared in controller_base
@@ -303,8 +292,7 @@ float controller_successive_loop::pitch_hold(float theta_c, float theta, float q
   return -delta_e; // TODO explain subtraction.
 }
 
-float controller_successive_loop::airspeed_with_throttle_hold(float Va_c, float Va,
-                                                              const params_s & params)
+float controller_successive_loop::airspeed_with_throttle_hold(float Va_c, float Va)
 {
   // For readability, declare parameters here that will be used in this function
   int64_t frequency = get_int("frequency");   // Declared in controller_base
@@ -338,7 +326,7 @@ float controller_successive_loop::airspeed_with_throttle_hold(float Va_c, float 
   return delta_t;
 }
 
-float controller_successive_loop::altitude_hold_control(float h_c, float h, const params_s & params)
+float controller_successive_loop::altitude_hold_control(float h_c, float h)
 {
   // For readability, declare parameters here that will be used in this function
   int64_t frequency = get_int("frequency");   // Declared in controller_base
@@ -415,33 +403,34 @@ float controller_successive_loop::adjust_h_c(float h_c, float h, float max_diff)
 void controller_successive_loop::declare_parameters()
 {
   // Declare param with ROS2 and set the default value.
-  declare_parameter("max_takeoff_throttle", 0.55);
-  declare_parameter("c_kp", 2.37);
-  declare_parameter("c_ki", .4);
-  declare_parameter("c_kd", .0);
-  declare_parameter("max_roll", 25.0);
+  std::cout << "THIS IS WORKING " << std::endl;
+  declare_param("max_takeoff_throttle", 0.55);
+  declare_param("c_kp", 2.37);
+  declare_param("c_ki", .4);
+  declare_param("c_kd", .0);
+  declare_param("max_roll", 25.0);
 
-  declare_parameter("r_kp", .06);
-  declare_parameter("r_ki", .0);
-  declare_parameter("r_kd", .04);
-  declare_parameter("max_a", .15);
+  declare_param("r_kp", .06);
+  declare_param("r_ki", .0);
+  declare_param("r_kd", .04);
+  declare_param("max_a", .15);
 
-  declare_parameter("p_kp", -.15);
-  declare_parameter("p_ki", .0);
-  declare_parameter("p_kd", -.05);
-  declare_parameter("max_e", .15);
-  declare_parameter("trim_e", 0.02);
+  declare_param("p_kp", -.15);
+  declare_param("p_ki", .0);
+  declare_param("p_kd", -.05);
+  declare_param("max_e", .15);
+  declare_param("trim_e", 0.02);
 
-  declare_parameter("tau", 50.0);
-  declare_parameter("a_t_kp", .05);
-  declare_parameter("a_t_ki", .005);
-  declare_parameter("a_t_kd", 0.0);
-  declare_parameter("max_t", 1.0);
-  declare_parameter("trim_t", 0.5);
+  declare_param("tau", 50.0);
+  declare_param("a_t_kp", .05);
+  declare_param("a_t_ki", .005);
+  declare_param("a_t_kd", 0.0);
+  declare_param("max_t", 1.0);
+  declare_param("trim_t", 0.5);
 
-  declare_parameter("a_kp", 0.015);
-  declare_parameter("a_ki", 0.003);
-  declare_parameter("a_kd", 0.0);
+  declare_param("a_kp", 0.015);
+  declare_param("a_ki", 0.003);
+  declare_param("a_kd", 0.0);
 }
 
 } // namespace rosplane

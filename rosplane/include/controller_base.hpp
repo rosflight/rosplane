@@ -156,11 +156,10 @@ protected:
 
   /**
    * Interface for control algorithm.
-   * @param params Parameters used to calculate.
    * @param input Inputs to the control algorithm.
    * @param output Outputs of the controller, including selected intermediate values and final control efforts.
    */
-  virtual void control(const struct params_s & params, const struct input_s & input,
+  virtual void control(const struct input_s & input,
                        struct output_s & output) = 0;
 
   /**

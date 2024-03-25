@@ -18,31 +18,28 @@ protected:
   /**
    * This function continually loops while the aircraft is in the take-off zone. The lateral and longitudinal control
    * for the take-off zone is called in this function.
-   * @param params The parameters that define the algorithm such as control gains.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void take_off(const struct params_s & params, const struct input_s & input,
+  virtual void take_off(const struct input_s & input,
                         struct output_s & output);
 
   /**
    * This function continually loops while the aircraft is in the climb zone. The lateral and longitudinal control
    * for the climb zone is called in this function.
-   * @param params The parameters that define the algorithm such as control gains.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void climb(const struct params_s & params, const struct input_s & input,
+  virtual void climb(const struct input_s & input,
                      struct output_s & output);
 
   /**
    * This function continually loops while the aircraft is in the altitude hold zone. The lateral and longitudinal 
    * control for the altitude hold zone is called in this function.
-   * @param params The parameters that define the algorithm such as control gains.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void altitude_hold(const struct params_s & params, const struct input_s & input,
+  virtual void altitude_hold(const struct input_s & input,
                              struct output_s & output);
 
   /**
@@ -66,58 +63,47 @@ protected:
 
   /**
    * This function runs the lateral control loops for the altitude hold zone.
-   * @param params The parameters that define the algorithm such as control gains.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void alt_hold_lateral_control(const struct params_s & params,
-                                        const struct input_s & input, struct output_s & output);
+  virtual void alt_hold_lateral_control(const struct input_s & input, struct output_s & output);
 
   /**
    * This function runs the longitudinal control loops for the altitude hold zone.
-   * @param params The parameters that define the algorithm such as control gains.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void alt_hold_longitudinal_control(const struct params_s & params,
-                                             const struct input_s & input,
+  virtual void alt_hold_longitudinal_control(const struct input_s & input,
                                              struct output_s & output);
 
   /**
    * This function runs the lateral control loops for the climb zone.
-   * @param params The parameters that define the algorithm such as control gains.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void climb_lateral_control(const struct params_s & params, const struct input_s & input,
+  virtual void climb_lateral_control(const struct input_s & input,
                                      struct output_s & output);
 
   /**
    * This function runs the longitudinal control loops for the climb zone.
-   * @param params The parameters that define the algorithm such as control gains.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void climb_longitudinal_control(const struct params_s & params,
-                                          const struct input_s & input, struct output_s & output);
+  virtual void climb_longitudinal_control(const struct input_s & input, struct output_s & output);
 
   /**
    * This function runs the lateral control loops for the take-off zone.
-   * @param params The parameters that define the algorithm such as control gains.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void take_off_lateral_control(const struct params_s & params,
-                                        const struct input_s & input, struct output_s & output);
+  virtual void take_off_lateral_control(const struct input_s & input, struct output_s & output);
 
   /**
    * This function runs the longitudinal control loops for the take-off zone.
-   * @param params The parameters that define the algorithm such as control gains.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void take_off_longitudinal_control(const struct params_s & params,
-                                             const struct input_s & input,
+  virtual void take_off_longitudinal_control(const struct input_s & input,
                                              struct output_s & output);
 
   /**
@@ -126,10 +112,9 @@ protected:
    * @param chi The current course angle.
    * @param phi_ff The roll angle feedforward term. This allows for faster convergence.   // TODO add reference to book?
    * @param r The yaw rate taken from the gyro.
-   * @param params The parameters for the control algorithm, including the control gains.
    * @return The commanded roll angle, to achieve the course angle.
    */
-  float course_hold(float chi_c, float chi, float phi_ff, float r, const struct params_s & params);
+  float course_hold(float chi_c, float chi, float phi_ff, float r);
 
   /**
    * The difference between the commanded course angle and the current course angle.
@@ -146,10 +131,9 @@ protected:
    * @param phi_c The commanded roll angle.
    * @param phi The current roll angle.
    * @param p The roll rate taken from the gyro.
-   * @param params The parameters for the control algorithm, including the control gains and max deflection.
    * @return The aileron deflection in radians required to achieve the commanded roll angle.
    */
-  float roll_hold(float phi_c, float phi, float p, const struct params_s & params);
+  float roll_hold(float phi_c, float phi, float p);
 
   /**
    * The difference between the commanded roll angle and the current roll angle.
@@ -166,10 +150,9 @@ protected:
    * @param theta_c The commanded pitch angle.
    * @param theta The current pitch angle.
    * @param q The pitch rate taken from the gyro.
-   * @param params The parameters for the control algorithm, including the control gains and max deflection.
    * @return The elevator deflection in radians required to achieve the commanded pitch.
    */
-  float pitch_hold(float theta_c, float theta, float q, const struct params_s & params);
+  float pitch_hold(float theta_c, float theta, float q);
 
   /**
    * The difference between the commanded pitch angle and the current pitch angle.
@@ -185,10 +168,9 @@ protected:
    * The control loop that calculates the required throttle level to move to and maintain a commanded airspeed.
    * @param Va_c The commanded airspeed.
    * @param Va The current airspeed.
-   * @param params The parameters for the control algorithm, including control gains.
    * @return The required throttle between 0 (no throttle) and 1 (full throttle).
    */
-  float airspeed_with_throttle_hold(float Va_c, float Va, const struct params_s & params);
+  float airspeed_with_throttle_hold(float Va_c, float Va);
 
   /**
    * The difference between the commanded airspeed and the current airspeed.
@@ -209,10 +191,9 @@ protected:
    * The control loop that calculates the required pitch angle to command to maintain a commanded altitude.
    * @param h_c The commanded altitude.
    * @param h The current altitude.
-   * @param params The parameters for the control algorithm, including control gains.
    * @return The commanded pitch angle to maintain and achieve the commanded altitude.
    */
-  float altitude_hold_control(float h_c, float h, const struct params_s & params);
+  float altitude_hold_control(float h_c, float h);
 
   /**
    * The difference between the commanded altitude and the current altitude.
