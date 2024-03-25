@@ -15,6 +15,7 @@ from rcl_interfaces.srv import GetParameters, SetParameters
 from std_srvs.srv import Trigger
 
 from enum import Enum, auto
+from queue import Queue
 import numpy as np
 import time
 
@@ -51,6 +52,8 @@ class Autotune(Node):
 
         # Class state variables
         self.collecting_data = False
+        self.gain_queue = Queue()
+        self.error_queue = Queue()
 
         # Data storage
         self.state = []
@@ -133,9 +136,8 @@ class Autotune(Node):
                                     'sigma': 1.5,
                                     'alpha': 1,
                                     'tau': 10**-3}
-        self.new_gains = None  # get_gains function cannot be called in __init__ since the node
+        self.optimizer = None  # get_gains function cannot be called in __init__ since the node
                                # has not yet been passed to the executor
-        self.optimizer = None
 
 
     ## ROS Callbacks ##
@@ -189,7 +191,6 @@ class Autotune(Node):
             self.collecting_data = False
             self.stabilize_period_timer.cancel()
             self.call_toggle_step_signal()
-            self.new_gains = self.optimizer.get_next_parameter_set(self.calculate_error())
 
     def run_tuning_iteration_callback(self, request, response):
         """
@@ -198,12 +199,12 @@ class Autotune(Node):
         """
 
         if self.optimizer is None:
-            self.new_gains = self.get_gains()
-            self.optimizer = Optimizer(self.new_gains, self.optimization_params)
+            self.optimizer = Optimizer(self.get_current_gains(), self.optimization_params)
 
         if not self.optimizer.optimization_terminated():
-            self.get_logger().info('Setting gains: ' + str(self.new_gains))
-            self.set_gains(self.new_gains)
+            new_gains = self.get_next_gains()
+            self.get_logger().info('Setting gains: ' + str(new_gains))
+            self.set_current_gains(new_gains)
 
             self.stabilize_period_timer.timer_period_ns = \
                     int(self.get_parameter('stabilize_period').value * 1e9)
@@ -229,15 +230,14 @@ class Autotune(Node):
             self.get_logger().info(f'Service {self.toggle_step_signal_client.srv_name} ' +
             'not available, waiting...')
 
-        request = Trigger.Request()
-        self.toggle_step_signal_client.call_async(request)
+        self.toggle_step_signal_client.call_async(Trigger.Request())
 
-    def get_gains(self):
+    def get_current_gains(self):
         """
         Gets the current gains of the autopilot.
 
         Returns:
-        list of floats: The current gains of the autopilot that is being tuning.
+        np.array, size num_gains, dtype float: The gains of the autopilot. [gain1, gain2, ...]
         """
 
         request = GetParameters.Request()
@@ -280,11 +280,15 @@ class Autotune(Node):
                 raise RuntimeError('Parameter type returned by get_parameters is not DOUBLE.')
             gains.append(value.double_value)
 
-        return np.array(gains)  # Placeholder
+        return np.array(gains)
 
-    def set_gains(self, gains):
+    def set_current_gains(self, gains):
         """
         Set the gains of the autopilot to the given values.
+
+        Parameters:
+        gains (np.array, size num_gains, dtype float): The gains to set for the autopilot.
+            [gain1, gain2, ...]
         """
 
         request = SetParameters.Request()
@@ -332,6 +336,29 @@ class Autotune(Node):
         """
         # TODO: Implement this function
         pass
+
+    def get_next_gains(self):
+        """
+        Gets the next set of gains to test from either the queue or the optimizer.
+
+        Returns:
+        np.array, size num_gains, dtype float: The gains to test. [gain1, gain2, ...]
+        """
+
+        self.error_queue.put(self.calculate_error())
+        self.state = []
+        self.commands = []
+        self.internals_debug = []
+
+        if self.gain_queue.empty():
+            # Empty the error queue and pass to the optimizer
+            error_array = np.array([self.error_queue.get() while not self.error_queue.empty()])
+            next_set = self.optimizer.get_next_parameter_set(error_array)
+
+            # Store the next set of gains in the queue
+            self.gain_queue.put(next_set[i] for i in range(next_set.shape[0]))
+
+        return self.gain_queue.get()
 
 
 def main(args=None):
