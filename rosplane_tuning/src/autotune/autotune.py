@@ -119,7 +119,7 @@ class Autotune(Node):
         # Clients
         self.toggle_step_signal_client = self.create_client(
                 Trigger,
-                '/autotune/toggle_step_signal',
+                'toggle_step_signal',
                 callback_group=self.external_callback_group)
         self.get_parameter_client = self.create_client(
                 GetParameters,
@@ -181,7 +181,7 @@ class Autotune(Node):
         if not self.collecting_data:
             # Stabilization period is over, start collecting data
             self.get_logger().info('Stepping command and collecting data for '
-                                   + str(self.get_parameter('stabilize_period').value)
+                                   + str(self.get_parameter('/autotune/stabilize_period').value)
                                    + ' seconds...')
             self.collecting_data = True
             self.call_toggle_step_signal()
@@ -199,23 +199,25 @@ class Autotune(Node):
         """
 
         if self.optimizer is None:
-            self.optimizer = Optimizer(self.get_current_gains(), self.optimization_params)
+            new_gains = self.get_current_gains()
+            self.optimizer = Optimizer(new_gains, self.optimization_params)
+        else:
+            new_gains = self.get_next_gains()
 
         if not self.optimizer.optimization_terminated():
-            new_gains = self.get_next_gains()
             self.get_logger().info('Setting gains: ' + str(new_gains))
             self.set_current_gains(new_gains)
 
             self.stabilize_period_timer.timer_period_ns = \
-                    int(self.get_parameter('stabilize_period').value * 1e9)
+                    int(self.get_parameter('/autotune/stabilize_period').value * 1e9)
             self.stabilize_period_timer.reset()
 
             self.get_logger().info('Stabilizing autopilot for '
-                                   + str(self.get_parameter('stabilize_period').value)
+                                   + str(self.get_parameter('/autotune/stabilize_period').value)
                                    + ' seconds...')
 
         response.success = True
-        response.message = self.optimizer.get_optimiztion_status()
+        response.message = self.optimizer.get_optimization_status()
 
         return response
 
@@ -335,7 +337,7 @@ class Autotune(Node):
         collected data.
         """
         # TODO: Implement this function
-        pass
+        return 0.0
 
     def get_next_gains(self):
         """
@@ -351,12 +353,15 @@ class Autotune(Node):
         self.internals_debug = []
 
         if self.gain_queue.empty():
-            # Empty the error queue and pass to the optimizer
-            error_array = np.array([self.error_queue.get() while not self.error_queue.empty()])
-            next_set = self.optimizer.get_next_parameter_set(error_array)
+            # Empty the error queue and store it in a numpy array
+            error_array = []
+            while not self.error_queue.empty():
+                error_array.append(self.error_queue.get())
+            error_array = np.array(error_array)
 
             # Store the next set of gains in the queue
-            self.gain_queue.put(next_set[i] for i in range(next_set.shape[0]))
+            for set in self.optimizer.get_next_parameter_set(error_array):
+                self.gain_queue.put(set)
 
         return self.gain_queue.get()
 
