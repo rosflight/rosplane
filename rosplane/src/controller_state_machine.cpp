@@ -18,7 +18,7 @@ controller_state_machine::controller_state_machine()
   set_parameters();
 }
 
-void controller_state_machine::control(const params_s & params, const input_s & input,
+void controller_state_machine::control(const input_s & input,
                                        output_s & output)
 {
   
@@ -31,7 +31,7 @@ void controller_state_machine::control(const params_s & params, const input_s & 
     case alt_zones::TAKE_OFF:
 
       // Run take-off controls.
-      take_off(params, input, output);
+      take_off(input, output);
 
       // If the current altitude is outside the take-off zone (toz) then move to the climb state.
       if (input.h >= alt_toz) {
@@ -47,7 +47,7 @@ void controller_state_machine::control(const params_s & params, const input_s & 
     case alt_zones::CLIMB:
 
       // Run climb controls.
-      climb(params, input, output);
+      climb(input, output);
 
       // Check to see if we have exited the climb zone.
       if (input.h >= input.h_c - alt_hz) {
@@ -72,7 +72,7 @@ void controller_state_machine::control(const params_s & params, const input_s & 
     case alt_zones::ALTITUDE_HOLD:
 
       // Run altitude hold controls.
-      altitude_hold(params, input, output);
+      altitude_hold(input, output);
 
       // Check to see if you have gotten too close to the ground.
       if (input.h <= alt_toz) {

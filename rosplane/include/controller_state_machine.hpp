@@ -14,11 +14,10 @@ public:
 
   /**
  * The state machine for the control algorithm for the autopilot.
- * @param params The parameters that define the algorithm such as control gains.
  * @param input The command inputs to the controller such as course and airspeed.
  * @param output The control efforts calculated and selected intermediate values.
  */
-  virtual void control(const struct params_s & params, const struct input_s & input,
+  virtual void control(const struct input_s & input,
                        struct output_s & output);
 
 protected:
@@ -29,29 +28,26 @@ protected:
 
   /**
    * This function continually loops while the aircraft is in the take-off zone. It is implemented by the child.
-   * @param params The parameters that define the algorithm such as control gains.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void take_off(const struct params_s & params, const struct input_s & input,
+  virtual void take_off(const struct input_s & input,
                         struct output_s & output) = 0;
 
   /**
    * This function continually loops while the aircraft is in the climb zone. It is implemented by the child.
-   * @param params The parameters that define the algorithm such as control gains.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void climb(const struct params_s & params, const struct input_s & input,
+  virtual void climb(const struct input_s & input,
                      struct output_s & output) = 0;
 
   /**
    * This function continually loops while the aircraft is in the altitude hold zone. It is implemented by the child.
-   * @param params The parameters that define the algorithm such as control gains.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void altitude_hold(const struct params_s & params, const struct input_s & input,
+  virtual void altitude_hold(const struct input_s & input,
                              struct output_s & output) = 0;
 
   /**

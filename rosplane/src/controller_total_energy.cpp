@@ -16,17 +16,19 @@ controller_total_energy::controller_total_energy()
   set_parameters();
 }
 
-void controller_total_energy::take_off_longitudinal_control(const struct params_s & params,
-                                                            const struct input_s & input,
+void controller_total_energy::take_off_longitudinal_control(const struct input_s & input,
                                                             struct output_s & output)
 {
+  // For readability, declare parameters here that will be used in this function
+  double max_takeoff_throttle = get_double("max_takeoff_throttle");
+
   // Set throttle to not overshoot altitude.
-  output.delta_t = sat(total_energy_throttle(input.Va_c, input.va, input.h_c, input.h, params),
-                       params.max_takeoff_throttle, 0);
+  output.delta_t = sat(total_energy_throttle(input.Va_c, input.va, input.h_c, input.h),
+                       max_takeoff_throttle, 0);
 
   // Command a shallow pitch angle to gain altitude.
   output.theta_c = 5.0 * 3.14 / 180.0; //TODO add to params.
-  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params);
+  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q);
 }
 
 void controller_total_energy::take_off_exit()
@@ -40,8 +42,7 @@ void controller_total_energy::take_off_exit()
   // Place any controller code that should run as you exit the take-off regime here.
 }
 
-void controller_total_energy::climb_longitudinal_control(const struct params_s & params,
-                                                         const struct input_s & input,
+void controller_total_energy::climb_longitudinal_control(const struct input_s & input,
                                                          struct output_s & output)
 {
   // For readability, declare parameters here that will be used in this function
@@ -49,9 +50,9 @@ void controller_total_energy::climb_longitudinal_control(const struct params_s &
 
   double adjusted_hc = adjust_h_c(input.h_c, input.h, alt_hz / 2.0);
   // Find the control efforts for throttle and find the commanded pitch angle using total energy.
-  output.delta_t = total_energy_throttle(input.Va_c, input.va, adjusted_hc, input.h, params);
-  output.theta_c = total_energy_pitch(input.Va_c, input.va, adjusted_hc, input.h, params);
-  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params);
+  output.delta_t = total_energy_throttle(input.Va_c, input.va, adjusted_hc, input.h);
+  output.theta_c = total_energy_pitch(input.Va_c, input.va, adjusted_hc, input.h);
+  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q);
 }
 
 void controller_total_energy::climb_exit()
@@ -65,8 +66,7 @@ void controller_total_energy::climb_exit()
   // Place any controller code that should run as you exit the climb regime here.
 }
 
-void controller_total_energy::alt_hold_longitudinal_control(const struct params_s & params,
-                                                            const struct input_s & input,
+void controller_total_energy::alt_hold_longitudinal_control(const struct input_s & input,
                                                             struct output_s & output)
 {
   // For readability, declare parameters here that will be used in this function
@@ -76,10 +76,9 @@ void controller_total_energy::alt_hold_longitudinal_control(const struct params_
   double adjusted_hc = adjust_h_c(input.h_c, input.h, alt_hz);
 
   // Calculate the control effort to maintain airspeed and the required pitch angle to maintain altitude.
-  output.delta_t = total_energy_throttle(input.Va_c, input.va, adjusted_hc, input.h, params);
-  output.theta_c = total_energy_pitch(input.Va_c, input.va, adjusted_hc, input.h,
-                                      params); // TODO remove capital from Va_c
-  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q, params);
+  output.delta_t = total_energy_throttle(input.Va_c, input.va, adjusted_hc, input.h);
+  output.theta_c = total_energy_pitch(input.Va_c, input.va, adjusted_hc, input.h); // TODO remove capital from Va_c
+  output.delta_e = pitch_hold(output.theta_c, input.theta, input.q);
 }
 
 void controller_total_energy::altitude_hold_exit()
@@ -92,8 +91,7 @@ void controller_total_energy::altitude_hold_exit()
   E_integrator_ = 0;
 }
 
-float controller_total_energy::total_energy_throttle(float va_c, float va, float h_c, float h,
-                                                     const struct params_s & params)
+float controller_total_energy::total_energy_throttle(float va_c, float va, float h_c, float h)
 {
   // For readability, declare parameters here that will be used in this function
   int64_t frequency = get_double("frequency");
@@ -104,7 +102,7 @@ float controller_total_energy::total_energy_throttle(float va_c, float va, float
   double trim_t = get_double("trim_t");   // Declared in controller_successive_loop
 
   // Update energies based off of most recent data.
-  update_energies(va_c, va, h_c, h, params);
+  update_energies(va_c, va, h_c, h);
 
   // Calculate total energy error, and normalize relative to the desired kinetic energy.
   float E_error = (K_error + U_error) / K_ref;
@@ -123,8 +121,7 @@ float controller_total_energy::total_energy_throttle(float va_c, float va, float
     + trim_t;
 }
 
-float controller_total_energy::total_energy_pitch(float va_c, float va, float h_c, float h,
-                                                  const struct params_s & params)
+float controller_total_energy::total_energy_pitch(float va_c, float va, float h_c, float h)
 {
   // For readability, declare parameters here that will be used in this function
   int64_t frequency = get_double("frequency");
@@ -133,7 +130,7 @@ float controller_total_energy::total_energy_pitch(float va_c, float va, float h_
   double l_kd = get_double("l_kd");
 
   // Update energies based off of most recent data.
-  update_energies(va_c, va, h_c, h, params);
+  update_energies(va_c, va, h_c, h);
 
   // Calculate energy balance error, and normalize relative to the desired kinetic energy.
 
@@ -151,8 +148,7 @@ float controller_total_energy::total_energy_pitch(float va_c, float va, float h_
              -25.0 * M_PI / 180.0); // TODO remove hard coded bounds from all of rosplane!!!!
 }
 
-void controller_total_energy::update_energies(float va_c, float va, float h_c, float h,
-                                              const struct params_s & params)
+void controller_total_energy::update_energies(float va_c, float va, float h_c, float h)
 {
   // For readability, declare parameters here that will be used in this function
   double mass = get_double("mass");
@@ -171,15 +167,15 @@ void controller_total_energy::update_energies(float va_c, float va, float h_c, f
 void controller_total_energy::declare_parameters()
 {
   // Declare parameter with ROS2 and set the default value
-  declare_parameter("e_kp", 5.0);
-  declare_parameter("e_ki", 0.9);
-  declare_parameter("e_kd", 0.0);
+  declare_param("e_kp", 5.0);
+  declare_param("e_ki", 0.9);
+  declare_param("e_kd", 0.0);
 
-  declare_parameter("l_kp", 1.0);
-  declare_parameter("l_ki", 0.05);
-  declare_parameter("l_kd", 0.0);
+  declare_param("l_kp", 1.0);
+  declare_param("l_ki", 0.05);
+  declare_param("l_kd", 0.0);
 
-  declare_parameter("mass", 2.28);
-  declare_parameter("gravity", 9.8);
+  declare_param("mass", 2.28);
+  declare_param("gravity", 9.8);
 }
 } // namespace rosplane

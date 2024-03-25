@@ -21,7 +21,7 @@ def generate_launch_description():
 
     base_launch_include = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(
+    os.path.join(
                 get_package_share_directory('rosplane'),
                 'launch/rosplane.launch.py'
             )
@@ -36,8 +36,8 @@ def generate_launch_description():
             name='gazebo_truth'
         ),
         Node(
-            package='data_viz',
-            executable='viz_data',
+            package='rosplane_tuning',
+            executable='data_viz.py',
             name='uav_plotter',
             parameters=[{
                 'use_sim_time': False,

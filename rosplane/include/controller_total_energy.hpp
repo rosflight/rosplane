@@ -17,31 +17,25 @@ public:
 protected:
   /**
    * This function overrides the longitudinal control loops for the take-off zone.
-   * @param params The parameters that define the algorithm such as control gains.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void take_off_longitudinal_control(const struct params_s & params,
-                                             const struct input_s & input,
+  virtual void take_off_longitudinal_control(const struct input_s & input,
                                              struct output_s & output);
 
   /**
    * This function overrides the longitudinal control loops for the climb zone.
-   * @param params The parameters that define the algorithm such as control gains.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void climb_longitudinal_control(const struct params_s & params,
-                                          const struct input_s & input, struct output_s & output);
+  virtual void climb_longitudinal_control(const struct input_s & input, struct output_s & output);
 
   /**
    * This function overrides the longitudinal control loops for the altitude hold zone.
-   * @param params The parameters that define the algorithm such as control gains.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void alt_hold_longitudinal_control(const struct params_s & params,
-                                             const struct input_s & input,
+  virtual void alt_hold_longitudinal_control(const struct input_s & input,
                                              struct output_s & output);
 
   /**
@@ -69,12 +63,10 @@ protected:
    * @param va This is the actual airspeed.
    * @param h_c This is the commanded altitude.
    * @param h This is the actual altitude.
-   * @param params The parameters that define the algorithm such as control gains.
    * @param Ts The sampling period in seconds.
    * @return The throttle value saturated between 0 and the parameter of max throttle.
    */
-  float total_energy_throttle(float va_c, float va, float h_c, float h,
-                              const struct params_s & params);
+  float total_energy_throttle(float va_c, float va, float h_c, float h);
 
   /**
    * This uses the error in the balance of energy to find the necessary elevator deflection to acheive that energy.
@@ -82,12 +74,10 @@ protected:
    * @param va This is the actual airspeed.
    * @param h_c This is the commanded altitude.
    * @param h This is the actual altitude.
-   * @param params The parameters that define the algorithm such as control gains.
    * @param Ts The sampling period in seconds.
    * @return The pitch command value saturated between min and max pitch.
    */
-  float total_energy_pitch(float va_c, float va, float h_c, float h,
-                           const struct params_s & params);
+  float total_energy_pitch(float va_c, float va, float h_c, float h);
 
   /**
    * This calculates and updates the kinetic energy reference and error, the potential energy error.
@@ -95,9 +85,8 @@ protected:
    * @param va This is the actual airspeed.
    * @param h_c This is the commanded altitude.
    * @param h This is the actual altitude.
-   * @param params The parameters that define the algorithm such as control gains.
    */
-  void update_energies(float va_c, float va, float h_c, float h, const struct params_s & params);
+  void update_energies(float va_c, float va, float h_c, float h);
 
   /**
    * This is the integral value for the error in the total energy.
