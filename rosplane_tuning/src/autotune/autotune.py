@@ -336,8 +336,39 @@ class Autotune(Node):
         Calculate the error between the state estimate and the commanded setpoint using the
         collected data.
         """
-        # TODO: Implement this function
-        return 0.0
+
+        # Get the estimate and command data from the right autopilot
+        if self.current_autopilot == CurrentAutopilot.ROLL:
+            estimate = np.array(self.state)[:, [0, 2]]
+            command = np.array(self.internals_debug)[:, [0, 1]]
+        elif self.current_autopilot == CurrentAutopilot.COURSE:
+            estimate = np.array(self.state)[:, [0, 3]]
+            command = np.array(self.commands)[:, [0, 2]]
+        elif self.current_autopilot == CurrentAutopilot.PITCH:
+            estimate = np.array(self.state)[:, [0, 4]]
+            command = np.array(self.internals_debug)[:, [0, 2]]
+        elif self.current_autopilot == CurrentAutopilot.ALTITUDE:
+            estimate = np.array(self.state)[:, [0, 5]]
+            command = np.array(self.commands)[:, [0, 3]]
+        else:  # CurrentAutopilot.AIRSPEED
+            estimate = np.array(self.state)[:, [0, 1]]
+            command = np.array(self.commands)[:, [0, 1]]
+
+        # Trim any measurements that happened before the first command
+        estimate = estimate[np.where(estimate[:, 0] >= command[0, 0])[0], :]
+
+        # Integrate across the square of the error
+        cumulative_error = 0.0
+        for i in range(estimate.shape[0] - 1):
+            # Get command that was just previous
+            command_index = np.where(command[:, 0] <= estimate[i + 1, 0])[0][-1]
+            # Numerically integrate
+            cumulative_error += (estimate[i + 1, 1] - command[command_index, 1])**2 \
+                    * (estimate[i + 1, 0] - estimate[i, 0])
+
+        self.get_logger().info('Cumulative error: ' + str(cumulative_error))
+
+        return cumulative_error
 
     def get_next_gains(self):
         """
