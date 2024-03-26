@@ -165,43 +165,55 @@ void controller_base::actuator_controls_publish()
 
 void controller_base::declare_param(std::string param_name, double value)
 {
-
   // Insert the parameter into the parameter struct
   params1_[param_name] = value;
-
   // Declare each of the parameters, making it visible to the ROS2 param system.
   this->declare_parameter(param_name, value);
 }
 
 void controller_base::declare_param(std::string param_name, bool value)
 {
-
   // Insert the parameter into the parameter struct
   params1_[param_name] = value;
-
   // Declare each of the parameters, making it visible to the ROS2 param system.
   this->declare_parameter(param_name, value);
 }
 
 void controller_base::declare_int(std::string param_name, int64_t value)
 {
-
   // Insert the parameter into the parameter struct
   params1_[param_name] = value;
-
   // Declare each of the parameters, making it visible to the ROS2 param system.
   this->declare_parameter(param_name, value);
 }
 
 void controller_base::declare_param(std::string param_name, std::string value)
 {
-
   // Insert the parameter into the parameter struct
   params1_[param_name] = value;
-
   // Declare each of the parameters, making it visible to the ROS2 param system.
   this->declare_parameter(param_name, value);
 }
+
+double controller_base::get_double(std::string param_name)
+{
+    return std::get<double>(params1_[param_name]);
+} 
+
+bool controller_base::get_bool(std::string param_name)
+{
+  return std::get<bool>(params1_[param_name]);
+} 
+
+int64_t controller_base::get_int(std::string param_name)
+{
+  return std::get<int64_t>(params1_[param_name]);
+} 
+
+std::string controller_base::get_string(std::string param_name)
+{
+  return std::get<std::string>(params1_[param_name]);
+} 
 
 void controller_base::set_parameters()
 {
@@ -222,7 +234,6 @@ void controller_base::set_parameters()
     else  
       RCLCPP_ERROR_STREAM(this->get_logger(), "Unable to set parameter: " + key + ". Error casting parameter as double, int, string, or bool!");
   }
-
 }
 
 rcl_interfaces::msg::SetParametersResult 
@@ -247,6 +258,8 @@ controller_base::parametersCallback(const std::vector<rclcpp::Parameter> & param
       params1_[param.get_name()] = param.as_double();
     else if (param.get_type() == rclcpp::ParameterType::PARAMETER_BOOL)
       params1_[param.get_name()] = param.as_bool();
+    else if (param.get_type() == rclcpp::ParameterType::PARAMETER_INTEGER)
+      params1_[param.get_name()] = param.as_int();
     else if (param.get_type() == rclcpp::ParameterType::PARAMETER_STRING)
       params1_[param.get_name()] = param.as_string();
     else
@@ -256,33 +269,6 @@ controller_base::parametersCallback(const std::vector<rclcpp::Parameter> & param
 
   return result;
 }
-
-double controller_base::get_double(std::string param_name)
-{
-  // try 
-  // {
-    return std::get<double>(params1_[param_name]);
-  // }
-  // catch (const std::bad_variant_access& e)
-  // {
-  //   RCLCPP_ERROR_STREAM(this->get_logger(), "Error when accessing " + param_name + " parameter: " + e.what());
-  // }
-} 
-
-bool controller_base::get_bool(std::string param_name)
-{
-  return std::get<bool>(params1_[param_name]);
-} 
-
-int64_t controller_base::get_int(std::string param_name)
-{
-  return std::get<int64_t>(params1_[param_name]);
-} 
-
-std::string controller_base::get_string(std::string param_name)
-{
-  return std::get<std::string>(params1_[param_name]);
-} 
 
 void controller_base::set_timer()
 {

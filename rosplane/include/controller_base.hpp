@@ -84,56 +84,6 @@ protected:
   };
 
   /**
-   * This struct contains all of the parameters used by the controller.
-   */
-  struct params_s
-  {
-    double alt_hz;               /**< altitude hold zone */
-    double alt_toz;              /**< altitude takeoff zone */
-    double tau;                  /**< servo response time constant */
-    double c_kp;                 /**< course hold proportional gain */
-    double c_kd;                 /**< course hold derivative gain */
-    double c_ki;                 /**< course hold integral gain */
-    double r_kp;                 /**< roll hold proportional gain */
-    double r_kd;                 /**< roll hold derivative gain */
-    double r_ki;                 /**< roll hold integral gain */
-    double p_kp;                 /**< pitch hold proportional gain */
-    double p_kd;                 /**< pitch hold derivative gain */
-    double p_ki;                 /**< pitch hold integral gain */
-    double p_ff;                 /**< pitch feedforward */
-    double a_t_kp;               /**< airspeed with throttle hold proportional gain */
-    double a_t_kd;               /**< airspeed with throttle hold derivative gain */
-    double a_t_ki;               /**< airspeed with throttle hold integral gain */
-    double a_kp;                 /**< altitude hold proportional gain */
-    double a_kd;                 /**< altitude hold derivative gain */
-    double a_ki;                 /**< altitude hold integral gain */
-    double l_kp;                 /**< energy balance proportional gain */
-    double l_kd;                 /**< energy balance derivative gain */
-    double l_ki;                 /**< energy balance integral gain */
-    double e_kp;                 /**< total energy proportional gain */
-    double e_kd;                 /**< total energy derivative gain */
-    double e_ki;                 /**< total energy integral gain */
-    double trim_e;               /**< trim value for elevator */
-    double trim_a;               /**< trim value for aileron */
-    double trim_r;               /**< trim value for rudder */
-    double trim_t;               /**< trim value for throttle */
-    double max_e;                /**< maximum value for elevator */
-    double max_a;                /**< maximum value for aileron */
-    double max_r;                /**< maximum value for rudder */
-    double max_t;                /**< maximum value for throttle */
-    double pwm_rad_e;            /**< conversion to pwm from radians for output of control loops */
-    double pwm_rad_a;            /**< conversion to pwm from radians for output of control loops */
-    double pwm_rad_r;            /**< conversion to pwm from radians for output of control loops */
-    double max_takeoff_throttle; /**< maximum throttle allowed at takeoff */
-    double mass;                 /**< mass of the aircraft */
-    double gravity;              /**< gravity in m/s^2 */
-    bool pitch_tuning_debug_override;
-    bool roll_tuning_debug_override;
-    double max_roll;
-    int frequency;
-  };
-
-  /**
    * Returns a std::variant that holds the value of the given parameter
   */
   double get_double(std::string param_name);
@@ -143,7 +93,7 @@ protected:
 
   void declare_param(std::string param_name, double value);
   void declare_param(std::string param_name, bool value);
-  void declare_int(std::string param_name, int64_t value);
+  void declare_int(std::string param_name, int64_t value);  
   void declare_param(std::string param_name, std::string value);
   
   /**
@@ -200,51 +150,13 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
 
   /** Parameters for use in control loops.*/
-  std::map<std::string, std::variant<double, bool, int64_t, std::string>> params1_;
-  // /** Parameters for use in control loops.*/
-  struct params_s params_ = {/* alt_hz */ 10.0,
-                             /* alt_toz */ 5.0,
-                             /* tau */ 50.0,
-                             /* c_kp */ 2.37,
-                             /* c_kd */ 0.0,
-                             /* c_ki */ 0.4,
-                             /* r_kp */ .06,
-                             /* r_kd */ 0.04,
-                             /* r_ki */ 0.0,
-                             /* p_kp */ -.15,
-                             /* p_kd */ -.05,
-                             /* p_ki */ 0.0,
-                             /* p_ff */ 0.0,
-                             /* a_t_kp */ .05,
-                             /* a_t_kd */ 0.0,
-                             /* a_t_ki */ .005,
-                             /* a_kp */ 0.015,
-                             /* a_kd */ 0.0,
-                             /* a_ki */ 0.003,
-                             /* l_kp */ 1.0,
-                             /* l_kd */ 0.0,
-                             /* l_ki */ 0.05,
-                             /* e_kp */ 5.0,
-                             /* e_kd */ 0.0,
-                             /* e_ki */ .9,
-                             /* trim_e */ 0.02,
-                             /* trim_a */ 0.0,
-                             /* trim_r */ 0.0,
-                             /* trim_t */ 0.5,
-                             /* max_e */ 0.61,
-                             /* max_a */ 0.15,
-                             /* max_r */ 0.523,
-                             /* max_t */ 1.0,
-                             /* pwm_rad_e */ 1.0,
-                             /* pwm_rad_a */ 1.0,
-                             /* pwm_rad_r */ 1.0,
-                             /* max_takeoff_throttle */ .55,
-                             /* mass */ 2.28,
-                             /* gravity */ 9.8,
-                             /* pitch_tuning_debug_override*/ false,
-                             /* roll_tuning_debug_override*/ false,
-                             /* max_roll*/ 25.0,
-                             /* frequency of contorl loop */ 100};
+  /** Note that these parameters are not used:
+   * 
+   * double p_ff;                 //< pitch feedforward
+   * double trim_r;               //< trim value for rudder
+   * double max_r;                //< maximum value for rudder
+   */
+  std::map<std::string, std::variant<double, bool, int64_t, std::string>> params_;   // Can I cast ROS int to int?
 
   /**
    * The stored value for the most up to date commands for the controller.

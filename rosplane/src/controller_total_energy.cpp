@@ -21,13 +21,14 @@ void controller_total_energy::take_off_longitudinal_control(const struct input_s
 {
   // For readability, declare parameters here that will be used in this function
   double max_takeoff_throttle = get_double("max_takeoff_throttle");
+  double cmd_takeoff_pitch = get_double("cmd_takeoff_pitch");   // Declared in controller_successive_loop
 
   // Set throttle to not overshoot altitude.
   output.delta_t = sat(total_energy_throttle(input.Va_c, input.va, input.h_c, input.h),
                        max_takeoff_throttle, 0);
 
   // Command a shallow pitch angle to gain altitude.
-  output.theta_c = 5.0 * 3.14 / 180.0; //TODO add to params.
+  output.theta_c = cmd_takeoff_pitch * 3.14 / 180.0;
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q);
 }
 
@@ -128,6 +129,7 @@ float controller_total_energy::total_energy_pitch(float va_c, float va, float h_
   double l_kp = get_double("l_kp");
   double l_ki = get_double("l_ki");
   double l_kd = get_double("l_kd");
+  double max_roll = get_double("max_roll");   // Declared in controller_successive_loop
 
   // Update energies based off of most recent data.
   update_energies(va_c, va, h_c, h);
@@ -144,8 +146,8 @@ float controller_total_energy::total_energy_pitch(float va_c, float va, float h_
   L_error_prev_ = L_error;
 
   // Return saturated pitch command.
-  return sat(l_kp * L_error + l_ki * L_integrator_, 25.0 * M_PI / 180.0,
-             -25.0 * M_PI / 180.0); // TODO remove hard coded bounds from all of rosplane!!!!
+  return sat(l_kp * L_error + l_ki * L_integrator_, max_roll * M_PI / 180.0,
+             -max_roll * M_PI / 180.0); 
 }
 
 void controller_total_energy::update_energies(float va_c, float va, float h_c, float h)
@@ -153,6 +155,7 @@ void controller_total_energy::update_energies(float va_c, float va, float h_c, f
   // For readability, declare parameters here that will be used in this function
   double mass = get_double("mass");
   double gravity = get_double("gravity");
+  double max_energy = get_double("max_energy");
 
   // Calculate the error in kinetic energy.
   K_error = 0.5 * mass * (pow(va_c, 2) - pow(va, 2));
@@ -161,7 +164,7 @@ void controller_total_energy::update_energies(float va_c, float va, float h_c, f
   K_ref = 0.5 * mass * pow(va_c, 2);
 
   // Calculate the error in the potential energy.
-  U_error = mass * gravity * sat(h_c - h, 5, -5); // TODO add limits to param
+  U_error = mass * gravity * sat(h_c - h, max_energy, -max_energy);
 }
 
 void controller_total_energy::declare_parameters()
@@ -177,5 +180,6 @@ void controller_total_energy::declare_parameters()
 
   declare_param("mass", 2.28);
   declare_param("gravity", 9.8);
+  declare_param("max_energy", 5.0);
 }
 } // namespace rosplane

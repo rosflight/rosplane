@@ -149,13 +149,14 @@ void controller_successive_loop::take_off_longitudinal_control(const struct inpu
 {
   // For readability, declare parameters here that will be used in this function
   double max_takeoff_throttle = get_double("max_takeoff_throttle");
+  double cmd_takeoff_pitch = get_double("cmd_takeoff_pitch");
   
   // Set throttle to not overshoot altitude.
   output.delta_t =
     sat(airspeed_with_throttle_hold(input.Va_c, input.va), max_takeoff_throttle, 0);
 
   // Command a shallow pitch angle to gain altitude.
-  output.theta_c = 5.0 * 3.14 / 180.0; // TODO add to params.
+  output.theta_c = cmd_takeoff_pitch * M_PI / 180.0; 
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q);
 }
 
@@ -238,6 +239,8 @@ float controller_successive_loop::roll_hold(float phi_c, float phi, float p)
   double r_ki = get_double("r_ki");
   double r_kd = get_double("r_kd");
   double max_a = get_double("max_a");
+  double trim_a = get_double("trim_a");
+  double pwm_rad_a = get_double("pwm_rad_a");  // Declared in controller base
 
   float error = phi_c - phi;
 
@@ -249,9 +252,9 @@ float controller_successive_loop::roll_hold(float phi_c, float phi, float p)
   float ui = r_ki * r_integrator;
   float ud = r_kd * p;
 
-  float delta_a = sat(up + ui - ud, max_a, -max_a);
+  float delta_a = sat(trim_a / pwm_rad_a + up + ui - ud, max_a, -max_a);
   if (fabs(r_ki) >= 0.00001) {
-    float delta_a_unsat = up + ui - ud;
+    float delta_a_unsat = trim_a / pwm_rad_a + up + ui - ud;
     r_integrator = r_integrator + (Ts / r_ki) * (delta_a - delta_a_unsat);
   }
 
@@ -282,7 +285,6 @@ float controller_successive_loop::pitch_hold(float theta_c, float theta, float q
 
   float delta_e = sat(trim_e / pwm_rad_e + up + ui - ud, max_e, -max_e);
 
-  // TODO : Why doesn't roll_hold have the trim a on it?
   if (fabs(p_ki) >= 0.00001) {
     float delta_e_unsat = trim_e / pwm_rad_e + up + ui - ud;
     p_integrator_ = p_integrator_ + (Ts / p_ki) * (delta_e - delta_e_unsat);
@@ -335,6 +337,7 @@ float controller_successive_loop::altitude_hold_control(float h_c, float h)
   double a_kp = get_double("a_kp");
   double a_ki = get_double("a_ki");
   double a_kd = get_double("a_kd");
+  double max_pitch = get_double("max_pitch");
 
   float error = h_c - h;
 
@@ -353,7 +356,7 @@ float controller_successive_loop::altitude_hold_control(float h_c, float h)
   float ui = a_ki * a_integrator_;
   float ud = a_kd * a_differentiator_;
 
-  float theta_c = sat(up + ui + ud, 20.0 * 3.14 / 180.0, -20.0 * 3.14 / 180.0);
+  float theta_c = sat(up + ui + ud, max_pitch * M_PI / 180.0, -max_pitch * M_PI / 180.0);
   if (fabs(a_ki) >= 0.00001) {
     float theta_c_unsat = up + ui + ud;
     a_integrator_ = a_integrator_ + (Ts / a_ki) * (theta_c - theta_c_unsat);
@@ -403,22 +406,24 @@ float controller_successive_loop::adjust_h_c(float h_c, float h, float max_diff)
 void controller_successive_loop::declare_parameters()
 {
   // Declare param with ROS2 and set the default value.
-  std::cout << "THIS IS WORKING " << std::endl;
   declare_param("max_takeoff_throttle", 0.55);
   declare_param("c_kp", 2.37);
   declare_param("c_ki", .4);
   declare_param("c_kd", .0);
   declare_param("max_roll", 25.0);
+  declare_param("cmd_takeoff_pitch", 5.0);
 
   declare_param("r_kp", .06);
   declare_param("r_ki", .0);
   declare_param("r_kd", .04);
   declare_param("max_a", .15);
+  declare_param("trim_a", 0.0);
 
   declare_param("p_kp", -.15);
   declare_param("p_ki", .0);
   declare_param("p_kd", -.05);
   declare_param("max_e", .15);
+  declare_param("max_pitch", 20.0);
   declare_param("trim_e", 0.02);
 
   declare_param("tau", 50.0);
