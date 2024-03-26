@@ -74,22 +74,24 @@ class Autotune(Node):
 
         # ROS parameters
         # The amount of time to collect data for calculating the error
-        self.declare_parameter('/autotune/stabilize_period', rclpy.Parameter.Type.DOUBLE)
+        self.declare_parameter('stabilize_period', rclpy.Parameter.Type.DOUBLE)
+        # Whether to run the autotune continuously or not
+        self.declare_parameter('continuous_tuning', rclpy.Parameter.Type.BOOL)
         # The autopilot that is currently being tuned
-        self.declare_parameter('/autotune/current_tuning_autopilot', rclpy.Parameter.Type.STRING)
+        self.declare_parameter('current_tuning_autopilot', rclpy.Parameter.Type.STRING)
         # Get the autopilot to tune
-        if self.get_parameter('/autotune/current_tuning_autopilot').value == 'roll':
+        if self.get_parameter('current_tuning_autopilot').value == 'roll':
             self.current_autopilot = CurrentAutopilot.ROLL
-        elif self.get_parameter('/autotune/current_tuning_autopilot').value == 'course':
+        elif self.get_parameter('current_tuning_autopilot').value == 'course':
             self.current_autopilot = CurrentAutopilot.COURSE
-        elif self.get_parameter('/autotune/current_tuning_autopilot').value == 'pitch':
+        elif self.get_parameter('current_tuning_autopilot').value == 'pitch':
             self.current_autopilot = CurrentAutopilot.PITCH
-        elif self.get_parameter('/autotune/current_tuning_autopilot').value == 'altitude':
+        elif self.get_parameter('current_tuning_autopilot').value == 'altitude':
             self.current_autopilot = CurrentAutopilot.ALTITUDE
-        elif self.get_parameter('/autotune/current_tuning_autopilot').value == 'airspeed':
+        elif self.get_parameter('current_tuning_autopilot').value == 'airspeed':
             self.current_autopilot = CurrentAutopilot.AIRSPEED
         else:
-            raise ValueError(self.get_parameter('/autotune/current_tuning_autopilot').value +
+            raise ValueError(self.get_parameter('current_tuning_autopilot').value +
                              ' is not a valid value for current_tuning_autopilot.' +
                              ' Please select one of the' +
                              ' following: roll, course, pitch, altitude, airspeed.')
@@ -116,7 +118,7 @@ class Autotune(Node):
 
         # Timers
         self.stabilize_period_timer = self.create_timer(
-            self.get_parameter('/autotune/stabilize_period').value,
+            self.get_parameter('stabilize_period').value,
             self.stabilize_period_timer_callback,
             callback_group=self.internal_callback_group)
         self.stabilize_period_timer.cancel()
@@ -124,7 +126,7 @@ class Autotune(Node):
         # Services
         self.run_tuning_iteration_service = self.create_service(
             Trigger,
-            '/autotune/run_tuning_iteration',
+            'run_tuning_iteration',
             self.run_tuning_iteration_callback,
             callback_group=self.internal_callback_group)
 
@@ -196,7 +198,7 @@ class Autotune(Node):
             self.get_logger().info('Setting gains: ' + str(self.new_gains))
             self.set_current_gains(self.new_gains)
             self.get_logger().info('Stepping command for '
-                                   + str(self.get_parameter('/autotune/stabilize_period').value)
+                                   + str(self.get_parameter('stabilize_period').value)
                                    + ' seconds...')
             self.collecting_data = True
             self.call_toggle_step_signal()
@@ -206,7 +208,7 @@ class Autotune(Node):
         elif self.autotune_state == AutoTuneState.STEP_TESTING:
             # Step test is over, reverse step
             self.get_logger().info('Reversing step command for '
-                                   + str(self.get_parameter('/autotune/stabilize_period').value)
+                                   + str(self.get_parameter('stabilize_period').value)
                                    + ' seconds...')
             self.call_toggle_step_signal()
 
@@ -221,6 +223,9 @@ class Autotune(Node):
             self.set_current_gains(self.initial_gains)
 
             self.autotune_state = AutoTuneState.ORBITING
+
+            if self.get_parameter('continuous_tuning').value:
+                self.run_tuning_iteration_callback(Trigger.Request(), Trigger.Response())
 
     def run_tuning_iteration_callback(self, request, response):
         """
@@ -238,11 +243,11 @@ class Autotune(Node):
 
         if not self.optimizer.optimization_terminated():
             self.stabilize_period_timer.timer_period_ns = \
-                    int(self.get_parameter('/autotune/stabilize_period').value * 1e9)
+                    int(self.get_parameter('stabilize_period').value * 1e9)
             self.stabilize_period_timer.reset()
 
             self.get_logger().info('Stabilizing autopilot for '
-                                   + str(self.get_parameter('/autotune/stabilize_period').value)
+                                   + str(self.get_parameter('stabilize_period').value)
                                    + ' seconds...')
             self.autotune_state = AutoTuneState.STABILIZING
 
@@ -395,8 +400,6 @@ class Autotune(Node):
             # Numerically integrate
             cumulative_error += (estimate[i + 1, 1] - command[command_index, 1])**2 \
                     * (estimate[i + 1, 0] - estimate[i, 0])
-
-        self.get_logger().info('Cumulative error: ' + str(cumulative_error))
 
         return cumulative_error
 

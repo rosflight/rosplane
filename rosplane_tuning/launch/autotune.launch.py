@@ -10,14 +10,19 @@ from launch_ros.actions import Node
 def generate_launch_description():
 
     # Launch arguments
-    stabilize_period = LaunchConfiguration('/autotune/stabilize_period')
+    stabilize_period = LaunchConfiguration('stabilize_period')
     stabilize_period_launch_arg = DeclareLaunchArgument(
-        '/autotune/stabilize_period',
+        'stabilize_period',
         description='Amount of time to collect data for calculating error'
     )
-    current_tuning_autopilot = LaunchConfiguration('/autotune/current_tuning_autopilot')
+    continuous_tuning = LaunchConfiguration('continuous_tuning')
+    continuous_tuning_launch_arg = DeclareLaunchArgument(
+        'continuous_tuning',
+        description='Whether to run the tuning sequence continuously or to wait for manual input'
+    )
+    current_tuning_autopilot = LaunchConfiguration('current_tuning_autopilot')
     current_tuning_autopilot_launch_arg = DeclareLaunchArgument(
-        '/autotune/current_tuning_autopilot',
+        'current_tuning_autopilot',
         description='Autopilot to tune'
     )
 
@@ -27,8 +32,9 @@ def generate_launch_description():
         executable='autotune.py',
         output='screen',
         parameters=[
-            {'/autotune/stabilize_period': stabilize_period},
-            {'/autotune/current_tuning_autopilot': current_tuning_autopilot}
+            {'stabilize_period': stabilize_period},
+            {'continuous_tuning': continuous_tuning},
+            {'current_tuning_autopilot': current_tuning_autopilot}
         ]
     )
     rosplane_tuning_launch_include = IncludeLaunchDescription(
@@ -40,6 +46,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         stabilize_period_launch_arg,
+        continuous_tuning_launch_arg,
         current_tuning_autopilot_launch_arg,
         autotune_node,
         rosplane_tuning_launch_include
