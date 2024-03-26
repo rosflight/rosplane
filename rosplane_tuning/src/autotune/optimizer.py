@@ -65,6 +65,7 @@ class Optimizer:
     def get_next_parameter_set(self, error):
         """
         This function returns the next set of gains to be tested by the optimization algorithm.
+        Needs to return valid array even if optimization is terminated.
 
         Parameters:
         error (np.array, size num_gains, dtype float): The error from the list of gains to test that

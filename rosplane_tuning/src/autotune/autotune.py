@@ -238,7 +238,7 @@ class Autotune(Node):
             self.initial_gains = self.get_current_gains()
             self.optimizer = Optimizer(self.initial_gains, self.optimization_params)
             self.new_gains = self.initial_gains
-        else:
+        elif not self.optimizer.optimization_terminated():
             self.new_gains = self.get_next_gains()
 
         if not self.optimizer.optimization_terminated():
@@ -250,6 +250,10 @@ class Autotune(Node):
                                    + str(self.get_parameter('stabilize_period').value)
                                    + ' seconds...')
             self.autotune_state = AutoTuneState.STABILIZING
+        else:
+            self.get_logger().info('Optimization terminated with: ' +
+                                   self.optimizer.get_optimization_status())
+            self.stabilize_period_timer.cancel()
 
         response.success = True
         response.message = self.optimizer.get_optimization_status()
