@@ -67,6 +67,7 @@ install(PROGRAMS
 install(PROGRAMS
   src/autotune/autotune.py
   src/autotune/optimizer.py
+  src/autotune/plot_util.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
