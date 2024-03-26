@@ -31,6 +31,16 @@ class CurrentAutopilot(Enum):
     AIRSPEED = auto()
 
 
+class AutoTuneState(Enum):
+    """
+    This class defines the possible states of the autotune node.
+    """
+    ORBITING = auto()
+    STABILIZING = auto()
+    STEP_TESTING = auto()
+    RETURN_TESTING = auto()
+
+
 class Autotune(Node):
     """
     This class is an auto-tuning node for the ROSplane autopilot. The node calculates the error
@@ -45,6 +55,8 @@ class Autotune(Node):
 
     def __init__(self):
         super().__init__('autotune')
+
+        self.autotune_state = AutoTuneState.ORBITING
 
         # Callback groups, used for allowing external services to run mid-internal callback
         self.internal_callback_group = MutuallyExclusiveCallbackGroup()
@@ -131,13 +143,14 @@ class Autotune(Node):
                 callback_group=self.external_callback_group)
 
         # Optimization
+        self.initial_gains = None  # get_gains function cannot be called in __init__ since the node
+                                   # has not yet been passed to the executor
         self.optimization_params = {'u1': 10**-4,
                                     'u2': 0.5,
                                     'sigma': 1.5,
                                     'alpha': 1,
                                     'tau': 10**-3}
-        self.optimizer = None  # get_gains function cannot be called in __init__ since the node
-                               # has not yet been passed to the executor
+        self.optimizer = None
 
 
     ## ROS Callbacks ##
@@ -178,19 +191,36 @@ class Autotune(Node):
         collection and sets up ROSplane to perform a step manuever.
         """
 
-        if not self.collecting_data:
+        if self.autotune_state == AutoTuneState.STABILIZING:
             # Stabilization period is over, start collecting data
-            self.get_logger().info('Stepping command and collecting data for '
+            self.get_logger().info('Setting gains: ' + str(self.new_gains))
+            self.set_current_gains(self.new_gains)
+            self.get_logger().info('Stepping command for '
                                    + str(self.get_parameter('/autotune/stabilize_period').value)
                                    + ' seconds...')
             self.collecting_data = True
             self.call_toggle_step_signal()
+
+            self.autotune_state = AutoTuneState.STEP_TESTING
+
+        elif self.autotune_state == AutoTuneState.STEP_TESTING:
+            # Step test is over, reverse step
+            self.get_logger().info('Reversing step command for '
+                                   + str(self.get_parameter('/autotune/stabilize_period').value)
+                                   + ' seconds...')
+            self.call_toggle_step_signal()
+
+            self.autotune_state = AutoTuneState.RETURN_TESTING
+
         else:
             # Data collection is over, stop collecting data and calculate gains for next iteration
-            self.get_logger().info('Data collection complete.')
+            self.get_logger().info('Data collection complete, restoring original gains and ' +
+                                   'returning to orbit.')
             self.collecting_data = False
             self.stabilize_period_timer.cancel()
-            self.call_toggle_step_signal()
+            self.set_current_gains(self.initial_gains)
+
+            self.autotune_state = AutoTuneState.ORBITING
 
     def run_tuning_iteration_callback(self, request, response):
         """
@@ -199,15 +229,14 @@ class Autotune(Node):
         """
 
         if self.optimizer is None:
-            new_gains = self.get_current_gains()
-            self.optimizer = Optimizer(new_gains, self.optimization_params)
+            # Initialize optimizer
+            self.initial_gains = self.get_current_gains()
+            self.optimizer = Optimizer(self.initial_gains, self.optimization_params)
+            self.new_gains = self.initial_gains
         else:
-            new_gains = self.get_next_gains()
+            self.new_gains = self.get_next_gains()
 
         if not self.optimizer.optimization_terminated():
-            self.get_logger().info('Setting gains: ' + str(new_gains))
-            self.set_current_gains(new_gains)
-
             self.stabilize_period_timer.timer_period_ns = \
                     int(self.get_parameter('/autotune/stabilize_period').value * 1e9)
             self.stabilize_period_timer.reset()
@@ -215,6 +244,7 @@ class Autotune(Node):
             self.get_logger().info('Stabilizing autopilot for '
                                    + str(self.get_parameter('/autotune/stabilize_period').value)
                                    + ' seconds...')
+            self.autotune_state = AutoTuneState.STABILIZING
 
         response.success = True
         response.message = self.optimizer.get_optimization_status()
