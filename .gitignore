@@ -9,3 +9,4 @@ log/
 # IDE files
 .vscode/
 .idea/
+__pycache__/

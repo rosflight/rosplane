@@ -15,7 +15,7 @@ controller_state_machine::controller_state_machine()
   declare_parameters();
 
   // Set parameters according to the parameters in the launch file, otherwise use the default values
-  set_parameters();
+  params.set_parameters();
 }
 
 void controller_state_machine::control(const input_s & input,
@@ -23,8 +23,8 @@ void controller_state_machine::control(const input_s & input,
 {
   
   // For readability, declare parameters that will be used in this controller
-  double alt_toz = get_double("alt_toz");
-  double alt_hz = get_double("alt_hz");
+  double alt_toz = params.get_double("alt_toz");
+  double alt_hz = params.get_double("alt_hz");
 
   // This state machine changes the controls used based on the zone of flight path the aircraft is currently on.
   switch (current_zone) {
@@ -96,8 +96,8 @@ void controller_state_machine::control(const input_s & input,
 void controller_state_machine::declare_parameters()
 {
   // Declare param with ROS2 and set the default value.
-  declare_param("alt_toz", 5.0);
-  declare_param("alt_hz", 10.0);
+  params.declare_param("alt_toz", 5.0);
+  params.declare_param("alt_hz", 10.0);
 }
 
 } // namespace rosplane

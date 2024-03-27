@@ -20,6 +20,7 @@
 #include <rosplane_msgs/msg/controller_internals_debug.hpp>
 #include <rosplane_msgs/msg/detail/controller_internals_debug__struct.hpp>
 #include <rosplane_msgs/msg/state.hpp>
+#include <param_manager.hpp>
 
 using std::placeholders::_1;
 using namespace std::chrono_literals;
@@ -84,25 +85,9 @@ protected:
   };
 
   /**
-   * Returns a std::variant that holds the value of the given parameter
+   * Parameter manager object. Contains helper functions to interface parameters with ROS.
   */
-  double get_double(std::string param_name);
-  bool get_bool(std::string param_name);
-  int64_t get_int(std::string param_name);
-  std::string get_string(std::string param_name);
-
-  void declare_param(std::string param_name, double value);
-  void declare_param(std::string param_name, bool value);
-  void declare_int(std::string param_name, int64_t value);  
-  void declare_param(std::string param_name, std::string value);
-  
-  /**
-   * This sets the parameters with the values in the params_ object from the supplied parameter file, or sets them to
-   * the default if no value is given for a parameter.
-   */
-  // TODO: Check to make sure that setting a parameter before declaring it won't give an error.
-  // Hypothesis is that it will break, but is that not desired behavior?
-  void set_parameters();
+  param_manager params;
 
   /**
    * Interface for control algorithm.

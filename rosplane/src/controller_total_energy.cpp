@@ -13,15 +13,15 @@ controller_total_energy::controller_total_energy()
   // Declare parameters associated with this controller, controller_state_machine
   declare_parameters();
   // Set parameters according to the parameters in the launch file, otherwise use the default values
-  set_parameters();
+  params.set_parameters();
 }
 
 void controller_total_energy::take_off_longitudinal_control(const struct input_s & input,
                                                             struct output_s & output)
 {
   // For readability, declare parameters here that will be used in this function
-  double max_takeoff_throttle = get_double("max_takeoff_throttle");
-  double cmd_takeoff_pitch = get_double("cmd_takeoff_pitch");   // Declared in controller_successive_loop
+  double max_takeoff_throttle = params.get_double("max_takeoff_throttle");
+  double cmd_takeoff_pitch = params.get_double("cmd_takeoff_pitch");   // Declared in controller_successive_loop
 
   // Set throttle to not overshoot altitude.
   output.delta_t = sat(total_energy_throttle(input.Va_c, input.va, input.h_c, input.h),
@@ -47,7 +47,7 @@ void controller_total_energy::climb_longitudinal_control(const struct input_s & 
                                                          struct output_s & output)
 {
   // For readability, declare parameters here that will be used in this function
-  double alt_hz = get_double("alt_hz");
+  double alt_hz = params.get_double("alt_hz");
 
   double adjusted_hc = adjust_h_c(input.h_c, input.h, alt_hz / 2.0);
   // Find the control efforts for throttle and find the commanded pitch angle using total energy.
@@ -71,7 +71,7 @@ void controller_total_energy::alt_hold_longitudinal_control(const struct input_s
                                                             struct output_s & output)
 {
   // For readability, declare parameters here that will be used in this function
-  double alt_hz = get_double("alt_hz");
+  double alt_hz = params.get_double("alt_hz");
 
   // Saturate altitude command.
   double adjusted_hc = adjust_h_c(input.h_c, input.h, alt_hz);
@@ -95,12 +95,12 @@ void controller_total_energy::altitude_hold_exit()
 float controller_total_energy::total_energy_throttle(float va_c, float va, float h_c, float h)
 {
   // For readability, declare parameters here that will be used in this function
-  int64_t frequency = get_double("frequency");
-  double e_kp = get_double("e_kp");
-  double e_ki = get_double("e_ki");
-  double e_kd = get_double("e_kd");
-  double max_t = get_double("max_t");   // Declared in controller_successive_loop
-  double trim_t = get_double("trim_t");   // Declared in controller_successive_loop
+  int64_t frequency = params.get_double("frequency");
+  double e_kp = params.get_double("e_kp");
+  double e_ki = params.get_double("e_ki");
+  double e_kd = params.get_double("e_kd");
+  double max_t = params.get_double("max_t");   // Declared in controller_successive_loop
+  double trim_t = params.get_double("trim_t");   // Declared in controller_successive_loop
 
   // Update energies based off of most recent data.
   update_energies(va_c, va, h_c, h);
@@ -125,11 +125,11 @@ float controller_total_energy::total_energy_throttle(float va_c, float va, float
 float controller_total_energy::total_energy_pitch(float va_c, float va, float h_c, float h)
 {
   // For readability, declare parameters here that will be used in this function
-  int64_t frequency = get_double("frequency");
-  double l_kp = get_double("l_kp");
-  double l_ki = get_double("l_ki");
-  double l_kd = get_double("l_kd");
-  double max_roll = get_double("max_roll");   // Declared in controller_successive_loop
+  int64_t frequency = params.get_double("frequency");
+  double l_kp = params.get_double("l_kp");
+  double l_ki = params.get_double("l_ki");
+  double l_kd = params.get_double("l_kd");
+  double max_roll = params.get_double("max_roll");   // Declared in controller_successive_loop
 
   // Update energies based off of most recent data.
   update_energies(va_c, va, h_c, h);
@@ -153,9 +153,9 @@ float controller_total_energy::total_energy_pitch(float va_c, float va, float h_
 void controller_total_energy::update_energies(float va_c, float va, float h_c, float h)
 {
   // For readability, declare parameters here that will be used in this function
-  double mass = get_double("mass");
-  double gravity = get_double("gravity");
-  double max_energy = get_double("max_energy");
+  double mass = params.get_double("mass");
+  double gravity = params.get_double("gravity");
+  double max_energy = params.get_double("max_energy");
 
   // Calculate the error in kinetic energy.
   K_error = 0.5 * mass * (pow(va_c, 2) - pow(va, 2));
@@ -170,16 +170,16 @@ void controller_total_energy::update_energies(float va_c, float va, float h_c, f
 void controller_total_energy::declare_parameters()
 {
   // Declare parameter with ROS2 and set the default value
-  declare_param("e_kp", 5.0);
-  declare_param("e_ki", 0.9);
-  declare_param("e_kd", 0.0);
+  params.declare_param("e_kp", 5.0);
+  params.declare_param("e_ki", 0.9);
+  params.declare_param("e_kd", 0.0);
 
-  declare_param("l_kp", 1.0);
-  declare_param("l_ki", 0.05);
-  declare_param("l_kd", 0.0);
+  params.declare_param("l_kp", 1.0);
+  params.declare_param("l_ki", 0.05);
+  params.declare_param("l_kd", 0.0);
 
-  declare_param("mass", 2.28);
-  declare_param("gravity", 9.8);
-  declare_param("max_energy", 5.0);
+  params.declare_param("mass", 2.28);
+  params.declare_param("gravity", 9.8);
+  params.declare_param("max_energy", 5.0);
 }
 } // namespace rosplane

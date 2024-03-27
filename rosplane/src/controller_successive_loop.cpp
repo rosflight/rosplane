@@ -26,7 +26,7 @@ controller_successive_loop::controller_successive_loop()
   // Declare parameters associated with this controller, controller_state_machine
   declare_parameters();
   // Set parameters according to the parameters in the launch file, otherwise use the default values
-  set_parameters();
+  params.set_parameters();
 }
 
 void controller_successive_loop::take_off(const struct input_s & input, struct output_s & output)
@@ -78,7 +78,7 @@ void controller_successive_loop::alt_hold_lateral_control(const struct input_s &
                                                           struct output_s & output)
 {
   // For readability, declare parameters here that will be used in this function
-  bool roll_tuning_debug_override = get_bool("roll_tuning_debug_override");   // Declared in controller_base
+  bool roll_tuning_debug_override = params.get_bool("roll_tuning_debug_override");   // Declared in controller_base
 
 
   // Set rudder command to zero, can use cooridinated_turn_hold if implemented.
@@ -96,8 +96,8 @@ void controller_successive_loop::alt_hold_longitudinal_control(const struct inpu
                                                                struct output_s & output)
 {
   // For readability, declare parameters here that will be used in this function
-  double alt_hz = get_double("alt_hz");   // Declared in controller_state_machine
-  bool pitch_tuning_debug_override = get_bool("pitch_tuning_debug_override");   // Declared in controller_base
+  double alt_hz = params.get_double("alt_hz");   // Declared in controller_state_machine
+  bool pitch_tuning_debug_override = params.get_bool("pitch_tuning_debug_override");   // Declared in controller_base
 
   // Saturate the altitude command.
   double adjusted_hc = adjust_h_c(input.h_c, input.h, alt_hz);
@@ -124,7 +124,7 @@ void controller_successive_loop::climb_longitudinal_control(const struct input_s
                                                             struct output_s & output)
 {
   // For readability, declare parameters here that will be used in this function
-  double alt_hz = get_double("alt_hz");   // Declared in controller_state_machine
+  double alt_hz = params.get_double("alt_hz");   // Declared in controller_state_machine
 
   // Saturate the altitude command.
   double adjusted_hc = adjust_h_c(input.h_c, input.h, alt_hz);
@@ -148,8 +148,8 @@ void controller_successive_loop::take_off_longitudinal_control(const struct inpu
                                                                struct output_s & output)
 {
   // For readability, declare parameters here that will be used in this function
-  double max_takeoff_throttle = get_double("max_takeoff_throttle");
-  double cmd_takeoff_pitch = get_double("cmd_takeoff_pitch");
+  double max_takeoff_throttle = params.get_double("max_takeoff_throttle");
+  double cmd_takeoff_pitch = params.get_double("cmd_takeoff_pitch");
   
   // Set throttle to not overshoot altitude.
   output.delta_t =
@@ -202,11 +202,11 @@ void controller_successive_loop::take_off_longitudinal_control(const struct inpu
 float controller_successive_loop::course_hold(float chi_c, float chi, float phi_ff, float r)
 {
   // For readability, declare parameters here that will be used in this function
-  int64_t frequency = get_int("frequency");   // Declared in controller_base
-  double c_kp = get_double("c_kp");
-  double c_ki = get_double("c_ki");
-  double c_kd = get_double("c_kd");
-  double max_roll = get_double("max_roll");
+  int64_t frequency = params.get_int("frequency");   // Declared in controller_base
+  double c_kp = params.get_double("c_kp");
+  double c_ki = params.get_double("c_ki");
+  double c_kd = params.get_double("c_kd");
+  double max_roll = params.get_double("max_roll");
 
   double wrapped_chi_c = wrap_within_180(chi, chi_c);
 
@@ -234,13 +234,13 @@ float controller_successive_loop::course_hold(float chi_c, float chi, float phi_
 float controller_successive_loop::roll_hold(float phi_c, float phi, float p)
 {
   // For readability, declare parameters here that will be used in this function
-  int64_t frequency = get_int("frequency");   // Declared in controller_base
-  double r_kp = get_double("r_kp");
-  double r_ki = get_double("r_ki");
-  double r_kd = get_double("r_kd");
-  double max_a = get_double("max_a");
-  double trim_a = get_double("trim_a");
-  double pwm_rad_a = get_double("pwm_rad_a");  // Declared in controller base
+  int64_t frequency = params.get_int("frequency");   // Declared in controller_base
+  double r_kp = params.get_double("r_kp");
+  double r_ki = params.get_double("r_ki");
+  double r_kd = params.get_double("r_kd");
+  double max_a = params.get_double("max_a");
+  double trim_a = params.get_double("trim_a");
+  double pwm_rad_a = params.get_double("pwm_rad_a");  // Declared in controller base
 
   float error = phi_c - phi;
 
@@ -265,13 +265,13 @@ float controller_successive_loop::roll_hold(float phi_c, float phi, float p)
 float controller_successive_loop::pitch_hold(float theta_c, float theta, float q)
 {
   // For readability, declare parameters here that will be used in this function
-  int64_t frequency = get_int("frequency");   // Declared in controller_base
-  double p_kp = get_double("p_kp");
-  double p_ki = get_double("p_ki");
-  double p_kd = get_double("p_kd");
-  double max_e = get_double("max_e");
-  double trim_e = get_double("trim_e");
-  double pwm_rad_e = get_double("pwm_rad_e");   // Declared in controller_base
+  int64_t frequency = params.get_int("frequency");   // Declared in controller_base
+  double p_kp = params.get_double("p_kp");
+  double p_ki = params.get_double("p_ki");
+  double p_kd = params.get_double("p_kd");
+  double max_e = params.get_double("max_e");
+  double trim_e = params.get_double("trim_e");
+  double pwm_rad_e = params.get_double("pwm_rad_e");   // Declared in controller_base
 
   float error = theta_c - theta;
 
@@ -297,13 +297,13 @@ float controller_successive_loop::pitch_hold(float theta_c, float theta, float q
 float controller_successive_loop::airspeed_with_throttle_hold(float Va_c, float Va)
 {
   // For readability, declare parameters here that will be used in this function
-  int64_t frequency = get_int("frequency");   // Declared in controller_base
-  double tau = get_double("tau");
-  double a_t_kp = get_double("a_t_kp");
-  double a_t_ki = get_double("a_t_ki");
-  double a_t_kd = get_double("a_t_kd");
-  double max_t = get_double("max_t");
-  double trim_t = get_double("trim_t");
+  int64_t frequency = params.get_int("frequency");   // Declared in controller_base
+  double tau = params.get_double("tau");
+  double a_t_kp = params.get_double("a_t_kp");
+  double a_t_ki = params.get_double("a_t_ki");
+  double a_t_kd = params.get_double("a_t_kd");
+  double max_t = params.get_double("max_t");
+  double trim_t = params.get_double("trim_t");
 
   float error = Va_c - Va;
 
@@ -331,13 +331,13 @@ float controller_successive_loop::airspeed_with_throttle_hold(float Va_c, float 
 float controller_successive_loop::altitude_hold_control(float h_c, float h)
 {
   // For readability, declare parameters here that will be used in this function
-  int64_t frequency = get_int("frequency");   // Declared in controller_base
-  double alt_hz = get_double("alt_hz");
-  double tau = get_double("tau");
-  double a_kp = get_double("a_kp");
-  double a_ki = get_double("a_ki");
-  double a_kd = get_double("a_kd");
-  double max_pitch = get_double("max_pitch");
+  int64_t frequency = params.get_int("frequency");   // Declared in controller_base
+  double alt_hz = params.get_double("alt_hz");
+  double tau = params.get_double("tau");
+  double a_kp = params.get_double("a_kp");
+  double a_ki = params.get_double("a_ki");
+  double a_kd = params.get_double("a_kd");
+  double max_pitch = params.get_double("max_pitch");
 
   float error = h_c - h;
 
@@ -406,36 +406,36 @@ float controller_successive_loop::adjust_h_c(float h_c, float h, float max_diff)
 void controller_successive_loop::declare_parameters()
 {
   // Declare param with ROS2 and set the default value.
-  declare_param("max_takeoff_throttle", 0.55);
-  declare_param("c_kp", 2.37);
-  declare_param("c_ki", .4);
-  declare_param("c_kd", .0);
-  declare_param("max_roll", 25.0);
-  declare_param("cmd_takeoff_pitch", 5.0);
+  params.declare_param("max_takeoff_throttle", 0.55);
+  params.declare_param("c_kp", 2.37);
+  params.declare_param("c_ki", .4);
+  params.declare_param("c_kd", .0);
+  params.declare_param("max_roll", 25.0);
+  params.declare_param("cmd_takeoff_pitch", 5.0);
 
-  declare_param("r_kp", .06);
-  declare_param("r_ki", .0);
-  declare_param("r_kd", .04);
-  declare_param("max_a", .15);
-  declare_param("trim_a", 0.0);
+  params.declare_param("r_kp", .06);
+  params.declare_param("r_ki", .0);
+  params.declare_param("r_kd", .04);
+  params.declare_param("max_a", .15);
+  params.declare_param("trim_a", 0.0);
 
-  declare_param("p_kp", -.15);
-  declare_param("p_ki", .0);
-  declare_param("p_kd", -.05);
-  declare_param("max_e", .15);
-  declare_param("max_pitch", 20.0);
-  declare_param("trim_e", 0.02);
+  params.declare_param("p_kp", -.15);
+  params.declare_param("p_ki", .0);
+  params.declare_param("p_kd", -.05);
+  params.declare_param("max_e", .15);
+  params.declare_param("max_pitch", 20.0);
+  params.declare_param("trim_e", 0.02);
 
-  declare_param("tau", 50.0);
-  declare_param("a_t_kp", .05);
-  declare_param("a_t_ki", .005);
-  declare_param("a_t_kd", 0.0);
-  declare_param("max_t", 1.0);
-  declare_param("trim_t", 0.5);
+  params.declare_param("tau", 50.0);
+  params.declare_param("a_t_kp", .05);
+  params.declare_param("a_t_ki", .005);
+  params.declare_param("a_t_kd", 0.0);
+  params.declare_param("max_t", 1.0);
+  params.declare_param("trim_t", 0.5);
 
-  declare_param("a_kp", 0.015);
-  declare_param("a_ki", 0.003);
-  declare_param("a_kd", 0.0);
+  params.declare_param("a_kp", 0.015);
+  params.declare_param("a_ki", 0.003);
+  params.declare_param("a_kd", 0.0);
 }
 
 } // namespace rosplane
