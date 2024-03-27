@@ -78,4 +78,30 @@ void param_manager::set_parameters()
   }
 }
 
+bool param_manager::set_parameters_callback(const std::vector<rclcpp::Parameter> & parameters)
+{
+  // Check each parameter in the incoming vector of parameters to change, and change the appropriate parameter.
+  for (const auto & param : parameters) {
+    
+    // Check if the parameter is in the params object or return an error
+    if (params_.find(param.get_name()) == params_.end()) {
+      RCLCPP_ERROR_STREAM(container_node_->get_logger(), "One of the parameters given does not is not a parameter of the controller node. Parameter: " + param.get_name());
+      return false;
+    }
+    
+    if (param.get_type() == rclcpp::ParameterType::PARAMETER_DOUBLE)
+      params_[param.get_name()] = param.as_double();
+    else if (param.get_type() == rclcpp::ParameterType::PARAMETER_BOOL)
+      params_[param.get_name()] = param.as_bool();
+    else if (param.get_type() == rclcpp::ParameterType::PARAMETER_INTEGER)
+      params_[param.get_name()] = param.as_int();
+    else if (param.get_type() == rclcpp::ParameterType::PARAMETER_STRING)
+      params_[param.get_name()] = param.as_string();
+    else
+      RCLCPP_ERROR_STREAM(container_node_->get_logger(), "Unable to determine parameter type in controller. Type is " + std::to_string(param.get_type()));
+
+  }
+  return true;
+}
+
 }   // namespace rosplane

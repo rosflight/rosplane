@@ -49,7 +49,16 @@ public:
    */
   // TODO: Check to make sure that setting a parameter before declaring it won't give an error.
   // Hypothesis is that it will break, but is that not desired behavior?
-  void set_parameters();
+  void set_parameters();    
+  
+  /**
+   * This function should be called in the parametersCallback function in a containing ROS node.
+   * It takes in a vector of changed parameters and updates them within the params_ object.
+   * 
+   * @param parameters: Vector of ROS Parameter objects that have been changed. 
+   * @returns Boolean value corresponding to success or failure of the parameter changes
+  */
+  bool set_parameters_callback(const std::vector<rclcpp::Parameter> & parameters);
 
 private:
   /**

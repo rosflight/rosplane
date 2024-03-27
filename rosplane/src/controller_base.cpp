@@ -170,28 +170,12 @@ controller_base::parametersCallback(const std::vector<rclcpp::Parameter> & param
   result.successful = true;
   result.reason = "success";
 
-  // Check each parameter in the incoming vector of parameters to change, and change the appropriate parameter.
-  for (const auto & param : parameters) {
-    
-    // Check if the parameter is in the params object or return an error
-    if (params_.find(param.get_name()) == params_.end()) {
-      result.successful = false;
-      result.reason =
-        "One of the parameters given does not is not a parameter of the controller node. Parameter: " + param.get_name();
-      break;
-    }
-    
-    if (param.get_type() == rclcpp::ParameterType::PARAMETER_DOUBLE)
-      params_[param.get_name()] = param.as_double();
-    else if (param.get_type() == rclcpp::ParameterType::PARAMETER_BOOL)
-      params_[param.get_name()] = param.as_bool();
-    else if (param.get_type() == rclcpp::ParameterType::PARAMETER_INTEGER)
-      params_[param.get_name()] = param.as_int();
-    else if (param.get_type() == rclcpp::ParameterType::PARAMETER_STRING)
-      params_[param.get_name()] = param.as_string();
-    else
-      RCLCPP_ERROR_STREAM(this->get_logger(), "Unable to determine parameter type in controller. Type is " + std::to_string(param.get_type()));
-
+  bool success = params.set_parameters_callback(parameters);
+  if (!success)
+  {
+    result.successful = false;
+    result.reason =
+      "One of the parameters given does not is not a parameter of the controller node.";
   }
 
   return result;
