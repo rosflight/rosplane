@@ -134,15 +134,6 @@ private:
    */
   rclcpp::TimerBase::SharedPtr timer_;
 
-  /** Parameters for use in control loops.*/
-  /** Note that these parameters are not used:
-   * 
-   * double p_ff;                 //< pitch feedforward
-   * double trim_r;               //< trim value for rudder
-   * double max_r;                //< maximum value for rudder
-   */
-  std::map<std::string, std::variant<double, bool, int64_t, std::string>> params_;   // Can I cast ROS int to int?
-
   /**
    * The stored value for the most up to date commands for the controller.
    */

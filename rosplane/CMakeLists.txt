@@ -62,7 +62,8 @@ install(TARGETS
 # Follower
 add_executable(rosplane_path_follower
             src/path_follower_example.cpp
-            src/path_follower_base.cpp)
+            src/path_follower_base.cpp
+            src/param_manager.cpp)
 ament_target_dependencies(rosplane_path_follower rosplane_msgs rclcpp rclpy Eigen3)
 install(TARGETS
   rosplane_path_follower
@@ -71,7 +72,8 @@ install(TARGETS
 # Manager
 add_executable(rosplane_path_manager
             src/path_manager_base.cpp
-            src/path_manager_example.cpp)
+            src/path_manager_example.cpp
+            src/param_manager.cpp)
 ament_target_dependencies(rosplane_path_manager rosplane_msgs rclcpp rclpy Eigen3)
 install(TARGETS
   rosplane_path_manager
@@ -79,7 +81,8 @@ install(TARGETS
 
 # Planner
 add_executable(rosplane_path_planner
-            src/path_planner.cpp)
+            src/path_planner.cpp
+            src/param_manager.cpp)
 ament_target_dependencies(rosplane_path_planner rosplane_msgs std_srvs rclcpp rclpy Eigen3)
 install(TARGETS
   rosplane_path_planner
@@ -88,7 +91,8 @@ install(TARGETS
 # Estimator
 add_executable(rosplane_estimator_node
               src/estimator_base.cpp
-              src/estimator_example.cpp)
+              src/estimator_example.cpp
+              src/param_manager.cpp)
 ament_target_dependencies(rosplane_estimator_node rosplane_msgs rosflight_msgs rclcpp Eigen3)
 install(TARGETS
         rosplane_estimator_node
