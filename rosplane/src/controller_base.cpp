@@ -9,7 +9,7 @@ namespace rosplane
 {
 
 controller_base::controller_base()
-    : Node("controller_base")
+    : Node("controller_base"), params(this)
 {
 
   // Advertise published topics.
@@ -30,10 +30,10 @@ controller_base::controller_base()
   declare_parameters();
 
   // Set the values for the parameters, from the param file or use the deafault value.
-  set_parameters();
+  params.set_parameters();
 
-  bool roll_tuning_debug_override = get_bool("roll_tuning_debug_override");
-  bool pitch_tuning_debug_override = get_bool("pitch_tuning_debug_override");
+  bool roll_tuning_debug_override = params.get_bool("roll_tuning_debug_override");
+  bool pitch_tuning_debug_override = params.get_bool("pitch_tuning_debug_override");
 
   if (roll_tuning_debug_override || pitch_tuning_debug_override) {
     tuning_debug_sub_ = this->create_subscription<rosplane_msgs::msg::ControllerInternalsDebug>(
@@ -50,12 +50,12 @@ controller_base::controller_base()
 void controller_base::declare_parameters()
 {
   // Declare default parameters associated with this controller, controller_base
-  declare_param("roll_tuning_debug_override", false);
-  declare_param("pitch_tuning_debug_override", false);
-  declare_param("pwm_rad_e", 1.0);
-  declare_param("pwm_rad_a", 1.0);
-  declare_param("pwm_rad_r", 1.0);
-  declare_int("frequency", 100);
+  params.declare_param("roll_tuning_debug_override", false);
+  params.declare_param("pitch_tuning_debug_override", false);
+  params.declare_param("pwm_rad_e", 1.0);
+  params.declare_param("pwm_rad_a", 1.0);
+  params.declare_param("pwm_rad_r", 1.0);
+  params.declare_int("frequency", 100);
 }
 
 void controller_base::controller_commands_callback(
@@ -163,79 +163,6 @@ void controller_base::actuator_controls_publish()
   }
 }
 
-void controller_base::declare_param(std::string param_name, double value)
-{
-  // Insert the parameter into the parameter struct
-  params1_[param_name] = value;
-  // Declare each of the parameters, making it visible to the ROS2 param system.
-  this->declare_parameter(param_name, value);
-}
-
-void controller_base::declare_param(std::string param_name, bool value)
-{
-  // Insert the parameter into the parameter struct
-  params1_[param_name] = value;
-  // Declare each of the parameters, making it visible to the ROS2 param system.
-  this->declare_parameter(param_name, value);
-}
-
-void controller_base::declare_int(std::string param_name, int64_t value)
-{
-  // Insert the parameter into the parameter struct
-  params1_[param_name] = value;
-  // Declare each of the parameters, making it visible to the ROS2 param system.
-  this->declare_parameter(param_name, value);
-}
-
-void controller_base::declare_param(std::string param_name, std::string value)
-{
-  // Insert the parameter into the parameter struct
-  params1_[param_name] = value;
-  // Declare each of the parameters, making it visible to the ROS2 param system.
-  this->declare_parameter(param_name, value);
-}
-
-double controller_base::get_double(std::string param_name)
-{
-    return std::get<double>(params1_[param_name]);
-} 
-
-bool controller_base::get_bool(std::string param_name)
-{
-  return std::get<bool>(params1_[param_name]);
-} 
-
-int64_t controller_base::get_int(std::string param_name)
-{
-  return std::get<int64_t>(params1_[param_name]);
-} 
-
-std::string controller_base::get_string(std::string param_name)
-{
-  return std::get<std::string>(params1_[param_name]);
-} 
-
-void controller_base::set_parameters()
-{
-
-  // Get the parameters from the launch file, if given.
-  // If not, use the default value defined in the header file.
-  for (const auto& [key, value] : params1_)
-  {
-    auto type = this->get_parameter(key).get_type();
-    if (type == rclcpp::ParameterType::PARAMETER_DOUBLE)
-      params1_[key] = this->get_parameter(key).as_double();
-    else if (type == rclcpp::ParameterType::PARAMETER_BOOL)
-      params1_[key] = this->get_parameter(key).as_bool();
-    else if (type == rclcpp::ParameterType::PARAMETER_INTEGER)
-      params1_[key] = this->get_parameter(key).as_int();
-    else if (type == rclcpp::ParameterType::PARAMETER_STRING)
-      params1_[key] = this->get_parameter(key).as_string();
-    else  
-      RCLCPP_ERROR_STREAM(this->get_logger(), "Unable to set parameter: " + key + ". Error casting parameter as double, int, string, or bool!");
-  }
-}
-
 rcl_interfaces::msg::SetParametersResult 
 controller_base::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
 {
@@ -247,7 +174,7 @@ controller_base::parametersCallback(const std::vector<rclcpp::Parameter> & param
   for (const auto & param : parameters) {
     
     // Check if the parameter is in the params object or return an error
-    if (params1_.find(param.get_name()) == params1_.end()) {
+    if (params_.find(param.get_name()) == params_.end()) {
       result.successful = false;
       result.reason =
         "One of the parameters given does not is not a parameter of the controller node. Parameter: " + param.get_name();
@@ -255,13 +182,13 @@ controller_base::parametersCallback(const std::vector<rclcpp::Parameter> & param
     }
     
     if (param.get_type() == rclcpp::ParameterType::PARAMETER_DOUBLE)
-      params1_[param.get_name()] = param.as_double();
+      params_[param.get_name()] = param.as_double();
     else if (param.get_type() == rclcpp::ParameterType::PARAMETER_BOOL)
-      params1_[param.get_name()] = param.as_bool();
+      params_[param.get_name()] = param.as_bool();
     else if (param.get_type() == rclcpp::ParameterType::PARAMETER_INTEGER)
-      params1_[param.get_name()] = param.as_int();
+      params_[param.get_name()] = param.as_int();
     else if (param.get_type() == rclcpp::ParameterType::PARAMETER_STRING)
-      params1_[param.get_name()] = param.as_string();
+      params_[param.get_name()] = param.as_string();
     else
       RCLCPP_ERROR_STREAM(this->get_logger(), "Unable to determine parameter type in controller. Type is " + std::to_string(param.get_type()));
 
@@ -273,7 +200,7 @@ controller_base::parametersCallback(const std::vector<rclcpp::Parameter> & param
 void controller_base::set_timer()
 {
 
-  int64_t frequency = get_int("frequency");
+  int64_t frequency = params.get_int("frequency");
   auto timer_period =
     std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1'000'000));
 
@@ -287,9 +214,9 @@ void controller_base::convert_to_pwm(controller_base::output_s & output)
 {
 
   // Assign parameters from parameters object
-  double pwm_rad_e = get_double("pwm_rad_e");
-  double pwm_rad_a = get_double("pwm_rad_a");
-  double pwm_rad_r = get_double("pwm_rad_r");
+  double pwm_rad_e = params.get_double("pwm_rad_e");
+  double pwm_rad_a = params.get_double("pwm_rad_a");
+  double pwm_rad_r = params.get_double("pwm_rad_r");
   // double test = get_double("frequency");
 
   // Multiply each control effort (in radians) by a scaling factor to a pwm.
