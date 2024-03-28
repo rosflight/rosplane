@@ -39,22 +39,54 @@ void param_manager::declare_param(std::string param_name, std::string value)
 
 double param_manager::get_double(std::string param_name)
 {
-    return std::get<double>(params_[param_name]);
+    try
+    {
+      return std::get<double>(params_[param_name]);
+    }
+    catch (std::bad_variant_access & e)
+    {
+      RCLCPP_ERROR_STREAM(container_node_->get_logger(), "ERROR GETTING PARAMETER: " + param_name);
+      throw std::runtime_error("error");
+    }
 } 
 
 bool param_manager::get_bool(std::string param_name)
 {
-  return std::get<bool>(params_[param_name]);
+    try
+    {
+      return std::get<bool>(params_[param_name]);
+    }
+    catch (std::bad_variant_access & e)
+    {
+      RCLCPP_ERROR_STREAM(container_node_->get_logger(), "ERROR GETTING PARAMETER: " + param_name);
+      throw std::runtime_error("error");
+    }
 } 
 
 int64_t param_manager::get_int(std::string param_name)
 {
-  return std::get<int64_t>(params_[param_name]);
+    try
+    {
+      return std::get<int64_t>(params_[param_name]);
+    }
+    catch (std::bad_variant_access & e)
+    {
+      RCLCPP_ERROR_STREAM(container_node_->get_logger(), "ERROR GETTING PARAMETER: " + param_name);
+      throw std::runtime_error("error");
+    }
 } 
 
 std::string param_manager::get_string(std::string param_name)
 {
-  return std::get<std::string>(params_[param_name]);
+    try
+    {
+      return std::get<std::string>(params_[param_name]);
+    }
+    catch (std::bad_variant_access & e)
+    {
+      RCLCPP_ERROR_STREAM(container_node_->get_logger(), "ERROR GETTING PARAMETER: " + param_name);
+      throw std::runtime_error("error");
+    }
 } 
 
 void param_manager::set_parameters()
