@@ -21,6 +21,7 @@
 #include <rosplane_msgs/msg/state.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
+#include <param_manager.hpp>
 
 #define EARTH_RADIUS 6378145.0f
 
@@ -76,23 +77,13 @@ protected:
     float we;
   };
 
-  struct params_s
-  {
-    double gravity;
-    double rho;
-    double sigma_accel;
-    double sigma_n_gps;
-    double sigma_e_gps;
-    double sigma_Vg_gps;
-    double sigma_course_gps;
-    double sigma_gyro;
-    double Ts;
-  };
-
   bool baro_init_; /**< Initial barometric pressure */
 
-  virtual void estimate(const struct params_s & params, const struct input_s & input,
+  virtual void estimate(const struct input_s & input,
                         struct output_s & output) = 0;
+
+protected:
+  param_manager params;
 
 private:
   rclcpp::Publisher<rosplane_msgs::msg::State>::SharedPtr vehicle_state_pub_;
@@ -112,7 +103,7 @@ private:
   void airspeedCallback(const rosflight_msgs::msg::Airspeed::SharedPtr msg);
   void statusCallback(const rosflight_msgs::msg::Status::SharedPtr msg);
 
-  double update_rate_ = 100.0;
+  // double update_rate_ = 100.0;
   rclcpp::TimerBase::SharedPtr update_timer_;
   std::string gnss_fix_topic_ = "navsat_compat/fix";
   std::string gnss_vel_topic_ = "navsat_compat/vel";
@@ -131,8 +122,11 @@ private:
   int baro_count_;                        /**< Used to grab the first set of baro measurements */
   std::vector<float> init_static_vector_; /**< Used to grab the first set of baro measurements */
 
-  struct params_s params_ = {
-    9.8, 1.225, .0245, .01, .01, .005, .005 / 20., M_PI * .13 / 180.0, 1.0f / update_rate_};
+  /**
+   * This declares each parameter as a parameter so that the ROS2 parameter system can recognize each parameter.
+   * It also sets the default parameter, which will then be overridden by a launch script.
+   */
+  void declare_parameters();
 
   struct input_s input_;
 };

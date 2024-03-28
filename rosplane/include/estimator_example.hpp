@@ -15,7 +15,7 @@ public:
   estimator_example();
 
 private:
-  virtual void estimate(const params_s & params, const input_s & input, output_s & output);
+  virtual void estimate(const input_s & input, output_s & output);
 
   //    float gps_n_old_;
   //    float gps_e_old_;
@@ -70,6 +70,17 @@ private:
   float gate_threshold_ = 9.21; // chi2(q = .01, df = 2)
 
   void check_xhat_a();
+
+  /**
+   * This declares each parameter as a parameter so that the ROS2 parameter system can recognize each parameter.
+   * It also sets the default parameter, which will then be overridden by a launch script.
+   */
+  void declare_parameters();
+
+  /**
+   * Initializes some variables that depend on ROS2 parameters
+  */
+  void init_variables();
 };
 } // namespace rosplane
 
