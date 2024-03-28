@@ -6,7 +6,7 @@ namespace rosplane
 {
 
 estimator_base::estimator_base()
-    : Node("estimator_base")
+    : Node("estimator_base"), params(this)
 {
 
   vehicle_state_pub_ = this->create_publisher<rosplane_msgs::msg::State>("estimated_state", 10);
@@ -30,12 +30,15 @@ estimator_base::estimator_base()
   baro_count_ = 0;
   armed_first_time_ = false;
 
-  params_.sigma_n_gps = .01;
-  params_.sigma_e_gps = .01;
-  params_.sigma_Vg_gps = .005;
-  params_.sigma_course_gps = .005 / 20;
+  // Declare and set parameters with the ROS2 system
+  declare_parameters();
+  params.set_parameters();
+}
 
-  params_.sigma_accel = .0025 * 9.81;
+void estimator_base::declare_parameters()
+{
+  params.declare_param("rho", 1.225);
+  params.declare_param("gravity", 9.8);
 }
 
 // TODO add param callback.
@@ -45,7 +48,7 @@ void estimator_base::update()
   struct output_s output;
 
   if (armed_first_time_) {
-    estimate(params_, input_, output);
+    estimate(input_, output);
   } else {
     output.pn = output.pe = output.h = 0;
     output.phi = output.theta = output.psi = 0;
@@ -159,6 +162,9 @@ void estimator_base::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
 
 void estimator_base::baroAltCallback(const rosflight_msgs::msg::Barometer::SharedPtr msg)
 {
+  // For readability, declare the parameters here
+  double rho = params.get_double("rho");
+  double gravity = params.get_double("gravity");
 
   if (armed_first_time_ && !baro_init_) {
     if (baro_count_ < 100) {
@@ -198,7 +204,7 @@ void estimator_base::baroAltCallback(const rosflight_msgs::msg::Barometer::Share
     float static_pres_old = input_.static_pres;
     input_.static_pres = -msg->pressure + init_static_;
 
-    float gate_gain = 1.35 * params_.rho * params_.gravity;
+    float gate_gain = 1.35 * rho * gravity;
     if (input_.static_pres < static_pres_old - gate_gain) {
       input_.static_pres = static_pres_old - gate_gain;
     } else if (input_.static_pres > static_pres_old + gate_gain) {
@@ -209,10 +215,13 @@ void estimator_base::baroAltCallback(const rosflight_msgs::msg::Barometer::Share
 
 void estimator_base::airspeedCallback(const rosflight_msgs::msg::Airspeed::SharedPtr msg)
 {
+  // For readability, declare the parameters here
+  double rho = params.get_double("rho");
+
   float diff_pres_old = input_.diff_pres;
   input_.diff_pres = msg->differential_pressure;
 
-  float gate_gain = pow(5, 2) * params_.rho / 2.0;
+  float gate_gain = pow(5, 2) * rho / 2.0;
   if (input_.diff_pres < diff_pres_old - gate_gain) {
     input_.diff_pres = diff_pres_old - gate_gain;
   } else if (input_.diff_pres > diff_pres_old + gate_gain) {
