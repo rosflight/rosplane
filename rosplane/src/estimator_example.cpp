@@ -75,7 +75,7 @@ void estimator_example::init_variables()
   double sigma_Vg_gps = params.get_double("sigma_Vg_gps");
   double sigma_course_gps = params.get_double("sigma_course_gps");
   double sigma_accel = params.get_double("sigma_accel");
-  double frequency = params.get_double("frequency");
+  int64_t frequency = params.get_int("frequency");
   double Ts = 1.0 / frequency;
   float lpf_a = params.get_double("lpf_a");
   float lpf_a1 = params.get_double("lpf_a1");
@@ -99,7 +99,7 @@ void estimator_example::estimate(const input_s & input, output_s & output)
   // For readability, declare the parameters here
   double rho = params.get_double("rho");
   double gravity = params.get_double("gravity");
-  double frequency = params.get_double("frequency");
+  int64_t frequency = params.get_int("frequency");
   double gps_n_lim = params.get_double("gps_n_lim");
   double gps_e_lim = params.get_double("gps_e_lim");
   double Ts = 1.0 / frequency;
