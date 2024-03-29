@@ -128,6 +128,20 @@ private:
    */
   void declare_parameters();
 
+  /**
+   * ROS2 parameter system interface. This connects ROS2 parameters with the defined update callback, parametersCallback.
+   */
+  OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
+
+  /**
+   * Callback for when parameters are changed using ROS2 parameter system.
+   * This takes all new changed params and updates the appropiate parameters in the params_ object.
+   * @param parameters Set of updated parameters.
+   * @return Service result object that tells the requester the result of the param update.
+   */
+  rcl_interfaces::msg::SetParametersResult
+  parametersCallback(const std::vector<rclcpp::Parameter> & parameters);
+
   struct input_s input_;
 };
 

@@ -26,6 +26,10 @@ estimator_base::estimator_base()
 
   update_timer_ = this->create_wall_timer(10ms, std::bind(&estimator_base::update, this));
 
+  // Set the parameter callback, for when parameters are changed.
+  parameter_callback_handle_ = this->add_on_set_parameters_callback(
+    std::bind(&estimator_base::parametersCallback, this, std::placeholders::_1));
+
   init_static_ = 0;
   baro_count_ = 0;
   armed_first_time_ = false;
@@ -41,7 +45,22 @@ void estimator_base::declare_parameters()
   params.declare_param("gravity", 9.8);
 }
 
-// TODO add param callback.
+rcl_interfaces::msg::SetParametersResult estimator_base::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
+{
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+  result.reason = "success";
+
+  bool success = params.set_parameters_callback(parameters);
+  if (!success)
+  {
+    result.successful = false;
+    result.reason =
+      "One of the parameters given does not is not a parameter of the estimator node.";
+  }
+
+  return result;
+}
 
 void estimator_base::update()
 {

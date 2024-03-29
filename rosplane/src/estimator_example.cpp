@@ -80,7 +80,7 @@ void estimator_example::init_variables()
   float lpf_a = params.get_double("lpf_a");
   float lpf_a1 = params.get_double("lpf_a1");
 
-  R_accel_ = R_accel_ * pow(sigma_accel, 2);
+  R_accel_ = Eigen::Matrix3f::Identity() * pow(sigma_accel, 2);
 
   R_p_(0, 0) = powf(sigma_n_gps, 2);
   R_p_(1, 1) = powf(sigma_e_gps, 2);
