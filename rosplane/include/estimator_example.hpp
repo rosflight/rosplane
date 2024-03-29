@@ -82,6 +82,7 @@ private:
   */
   void init_variables();
 };
+
 } // namespace rosplane
 
 #endif // ESTIMATOR_EXAMPLE_H
