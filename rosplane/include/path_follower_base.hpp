@@ -5,6 +5,7 @@
 #include <rosplane_msgs/msg/controller_commands.hpp>
 #include <rosplane_msgs/msg/current_path.hpp>
 #include <rosplane_msgs/msg/state.hpp>
+#include <param_manager.hpp>
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
@@ -50,16 +51,17 @@ protected:
     double phi_ff; /** feed forward term for orbits (rad) */
   };
 
-  struct params_s
-  {
-    double chi_infty;
-    double k_path;
-    double k_orbit;
-  };
+  // struct params_s
+  // {
+  //   double chi_infty;
+  //   double k_path;
+  //   double k_orbit;
+  // };
 
-  virtual void follow(const struct params_s & params, const struct input_s & input,
+  virtual void follow(const struct input_s & input,
                       struct output_s & output) = 0;
-  struct params_s params_ = {.5, 0.05, 4.0}; /**< params */
+  // struct params_s params_ = {.5, 0.05, 4.0}; /**< params */
+  param_manager params;
 
 private:
   rclcpp::Subscription<rosplane_msgs::msg::State>::SharedPtr vehicle_state_sub_;
@@ -83,6 +85,12 @@ private:
 
   rcl_interfaces::msg::SetParametersResult
   parametersCallback(const std::vector<rclcpp::Parameter> & parameters);
+
+  /**
+   * This declares each parameter as a parameter so that the ROS2 parameter system can recognize each parameter.
+   * It also sets the default parameter, which can be overridden by a launch script.
+   */
+  void declare_parameters();
 };
 
 } // namespace rosplane

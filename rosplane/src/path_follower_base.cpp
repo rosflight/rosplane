@@ -6,7 +6,7 @@ namespace rosplane
 {
 
 path_follower_base::path_follower_base()
-    : Node("path_follower_base")
+    : Node("path_follower_base"), params(this)
 {
   vehicle_state_sub_ = this->create_subscription<rosplane_msgs::msg::State>(
     "estimated_state", 10, std::bind(&path_follower_base::vehicle_state_callback, this, _1));
@@ -24,13 +24,9 @@ path_follower_base::path_follower_base()
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
     std::bind(&path_follower_base::parametersCallback, this, std::placeholders::_1));
 
-  this->declare_parameter("CHI_INFTY", params_.chi_infty);
-  this->declare_parameter("K_PATH", params_.k_path);
-  this->declare_parameter("K_ORBIT", params_.k_orbit);
-
-  params_.chi_infty = this->get_parameter("CHI_INFTY").as_double();
-  params_.k_path = this->get_parameter("K_PATH").as_double();
-  params_.k_orbit = this->get_parameter("K_ORBIT").as_double();
+  // Declare and set parameters with the ROS2 system
+  declare_parameters();
+  params.set_parameters();
 
   state_init_ = false;
   current_path_init_ = false;
@@ -42,7 +38,7 @@ void path_follower_base::update()
   struct output_s output;
 
   if (state_init_ == true && current_path_init_ == true) {
-    follow(params_, input_, output);
+    follow(input_, output);
     rosplane_msgs::msg::ControllerCommands msg;
 
     rclcpp::Time now = this->get_clock()->now();
@@ -61,7 +57,7 @@ void path_follower_base::update()
     RCLCPP_DEBUG_STREAM(this->get_logger(), "h_c: " << msg.h_c);
     RCLCPP_DEBUG_STREAM(this->get_logger(), "phi_ff: " << msg.phi_ff);
 
-    RCLCPP_DEBUG_STREAM(this->get_logger(), "k_orbit: " << params_.k_orbit);
+    // RCLCPP_DEBUG_STREAM(this->get_logger(), "k_orbit: " << params.get_double("k_orbit"));
 
     controller_commands_pub_->publish(msg);
   }
@@ -103,28 +99,23 @@ path_follower_base::parametersCallback(const std::vector<rclcpp::Parameter> & pa
 {
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = false;
-  result.reason = "";
+  result.reason = "One of the parameters given is not a parameter of the path_follower node";
 
-  for (const auto & param : parameters) {
-
-    if (param.get_name() == "CHI_INFTY") {
-      params_.chi_infty = param.as_double();
-      result.successful = true;
-      result.reason = "success";
-    } else if (param.get_name() == "K_PATH") {
-      RCLCPP_INFO_STREAM(this->get_logger(), "K_PATH Orginal: " << params_.k_path);
-      params_.k_path = param.as_double();
-      result.successful = true;
-      result.reason = "success";
-      RCLCPP_INFO_STREAM(this->get_logger(), "K_PATH Changed: " << params_.k_path);
-    } else if (param.get_name() == "K_ORBIT") {
-      params_.k_orbit = param.as_double();
-      result.successful = true;
-      result.reason = "success";
-    }
+  bool success = params.set_parameters_callback(parameters);
+  if (success)
+  {
+    result.successful = true;
+    result.reason = success;
   }
 
   return result;
+}
+
+void path_follower_base::declare_parameters()
+{
+  params.declare_param("chi_infty", .5);
+  params.declare_param("k_path", 0.05);
+  params.declare_param("k_orbit", 4.0);
 }
 
 } // namespace rosplane

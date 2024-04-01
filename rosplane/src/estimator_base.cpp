@@ -45,7 +45,8 @@ void estimator_base::declare_parameters()
   params.declare_param("gravity", 9.8);
 }
 
-rcl_interfaces::msg::SetParametersResult estimator_base::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
+rcl_interfaces::msg::SetParametersResult 
+estimator_base::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
@@ -56,7 +57,7 @@ rcl_interfaces::msg::SetParametersResult estimator_base::parametersCallback(cons
   {
     result.successful = false;
     result.reason =
-      "One of the parameters given does not is not a parameter of the estimator node.";
+      "One of the parameters given is not a parameter of the estimator node.";
   }
 
   return result;

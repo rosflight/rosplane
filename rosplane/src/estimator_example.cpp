@@ -64,6 +64,7 @@ estimator_example::estimator_example()
   // Declare and set parameters with the ROS2 system
   declare_parameters();
   params.set_parameters();
+  // Inits R matrix and alpha values with ROS2 parameters
   init_variables();
 }
 

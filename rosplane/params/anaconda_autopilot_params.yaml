@@ -25,7 +25,7 @@ autopilot: # node name.
     e_kp: .5
     e_kd: 0.0
     e_ki: .01
-    trim_e: 0.02
+    trim_e: 0.075
     trim_a: 0.0
     trim_r: 0.0
     trim_t: 0.5
@@ -36,7 +36,7 @@ autopilot: # node name.
     pwm_rad_e: 1.0
     pwm_rad_a: 1.0
     pwm_rad_r: 1.0
-    max_takeoff_throttle: 0.55
+    max_takeoff_throttle: 1.0
     mass: 2.28
     gravity: 9.8
     max_roll: 25.0

@@ -12,9 +12,14 @@ double wrap_within_180(double fixed_heading, double wrapped_heading)
 
 path_follower_example::path_follower_example() {}
 
-void path_follower_example::follow(const params_s & params, const input_s & input,
+void path_follower_example::follow(const input_s & input,
                                    output_s & output)
 {
+  // For readability, declare parameters that will be used in the function here
+  double k_path = params.get_double("k_path");
+  double k_orbit = params.get_double("k_orbit");
+  double chi_infty = params.get_double("chi_infty");
+
   if (input.p_type == path_type::Line) // follow straight line path specified by r and q
   {
     // compute wrapped version of the path angle
@@ -29,10 +34,10 @@ void path_follower_example::follow(const params_s & params, const input_s & inpu
     float path_error =
       -sinf(chi_q) * (input.pn - input.r_path[0]) + cosf(chi_q) * (input.pe - input.r_path[1]);
 
-    // RCLCPP_INFO_STREAM(this->get_logger(), "k_path: " << params.k_path);
+    // RCLCPP_INFO_STREAM(this->get_logger(), "k_path: " << k_path);
 
     // heading command
-    output.chi_c = chi_q - params.chi_infty * 2 / M_PI * atanf(params_.k_path * path_error);
+    output.chi_c = chi_q - chi_infty * 2 / M_PI * atanf(k_path * path_error);
 
     // desired altitude
     float h_d = -input.r_path[2]
@@ -54,7 +59,7 @@ void path_follower_example::follow(const params_s & params, const input_s & inpu
     //compute orbit error
     float norm_orbit_error = (d - input.rho_orbit) / input.rho_orbit;
     output.chi_c =
-      varphi + input.lam_orbit * (M_PI / 2.0 + atanf(params.k_orbit * norm_orbit_error));
+      varphi + input.lam_orbit * (M_PI / 2.0 + atanf(k_orbit * norm_orbit_error));
 
     // commanded altitude is the height of the orbit
     float h_d = -input.c_orbit[2];

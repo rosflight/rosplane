@@ -12,7 +12,7 @@ public:
   path_follower_example();
 
 private:
-  virtual void follow(const struct params_s & params, const struct input_s & input,
+  virtual void follow(const struct input_s & input,
                       struct output_s & output);
 };
 
