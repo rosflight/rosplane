@@ -31,15 +31,15 @@ public:
   path_manager_example();
 
 private:
-  virtual void manage(const struct params_s & params, const struct input_s & input,
+  virtual void manage(const struct input_s & input,
                       struct output_s & output);
 
-  void manage_line(const struct params_s & params, const struct input_s & input,
+  void manage_line(const struct input_s & input,
                    struct output_s & output);
-  void manage_fillet(const struct params_s & params, const struct input_s & input,
+  void manage_fillet(const struct input_s & input,
                      struct output_s & output);
   fillet_state fil_state_;
-  void manage_dubins(const struct params_s & params, const struct input_s & input,
+  void manage_dubins(const struct input_s & input,
                      struct output_s & output);
   dubin_state dub_state_;
   struct dubinspath_s
@@ -67,6 +67,12 @@ private:
 
   Eigen::Matrix3f rotz(float theta);
   float mo(float in);
+
+  /**
+   * This declares each parameter as a parameter so that the ROS2 parameter system can recognize each parameter.
+   * It also sets the default parameter, which will then be overridden by a launch script.
+   */
+  void declare_parameters();
 };
 } // namespace rosplane
 #endif // PATH_MANAGER_EXAMPLE_H

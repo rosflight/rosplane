@@ -14,10 +14,16 @@ path_manager_example::path_manager_example()
 {
   fil_state_ = fillet_state::STRAIGHT;
   dub_state_ = dubin_state::FIRST;
+
+  // Declare the parameters used in this class with the ROS2 system
+  declare_parameters();
+  params.set_parameters();
 }
 
-void path_manager_example::manage(const params_s & params, const input_s & input, output_s & output)
+void path_manager_example::manage(const input_s & input, output_s & output)
 {
+  // For readability, declare the parameters that will be used in the function here
+  double R_min = params.get_double("R_min");
 
   if (num_waypoints_ < 2) {
     //ROS_WARN_THROTTLE(4, "No waypoints received! Loitering about origin at 50m");
@@ -27,22 +33,25 @@ void path_manager_example::manage(const params_s & params, const input_s & input
     output.c[0] = 0.0f;
     output.c[1] = 0.0f;
     output.c[2] = -50.0f;
-    output.rho = params.R_min;
+    output.rho = R_min;
     output.lamda = 1;
   } else {
     if (waypoints_[idx_a_].chi_valid) {
-      manage_dubins(params, input, output);
+      manage_dubins(input, output);
     } else {
       /** Switch the following for flying directly to waypoints, or filleting corners */
-      //manage_line(params, input, output);
-      manage_fillet(params, input, output);
+      //manage_line(input, output);
+      manage_fillet(input, output);
     }
   }
 }
 
-void path_manager_example::manage_line(const params_s & params, const input_s & input,
+void path_manager_example::manage_line(const input_s & input,
                                        output_s & output)
 {
+  // For readability, declare the parameters that will be used in the function here
+  bool orbit_last = params.get_bool("orbit_last");
+  double R_min = params.get_double("R_min");
 
   Eigen::Vector3f p;
   p << input.pn, input.pe, -input.h;
@@ -51,7 +60,7 @@ void path_manager_example::manage_line(const params_s & params, const input_s & 
   int idx_c;
   if (idx_a_ == num_waypoints_ - 1) {
 
-    if (params.orbit_last) {
+    if (orbit_last) {
       output.flag = false;
       output.va_d = waypoints_[idx_a_].va_d;
       output.c[0] = waypoints_[idx_a_].w[0];
@@ -63,7 +72,7 @@ void path_manager_example::manage_line(const params_s & params, const input_s & 
       output.q[0] = 0.0;
       output.q[1] = 0.0;
       output.q[2] = 0.0;
-      output.rho = params.R_min;
+      output.rho = R_min;
 
       if (waypoints_[idx_a_].chi_d < M_PI) {
         output.lamda = 1;
@@ -109,12 +118,16 @@ void path_manager_example::manage_line(const params_s & params, const input_s & 
   }
 }
 
-void path_manager_example::manage_fillet(const params_s & params, const input_s & input,
+void path_manager_example::manage_fillet(const input_s & input,
                                          output_s & output)
 {
+  // For readability, declare the parameters that will be used in the function here
+  bool orbit_last = params.get_bool("orbit_last");
+  double R_min = params.get_double("R_min");
+
   if (num_waypoints_ < 3) //since it fillets don't make sense between just two points
   {
-    manage_line(params, input, output);
+    manage_line(input, output);
     return;
   }
 
@@ -125,7 +138,7 @@ void path_manager_example::manage_fillet(const params_s & params, const input_s 
   int idx_c;
   if (idx_a_ == num_waypoints_ - 1) {
 
-    if (params.orbit_last) {
+    if (orbit_last) {
       output.flag = false;
       output.va_d = waypoints_[idx_a_].va_d;
       output.c[0] = waypoints_[idx_a_].w[0];
@@ -137,7 +150,7 @@ void path_manager_example::manage_fillet(const params_s & params, const input_s 
       output.q[0] = 0.0;
       output.q[1] = 0.0;
       output.q[2] = 0.0;
-      output.rho = params.R_min;
+      output.rho = R_min;
 
       if (waypoints_[idx_a_].chi_d < M_PI) {
         output.lamda = 1;
@@ -153,7 +166,7 @@ void path_manager_example::manage_fillet(const params_s & params, const input_s 
   } else if (idx_a_ == num_waypoints_ - 2) {
     idx_b = num_waypoints_ - 1;
 
-    if (params.orbit_last) {
+    if (orbit_last) {
       idx_c = 0;
       idx_a_ = idx_b;
       return;
@@ -168,8 +181,6 @@ void path_manager_example::manage_fillet(const params_s & params, const input_s 
   Eigen::Vector3f w_im1(waypoints_[idx_a_].w);
   Eigen::Vector3f w_i(waypoints_[idx_b].w);
   Eigen::Vector3f w_ip1(waypoints_[idx_c].w);
-
-  float R_min = params.R_min;
 
   output.va_d = waypoints_[idx_a_].va_d;
   output.r[0] = w_im1(0);
@@ -216,9 +227,12 @@ void path_manager_example::manage_fillet(const params_s & params, const input_s 
   }
 }
 
-void path_manager_example::manage_dubins(const params_s & params, const input_s & input,
+void path_manager_example::manage_dubins(const input_s & input,
                                          output_s & output)
 {
+  // For readability, declare the parameters that will be used in the function here
+  double R_min = params.get_double("R_min");
+
   Eigen::Vector3f p;
   p << input.pn, input.pe, -input.h;
 
@@ -235,7 +249,7 @@ void path_manager_example::manage_dubins(const params_s & params, const input_s 
 
   switch (dub_state_) {
     case dubin_state::FIRST:
-      dubinsParameters(waypoints_[0], waypoints_[1], params.R_min);
+      dubinsParameters(waypoints_[0], waypoints_[1], R_min);
       output.flag = false;
       output.c[0] = dubinspath_.cs(0);
       output.c[1] = dubinspath_.cs(1);
@@ -319,7 +333,7 @@ void path_manager_example::manage_dubins(const params_s & params, const input_s 
         }
 
         // plan new Dubin's path to next waypoint configuration
-        dubinsParameters(waypoints_[idx_a_], waypoints_[idx_b], params.R_min);
+        dubinsParameters(waypoints_[idx_a_], waypoints_[idx_b], R_min);
 
         //start new path
         if ((p - dubinspath_.w1).dot(dubinspath_.q1) >= 0) // start in H1
@@ -510,6 +524,12 @@ void path_manager_example::dubinsParameters(const waypoint_s start_node, const w
     dubinspath_.q3 = rotz(dubinspath_.chie) * e1;
     dubinspath_.R = R;
   }
+}
+
+void path_manager_example::declare_parameters()
+{
+  params.declare_param("R_min", 25.0);
+  params.declare_param("orbit_last", false);
 }
 
 } // namespace rosplane

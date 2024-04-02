@@ -105,7 +105,7 @@ path_follower_base::parametersCallback(const std::vector<rclcpp::Parameter> & pa
   if (success)
   {
     result.successful = true;
-    result.reason = success;
+    result.reason = "success";
   }
 
   return result;

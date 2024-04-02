@@ -20,6 +20,7 @@
 #include <sensor_msgs/msg/imu.hpp>
 #include <std_msgs/msg/float32.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
+#include <param_manager.hpp>
 //#include <rosplane/ControllerConfig.hpp>!!!
 using std::placeholders::_1;
 using namespace std::chrono_literals;
@@ -63,13 +64,9 @@ protected:
     int8_t lamda; /** Direction of orbital path (cw is 1, ccw is -1) */
   };
 
-  struct params_s
-  {
-    double R_min;
-    bool orbit_last;
-  };
+  param_manager params;   /** Holds the parameters for the path_manager and children */
 
-  virtual void manage(const struct params_s & params, const struct input_s & input,
+  virtual void manage(const struct input_s & input,
                       struct output_s & output) = 0;
 
 private:
@@ -79,8 +76,6 @@ private:
     new_waypoint_sub_; /**< new waypoint subscription */
   rclcpp::Publisher<rosplane_msgs::msg::CurrentPath>::SharedPtr
     current_path_pub_; /**< controller commands publication */
-
-  struct params_s params_;
 
   rosplane_msgs::msg::State vehicle_state_; /**< vehicle state */
 
