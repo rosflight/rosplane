@@ -48,7 +48,7 @@ class Optimizer:
         x, y = np.meshgrid(self.x_values, self.y_values)
         z = error.reshape(x.shape)
 
-        # Plot the fucntion landscape in a 3D plot
+        # Plot the function landscape in a 3D plot
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
         ax.plot_surface(x, y, z, cmap='viridis', alpha=0.8)
@@ -56,3 +56,16 @@ class Optimizer:
         ax.set_ylabel('Gain 2')
         ax.set_zlabel('Error')
         plt.show()
+
+        # Save to npy file, iterate the filename if it already exists
+        xyz = np.stack((x, y, z), axis=-1)
+        file_index = 0
+        while True:
+            filename = f'plot_data_{file_index}.npy'
+            try:
+                with open(filename, 'xb') as f:  # Use 'xb' mode to create the file exclusively
+                    np.save(f, xyz)
+                break  # Exit loop if file creation is successful
+            except FileExistsError:
+                file_index += 1
+

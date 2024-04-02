@@ -23,7 +23,7 @@ def generate_launch_description():
     autopilot_params = os.path.join(
         rosplane_dir,
         'params',
-        aircraft + '_autopilot_commands.yaml'
+        aircraft + '_autopilot_params.yaml'
     )
 
 
