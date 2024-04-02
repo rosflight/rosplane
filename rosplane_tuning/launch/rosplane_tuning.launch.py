@@ -32,9 +32,7 @@ def generate_launch_description():
             package='rosplane',
             executable='rosplane_controller',
             name='autopilot',
-            parameters = [autopilot_params,
-                          {'pitch_tuning_debug_override': False},
-                          {'roll_tuning_debug_override': True}],
+            parameters = [autopilot_params],
             output = 'screen',
             arguments = [control_type]
         ),
