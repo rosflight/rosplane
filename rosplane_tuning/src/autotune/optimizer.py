@@ -38,7 +38,7 @@ class Optimizer:
         self.sigma      = optimization_params['sigma']
         self.init_alpha = optimization_params['alpha']
         self.tau        = optimization_params['tau']
-        self.flag       = 0
+        self.k          = 0
         self.state = OptimizerState.FINDING_GRADIENT
 
     def optimization_terminated(self):
@@ -60,6 +60,7 @@ class Optimizer:
         Returns:
         str: The status of the optimization algorithm.
         """
+        # Return with the final values, the best value found
         return 'TODO: Status not implemented.'
 
     def get_next_parameter_set(self, error):
@@ -79,16 +80,20 @@ class Optimizer:
         """
 
         if self.state == OptimizerState.FINDING_GRADIENT:
-            pass
+            self.get_gradient()
+        
         elif self.state == OptimizerState.BRACKETING:
-            pass
+            # using error, conduct bracketing
+            # return the next set of gains to test
+            self.bracketing()
+        
         elif self.state == OptimizerState.PINPOINTING:
-            pass
+            self.pinpointing()
+        
         else:  # Terminated
             pass
 
-
-    def get_gradient(self, fx, fxh):
+    def get_gradient(self, fx, fxh, offset=0.01):
         """
         This function returns the gradient at the given point using forward finite difference.
 
@@ -99,74 +104,35 @@ class Optimizer:
         Returns:
         float: The gradient at the given point.
         """
-        return (fxh - fx) / 0.01
+        return (fxh - fx) / offset
 
-    def next_step(self, phi1, phi1_prime, phi2, phi2_prime):
-        """
-        This function chooses which function to run next based on the flag.
-        """
-        if self.flag == 0:
-            self.initial_bracketing(phi1, phi1_prime, phi2, phi2_prime)
-        pass
-
-    # Flag 0 - Initial Bracketing
-    def initial_bracketing(self, phi1, phi1_prime, phi2, phi2_prime):
-        """
-        This function conducts the bracketing part of the optimization.
-        """
-
-        alpha1 = 0
-        alpha2 = self.init_alpha
-
-        # Needs Pinpointing
-        if(phi2 > phi1 + self.u1*self.init_alpha*phi1_prime):
-            flag = 2
-            alphap = self.interpolate(alpha1, alpha2)
-            return alpha2
-
-        # Optimized
-        if abs(phi2_prime) <= -self.u2*phi1_prime:
-            flag = 4
-            return alpha2
-
-        # Needs Pinpointing
-        elif phi2_prime >= 0:
-            flag = 2
-            alphap = self.interpolate(alpha1, alpha2)
-            return alpha2
-
-        # Needs more Bracketing
-        else:
-            alpha1 = alpha2
-            alpha2 = self.sigma*alpha2
-            flag = 1
-            return alpha2
-
-
-    # Flag 1 - Bracketing
     def bracketing(self, phi1, phi1_prime, phi2, phi2_prime, temp_alpha1, temp_alpha2):
         """
         This function conducts the bracketing part of the optimization.
         """
-        alpha1 = temp_alpha1
-        alpha2 = temp_alpha2
+        if self.k == 0:
+            alpha1 = 0
+            alpha2 = self.init_alpha
+        else:
+            alpha1 = temp_alpha1
+            alpha2 = temp_alpha2
 
         # Needs Pinpointing
         if(phi2 > phi1 + self.u1*self.init_alpha*phi1_prime) or (phi2 > phi1):
-            flag = 2
+            self.state == OptimizerState.PINPOINTING
             alphap = self.interpolate(alpha1, alpha2)
             res = [alpha1, alphap, alpha2]
             return res 
 
         # Optimized
         if abs(phi2_prime) <= -self.u2*phi1_prime:
-            flag = 4
+            self.state == OptimizerState.TERMINATED
             res = [alpha2]
             return res
 
         # Needs Pinpointing
         elif phi2_prime >= 0:
-            flag = 2
+            self.state == OptimizerState.PINPOINTING
             alphap = self.interpolate(alpha1, alpha2)
             res = [alpha1, alphap, alpha2]
             return res
@@ -178,7 +144,6 @@ class Optimizer:
             res = [alpha1, alpha2]
             return res
 
-    # Interpolating
     def interpolate(self, alpha1, alpha2):
         """
         This function interpolates between two points.
@@ -192,7 +157,6 @@ class Optimizer:
         """
         return (alpha1 + alpha2)/2
 
-    # Flag 2 - Pinpointing 
     def pinpointing(self, alpha1, phi1, phi1_prime, alpha2, phi2, phi2_prime, alphap, phip, phip_prime):
         """
         This function conducts the pinpointing part of the optimization.
@@ -217,7 +181,7 @@ class Optimizer:
         else:
             # Optimized
             if abs(phip_prime) <= -self.u2*phi1_prime:
-                flag = 4
+                self.state == OptimizerState.TERMINATED
                 alphastar = alphap
                 res = [alphastar]
                 return res
@@ -230,11 +194,3 @@ class Optimizer:
             return res
 
         # Check for failure criteria
-
-    # Flag 3 - Failure Convergence
-    def failure(self):
-        pass
-
-    # Flag 4 - Successful Convergence
-    def success(self):
-        pass
