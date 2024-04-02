@@ -139,9 +139,13 @@ class Autotune(Node):
                 GetParameters,
                 '/autopilot/get_parameters',
                 callback_group=self.external_callback_group)
-        self.set_parameter_client = self.create_client(
+        self.autopilot_set_param_client = self.create_client(
                 SetParameters,
                 '/autopilot/set_parameters',
+                callback_group=self.external_callback_group)
+        self.signal_generator_set_param_client = self.create_client(
+                SetParameters,
+                '/signal_generator/set_parameters',
                 callback_group=self.external_callback_group)
 
         # Optimization
@@ -238,6 +242,7 @@ class Autotune(Node):
             self.initial_gains = self.get_current_gains()
             self.optimizer = Optimizer(self.initial_gains, self.optimization_params)
             self.new_gains = self.initial_gains
+            self.set_signal_generator_params()
         elif not self.optimizer.optimization_terminated():
             self.new_gains = self.get_next_gains()
 
@@ -262,6 +267,68 @@ class Autotune(Node):
 
 
     ## Helper Functions ##
+    def set_signal_generator_params(self):
+        """
+        Sets the signal generators parameters to the initial values needed for the optimization.
+        """
+
+        request = SetParameters.Request()
+        if self.current_autopilot == CurrentAutopilot.ROLL:
+            request.parameters = [
+                    Parameter(name='controller_output', value='roll').to_parameter_msg(),
+                    Parameter(name='signal_type', value='step').to_parameter_msg(),
+                    Parameter(name='signal_magnitude', value=np.deg2rad(30)).to_parameter_msg(),
+                    Parameter(name='default_phi_c', value=0.0).to_parameter_msg()
+                    ]
+        elif self.current_autopilot == CurrentAutopilot.COURSE:
+            request.parameters = [
+                    Parameter(name='controller_output', value='course').to_parameter_msg(),
+                    Parameter(name='signal_type', value='step').to_parameter_msg(),
+                    Parameter(name='signal_magnitude', value=np.deg2rad(90)).to_parameter_msg(),
+                    ]
+        elif self.current_autopilot == CurrentAutopilot.PITCH:
+            request.parameters = [
+                    Parameter(name='controller_output', value='pitch').to_parameter_msg(),
+                    Parameter(name='signal_type', value='step').to_parameter_msg(),
+                    Parameter(name='signal_magnitude', value=np.deg2rad(20)).to_parameter_msg(),
+                    Parameter(name='default_theta_c', value=0.0).to_parameter_msg()
+                    ]
+        elif self.current_autopilot == CurrentAutopilot.ALTITUDE:
+            request.parameters = [
+                    Parameter(name='controller_output', value='altitude').to_parameter_msg(),
+                    Parameter(name='signal_type', value='step').to_parameter_msg(),
+                    Parameter(name='signal_magnitude', value=10.0).to_parameter_msg(),
+                    ]
+        else:  # CurrentAutopilot.AIRSPEED
+            request.parameters = [
+                    Parameter(name='controller_output', value='airspeed').to_parameter_msg(),
+                    Parameter(name='signal_type', value='step').to_parameter_msg(),
+                    Parameter(name='signal_magnitude', value=5.0).to_parameter_msg(),
+                    ]
+
+
+        # Call the service
+        while not self.signal_generator_set_param_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service {self.signal_generator_set_param_client.srv_name}' +
+                                   ' not available, waiting...')
+        future = self.signal_generator_set_param_client.call_async(request)
+
+        # Wait for the service to complete, exiting if it takes too long
+        call_time = time.time()
+        callback_complete = False
+        while call_time + 5 > time.time():
+            if future.done():
+                callback_complete = True
+                break
+        if not callback_complete or future.result() is None:
+            raise RuntimeError('Unable to set signal generator gains.')
+
+        # Print any errors that occurred
+        for response in future.result().results:
+            if not response.successful:
+                raise RuntimeError(f'Failed to set parameter: {response.reason}')
+
+
     def call_toggle_step_signal(self):
         """
         Call the signal_generator's toggle step service to toggle the step input.
@@ -350,10 +417,10 @@ class Autotune(Node):
                                   Parameter(name='a_t_ki', value=gains[1]).to_parameter_msg()]
 
         # Call the service
-        while not self.set_parameter_client.wait_for_service(timeout_sec=1.0):
+        while not self.autopilot_set_param_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service {self.set_parameter_client.srv_name}' +
                                    ' not available, waiting...')
-        future = self.set_parameter_client.call_async(request)
+        future = self.autopilot_set_param_client.call_async(request)
 
         # Wait for the service to complete, exiting if it takes too long
         call_time = time.time()
