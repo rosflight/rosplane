@@ -206,7 +206,6 @@ class Autotune(Node):
                                    + ' seconds...')
             self.collecting_data = True
             self.call_toggle_step_signal()
-
             self.autotune_state = AutoTuneState.STEP_TESTING
 
         elif self.autotune_state == AutoTuneState.STEP_TESTING:
@@ -215,7 +214,6 @@ class Autotune(Node):
                                    + str(self.get_parameter('stabilize_period').value)
                                    + ' seconds...')
             self.call_toggle_step_signal()
-
             self.autotune_state = AutoTuneState.RETURN_TESTING
 
         else:
@@ -225,7 +223,7 @@ class Autotune(Node):
             self.collecting_data = False
             self.stabilize_period_timer.cancel()
             self.set_current_gains(self.initial_gains)
-
+            self.disable_autopilot_override()
             self.autotune_state = AutoTuneState.ORBITING
 
             if self.get_parameter('continuous_tuning').value:
@@ -243,6 +241,7 @@ class Autotune(Node):
             self.optimizer = Optimizer(self.initial_gains, self.optimization_params)
             self.new_gains = self.initial_gains
             self.set_signal_generator_params()
+
         elif not self.optimizer.optimization_terminated():
             self.new_gains = self.get_next_gains()
 
@@ -250,11 +249,12 @@ class Autotune(Node):
             self.stabilize_period_timer.timer_period_ns = \
                     int(self.get_parameter('stabilize_period').value * 1e9)
             self.stabilize_period_timer.reset()
-
+            self.enable_autopilot_override()
             self.get_logger().info('Stabilizing autopilot for '
                                    + str(self.get_parameter('stabilize_period').value)
                                    + ' seconds...')
             self.autotune_state = AutoTuneState.STABILIZING
+
         else:
             self.get_logger().info('Optimization terminated with: ' +
                                    self.optimizer.get_optimization_status())
@@ -328,6 +328,38 @@ class Autotune(Node):
             if not response.successful:
                 raise RuntimeError(f'Failed to set parameter: {response.reason}')
 
+    def enable_autopilot_override(self):
+        """
+        Enable to autopilot override for the current autopilot, if an override is needed.
+        This enables direct control of that autopilot, rather than the outer loop controlling
+        the autopilot.
+        """
+        request = SetParameters.Request()
+        if self.current_autopilot == CurrentAutopilot.ROLL:
+            request.parameters = [
+                    Parameter(name='roll_tuning_debug_override', value=True).to_parameter_msg()
+                    ]
+        elif self.current_autopilot == CurrentAutopilot.PITCH:
+            request.parameters = [
+                    Parameter(name='pitch_tuning_debug_override', value=True).to_parameter_msg()
+                    ]
+        self.set_autopilot_params(request)
+
+    def disable_autopilot_override(self):
+        """
+        Disable the autopilot override for the current autopilot, if an override is needed.
+        This allows the outer loop to control the autopilot again.
+        """
+        request = SetParameters.Request()
+        if self.current_autopilot == CurrentAutopilot.ROLL:
+            request.parameters = [
+                    Parameter(name='roll_tuning_debug_override', value=False).to_parameter_msg()
+                    ]
+        elif self.current_autopilot == CurrentAutopilot.PITCH:
+            request.parameters = [
+                    Parameter(name='pitch_tuning_debug_override', value=False).to_parameter_msg()
+                    ]
+        self.set_autopilot_params(request)
 
     def call_toggle_step_signal(self):
         """
@@ -416,6 +448,17 @@ class Autotune(Node):
             request.parameters = [Parameter(name='a_t_kp', value=gains[0]).to_parameter_msg(),
                                   Parameter(name='a_t_ki', value=gains[1]).to_parameter_msg()]
 
+        self.set_autopilot_params(request)
+
+    def set_autopilot_params(self, request):
+        """
+        Set parameters for the autopilot. Moved to a separate function to avoid code repetition.
+
+        Parameters:
+        request (SetParameters.Request): A ROS2 object for setting parameters, already populated
+            with the desired parameters and values.
+        """
+
         # Call the service
         while not self.autopilot_set_param_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service {self.set_parameter_client.srv_name}' +
@@ -430,7 +473,7 @@ class Autotune(Node):
                 callback_complete = True
                 break
         if not callback_complete or future.result() is None:
-            raise RuntimeError('Unable to set autopilot gains.')
+            raise RuntimeError('Unable to set autopilot params.')
 
         # Print any errors that occurred
         for response in future.result().results:
