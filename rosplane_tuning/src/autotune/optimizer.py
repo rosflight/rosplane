@@ -8,6 +8,7 @@ class OptimizerState(Enum):
     """
     This class defines the various states that exist within the optimizer.
     """
+    SELECT_DIRECTION = auto()
     FINDING_GRADIENT = auto()
     BRACKETING = auto()
     PINPOINTING = auto()
@@ -38,8 +39,17 @@ class Optimizer:
         self.sigma      = optimization_params['sigma']
         self.init_alpha = optimization_params['alpha']
         self.tau        = optimization_params['tau']
-        self.k          = 0
-        self.state = OptimizerState.FINDING_GRADIENT
+        self.state = OptimizerState.FINDING_GRADIENT # Find the initial gradient from the starting gains
+
+        # Line Search Variables
+        self.k                  = 0
+        self.reset              = False
+        self.p                  = np.array([])
+        self.line_search_vector = np.array([0.0, 0.0])  # [prior_p, prior_phi_prime]
+        self.save_gains         = np.array([])          # np.array to save gains between autotune iterations
+        self.save_phis          = np.array([])          # np.array to save phis (to calc gradients) between autotune iterations, correspond with above array
+        self.current_gains      = initial_gains         # Gains updated every succesful/nuclear pinpointing
+
 
     def optimization_terminated(self):
         """
@@ -80,69 +90,181 @@ class Optimizer:
         """
 
         if self.state == OptimizerState.FINDING_GRADIENT:
-            self.get_gradient()
+            # Store current gains and error, request new gain and error for gradient, then select direction
+            self.state = OptimizerState.SELECT_DIRECTION
+            self.save_gains = self.current_gains
+            self.save_phis = error
+            new_gains = [gain + 0.01 for gain in self.initial_gains] 
+            # After some calculations, found that even if you add 0.01 to all dimensions and divide by 0.01 for the gradient
+            # you get roughly the same magnitude on the gradient. If we need more accuracy we can add a smarter value 
+            # (decrease based on number of dimensions)
+            return new_gains
+        
+        elif self.state == OptimizerState.SELECT_DIRECTION:
+        
+            if self.k == 0:
+                new_gains = self.line_search(self.initial_gains, error, self.save_gains, self.new_phis)
+            else:
+                new_gains = self.line_search()
+            
+            return new_gains
         
         elif self.state == OptimizerState.BRACKETING:
             # using error, conduct bracketing
             # return the next set of gains to test
-            self.bracketing()
+            gains = self.save_gains[0]
+            gainsh = self.save_gains[1]
+            gains2 = self.save_gains[2]
+            gains2h = self.save_gains[3]
+
+            new_gains = self.bracketing(gains, gainsh, self.save_phis[0], self.save_phis[1], gains2, gains2h, error[0], error[1])
+            return new_gains
         
         elif self.state == OptimizerState.PINPOINTING:
-            self.pinpointing()
-        
-        else:  # Terminated
-            pass
 
-    def get_gradient(self, fx, fxh, offset=0.01):
+            gains1  = self.save_gains[0]
+            gains2  = self.save_gains[2]
+            gainsp  = self.save_gains[4]
+
+            phip = error[0]
+            phiph = error[1]
+            phip_prime = self.get_gradient(phip, phiph)
+
+            phi1 = self.save_phis[0]
+            phi1_prime = self.save_phis[1]
+
+            new_gains = self.pinpointing(gains1, phi1, phi1_prime, gains2, gainsp, phip, phip_prime)
+            return new_gains
+
+        else:  # Process Terminated
+            return self.current_gains
+
+    def get_gradient(self, phi, phih):
         """
         This function returns the gradient at the given point using forward finite difference.
 
         Parameters:
-        fx (float): The function evaluation at the point of the gradient.
-        fxh (float): The function evaluation at a point slightly offset from the point. 
+        phi (float): The function evaluation at the point of the gradient.
+        phih (float): The function evaluation at a point slightly offset from the point. 
 
         Returns:
         float: The gradient at the given point.
         """
-        return (fxh - fx) / offset
+        return (phih - phi) / 0.01
 
-    def bracketing(self, phi1, phi1_prime, phi2, phi2_prime, temp_alpha1, temp_alpha2):
+    def line_search(self, gains, phi, gainsh, phih):
+        """
+        This function conducts the initial direction selection part of the optimization,
+        using conjugate gradient descent.
+
+        Parameters:
+        gains (np.array, size num_gains, dtype float): The current gains. [gain1, gain2, ...]
+        phi (np.array, size num_gains, dtype float): The error from the list of gains. [error1, error2, ...]
+        phi_prime (): The gradient of the error from the list of gains. 
+
+        Returns:
+        np.array, size num_gains*num_sets, dtype float: The next series of gains to be tested. Any
+            number of gain sets can be returned, depending on the number of gains that need to be tested for 
+            the follow on optimization. [[gain1_1, gain2_1, ...], [gain1_2, gain2_2, ...], ...] 
+        """
+        
+        phi_prime = self.get_gradient(phi, phih) # Calculate gradient
+
+        # Check for convergence
+        if np.linalg.norm(phi_prime,np.inf) < self.tau:
+            self.state = OptimizerState.TERMINATED
+            return self.current_gains
+
+        # Select Direction
+        prior_p = self.line_search_vector[0]
+        prior_phi_prime = self.line_search_vector[1]
+
+        if self.k == 0 or self.reset == True:
+            self.reset = False
+            self.p = -phi_prime/np.linalg.norm(phi_prime)
+        else:
+            bk = np.dot(phi_prime,phi_prime)/np.dot(prior_phi_prime,prior_phi_prime)
+            self.p = -phi_prime/np.linalg.norm(phi_prime) + bk*prior_p
+        
+        # Prepare for bracketing
+        self.OptimizerState = OptimizerState.BRACKETING
+        # Request phi2 and phi2+h
+        gains2 = gains + self.a_init*p
+        gains2h = [gain + 0.01 for gain in gains2]
+        new_gains = np.array([gains2, gains2h])
+        
+        # Save phi1 and phi1+h
+        self.save_gains = np.array([gains, gainsh, gains2, gains2h])
+        self.save_phis = np.array([phi, phih])
+        self.k += 1
+
+        return new_gains
+
+    def distance(point1, point2):
+        """
+        This function calculates the distance between two points.
+
+        Parameters:
+        point1 (np.array, size num_gains, dtype float): The first point. [gain1, gain2, ...]
+        point2 (np.array, size num_gains, dtype float): The second point. [gain1, gain2, ...]
+
+        Returns:
+        float: The distance between the two points.
+        """
+        return np.linalg.norm(point1 - point2)
+
+    def bracketing(self, gains, gainsh, phi1, phi1_prime, gains2, gains2h, phi2, phi2_prime):
         """
         This function conducts the bracketing part of the optimization.
         """
-        if self.k == 0:
-            alpha1 = 0
-            alpha2 = self.init_alpha
-        else:
-            alpha1 = temp_alpha1
-            alpha2 = temp_alpha2
+
+        alpha1 = self.distance(self.init_gains, gains)  # For the initial pass, gains should be initial_gains, so alpha1 = 0
+        alpha2 = self.distance(self.init_gains, gains2)
 
         # Needs Pinpointing
         if(phi2 > phi1 + self.u1*self.init_alpha*phi1_prime) or (phi2 > phi1):
             self.state == OptimizerState.PINPOINTING
+            # Save old points
+            self.save_gains = np.array([gains, gainsh, gains2, gains2h, gainsp, [gain + 0.01 for gain in gainsp]])
+            self.save_phis = np.array([phi1, phi1_prime, phi2, phi2_prime])
+            # Request new point
             alphap = self.interpolate(alpha1, alpha2)
-            res = [alpha1, alphap, alpha2]
-            return res 
+            gainsp = self.init_gains + alphap*self.p
+            new_gains = [self.save_gains[4], self.save_gains[5]]
+            return new_gains
 
         # Optimized
         if abs(phi2_prime) <= -self.u2*phi1_prime:
-            self.state == OptimizerState.TERMINATED
-            res = [alpha2]
-            return res
+            self.state == OptimizerState.SELECT_DIRECTION
+            new_gains = self.init_gains + alpha2*self.p
+            self.current_gains = new_gains
+            return new_gains
 
         # Needs Pinpointing
         elif phi2_prime >= 0:
             self.state == OptimizerState.PINPOINTING
+            # Save old points
+            self.save_gains = np.array([gains, gainsh, gains2, gains2h, gainsp, [gain + 0.01 for gain in gainsp]])
+            self.save_phis = np.array([phi1, phi1_prime, phi2, phi2_prime])
+            # Request new point
             alphap = self.interpolate(alpha1, alpha2)
-            res = [alpha1, alphap, alpha2]
-            return res
+            gainsp = self.init_gains + alphap*self.p
+            new_gains = [self.save_gains[4], self.save_gains[5]]
+            return new_gains
 
         # Needs more Bracketing
         else:
             alpha1 = alpha2
             alpha2 = self.sigma*alpha2
-            res = [alpha1, alpha2]
-            return res
+
+            # Request new points
+            gains1 = self.init_gains + alpha1*self.p
+            gains2 = self.init_gains + alpha2*self.p
+            gains1h = [gain + 0.01 for gain in gains1]
+            gains2h = [gain + 0.01 for gain in gains2]
+
+            new_gains = [gains1, gains1h, gains2, gains2h]
+            return new_gains
 
     def interpolate(self, alpha1, alpha2):
         """
@@ -157,40 +279,51 @@ class Optimizer:
         """
         return (alpha1 + alpha2)/2
 
-    def pinpointing(self, alpha1, phi1, phi1_prime, alpha2, phi2, phi2_prime, alphap, phip, phip_prime):
+    def pinpointing(self, gains1, phi1, phi1_prime, gains2, gainsp, phip, phip_prime):
         """
         This function conducts the pinpointing part of the optimization.
 
         Parameters:
-        alpha1 (float): The first distance.
-        phi1 (float): The value of the function at point 1.
-        phi1_prime (float): The gradient of the function at point 1.
-        alpha2 (float): The second distance.
-        phi2 (float): The value of the function at point 2.
-        phi2_prime (float): The gradient of the function at point 2.
 
         Returns:
         alphastar (float): The optimal step size
         """
 
+        alpha1 = self.distance(self.init_gains, gains1)
+        alpha2 = self.distance(self.init_gains, gains2)
+        alphap = self.distance(self.init_gains, gainsp)
+
         if alphap > phi1 + self.u1*alphap*phi1_prime or alphap > phi1:
-            alpha2 = alphap
+            # Continue pinpointing
+            gains2 = gainsp
+            gainsp = self.interpolate(gains1, gains2)
             phi2 = phip
-            res = [alpha1, alpha2]
-            return res
+            phi2_prime = phip_prime
+            self.save_gains = np.array([gains1, None, gains2, None, gainsp, [gain + 0.01 for gain in gainsp]])
+            self.save_phis = np.array([phi1, phi1_prime, phi2, phi2_prime])
+            new_gains = [self.save_gains[4], self.save_gains[5]]
+            return new_gains
         else:
             # Optimized
             if abs(phip_prime) <= -self.u2*phi1_prime:
-                self.state == OptimizerState.TERMINATED
+                self.state == OptimizerState.SELECT_DIRECTION
                 alphastar = alphap
-                res = [alphastar]
-                return res
+                new_gains = self.init_gains + alphastar*self.p
+                return new_gains
             # More parameterization needed
             elif phip_prime*(alpha2 - alpha1) >= 0:
-                alpha2 = alpha1
+                gains2 = gains1
+                phi2 = phi1
+                
+            gains1 = gainsp
+            phi1 = phip
+            gainsp = self.interpolate(gains1, gains2)
 
-            alpha1 = alphap
-            res = [alpha1, alpha2]
-            return res
+            self.save_gains = np.array([gains1, None, gains2, None, gainsp, [gain + 0.01 for gain in gainsp]])
+            self.save_phis = np.array([phi1, phi1_prime, phi2, phi2_prime])
+            new_gains = [self.save_gains[4], self.save_gains[5]]
+            return new_gains
 
-        # Check for failure criteria
+        # Check for failure criteria - the nuclear option
+            # self.state == OptimizerState.SELECT_DIRECTION
+            # self.current_gains = new_gains
