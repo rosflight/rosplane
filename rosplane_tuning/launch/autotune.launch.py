@@ -37,17 +37,10 @@ def generate_launch_description():
             {'current_tuning_autopilot': current_tuning_autopilot}
         ]
     )
-    rosplane_tuning_launch_include = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(get_package_share_directory('rosplane_tuning'),
-                         'launch/rosplane_tuning.launch.py')
-        )
-    )
 
     return LaunchDescription([
         stabilize_period_launch_arg,
         continuous_tuning_launch_arg,
         current_tuning_autopilot_launch_arg,
-        autotune_node,
-        rosplane_tuning_launch_include
+        autotune_node
         ])

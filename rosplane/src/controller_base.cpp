@@ -32,10 +32,8 @@ controller_base::controller_base()
   // Set the values for the parameters, from the param file or use the deafault value.
   set_parameters();
 
-  if (params_.roll_tuning_debug_override || params_.pitch_tuning_debug_override) {
-    tuning_debug_sub_ = this->create_subscription<rosplane_msgs::msg::ControllerInternalsDebug>(
-      "/tuning_debug", 10, std::bind(&controller_base::tuning_debug_callback, this, _1));
-  }
+  tuning_debug_sub_ = this->create_subscription<rosplane_msgs::msg::ControllerInternalsDebug>(
+    "/tuning_debug", 10, std::bind(&controller_base::tuning_debug_callback, this, _1));
 
   // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
