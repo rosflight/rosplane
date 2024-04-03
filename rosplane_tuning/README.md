@@ -4,6 +4,43 @@ This ROS2 package contains tools useful for tuning the autopilot performance of 
 
 We recommend using [PlotJuggler](https://github.com/facontidavide/PlotJuggler) to visualize command input and response.
 
+## Autotuner
+
+To make using ROSplane easier, we have implemented an autotune node. This node performs a gradient-based optimization routine where the autotune adjusts the autopilot gains in the direction that minimizes the error between the autopilot command and estimated state.
+
+The optimization tests a series of gains using step commands from which error is calculated and gains are slowly adjusted to minimize the error. Error is calculated by giving a step input to an autopilot, waiting a few seconds for the system to respond, stepping back, waiting a few more seconds, and then calculuating the error. The autopilot then returns back to its previous state. This results in a responce like this figure:
+
+![Autotune Response](media/roll_response.png)
+
+### Usage
+
+WARNING: Make sure to monitor the UAV during all portions of tuning, and be ready to take manual control in case the autopilot becomes unstable or does something terrible. We don't guarantee that the autotuner will not crash your plane.
+
+1. Launch the launch file for the portion of the autopilot you want to tune. This will launch both ROSplane and the autotuner. Set the `continuous_tuning` parameter to `true` if you are confident in the autopilot's current ability to stay stable and in the air. Leave it as `false` if you'd rather manually begin each iteration.
+    ```
+    ros2 launch rosplane_tuning roll_autotune.launch.py continuous_tuning:=true
+    ```
+
+2. Launch ROSplane if you haven't already done so. The autotuner will start from whichever gains are currently set in ROSplane, so set those to whichever values you'd like to start the optimization from.
+    ```
+    ros2 launch rosplane_tuning rosplane_tuning.launch.py
+    ```
+
+3. Get ROSplane into the desired state, like an orbit high above the launch site. The autotuner will return to this state between every iteration.
+
+4. Call the `run_tuning_iteration` service to start tuning.  If you set `continuous_tuning` to `false`, you will need to manually call the `run_tuning_iteration` service to start each iteration.
+
+5. Wait until the autotuner reports that it has finished or you are satisfied with the current response. The autotuner will update the current gains with the best response it has found so far.
+
+Repeat for each autopilot you wish to tune. We recommend tuning the autopilots in this order: roll, pitch, airspeed, altitude, course. The airspeed and altitude autopilots are closely coupled, so you may need to iterate between them to get the best performance.
+
+Make sure to set the new gains as the default values for ROSplane in the `rosplane/params` directory. Gains are reported by the autotuner in this order:
+- Roll: `r_kp`, `r_kd`
+- Pitch: `p_kp`, `p_kd`
+- Airspeed: `a_t_kp`, `a_t_ki`
+- Altitude: `a_kp`, `a_ki`
+- Course: `c_kp`, `c_ki`
+
 ## Signal Generator
 
 Signal generator is a ROS2 node that will generate step inputs, square waves, sine waves, sawtooth waves, and triangle waves to be used as command input for ROSplane. It has support for roll, pitch, altitude, course, and airspeed command input.
@@ -19,7 +56,7 @@ Signal generator works by publishing autopilot commands on the ROS network on th
 - Triangle: This is a continuous signal that ramps up and down between the minimum and maximum value of the signal, creating a triangle like pattern.
 - Sawtooth: This is a continuous signal (sometimes call a ramp signal) that creates a constantly increasing signal that resets to its minimum value once the maximum value is reached.
 
-![Waveforms](Waveforms.svg)
+![Waveforms](media/Waveforms.svg)
 
 *By Omegatron - Own work, CC BY-SA 3.0, https://commons.wikimedia.org/w/index.php?curid=343520*
 

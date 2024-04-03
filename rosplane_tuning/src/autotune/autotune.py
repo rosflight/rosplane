@@ -48,7 +48,9 @@ class Autotune(Node):
     A gradient-based optimization is then run to find the optimal gains to minimize the error.
 
     This class itself contains the ROS-specific code for the autotune node. The optimization
-    algorithms are contained in the Optimizer class.
+    algorithms are contained in the Optimizer class. The core of the autotune procedure and logic
+    is in the run_tuning_iteration_callback function and the stabilize_period_timer_callback
+    function.
 
     Va is airspeed, phi is roll angle, chi is course angle, theta is pitch angle, and h is altitude.
     """
