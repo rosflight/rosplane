@@ -150,7 +150,7 @@ class Optimizer:
         Returns:
         float: The gradient at the given point.
         """
-        return (phih - phi) / 0.01
+        return (phih - phi) / 0.01  # Shouldn't be a hard coded value, replace with a variable
 
     def line_search(self, gains, phi, gainsh, phih):
         """

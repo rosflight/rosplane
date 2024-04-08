@@ -19,8 +19,8 @@ class Optimizer:
         # None of the optimization parameters are needed, so they are ignored.
 
         # Define the grid of points to test and plot
-        self.x_values = np.linspace(0.0, 1.0, 10)
-        self.y_values = np.linspace(0.0, 1.0, 10)
+        self.x_values = np.linspace(0.1, 0.3, 10)
+        self.y_values = np.linspace(0.0, 0.1, 10)
 
         self.points_given = False
         self.plotting_complete = False

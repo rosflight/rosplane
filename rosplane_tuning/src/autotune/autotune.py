@@ -153,11 +153,11 @@ class Autotune(Node):
         # Optimization
         self.initial_gains = None  # get_gains function cannot be called in __init__ since the node
                                    # has not yet been passed to the executor
-        self.optimization_params = {'u1': 10**-4,
+        self.optimization_params = {'u1': 1e-3,
                                     'u2': 0.5,
-                                    'sigma': 1.5,
-                                    'alpha': 1,
-                                    'tau': 10**-3}
+                                    'sigma': 2.0,
+                                    'alpha': 0.05,
+                                    'tau': 1e-2}
         self.optimizer = None
 
 
