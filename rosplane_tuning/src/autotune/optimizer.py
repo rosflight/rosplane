@@ -40,6 +40,7 @@ class Optimizer:
         self.init_alpha = optimization_params['alpha']
         self.tau        = optimization_params['tau']
         self.state = OptimizerState.FINDING_GRADIENT # Find the initial gradient from the starting gains
+        self.initial_gains = initial_gains
 
         # Line Search Variables
         self.k                  = 0
@@ -71,7 +72,10 @@ class Optimizer:
         str: The status of the optimization algorithm.
         """
         # Return with the final values, the best value found
-        return 'TODO: Status not implemented.'
+        if self.state == OptimizerState.TERMINATED:
+            return 'Optimization Terminated'
+        else:
+            return "Optimization in Progress"
 
     def get_next_parameter_set(self, error):
         """
@@ -103,9 +107,9 @@ class Optimizer:
         elif self.state == OptimizerState.SELECT_DIRECTION:
         
             if self.k == 0:
-                new_gains = self.line_search(self.initial_gains, error, self.save_gains, self.new_phis)
+                new_gains = self.line_search(self.initial_gains, error, self.save_gains, self.save_phis)
             else:
-                new_gains = self.line_search()
+                new_gains = self.line_search(self.current_gains, error, self.save_gains, self.save_phis)
             
             return new_gains
         
@@ -187,9 +191,9 @@ class Optimizer:
             self.p = -phi_prime/np.linalg.norm(phi_prime) + bk*prior_p
         
         # Prepare for bracketing
-        self.OptimizerState = OptimizerState.BRACKETING
+        self.state = OptimizerState.BRACKETING
         # Request phi2 and phi2+h
-        gains2 = gains + self.a_init*p
+        gains2 = gains + self.init_alpha*self.p
         gains2h = [gain + 0.01 for gain in gains2]
         new_gains = np.array([gains2, gains2h])
         
@@ -230,13 +234,13 @@ class Optimizer:
             # Request new point
             alphap = self.interpolate(alpha1, alpha2)
             gainsp = self.init_gains + alphap*self.p
-            new_gains = [self.save_gains[4], self.save_gains[5]]
+            new_gains = np.array([self.save_gains[4], self.save_gains[5]])
             return new_gains
 
         # Optimized
         if abs(phi2_prime) <= -self.u2*phi1_prime:
             self.state == OptimizerState.SELECT_DIRECTION
-            new_gains = self.init_gains + alpha2*self.p
+            new_gains = np.array([self.init_gains + alpha2*self.p])
             self.current_gains = new_gains
             return new_gains
 
@@ -249,7 +253,7 @@ class Optimizer:
             # Request new point
             alphap = self.interpolate(alpha1, alpha2)
             gainsp = self.init_gains + alphap*self.p
-            new_gains = [self.save_gains[4], self.save_gains[5]]
+            new_gains = np.array([self.save_gains[4], self.save_gains[5]])
             return new_gains
 
         # Needs more Bracketing
@@ -263,7 +267,7 @@ class Optimizer:
             gains1h = [gain + 0.01 for gain in gains1]
             gains2h = [gain + 0.01 for gain in gains2]
 
-            new_gains = [gains1, gains1h, gains2, gains2h]
+            new_gains = np.array([gains1, gains1h, gains2, gains2h])
             return new_gains
 
     def interpolate(self, alpha1, alpha2):
@@ -301,14 +305,14 @@ class Optimizer:
             phi2_prime = phip_prime
             self.save_gains = np.array([gains1, None, gains2, None, gainsp, [gain + 0.01 for gain in gainsp]])
             self.save_phis = np.array([phi1, phi1_prime, phi2, phi2_prime])
-            new_gains = [self.save_gains[4], self.save_gains[5]]
+            new_gains = np.array([self.save_gains[4], self.save_gains[5]])
             return new_gains
         else:
             # Optimized
             if abs(phip_prime) <= -self.u2*phi1_prime:
                 self.state == OptimizerState.SELECT_DIRECTION
                 alphastar = alphap
-                new_gains = self.init_gains + alphastar*self.p
+                new_gains = np.array([self.init_gains + alphastar*self.p])
                 return new_gains
             # More parameterization needed
             elif phip_prime*(alpha2 - alpha1) >= 0:
@@ -321,7 +325,7 @@ class Optimizer:
 
             self.save_gains = np.array([gains1, None, gains2, None, gainsp, [gain + 0.01 for gain in gainsp]])
             self.save_phis = np.array([phi1, phi1_prime, phi2, phi2_prime])
-            new_gains = [self.save_gains[4], self.save_gains[5]]
+            new_gains = np.array([self.save_gains[4], self.save_gains[5]])
             return new_gains
 
         # Check for failure criteria - the nuclear option

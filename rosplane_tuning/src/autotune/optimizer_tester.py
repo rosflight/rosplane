@@ -7,8 +7,12 @@ import matplotlib.pyplot as plt
 # Function to test the optimizer with
 def function(x):
     # Matyas function
+    print("f", x)
     return 0.26 * (x[0] ** 2 + x[1] ** 2) - 0.48 * x[0] * x[1]
 
+def gradient(x):
+    # Gradient of Matyas function
+    return np.array([0.52 * x[0] - 0.48 * x[1], 0.52 * x[1] - 0.48 * x[0]])
 
 # Initialize optimizer
 curr_points = np.array([[0, 5]])  # Initial point
@@ -22,22 +26,32 @@ optimizer = Optimizer(curr_points[0], optimization_params)
 
 # Run optimization
 all_points = []
+k = 0
 while not optimizer.optimization_terminated():
+    print("Iteration ", k)
     # Print status
     print(optimizer.get_optimiztion_status())
+    print(optimizer.state)
 
     # Calculate error for current points
     error = []
+    # print(curr_points)                      # Testing
     for point in curr_points:
         error.append(function(point))
     error = np.array(error)
-
     # Pass points to optimizer
+    print("CP", curr_points)                # Testing
+    # print("G", gradient(curr_points[0]))    # Testing
     curr_points = optimizer.get_next_parameter_set(error)
+    print("CP", curr_points)                # Testing
 
     # Store points 
     for point in curr_points:
         all_points.append(point)
+
+    # End interation step
+    k += 1
+    print()
 all_points = np.array(all_points)
 
 print('Optimization terminated with status: {}'.format(optimizer.get_optimiztion_status()))
