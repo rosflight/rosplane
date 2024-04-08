@@ -35,15 +35,15 @@ while not optimizer.optimization_terminated():
 
     # Calculate error for current points
     error = []
-    # print(curr_points)                      # Testing
+    print("CP", curr_points)                      # Testing
     for point in curr_points:
         error.append(function(point))
     error = np.array(error)
     # Pass points to optimizer
-    print("CP", curr_points)                # Testing
+    # print("CP", curr_points)                  # Testing
     # print("G", gradient(curr_points[0]))    # Testing
     curr_points = optimizer.get_next_parameter_set(error)
-    print("CP", curr_points)                # Testing
+    # print("CP", curr_points)                  # Testing
 
     # Store points 
     for point in curr_points:
