@@ -15,7 +15,7 @@ def gradient(x):
     return np.array([0.52 * x[0] - 0.48 * x[1], 0.52 * x[1] - 0.48 * x[0]])
 
 # Initialize optimizer
-curr_points = np.array([[0, 5]])  # Initial point
+curr_points = np.array([[0.0, 5.0]])  # Initial point
 optimization_params = {'u1': 1e-4,
                        'u2': 0.5,
                        'sigma': 1.5,
