@@ -306,6 +306,7 @@ class Autotune(Node):
                     Parameter(name='controller_output', value='airspeed').to_parameter_msg(),
                     Parameter(name='signal_type', value='step').to_parameter_msg(),
                     Parameter(name='signal_magnitude', value=5.0).to_parameter_msg(),
+                    Parameter(name='default_theta_c', value=0.0).to_parameter_msg()
                     ]
 
 
@@ -341,7 +342,8 @@ class Autotune(Node):
             request.parameters = [
                     Parameter(name='roll_tuning_debug_override', value=True).to_parameter_msg()
                     ]
-        elif self.current_autopilot == CurrentAutopilot.PITCH:
+        elif self.current_autopilot == CurrentAutopilot.PITCH \
+                or self.current_autopilot == CurrentAutopilot.AIRSPEED:
             request.parameters = [
                     Parameter(name='pitch_tuning_debug_override', value=True).to_parameter_msg()
                     ]
@@ -357,7 +359,8 @@ class Autotune(Node):
             request.parameters = [
                     Parameter(name='roll_tuning_debug_override', value=False).to_parameter_msg()
                     ]
-        elif self.current_autopilot == CurrentAutopilot.PITCH:
+        elif self.current_autopilot == CurrentAutopilot.PITCH \
+                or self.current_autopilot == CurrentAutopilot.AIRSPEED:
             request.parameters = [
                     Parameter(name='pitch_tuning_debug_override', value=False).to_parameter_msg()
                     ]
