@@ -16,8 +16,8 @@ def gradient(x):
 
 # Initialize optimizer
 curr_points = np.array([[0.0, 5.0]])  # Initial point
-optimization_params = {'u1': 1e-4,
-                       'u2': 0.5,
+optimization_params = {'mu_1': 1e-4,
+                       'mu_2': 0.5,
                        'sigma': 1.5,
                        'alpha': 1.0,
                        'tau': 1e-3}
