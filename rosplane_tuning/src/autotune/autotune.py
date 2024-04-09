@@ -153,11 +153,45 @@ class Autotune(Node):
         # Optimization
         self.initial_gains = None  # get_gains function cannot be called in __init__ since the node
                                    # has not yet been passed to the executor
-        self.optimization_params = {'u1': 1e-3,
-                                    'u2': 0.5,
-                                    'sigma': 2.0,
-                                    'alpha': 0.05,
-                                    'tau': 1e-2}
+
+        # As we conduct optimizations, these parameters will be changed to be more
+        # efficient to optimize the specific gains, based on the design spaces.
+        if self.get_parameter('current_tuning_autopilot').value == 'roll':
+            self.optimization_params = {'u1': 1e-3,
+                                        'u2': 0.5,
+                                        'sigma': 2.0,
+                                        'alpha': 0.05,
+                                        'tau': 1e-2}
+        elif self.get_parameter('current_tuning_autopilot').value == 'course':
+            self.optimization_params = {'u1': 1e-3,
+                                        'u2': 0.5,
+                                        'sigma': 2.0,
+                                        'alpha': 0.05,
+                                        'tau': 1e-2}
+        elif self.get_parameter('current_tuning_autopilot').value == 'pitch':
+            self.optimization_params = {'u1': 1e-3,
+                                        'u2': 0.5,
+                                        'sigma': 2.0,
+                                        'alpha': 0.05,
+                                        'tau': 1e-2}
+        elif self.get_parameter('current_tuning_autopilot').value == 'altitude':
+            self.optimization_params = {'u1': 1e-3,
+                                        'u2': 0.5,
+                                        'sigma': 2.0,
+                                        'alpha': 0.05,
+                                        'tau': 1e-2}
+        elif self.get_parameter('current_tuning_autopilot').value == 'airspeed':
+            self.optimization_params = {'u1': 1e-3,
+                                        'u2': 0.5,
+                                        'sigma': 2.0,
+                                        'alpha': 0.05,
+                                        'tau': 1e-2}
+        else:
+            raise ValueError(self.get_parameter('current_tuning_autopilot').value +
+                             ' is not a valid value for current_tuning_autopilot.' +
+                             ' Please select one of the' +
+                             ' following: roll, course, pitch, altitude, airspeed.')
+
         self.optimizer = None
 
 
