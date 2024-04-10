@@ -157,35 +157,40 @@ class Autotune(Node):
         # As we conduct optimizations, these parameters will be changed to be more
         # efficient to optimize the specific gains, based on the design spaces.
         if self.get_parameter('current_tuning_autopilot').value == 'roll':
-            self.optimization_params = {'u1': 1e-3,
-                                        'u2': 0.5,
+            self.optimization_params = {'mu_1': 1e-3,
+                                        'mu_2': 0.5,
                                         'sigma': 2.0,
                                         'alpha': 0.05,
-                                        'tau': 1e-2}
+                                        'tau': 1e-2,
+                                        'h': 0.01}
         elif self.get_parameter('current_tuning_autopilot').value == 'course':
-            self.optimization_params = {'u1': 1e-3,
-                                        'u2': 0.5,
+            self.optimization_params = {'mu_1': 1e-3,
+                                        'mu_2': 0.5,
                                         'sigma': 2.0,
                                         'alpha': 0.05,
-                                        'tau': 1e-2}
+                                        'tau': 1e-2,
+                                        'h': 0.01}
         elif self.get_parameter('current_tuning_autopilot').value == 'pitch':
-            self.optimization_params = {'u1': 1e-3,
-                                        'u2': 0.5,
+            self.optimization_params = {'mu_1': 1e-3,
+                                        'mu_2': 0.5,
                                         'sigma': 2.0,
                                         'alpha': 0.05,
-                                        'tau': 1e-2}
+                                        'tau': 1e-2,
+                                        'h': 0.01}
         elif self.get_parameter('current_tuning_autopilot').value == 'altitude':
-            self.optimization_params = {'u1': 1e-3,
-                                        'u2': 0.5,
+            self.optimization_params = {'mu_1': 1e-3,
+                                        'mu_2': 0.5,
                                         'sigma': 2.0,
                                         'alpha': 0.05,
-                                        'tau': 1e-2}
+                                        'tau': 1e-2,
+                                        'h': 0.01}
         elif self.get_parameter('current_tuning_autopilot').value == 'airspeed':
-            self.optimization_params = {'u1': 1e-3,
-                                        'u2': 0.5,
+            self.optimization_params = {'mu_1': 1e-3,
+                                        'mu_2': 0.5,
                                         'sigma': 2.0,
                                         'alpha': 0.05,
-                                        'tau': 1e-2}
+                                        'tau': 1e-2,
+                                        'h': 0.01}
         else:
             raise ValueError(self.get_parameter('current_tuning_autopilot').value +
                              ' is not a valid value for current_tuning_autopilot.' +
@@ -204,7 +209,7 @@ class Autotune(Node):
 
         if self.collecting_data:
             time = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
-            self.state.append([time, msg.va, msg.phi, msg.chi, msg.theta, 
+            self.state.append([time, msg.va, msg.phi, msg.chi, msg.theta,
                                -msg.position[2]])  # h = -msg.position[2]
 
     def commands_callback(self, msg):
@@ -597,4 +602,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-

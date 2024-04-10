@@ -312,4 +312,3 @@ def interpolate(alpha_1, alpha_2, phi_1, phi_2, phi_1_prime, phi_2_prime):
     beta_2 = np.sign(alpha_2 - alpha_1) * np.sqrt(beta_1**2 - phi_1_prime*phi_2_prime)
     return alpha_2 - (alpha_2 - alpha_1) \
             * (phi_2_prime + beta_2 - beta_1) / (phi_2_prime - phi_1_prime + 2*beta_2)
-
