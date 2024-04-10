@@ -9,10 +9,9 @@ class OptimizerState(Enum):
     This class defines the various states that exist within the optimizer.
     """
     UNINITIALIZED = auto()
-    FINDING_GRADIENT = auto()
+    FINDING_JACOBEAN = auto()
     BRACKETING = auto()
     PINPOINTING = auto()
-
     TERMINATED = auto()
 
 
@@ -37,7 +36,11 @@ class Optimizer:
             - alpha (float): The initial step size. The ideal value for this is very
                 application-specific.
             - tau (float): The convergence tolerance. The optimization is considered converged
-                when the inifity norm is less than tau.
+                when the infinity norm is less than tau.
+            - h (float): Finite difference step size. This is used to calculate the gradient
+                by stepping slightly away from a point and then calculating the slope of the
+                line between the two points. Ideally this value will be small, but it is sensitive
+                to noise and can't get too small.
         """
 
         # Save passed optimization parameters. See above for parameters details.
@@ -46,18 +49,16 @@ class Optimizer:
         self.sigma = optimization_params['sigma']
         self.alpha = optimization_params['alpha']
         self.tau   = optimization_params['tau']
+        self.h     = optimization_params['h']
 
         # The current state of the optimization process.
         self.state = OptimizerState.UNINITIALIZED
 
-        # The jacobian of the function at x_0.
+        # The jacobean of the function at x_0.
         self.J = None
 
         # The current search direction from x_0.
         self.p = None
-
-        # The step size for calculating gradients with finite-difference.
-        self.h = 0.01
 
         # The current best point in the optimization, where we are stepping away from.
         self.x_0 = initial_point
@@ -83,6 +84,16 @@ class Optimizer:
         # Bool to specify if this is the first bracketing step, used by the bracketing algorithm.
         self.first_bracket = None
 
+        # TODO: describe these parameters
+        self.alpha_p = None
+        self.phi_p = None
+        self.phi_p_prime = None
+        self.alpha_low = None
+        self.alpha_high = None
+        self.phi_low = None
+        self.phi_low_prime = None
+        self.phi_high = None
+        self.phi_high_prime = None
 
     def optimization_terminated(self):
         """
@@ -96,7 +107,7 @@ class Optimizer:
         else:
             return False
 
-    def get_optimiztion_status(self):
+    def get_optimization_status(self):
         """
         This function returns the status of the optimization algorithm.
 
@@ -105,7 +116,7 @@ class Optimizer:
         """
         if self.state == OptimizerState.UNINITIALIZED:
             return "Optimizer awaiting first iteration."
-        elif self.state == OptimizerState.FINDING_GRADIENT:
+        elif self.state == OptimizerState.FINDING_JACOBEAN:
             return "Finding gradient."
         elif self.state == OptimizerState.BRACKETING:
             return "Bracketing step size."
@@ -132,16 +143,16 @@ class Optimizer:
 
         if self.state == OptimizerState.UNINITIALIZED:
             # Find the gradient at the new point
-            self.state = OptimizerState.FINDING_GRADIENT
+            self.state = OptimizerState.FINDING_JACOBEAN
             self.phi_0 = error[0]
 
-            # Find the values for finite difference, where each dimmension is individually
+            # Find the values for finite difference, where each dimension is individually
             # stepped by h
             return np.tile(self.x_0, (self.x_0.shape[0], 1)) \
                     + np.identity(self.x_0.shape[0]) * self.h
 
-        if self.state == OptimizerState.FINDING_GRADIENT:
-            # Calculate the jacobian at the current point
+        if self.state == OptimizerState.FINDING_JACOBEAN:
+            # Calculate the jacobean at the current point
             J_prior = self.J
             self.J = (error - self.phi_0) / self.h
 
@@ -178,8 +189,8 @@ class Optimizer:
             return new_points
 
         elif self.state == OptimizerState.PINPOINTING:
-            self.phi_2 = error[0]
-            self.phi_2_prime = (error[1] - error[0]) / self.h
+            self.phi_p = error[0]
+            self.phi_p_prime = (error[1] - error[0]) / self.h
             return self.pinpointing()
 
         else:  # Process Terminated
@@ -194,21 +205,41 @@ class Optimizer:
         # Needs Pinpointing
         if(self.phi_2 > self.phi_0 + self.mu_1*self.alpha_2*self.phi_0_prime) \
                 or (not self.first_bracket and self.phi_2 > self.phi_1):
+            self.alpha_low = self.alpha_1
+            self.alpha_high = self.alpha_2
+            self.phi_low = self.phi_1
+            self.phi_low_prime = self.phi_1_prime
+            self.phi_high = self.phi_2
+            self.phi_high_prime = self.phi_2_prime
             self.state = OptimizerState.PINPOINTING
-            return self.pinpointing()
+
+            self.alpha_p = interpolate(self.alpha_1, self.alpha_2, self.phi_1, self.phi_2,
+                                       self.phi_1_prime, self.phi_2_prime)
+            x_p = self.x_0 + self.alpha_p*self.p
+            return np.array([x_p, (x_p + self.h*self.p)])
 
         # Optimized
         if abs(self.phi_2_prime) <= -self.mu_2*self.phi_0_prime:
             self.x_0 = self.x_0 + self.alpha_2*self.p
             self.phi_0 = self.phi_2
-            self.state = OptimizerState.FINDING_GRADIENT
+            self.state = OptimizerState.FINDING_JACOBEAN
             return np.tile(self.x_0, (self.x_0.shape[0], 1)) \
                     + np.identity(self.x_0.shape[0]) * self.h
 
         # Needs Pinpointing
         elif self.phi_2_prime >= 0:
+            self.alpha_low = self.alpha_2
+            self.alpha_high = self.alpha_1
+            self.phi_low = self.phi_2
+            self.phi_low_prime = self.phi_2_prime
+            self.phi_high = self.phi_1
+            self.phi_high_prime = self.phi_1_prime
             self.state = OptimizerState.PINPOINTING
-            return self.pinpointing()
+
+            self.alpha_p = interpolate(self.alpha_1, self.alpha_2, self.phi_1, self.phi_2,
+                                       self.phi_1_prime, self.phi_2_prime)
+            x_p = self.x_0 + self.alpha_p*self.p
+            return np.array([x_p, (x_p + self.h*self.p)])
 
         # Needs more Bracketing
         else:
@@ -222,61 +253,63 @@ class Optimizer:
             x_2 = self.x_0 + self.alpha_2*self.p
             return np.array([x_2, (x_2 + self.h*self.p)])
 
-    def interpolate(self, alpha1, alpha2):
-        """
-        This function interpolates between two points.
-
-        Parameters:
-        alpha1 (float): The first distance.
-        alpha2 (float): The second distance.
-
-        Returns:
-        float: The interpolated value or alphap.
-        """
-        return (alpha1 + alpha2)/2
-
     def pinpointing(self):
         """
         This function conducts the pinpointing part of the optimization.
-
-        Returns:
-        alphastar (float): The optimal step size
         """
 
-        alpha1 = self.distance(self.current_gains, gains1)
-        alpha2 = self.distance(self.current_gains, gains2)
-        alphap = self.distance(self.current_gains, gainsp)
-
-        if alphap > phi1 + self.mu_1*alphap*phi1_prime or alphap > phi1:
-            # Continue pinpointing
-            gains2 = gainsp
-            gainsp = self.interpolate(gains1, gains2)
-            phi2 = phip
-            phi2_prime = phip_prime
-            self.save_gains = np.array([gains1, None, gains2, None, gainsp,
-                                        [gain + self.h for gain in gainsp]])
-            self.save_phis = np.array([phi1, phi1_prime, phi2, phi2_prime])
-            new_gains = np.array([self.save_gains[4], self.save_gains[5]])
-            return new_gains
+        if (self.phi_p > self.phi_0 + self.mu_1*self.alpha_p*self.phi_0_prime) \
+                or (self.phi_p > self.phi_low):
+            # Set interpolated point to high, continue
+            self.alpha_high = self.alpha_p
+            self.phi_high = self.phi_p
+            self.phi_high_prime = self.phi_p_prime
         else:
-            # Optimizedmu_2
-            if abs(phip_prime) <= -self.u2*phi1_prime:
-                self.state == OptimizerState.SELECT_DIRECTION
-                alphastar = alphap
-                new_gains = np.array([self.current_gains + alphastar*self.p])
-                return new_gains
-            # More parameterization needed
-            elif phip_prime*(alpha2 - alpha1) >= 0:
-                gains2 = gains1
-                phi2 = phi1
+            if abs(self.phi_p_prime) <= -self.mu_2*self.phi_0_prime:
+                # Pinpointing complete, set interpolated point to x_0 and find new jacobian
+                self.x_0 = self.x_0 + self.alpha_p*self.p
+                self.phi_0 = self.phi_p
+                self.state = OptimizerState.FINDING_JACOBEAN
+                return np.tile(self.x_0, (self.x_0.shape[0], 1)) \
+                    + np.identity(self.x_0.shape[0]) * self.h
 
-            gains1 = gainsp
-            phi1 = phip
-            gainsp = self.interpolate(gains1, gains2)
+            elif self.phi_p_prime*(self.alpha_high - self.alpha_low) >= 0:
+                # Set high to low (and low to interpolated)
+                self.alpha_high = self.alpha_low
+                self.phi_high = self.phi_low
+                self.phi_high_prime = self.phi_low_prime
 
-            self.save_gains = np.array([gains1, None, gains2, None, gainsp,
-                                        [gain + self.h for gain in gainsp]])
-            self.save_phis = np.array([phi1, phi1_prime, phi2, phi2_prime])
-            new_gains = np.array([self.save_gains[4], self.save_gains[5]])
-            return new_gains
+            # Set low to interpolated
+            self.alpha_low = self.alpha_p
+            self.phi_low = self.phi_p
+            self.phi_low_prime = self.phi_p_prime
+
+        # Find value and gradient at interpolated point
+        self.alpha_p = interpolate(self.alpha_low, self.alpha_high, self.phi_low, self.phi_high,
+                                   self.phi_low_prime, self.phi_high_prime)
+        x_p = self.x_0 + self.alpha_p*self.p
+        return np.array([x_p, (x_p + self.h*self.p)])
+
+
+def interpolate(alpha_1, alpha_2, phi_1, phi_2, phi_1_prime, phi_2_prime):
+    """
+    This function performs quadratic interpolation between two points to find the minimum,
+    given their function values and derivatives.
+
+    Parameters:
+    alpha_1 (float): Function input 1.
+    alpha_2 (float): Function input 2.
+    phi_1 (float): Function value at alpha_1.
+    phi_2 (float): Function value at alpha_2.
+    phi_1_prime (float): Function derivative at alpha_1.
+    phi_2_prime (float): Function derivative at alpha_2.
+
+    Returns:
+    float: The function input (alpha_p) at the interpolated minimum.
+    """
+
+    beta_1 = phi_1_prime + phi_2_prime - 3*(phi_1 - phi_2) / (alpha_1 - alpha_2)
+    beta_2 = np.sign(alpha_2 - alpha_1) * np.sqrt(beta_1**2 - phi_1_prime*phi_2_prime)
+    return alpha_2 - (alpha_2 - alpha_1) \
+            * (phi_2_prime + beta_2 - beta_1) / (phi_2_prime - phi_1_prime + 2*beta_2)
 
