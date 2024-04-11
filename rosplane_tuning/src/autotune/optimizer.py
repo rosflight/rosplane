@@ -95,6 +95,13 @@ class Optimizer:
         self.phi_high = None
         self.phi_high_prime = None
 
+        # Number of iterations since improvement
+        self.k = 0
+        self.max_k = 10
+
+        # Reason for termination
+        self.reason = ""
+
     def optimization_terminated(self):
         """
         This function checks if the optimization algorithm has terminated.
@@ -123,7 +130,7 @@ class Optimizer:
         elif self.state == OptimizerState.PINPOINTING:
             return "Pinpointing step size."
         elif self.state == OptimizerState.TERMINATED:
-            return "Optimizer terminated with final gains at: " + str(self.x_0)
+            return str(self.reason) + " Final gains: " + str(self.x_0)
 
     def get_next_parameter_set(self, error):
         """
@@ -141,6 +148,11 @@ class Optimizer:
             given at initialization. [[gain1_1, gain2_1, ...], [gain1_2, gain2_2, ...], ...]
         """
 
+        if self.k >= self.max_k:
+            self.reason = f"{self.k} iterations without improvement."
+            self.state = OptimizerState.TERMINATED
+            return self.x_0.reshape(1, 2)
+
         if self.state == OptimizerState.UNINITIALIZED:
             # Find the gradient at the new point
             self.state = OptimizerState.FINDING_JACOBEAN
@@ -152,12 +164,15 @@ class Optimizer:
                     + np.identity(self.x_0.shape[0]) * self.h
 
         if self.state == OptimizerState.FINDING_JACOBEAN:
+            self.k = 0
+
             # Calculate the jacobean at the current point
             J_prior = self.J
             self.J = (error - self.phi_0) / self.h
 
             # Check for convergence using infinity norm
             if np.linalg.norm(self.J, np.inf) < self.tau:
+                self.reason = "Converged."
                 self.state = OptimizerState.TERMINATED
                 return self.x_0.reshape(1, 2)
 
@@ -182,6 +197,7 @@ class Optimizer:
             return np.array([x_2, (x_2 + self.h*self.p)])
 
         elif self.state == OptimizerState.BRACKETING:
+            self.k += 1
             self.phi_2 = error[0]
             self.phi_2_prime = (error[1] - error[0]) / self.h
             new_points = self.bracketing()
@@ -189,6 +205,7 @@ class Optimizer:
             return new_points
 
         elif self.state == OptimizerState.PINPOINTING:
+            self.k += 1
             self.phi_p = error[0]
             self.phi_p_prime = (error[1] - error[0]) / self.h
             return self.pinpointing()
@@ -223,6 +240,7 @@ class Optimizer:
             self.x_0 = self.x_0 + self.alpha_2*self.p
             self.phi_0 = self.phi_2
             self.state = OptimizerState.FINDING_JACOBEAN
+            self.alpha = self.alpha_2
             return np.tile(self.x_0, (self.x_0.shape[0], 1)) \
                     + np.identity(self.x_0.shape[0]) * self.h
 
@@ -270,6 +288,7 @@ class Optimizer:
                 self.x_0 = self.x_0 + self.alpha_p*self.p
                 self.phi_0 = self.phi_p
                 self.state = OptimizerState.FINDING_JACOBEAN
+                self.alpha = self.alpha_p
                 return np.tile(self.x_0, (self.x_0.shape[0], 1)) \
                     + np.identity(self.x_0.shape[0]) * self.h
 
