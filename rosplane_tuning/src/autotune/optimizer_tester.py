@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-# Function to test the optimizer with
 def Matyas(x):
     # Matyas function
     return 0.26 * (x[0] ** 2 + x[1] ** 2) - 0.48 * x[0] * x[1]
@@ -13,11 +12,18 @@ def Circle(x):
     # Circle function
     return x[0] ** 2 + x[1] ** 2
 
-function = Circle
-function = Matyas
+def FakeRollController(x):
+    # Function that roughly mimics the roll controller landscape
+    std = 0.1
+    rotation = np.deg2rad(45)
+    x_rot = x[0] * np.cos(rotation) - x[1] * np.sin(rotation)
+    y_rot = x[0] * np.sin(rotation) + x[1] * np.cos(rotation)
+    return 15*(x_rot - 0.2)**2 + 3*(y_rot - 0.03)**2 + np.random.normal(0, std)
+
+function = FakeRollController
 
 # Initialize optimizer
-curr_points = np.array([[0.0, 2.0]])  # Initial point
+curr_points = np.array([[0.06, 0.04]])  # Initial point
 optimization_params = {'mu_1': 1e-4,
                        'mu_2': 0.5,
                        'sigma': 1.5,
@@ -26,6 +32,9 @@ optimization_params = {'mu_1': 1e-4,
                        'h': 1e-2}
 optimizer = Optimizer(curr_points[0], optimization_params)
 
+# Print initial point and value
+print('Initial point: {}'.format(curr_points[0]))
+print('Initial value: {}'.format(function(curr_points[0])))
 
 # Run optimization
 all_points = []
@@ -52,13 +61,17 @@ all_points = np.array(all_points)
 x_0_points = np.array(x_0_points)
 
 print('Optimization terminated with status: {}'.format(optimizer.get_optimization_status()))
+print('Total number of points tested: {}'.format(len(all_points)))
+print('Final point: {}'.format(curr_points[0]))
+print('Final value: {}'.format(function(curr_points[0])))
 
 
 # Plot the function with the optimization path
-x_min = np.min(all_points[:, 0]) - 1
-x_max = np.max(all_points[:, 0]) + 1
-y_min = np.min(all_points[:, 1]) - 1
-y_max = np.max(all_points[:, 1]) + 1
+range = 0.5
+x_min = np.min(all_points[:, 0]) - range/2
+x_max = np.max(all_points[:, 0]) + range/2
+y_min = np.min(all_points[:, 1]) - range/2
+y_max = np.max(all_points[:, 1]) + range/2
 x = np.linspace(x_min, x_max, 100)
 y = np.linspace(y_min, y_max, 100)
 X, Y = np.meshgrid(x, y)
