@@ -7,12 +7,20 @@ import matplotlib.pyplot as plt
 def FakeRollController(x, include_noise):
     # Function that roughly mimics the roll controller landscape
     std = 0.1 if include_noise else 0.0
-    rotation = np.deg2rad(-40)
-    x_trans = x[0] - 0.2
-    y_trans = x[1] - 0.03
-    x_rot = x_trans * np.cos(rotation) + y_trans * np.sin(rotation)
-    y_rot = x_trans * -np.sin(rotation) + y_trans * np.cos(rotation)
-    return 15*x_rot**2 + 3*y_rot**2 + np.random.normal(0, std)
+
+    rotation = np.deg2rad(35)
+    x_offset = 0.20
+    y_offset = 0.03
+    x_scale = 15
+    y_scale = 3
+
+    x_rot = x[0] * np.cos(rotation) - x[1] * np.sin(rotation)
+    y_rot = x[0] * np.sin(rotation) + x[1] * np.cos(rotation)
+    x_trans = x_rot - (x_offset*np.cos(rotation) - y_offset*np.sin(rotation))
+    y_trans = y_rot - (x_offset*np.sin(rotation) + y_offset*np.cos(rotation))
+    x_scaled = x_trans**2 * x_scale
+    y_scaled = y_trans**2 * y_scale
+    return x_scaled + y_scaled + np.random.normal(0, std)
 
 # Initialize optimizer
 curr_points = np.array([[0.06, 0.04]])  # Initial point
@@ -60,9 +68,8 @@ print('Final value: {}'.format(FakeRollController(curr_points[0], False)))
 
 
 # Plot the function with the optimization path
-range = 0.5
-x = np.linspace(-0.1, 0.5, 100)
-y = np.linspace(-0.3, 0.3, 100)
+x = np.linspace(0., 0.4, 100)
+y = np.linspace(-0.2, 0.3, 100)
 X, Y = np.meshgrid(x, y)
 Z = FakeRollController([X, Y], False)
 plt.contour(X, Y, Z, 50)
