@@ -24,14 +24,10 @@ def FakeRollController(x, include_noise):
 
 # Initialize optimizer
 curr_points = np.array([[0.06, 0.04]])  # Initial point
-optimization_params = {'mu_1': 1e-4,
-                       'mu_2': 0.5,
-                       'sigma': 1.5,
-                       'alpha': 0.05,
+optimization_params = {'alpha': 0.1,
                        'tau': 0.1,
-                       'h': 0.01}
+                       'h': 0.03}
 optimizer = Optimizer(curr_points[0], optimization_params)
-num_repeats = 3
 
 # Print initial point and value
 print('Initial point: {}'.format(curr_points[0]))
@@ -39,15 +35,12 @@ print('Initial value: {}'.format(FakeRollController(curr_points[0], False)))
 
 # Run optimization
 all_points = []
-x_0_points = []
+x_points = []
 while not optimizer.optimization_terminated():
-    # Print status
-    print(optimizer.get_optimization_status())
-
     # Calculate error for current points
     error = []
     for point in curr_points:
-        error.append(np.average([FakeRollController(point, True) for _ in range(num_repeats)]))
+        error.append(FakeRollController(point, True))
     error = np.array(error)
     # Pass points to optimizer
     curr_points = optimizer.get_next_parameter_set(error)
@@ -55,16 +48,15 @@ while not optimizer.optimization_terminated():
     # Store points 
     for point in curr_points:
         all_points.append(point)
-    x_0_points.append(optimizer.x_0)
+    x_points.append(optimizer.x)
 
     # End interation step
 all_points = np.array(all_points)
-x_0_points = np.array(x_0_points)
+x_points = np.array(x_points)
 
 print('Optimization terminated with status: {}'.format(optimizer.get_optimization_status()))
-print('Total number of points tested: {}'.format(len(all_points) * num_repeats))
-print('Final point: {}'.format(curr_points[0]))
 print('Final value: {}'.format(FakeRollController(curr_points[0], False)))
+print('Total number of points tested: {}'.format(len(all_points)))
 
 
 # Plot the function with the optimization path
@@ -73,7 +65,7 @@ y = np.linspace(-0.2, 0.3, 100)
 X, Y = np.meshgrid(x, y)
 Z = FakeRollController([X, Y], False)
 plt.contour(X, Y, Z, 50)
-plt.plot(x_0_points[:, 0], x_0_points[:, 1], color='b', marker='o')
+plt.plot(x_points[:, 0], x_points[:, 1], color='b', marker='o')
 # Lock the x and y axis to be equal
 plt.axis('equal')
 plt.show()
