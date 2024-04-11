@@ -29,9 +29,9 @@ optimization_params = {'mu_1': 1e-4,
                        'sigma': 1.5,
                        'alpha': 0.05,
                        'tau': 0.1,
-                       'h': 0.05}
+                       'h': 0.01}
 optimizer = Optimizer(curr_points[0], optimization_params)
-num_repeats = 5
+num_repeats = 3
 
 # Print initial point and value
 print('Initial point: {}'.format(curr_points[0]))

@@ -97,7 +97,7 @@ class Optimizer:
 
         # Number of iterations since improvement
         self.k = 0
-        self.max_k = 10
+        self.max_k = 5
 
         # Reason for termination
         self.reason = ""
