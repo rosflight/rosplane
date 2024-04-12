@@ -66,9 +66,11 @@ class Optimizer:
         """
         if self.state == OptimizerState.UNINITIALIZED:
             return "Optimizer awaiting first iteration."
+        elif self.state == OptimizerState.FIRST_ITERATION:
+            return "First iteration."
         elif self.state == OptimizerState.OPTIMIZING:
             return "Optimizing."
-        elif self.state == OptimizerState.TERMINATED:
+        else:  # self.state == OptimizerState.TERMINATED:
             return str(self.reason) + " Final gains: " + str(self.x)
 
     def get_next_parameter_set(self, error):
