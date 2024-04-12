@@ -26,19 +26,12 @@ class Optimizer:
         initial_point (np.array, size num_gains, dtype float): The starting point for the gains to
             be optimized (x_0). [gain1, gain2, ...]
         optimization_params (dictionary): Parameters needed for the optimization operation.
-            - alpha (float): The initial step size. The ideal value for this is very
-                application-specific.
-            - tau (float): The convergence tolerance. The optimization is considered converged
-                when the infinity norm is less than tau.
-            - h (float): Finite difference step size. This is used to calculate the gradient
-                by stepping slightly away from a point and then calculating the slope of the
-                line between the two points. Ideally this value will be small, but it is sensitive
-                to noise and can't get too small.
+            - alpha (float): The step size.
+            - h (float): Finite difference step size, used to calculate the gradient.
         """
 
         # Save passed optimization parameters. See above for parameters details.
         self.alpha = optimization_params['alpha']
-        self.tau   = optimization_params['tau']
         self.h     = optimization_params['h']
 
         # The current state of the optimization process.
@@ -49,17 +42,8 @@ class Optimizer:
 
         # Initialize the gains to the initial point
         self.x = initial_point
-        self.f_initial = None
+        self.prev_error = None
 
-        # Keep track of the number of iterations
-        self.k = 0
-        self.max_k = 20
-
-        # Initialize the velocity
-        self.v = np.zeros([self.x.shape[0]]).T
-
-        self.inertia = 0.8
-        self.drag = 0.9
 
     def optimization_terminated(self):
         """
@@ -103,15 +87,10 @@ class Optimizer:
             given at initialization. [[gain1_1, gain2_1, ...], [gain1_2, gain2_2, ...], ...]
         """
 
-        if self.k >= self.max_k:
-            self.reason = "Interations complete."
-            self.state = OptimizerState.TERMINATED
-            return self.x.reshape(1, 2)
-
         if self.state == OptimizerState.UNINITIALIZED:
             # Find the gradient at the new point
             self.state = OptimizerState.FIRST_ITERATION
-            self.f_initial = error.item(0)
+            self.prev_error = error.item(0)
 
             # Find the values for finite difference, where each dimension is individually
             # stepped by h
@@ -119,23 +98,23 @@ class Optimizer:
                     + np.identity(self.x.shape[0]) * self.h
 
         if self.state == OptimizerState.FIRST_ITERATION or self.state == OptimizerState.OPTIMIZING:
-            self.k += 1
             # Calculate the jacobean at the current point
             if self.state == OptimizerState.FIRST_ITERATION:
-                J = (error - self.f_initial) / self.h
+                J = (error - self.prev_error) / self.h
                 self.state = OptimizerState.OPTIMIZING
             else:
                 J = (error[1:] - error[0]) / self.h
-            J_norm = J / np.linalg.norm(J)
 
-            # Update the velocity
-            self.v = self.inertia * self.v + (1 - self.inertia) * -J_norm
+                # Check if any of the new points are better
+                if np.min(error) > self.prev_error:
+                    self.reason = "Current iteration worst than previous."
+                    self.state = OptimizerState.TERMINATED
+                    return self.x.reshape(1, 2)
+                self.prev_error = error.item(0)
 
-            # Slow the velocity down with drag
-            self.v = self.v * self.drag
 
             # Take a step in the search direction
-            self.x = self.x + self.v * self.alpha
+            self.x = self.x - J * self.alpha
 
             # Find the gradient at the new point
             points = np.tile(self.x, (self.x.shape[0], 1)) \

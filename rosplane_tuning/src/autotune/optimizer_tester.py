@@ -24,9 +24,8 @@ def FakeRollController(x, include_noise):
 
 # Initialize optimizer
 curr_points = np.array([[0.06, 0.04]])  # Initial point
-optimization_params = {'alpha': 0.1,
-                       'tau': 0.1,
-                       'h': 0.03}
+optimization_params = {'alpha': 0.01,
+                       'h': 0.04}
 optimizer = Optimizer(curr_points[0], optimization_params)
 
 # Print initial point and value
@@ -61,7 +60,7 @@ print('Total number of points tested: {}'.format(len(all_points)))
 
 # Plot the function with the optimization path
 x = np.linspace(0., 0.4, 100)
-y = np.linspace(-0.2, 0.3, 100)
+y = np.linspace(-0.1, 0.2, 100)
 X, Y = np.meshgrid(x, y)
 Z = FakeRollController([X, Y], False)
 plt.contour(X, Y, Z, 50)
