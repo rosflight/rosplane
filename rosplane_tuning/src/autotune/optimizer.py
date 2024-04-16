@@ -109,7 +109,7 @@ class Optimizer:
 
                 # Check if any of the new points are better
                 if np.min(error) > self.prev_error:
-                    self.reason = "Current iteration worst than previous."
+                    self.reason = "Current iteration worse than previous."
                     self.state = OptimizerState.TERMINATED
                     return self.x.reshape(1, 2)
                 self.prev_error = error.item(0)
@@ -126,4 +126,3 @@ class Optimizer:
 
         else:  # Process Terminated
             return self.x.reshape(1, 2)
-
