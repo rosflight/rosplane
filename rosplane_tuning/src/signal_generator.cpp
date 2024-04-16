@@ -137,7 +137,7 @@ void TuningSignalGenerator::publish_timer_callback()
     case ControllerOutput::ALTITUDE:
       center_value = default_h_c_;
       break;
-    case ControllerOutput::HEADING:
+    case ControllerOutput::COURSE:
       center_value = default_chi_c_;
       break;
     case ControllerOutput::AIRSPEED:
@@ -186,7 +186,7 @@ void TuningSignalGenerator::publish_timer_callback()
     case ControllerOutput::ALTITUDE:
       command_message.h_c = signal_value;
       break;
-    case ControllerOutput::HEADING:
+    case ControllerOutput::COURSE:
       command_message.chi_c = signal_value;
       break;
     case ControllerOutput::AIRSPEED:
@@ -336,8 +336,8 @@ void TuningSignalGenerator::update_params()
     controller_output_ = ControllerOutput::PITCH;
   } else if (controller_output_string == "altitude") {
     controller_output_ = ControllerOutput::ALTITUDE;
-  } else if (controller_output_string == "heading") {
-    controller_output_ = ControllerOutput::HEADING;
+  } else if (controller_output_string == "course") {
+    controller_output_ = ControllerOutput::COURSE;
   } else if (controller_output_string == "airspeed") {
     controller_output_ = ControllerOutput::AIRSPEED;
   } else {
