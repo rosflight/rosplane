@@ -5,7 +5,6 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.uic import loadUi
 from tuning_gui import Ui_MainWindow
 import subprocess
-import timeit
 
 # TODO:
 # 1. Add the clear button
