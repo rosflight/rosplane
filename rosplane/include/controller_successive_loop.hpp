@@ -214,8 +214,12 @@ protected:
   //    float ct_error_;
   //    float ct_integrator_;
   //    float ct_differentiator_;
+  float yaw_damper(float r, const struct params_s &params);
 
-  /**
+  float delta_r_delay;
+  float r_delay;
+
+ /**
  * Saturate a given value to a maximum or minimum of the limits.
  * @param value The value to saturate.
  * @param up_limit The maximum the value can take on.
