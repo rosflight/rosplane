@@ -3,9 +3,9 @@ autopilot: # node name.
     alt_hz: 10.0
     alt_toz: 5.0
     tau: 50.0
-    c_kp: 3.5
+    c_kp: 0.8
     c_kd: 0.0
-    c_ki: 0.1
+    c_ki: 0.08
     r_kp: 0.06
     r_kd: 0.04
     r_ki: 0.0
@@ -37,7 +37,7 @@ autopilot: # node name.
     pwm_rad_a: 1.0
     pwm_rad_r: 1.0
     max_takeoff_throttle: 1.0
-    mass: 2.28
+    mass: 4.5
     gravity: 9.8
     max_roll: 25.0
     frequency: 100
