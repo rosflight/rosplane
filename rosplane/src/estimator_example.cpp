@@ -1,5 +1,6 @@
 #include "estimator_example.hpp"
 #include "estimator_base.hpp"
+#include <rclcpp/logging.hpp>
 
 namespace rosplane
 {
@@ -30,8 +31,8 @@ estimator_example::estimator_example()
 {
   P_a_ *= powf(radians(5.0f), 2);
 
-  Q_a_(0, 0) = 0.01;
-  Q_a_(1, 1) = 0.01;
+  Q_a_(0, 0) = 0.0001;
+  Q_a_(1, 1) = 0.0000001;
 
   Q_g_ *= pow(M_PI * .13 / 180.0, 2); // TODO connect this to the actual params.
 
