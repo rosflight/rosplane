@@ -214,7 +214,7 @@ protected:
   //    float ct_error_;
   //    float ct_integrator_;
   //    float ct_differentiator_;
-  float yaw_damper(float r, const struct params_s &params);
+  float yaw_damper(float r);
 
   float delta_r_delay;
   float r_delay;
