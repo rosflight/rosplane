@@ -10,7 +10,7 @@ def generate_launch_description():
     stabilize_period = LaunchConfiguration('stabilize_period')
     stabilize_period_launch_arg = DeclareLaunchArgument(
         'stabilize_period',
-        default_value=TextSubstitution(text='5.0'),
+        default_value=TextSubstitution(text='10.0'),
         description='Whether to run the tuning sequence continuously or to wait for manual input'
     )
     continuous_tuning = LaunchConfiguration('continuous_tuning')

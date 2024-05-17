@@ -3,7 +3,7 @@
 from rosplane_msgs.msg import ControllerCommands
 from rosplane_msgs.msg import ControllerInternalsDebug
 from rosplane_msgs.msg import State
-from optimizer import Optimizer
+from plot_util import Optimizer
 
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
