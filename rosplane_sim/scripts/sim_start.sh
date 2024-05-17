@@ -39,9 +39,17 @@ tmux select-pane -t rosplane_sim_session:0.3
 # rosplane_sim_session:0.2 Top Right
 # rosplane_sim_session:0.3 Bottom Right
 
+# TODO add argument to know whether to launch a docker containter using compose. Smart way to extract name of container? Try to reduce number of args.
+# TODO Will this be run on the base station? If so, it needs to connect via ssh.
+
+# Send commands to run the sim.
+# TODO change to take path argument, and have all windows go to the directory.
 tmux send-keys -t rosplane_sim_session:0.0 'cd ~/repos/rosflight_ws/' C-m
+# TODO add argument to check for sim or not. (If done rename the whole script)
 tmux send-keys -t rosplane_sim_session:0.0 'ros2 launch rosflight_sim fixedwing_sim_io_joy.launch.py aircraft:=anaconda' C-m
+# TODO add argument if tuning or not.
 tmux send-keys -t rosplane_sim_session:0.2 'ros2 launch rosplane_sim sim.launch.py aircraft:=anaconda' C-m
+
 # Add check to see if rc_sim has been passed an arg
 if [ "$rc_sim" == "--rc_sim" ] || [ "$rc_sim" == "-r" ]; then
   tmux send-keys -t rosplane_sim_session:0.3 'ros2 run rosflight_sim rc_sim.py --ros-args --remap RC:=/fixedwing/RC' C-m
