@@ -38,6 +38,7 @@ def generate_launch_description():
             package='rosplane',
             executable='rosplane_path_follower',
             name='path_follower',
+            parameters = [autopilot_params],
         ),
         Node(
             package='rosplane',

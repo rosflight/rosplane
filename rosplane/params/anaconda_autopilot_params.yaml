@@ -46,3 +46,9 @@ path_manager:
   ros__parameters:
     R_min: 100.0
     orbit_last: False
+
+path_follower:
+  ros__parameters:
+    chi_infty: 0.5
+    k_orbit: 4.0
+    k_path: 0.05
