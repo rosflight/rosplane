@@ -48,8 +48,8 @@ private:
     state.initial_lon = 0.0; // TODO implement correct initial lat and lon
     state.initial_alt = 0.0;
 
-    state.position[0] = msg.pose.pose.position.x;
-    state.position[1] = msg.pose.pose.position.y;
+    state.position[0] = -msg.pose.pose.position.x;
+    state.position[1] = -msg.pose.pose.position.y;
     state.position[2] = msg.pose.pose.position.z;
 
     Eigen::Quaternionf q;
