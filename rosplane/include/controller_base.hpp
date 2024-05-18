@@ -50,6 +50,7 @@ public:
   controller_base();
 
 protected:
+
   /**
    * This struct holds all of the inputs to the control algorithm.
    */

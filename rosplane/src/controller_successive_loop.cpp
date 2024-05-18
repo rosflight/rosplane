@@ -1,6 +1,7 @@
 #include "controller_successive_loop.hpp"
 
 #include "iostream"
+#include <cmath>
 #include <rclcpp/logging.hpp>
 
 namespace rosplane
@@ -84,7 +85,7 @@ void controller_successive_loop::alt_hold_lateral_control(const struct input_s &
   // Set rudder command to zero, can use cooridinated_turn_hold if implemented.
   // Find commanded roll angle in order to achieve commanded course.
   // Find aileron deflection required to acheive required roll angle.
-  output.delta_r = 0; //cooridinated_turn_hold(input.beta, params)
+  output.delta_r = yaw_damper(input.r); //cooridinated_turn_hold(input.beta, params)
   output.phi_c = course_hold(input.chi_c, input.chi, input.phi_ff, input.r);
 
   if (roll_tuning_debug_override) { output.phi_c = tuning_debug_override_msg_.phi_c; }
@@ -117,7 +118,7 @@ void controller_successive_loop::climb_lateral_control(const struct input_s & in
   // Maintain straight flight while gaining altitude.
   output.phi_c = 0;
   output.delta_a = roll_hold(output.phi_c, input.phi, input.p);
-  output.delta_r = 0;
+  output.delta_r = yaw_damper(input.r);
 }
 
 void controller_successive_loop::climb_longitudinal_control(const struct input_s & input,
@@ -139,7 +140,7 @@ void controller_successive_loop::take_off_lateral_control(const struct input_s &
                                                           struct output_s & output)
 {
   // In the take-off zone maintain level straight flight by commanding a roll angle of 0 and rudder of 0.
-  output.delta_r = 0;
+  output.delta_r = 0.0;
   output.phi_c = 0;
   output.delta_a = roll_hold(output.phi_c, input.phi, input.p);
 }
@@ -222,6 +223,7 @@ float controller_successive_loop::course_hold(float chi_c, float chi, float phi_
 
   float phi_c =
     sat(up + ui + ud + phi_ff, max_roll * 3.14 / 180.0, -max_roll * 3.14 / 180.0);
+
   if (fabs(c_ki) >= 0.00001) {
     float phi_c_unsat = up + ui + ud + phi_ff;
     c_integrator_ = c_integrator_ + (Ts / c_ki) * (phi_c - phi_c_unsat);
@@ -366,7 +368,33 @@ float controller_successive_loop::altitude_hold_control(float h_c, float h)
   return theta_c;
 }
 
-//float controller_successive_loop::cooridinated_turn_hold(float v, const params_s &params, float Ts)
+float controller_successive_loop::yaw_damper(float r)
+{
+  int64_t frequency = params.get_int("frequency");   // Declared in controller_base
+  float y_pwo = params.get_double("y_pwo");
+  float y_kr = params.get_double("y_kr");
+  float max_r = 1.0; // TODO Add to params
+
+  float Ts = 1.0/frequency;
+
+  float n0 = 0.0;
+  float n1 = 1.0;
+  float d0 = y_pwo;
+  float d1 = 1.0;
+
+  float b0 = -y_kr * (2.0 * n1 - Ts * n0) / (2.0 * d1 + Ts * d0);
+  float b1 = y_kr * (2.0 * n1 + Ts * n0) / (2.0 * d1 + Ts * d0);
+  float a0 = y_kr * (2.0 * d1 - Ts * d0) / (2.0 * d1 + Ts * d0);
+
+  float delta_r = -sat(a0 * delta_r_delay + b1 * r + b0 * r_delay, max_r, -max_r);
+
+  r_delay = r;
+  delta_r_delay = delta_r;
+
+  return delta_r;
+}
+
+//float controller_successive_loop::cooridinated_turn_hold(float v, const params_s &params)
 //{
 //    //todo finish this if you want...
 //    return 0;
@@ -377,6 +405,12 @@ float controller_successive_loop::sat(float value, float up_limit, float low_lim
   // Set to upper limit if larger than that limit.
   // Set to lower limit if smaller than that limit.
   // Otherwise, do not change the value.
+  
+  if (up_limit < 0.0) 
+  {
+    RCLCPP_WARN_ONCE(this->get_logger(), "Upper limit in saturation function is negative.");
+  }
+
   float rVal;
   if (value > up_limit) rVal = up_limit;
   else if (value < low_limit)
@@ -436,6 +470,9 @@ void controller_successive_loop::declare_parameters()
   params.declare_param("a_kp", 0.015);
   params.declare_param("a_ki", 0.003);
   params.declare_param("a_kd", 0.0);
+
+  params.declare_param("y_pwo", .6349);
+  params.declare_param("y_kr", .85137);
 }
 
 } // namespace rosplane
