@@ -118,7 +118,7 @@ void controller_successive_loop::climb_lateral_control(const struct input_s & in
   // Maintain straight flight while gaining altitude.
   output.phi_c = 0;
   output.delta_a = roll_hold(output.phi_c, input.phi, input.p);
-  output.delta_r = 0.0; //yaw_damper(input.r, params);
+  output.delta_r = yaw_damper(input.r);
 }
 
 void controller_successive_loop::climb_longitudinal_control(const struct input_s & input,
