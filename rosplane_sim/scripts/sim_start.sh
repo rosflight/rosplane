@@ -168,6 +168,11 @@ if $sim; then
 fi
 
 if $bag; then
+
+  if $online; then
+    tmux send-keys -t rosplane_sim_session:0.1 "cd bags"
+  fi
+
   if [ ! -z $bag_name ]; then
     tmux send-keys -t rosplane_sim_session:0.1 "ros2 bag record -a -o $bag_name" C-m
   else
