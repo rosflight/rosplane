@@ -5,24 +5,35 @@ print_help() {
     usage
     echo
     echo "Options:"
-    echo "  -h      Show this help message and exit"
-    echo "  -s      Run as simulation of ROSflight"
-    echo "  -t      Run tuning version of ROSflight"
-    echo "  -r      Run the script with simulated transmitter"
-    echo "  -a      Aircraft parameter to pass to launch files, default is anaconda"
+    echo "  -h                Show this help message and exit"
+    echo "  -s                Run as simulation of ROSflight"
+    echo "  -t                Run tuning version of ROSflight"
+    echo "  -r                Run the script with simulated transmitter"
+    echo "  -a                Aircraft option to pass to launch files"
+    echo "  aircraft          The aricraft parameter to be used in launch files, default is anaconda"
+    echo "  -b                Start a ROS bag"
+    ehco "  bag_name          Name of bag (optional)"
+    echo "  -o                Run the tmux session online (on remote host)"
+    echo "  user@host         Username and address of remote"
+    echo "  -d                Indicate that you should run a docker container of the given name (uses compose, and compose file should be in workspce directory)"
+    echo "  docker_name       Name of container"
+    echo "  path/to/workspace Path to workspace"
 }
 
 usage() {
-    echo "Usage: $0 [-h] [-s] [-t] [-r] [-a] aircraft path/to/ROSflight/workspace"
+    echo "Usage: $0 [-h] [-s] [-t] [-r] [-a aircraft] [-b [bag_name]] [-o user@host] [-d docker_container_name] path/to/ROSflight/workspace"
 }
 
 sim=false
 tuning=false
 rc_sim=false
 aircraft='anaconda'
+online=false
+docker=false
+bag=false
 
 # Parse options using getopts
-while getopts ":hstra:" opt; do
+while getopts ":hstra:o:d:" opt; do
     case $opt in
         h)
             
@@ -44,6 +55,25 @@ while getopts ":hstra:" opt; do
             ;;
         a)
             aircraft=$OPTARG
+            ;;
+        b)
+            bag=true
+            bag_name=$OPTARG
+            ;;
+        o)
+            online=true
+            user_host=$OPTARG
+            if $sim; then
+              echo "Cannot run simulat on a remote."
+              exit 1 
+            fi
+            ;;
+        d)
+            docker=true
+            docker_name=$OPTARG
+            if ! $online; then
+              echo "Script not configured for Docker not on remote."
+            fi
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
@@ -86,11 +116,31 @@ tmux select-pane -t rosplane_sim_session:0.3
 # rosplane_sim_session:0.2 Top Right
 # rosplane_sim_session:0.3 Bottom Right
 
-# TODO add argument to know whether to launch a docker containter using compose. Smart way to extract name of container? Try to reduce number of args.
-# TODO Will this be run on the base station? If so, it needs to connect via ssh. I think that this may be less intensive on the network but I could be wrong.
+# Setup all panes to ssh into the remote
+if $online; then
+  tmux send-keys -t rosplane_sim_session:0.0 "ssh $user_host" C-m
+  tmux send-keys -t rosplane_sim_session:0.1 "ssh $user_host" C-m
+  tmux send-keys -t rosplane_sim_session:0.2 "ssh $user_host" C-m
+  tmux send-keys -t rosplane_sim_session:0.3 "ssh $user_host" C-m
+fi 
+
+# Send all of the panes to the working directory.
+tmux send-keys -t rosplane_sim_session:0.0 "cd $filepath" C-m
+tmux send-keys -t rosplane_sim_session:0.1 "cd $filepath" C-m
+tmux send-keys -t rosplane_sim_session:0.2 "cd $filepath" C-m
+tmux send-keys -t rosplane_sim_session:0.3 "cd $filepath" C-m
+
+# TODO test docker implementation.
+
+if $docker; then
+  tmux send-keys -t rosplane_sim_session:0.0 "docker compose up -d" C-m
+  tmux send-keys -t rosplane_sim_session:0.0 "docker compose exec bash -t" C-m # TODO check these commands.
+  tmux send-keys -t rosplane_sim_session:0.1 "docker compose exec bash -t" C-m
+  tmux send-keys -t rosplane_sim_session:0.2 "docker compose exec bash -t" C-m
+  tmux send-keys -t rosplane_sim_session:0.3 "docker compose exec bash -t" C-m
+fi
 
 # Send commands to run the sim.
-tmux send-keys -t rosplane_sim_session:0.0 "cd $filepath" C-m
 
 if $sim; then
   tmux send-keys -t rosplane_sim_session:0.0 "ros2 launch rosflight_sim fixedwing_sim_io_joy.launch.py aircraft:=$aircraft" C-m
@@ -100,7 +150,6 @@ else
   exit 1
 fi
 
-tmux send-keys -t rosplane_sim_session:0.2 "cd $filepath" C-m
 if $tuning; then
   tmux send-keys -t rosplane_sim_session:0.2 "ros2 launch rosplane_sim sim_tuning.launch.py aircraft:=$aircraft" C-m
 else
@@ -108,14 +157,30 @@ else
 fi
 
 
-tmux send-keys -t rosplane_sim_session:0.3 "cd $filepath" C-m
 # Check to see if rc_sim has been passed an arg
 if $rc_sim; then
   tmux send-keys -t rosplane_sim_session:0.3 'ros2 run rosflight_sim rc_sim.py --ros-args --remap RC:=/fixedwing/RC' C-m
 fi
-tmux send-keys -t rosplane_sim_session:0.1 "cd $filepath" C-m
-sleep 3 # It doesn't look like there is a clear way to do this better. This will have to do.
-tmux send-keys -t rosplane_sim_session:0.1 'ros2 service call /calibrate_imu std_srvs/srv/Trigger' C-m
+
+if $sim; then
+  sleep 3 # It doesn't look like there is a clear way to do this better. This will have to do.
+  tmux send-keys -t rosplane_sim_session:0.1 'ros2 service call /calibrate_imu std_srvs/srv/Trigger' C-m
+fi
+
+if $bag; then
+  if [ ! -z $bag_name ]; then
+    tmux send-keys -t rosplane_sim_session:0.1 "ros2 bag record -a -o $bag_name" C-m
+  else
+    tmux send-keys -t rosplane_sim_session:0.1 "ros2 bag record -a" C-m
+  fi
+fi
+
+# Create another window that is on the local machine.
+online=true
+if $online; then
+  tmux new-window -t rosplane_sim_session -n local_env
+fi
+
 
 # Attach to the tmux session
 tmux attach-session -t rosplane_sim_session
