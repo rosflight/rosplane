@@ -16,7 +16,7 @@ print_help() {
     echo "  -o                Run the tmux session online (on remote host)"
     echo "  user@host         Username and address of remote"
     echo "  -d                Indicate that you should run a docker container of the given name (uses compose, and compose file should be in workspce directory)"
-    echo "  docker_name       Name of container"
+    echo "  container       Name of container"
     echo "  path/to/workspace Path to workspace"
 }
 
@@ -33,7 +33,7 @@ docker=false
 bag=false
 
 # Parse options using getopts
-while getopts ":hstra:o:d:" opt; do
+while getopts ":hstra:b:o:d:" opt; do
     case $opt in
         h)
             
@@ -70,7 +70,7 @@ while getopts ":hstra:o:d:" opt; do
             ;;
         d)
             docker=true
-            docker_name=$OPTARG
+            container=$OPTARG
             if ! $online; then
               echo "Script not configured for Docker not on remote."
             fi
@@ -134,10 +134,11 @@ tmux send-keys -t rosplane_sim_session:0.3 "cd $filepath" C-m
 
 if $docker; then
   tmux send-keys -t rosplane_sim_session:0.0 "docker compose up -d" C-m
-  tmux send-keys -t rosplane_sim_session:0.0 "docker compose exec bash -t" C-m # TODO check these commands.
-  tmux send-keys -t rosplane_sim_session:0.1 "docker compose exec bash -t" C-m
-  tmux send-keys -t rosplane_sim_session:0.2 "docker compose exec bash -t" C-m
-  tmux send-keys -t rosplane_sim_session:0.3 "docker compose exec bash -t" C-m
+  sleep 2
+  tmux send-keys -t rosplane_sim_session:0.0 "docker compose exec $container bash" C-m # TODO check these commands.
+  tmux send-keys -t rosplane_sim_session:0.1 "docker compose exec $container bash" C-m
+  tmux send-keys -t rosplane_sim_session:0.2 "docker compose exec $container bash" C-m
+  tmux send-keys -t rosplane_sim_session:0.3 "docker compose exec $container bash" C-m
 fi
 
 # Send commands to run the sim.
@@ -145,15 +146,19 @@ fi
 if $sim; then
   tmux send-keys -t rosplane_sim_session:0.0 "ros2 launch rosflight_sim fixedwing_sim_io_joy.launch.py aircraft:=$aircraft" C-m
 else
-  # TODO add functionality if it is not in sim.
-  echo "Use -s argument."
-  exit 1
+  tmux send-keys -t rosplane_sim_session:0.0 "ros2 run rosflight_io rosflight_io --ros-args -p port:=/dev/ttyACM0" C-m
 fi
 
 if $tuning; then
-  tmux send-keys -t rosplane_sim_session:0.2 "ros2 launch rosplane_sim sim_tuning.launch.py aircraft:=$aircraft" C-m
-else
+  if $sim; then
+    tmux send-keys -t rosplane_sim_session:0.2 "ros2 launch rosplane_sim sim_tuning.launch.py aircraft:=$aircraft" C-m
+  else 
+    tmux send-keys -t rosplane_sim_session:0.2 "ros2 launch rosplane_tuning rosplane_tuning.launch.py aircraft:=$aircraft" C-m
+  fi 
+elif $sim; then
   tmux send-keys -t rosplane_sim_session:0.2 "ros2 launch rosplane_sim sim.launch.py aircraft:=$aircraft" C-m
+else
+  tmux send-keys -t rosplane_sim_session:0.2 "ros2 launch rosplane rosplane.launch.py aircraft:=$aircraft" C-m
 fi
 
 
@@ -170,18 +175,17 @@ fi
 if $bag; then
 
   if $online; then
-    tmux send-keys -t rosplane_sim_session:0.1 "cd bags"
+    tmux send-keys -t rosplane_sim_session:0.3 "cd bags" C-m
   fi
 
   if [ ! -z $bag_name ]; then
-    tmux send-keys -t rosplane_sim_session:0.1 "ros2 bag record -a -o $bag_name" C-m
+    tmux send-keys -t rosplane_sim_session:0.3 "ros2 bag record -a -o $bag_name" C-m
   else
-    tmux send-keys -t rosplane_sim_session:0.1 "ros2 bag record -a" C-m
+    tmux send-keys -t rosplane_sim_session:0.3 "ros2 bag record -a" C-m
   fi
 fi
 
 # Create another window that is on the local machine.
-online=true
 if $online; then
   tmux new-window -t rosplane_sim_session -n local_env
 fi
