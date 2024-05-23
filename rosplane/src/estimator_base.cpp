@@ -82,11 +82,11 @@ void estimator_base::update()
   rosplane_msgs::msg::State msg;
   msg.header.stamp = this->get_clock()->now();
   msg.header.frame_id =
-    1; // Denotes global frame TODO make sure all messages throughout ROSPlane have this
+    1; // Denotes global frame
 
-  msg.position[0] = -output.pn;
-  msg.position[1] = -output.pe; // TODO find out why there are these minuses.
-  msg.position[2] = -output.h;
+  msg.position[0] = output.pn;
+  msg.position[1] = output.pe;
+  msg.position[2] = -output.h; // Nominal output is alt. For NED the alt must be inverted.
   if (gps_init_) {
     msg.initial_lat = init_lat_;
     msg.initial_lon = init_lon_;
