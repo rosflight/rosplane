@@ -28,6 +28,7 @@ private:
   rclcpp::Publisher<rosplane_msgs::msg::Waypoint>::SharedPtr waypoint_publisher;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr next_waypoint_service;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr clear_waypoint_service;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr print_waypoint_service;
   rclcpp::Service<rosplane_msgs::srv::AddWaypoint>::SharedPtr add_waypoint_service;
   rclcpp::TimerBase::SharedPtr timer_;
 
@@ -38,6 +39,9 @@ private:
                    const rosplane_msgs::srv::AddWaypoint::Response::SharedPtr & res);
   
   bool clear_path(const std_srvs::srv::Trigger::Request::SharedPtr & req,
+                  const std_srvs::srv::Trigger::Response::SharedPtr & res);
+
+  bool print_path(const std_srvs::srv::Trigger::Request::SharedPtr & req,
                   const std_srvs::srv::Trigger::Response::SharedPtr & res);
 
   void waypoint_publish();
@@ -64,6 +68,10 @@ path_planner::path_planner()
   clear_waypoint_service = this->create_service<std_srvs::srv::Trigger>(
     "clear_waypoints",
     std::bind(&path_planner::clear_path, this, _1, _2));
+
+  print_waypoint_service = this->create_service<std_srvs::srv::Trigger>(
+    "print_waypoints",
+    std::bind(&path_planner::print_path, this, _1, _2));
   // TODO: Add load mission from file option
 
   timer_ = this->create_wall_timer(1000ms, std::bind(&path_planner::waypoint_publish, this));
@@ -115,7 +123,7 @@ bool path_planner::update_path(const rosplane_msgs::srv::AddWaypoint::Request::S
   new_waypoint.header.stamp = now;
   new_waypoint.w = req->w;
   new_waypoint.chi_d = req->chi_d;
-  new_waypoint.chi_valid = req->chi_valid;
+  new_waypoint.use_chi = req->use_chi;
   new_waypoint.va_d = req->va_d;
   new_waypoint.set_current = req->set_current;
   new_waypoint.clear_wp_list = false;
@@ -139,10 +147,37 @@ bool path_planner::clear_path(const std_srvs::srv::Trigger::Request::SharedPtr &
                               const std_srvs::srv::Trigger::Response::SharedPtr & res) {
   wps.clear();
 
+  rosplane_msgs::msg::Waypoint new_waypoint;
+  new_waypoint.clear_wp_list = true;
+
+  waypoint_publisher->publish(new_waypoint);
+
   res->success = true;
   return true;
 }
 
+bool path_planner::print_path(const std_srvs::srv::Trigger::Request::SharedPtr & req,
+                              const std_srvs::srv::Trigger::Response::SharedPtr & res) {
+  std::stringstream output;
+  
+  output << "Printing waypoints...";
+
+  for (int i=0; i<wps.size(); ++i) {
+    rosplane_msgs::msg::Waypoint wp = wps[i];
+    output << std::endl << "----- WAYPOINT " << i << " -----" << std::endl;
+    output << "Position (NED, meters): [" << wp.w[0] << ", " << wp.w[1] << ", " << wp.w[2] << "]" << std::endl;
+    output << "Chi_d: " << wp.chi_d << " " << std::endl;
+    output << "Va_d: " << wp.va_d << " " << std::endl;
+    output << "use_chi: " << wp.use_chi;
+  }
+
+  // Print to info log stream
+  RCLCPP_INFO_STREAM(this->get_logger(), output.str());
+
+  res->success = true;
+
+  return true;
+}
 } // namespace rosplane
 
 int main(int argc, char ** argv)
