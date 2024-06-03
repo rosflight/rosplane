@@ -136,7 +136,7 @@ tmux send-keys -t rosplane_sim_session:0.3 "cd $filepath" C-m
 if $docker; then
   tmux send-keys -t rosplane_sim_session:0.0 "docker compose up -d" C-m
   sleep 2
-  tmux send-keys -t rosplane_sim_session:0.0 "docker compose exec $container bash" C-m # TODO check these commands.
+  tmux send-keys -t rosplane_sim_session:0.0 "docker compose exec $container bash" C-m
   tmux send-keys -t rosplane_sim_session:0.1 "docker compose exec $container bash" C-m
   tmux send-keys -t rosplane_sim_session:0.2 "docker compose exec $container bash" C-m
   tmux send-keys -t rosplane_sim_session:0.3 "docker compose exec $container bash" C-m
