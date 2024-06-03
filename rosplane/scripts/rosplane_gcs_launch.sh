@@ -10,9 +10,9 @@ print_help() {
     echo "  -t                Run tuning version of ROSflight"
     echo "  -r                Run the script with simulated transmitter"
     echo "  -a                Aircraft option to pass to launch files"
-    echo "  aircraft          The aricraft parameter to be used in launch files, default is anaconda"
+    echo "  aircraft          The aircraft parameter to be used in launch files, default is anaconda"
     echo "  -b                Start a ROS bag"
-    ehco "  bag_name          Name of bag (optional)"
+    echo "  bag_name          Name of the ROS bag (optional)"
     echo "  -o                Run the tmux session online (on remote host)"
     echo "  user@host         Username and address of remote"
     echo "  -d                Indicate that you should run a docker container of the given name (uses compose, and compose file should be in workspce directory)"
@@ -64,7 +64,7 @@ while getopts ":hstra:b:o:d:" opt; do
             online=true
             user_host=$OPTARG
             if $sim; then
-              echo "Cannot run simulat on a remote."
+              echo "Cannot run simulator on a remote."
               exit 1 
             fi
             ;;
@@ -72,7 +72,7 @@ while getopts ":hstra:b:o:d:" opt; do
             docker=true
             container=$OPTARG
             if ! $online; then
-              echo "Script not configured for Docker not on remote."
+              echo "Running docker on the local machine is not supported currently."
             fi
             ;;
         \?)
@@ -97,7 +97,8 @@ fi
 # Create a new tmux session
 tmux new-session -d -s rosplane_sim_session
 
-tmux source-file ~/.tmux.conf
+# Uncomment this line if you want to use your own tmux config
+# tmux source-file ~/.tmux.conf
 
 # Split the tmux window into 4 panes
 tmux split-window -t rosplane_sim_session:0.0 -h
@@ -130,7 +131,7 @@ tmux send-keys -t rosplane_sim_session:0.1 "cd $filepath" C-m
 tmux send-keys -t rosplane_sim_session:0.2 "cd $filepath" C-m
 tmux send-keys -t rosplane_sim_session:0.3 "cd $filepath" C-m
 
-# TODO test docker implementation.
+# The docker commands assume that the container uses -it commands to create a persistent terminal.
 
 if $docker; then
   tmux send-keys -t rosplane_sim_session:0.0 "docker compose up -d" C-m
