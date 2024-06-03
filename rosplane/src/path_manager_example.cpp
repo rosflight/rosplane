@@ -1,10 +1,12 @@
 //#include "path_manager_example.h"
 //#include "ros/ros.h"
 #include "path_manager_example.hpp"
+#include "Eigen/src/Core/Matrix.h"
 #include "rclcpp/rclcpp.hpp"
 #include <cmath>
 #include <rclcpp/logging.hpp>
 #include <string>
+#include <chrono>
 
 namespace rosplane
 {
@@ -18,29 +20,50 @@ path_manager_example::path_manager_example()
   // Declare the parameters used in this class with the ROS2 system
   declare_parameters();
   params.set_parameters();
+
+  start_time = std::chrono::system_clock::now();
+
 }
 
 void path_manager_example::manage(const input_s & input, output_s & output)
 {
   // For readability, declare the parameters that will be used in the function here
   double R_min = params.get_double("R_min");
+  double abort_altitude = params.get_double("abort_altitude");
+  double abort_airspeed = params.get_double("abort_airspeed");
 
-  if (num_waypoints_ < 2) {
-    //ROS_WARN_THROTTLE(4, "No waypoints received! Loitering about origin at 50m");
-    //RCLCPP_WARN(this->get_logger(), "No waypoints received! Loitering about origin at 50m",4); !!!
+  if (num_waypoints_ == 0) 
+  {
+    auto now = std::chrono::system_clock::now();
+    if (float(std::chrono::system_clock::to_time_t(now) - std::chrono::system_clock::to_time_t(start_time)) >= 5.0) 
+    {
+      RCLCPP_WARN_STREAM(this->get_logger(), "No waypoits received, orbiting origin at " << abort_altitude << "m.");
+      output.flag = false;
+      output.va_d = abort_airspeed;
+      output.c[0] = 0.0f;
+      output.c[1] = 0.0f;
+      output.c[2] = -50.0f;
+      output.rho = R_min;
+      output.lamda = 1;
+    }
+  }
+  else if (num_waypoints_ == 1) 
+  {
     output.flag = false;
-    output.va_d = 20;
-    output.c[0] = 0.0f;
-    output.c[1] = 0.0f;
-    output.c[2] = -50.0f;
+    output.va_d = waypoints_[0].va_d;
+    output.c[0] = waypoints_[0].w[0];
+    output.c[1] = waypoints_[0].w[1];
+    output.c[2] = waypoints_[0].w[2];
     output.rho = R_min;
-    output.lamda = 1;
-  } else {
+    output.lamda = orbit_direction(input.pn, input.pe, input.chi, output.c[0], output.c[1]);
+  }
+  else 
+  {
     if (waypoints_[idx_a_].chi_valid) {
       manage_dubins(input, output);
     } else {
       /** Switch the following for flying directly to waypoints, or filleting corners */
-      //manage_line(input, output);
+      //manage_line(input, output); // TODO add ROS param for just line following or filleting?
       manage_fillet(input, output);
     }
   }
@@ -530,6 +553,29 @@ void path_manager_example::declare_parameters()
 {
   params.declare_param("R_min", 25.0);
   params.declare_param("orbit_last", false);
+  params.declare_param("abort_altitude", 50.0);
+  params.declare_param("abort_airspeed", 15.0);
+}
+
+int path_manager_example::orbit_direction(float pn, float pe, float chi, float c_n, float c_e)
+{
+  Eigen::Vector3f pos;
+  pos << pn, pe, 0.0;
+
+  Eigen::Vector3f center;
+  center << c_n, c_e, 0.0;
+
+  Eigen::Vector3f d = pos - center;
+
+  Eigen::Vector3f course;
+  course << sinf(chi), cosf(chi), 0.0;
+
+  if (d.cross(course)(2) >= 0 ) 
+  {
+    return -1;
+  }
+
+  return 1;
 }
 
 } // namespace rosplane
