@@ -45,6 +45,7 @@ private:
                   const std_srvs::srv::Trigger::Response::SharedPtr & res);
 
   void waypoint_publish();
+  void timer_callback();
 
   int num_waypoints_published;
 
@@ -74,35 +75,27 @@ path_planner::path_planner()
     std::bind(&path_planner::print_path, this, _1, _2));
   // TODO: Add load mission from file option
 
-  timer_ = this->create_wall_timer(1000ms, std::bind(&path_planner::waypoint_publish, this));
+  timer_ = this->create_wall_timer(1000ms, std::bind(&path_planner::timer_callback, this));
 
   num_waypoints_published = 0;
 }
 
 path_planner::~path_planner() {}
 
+void path_planner::timer_callback() {
+  if (num_waypoints_published < NUM_WAYPOINTS_TO_PUBLISH_AT_START && num_waypoints_published < wps.size()) {
+    waypoint_publish();
+  }
+}
+
 bool path_planner::publish_next_waypoint(const std_srvs::srv::Trigger::Request::SharedPtr & req,
                                          const std_srvs::srv::Trigger::Response::SharedPtr & res)
 {
 
-  RCLCPP_INFO_STREAM(
-    this->get_logger(),
-    "Publishing next waypoint, num_waypoints_published: " << num_waypoints_published);
-
-  rosplane_msgs::msg::Waypoint new_waypoint = wps[num_waypoints_published];
-  new_waypoint.clear_wp_list = false;
-
-  waypoint_publisher->publish(new_waypoint);
-
-  num_waypoints_published++;
-
-  return true;
-}
-
-void path_planner::waypoint_publish()
-{
-
-  if (num_waypoints_published < NUM_WAYPOINTS_TO_PUBLISH_AT_START && num_waypoints_published < wps.size()) {
+  if (num_waypoints_published < wps.size()) {
+    RCLCPP_INFO_STREAM(
+      this->get_logger(),
+      "Publishing next waypoint, num_waypoints_published: " << num_waypoints_published);
 
     rosplane_msgs::msg::Waypoint new_waypoint = wps[num_waypoints_published];
     new_waypoint.clear_wp_list = false;
@@ -110,7 +103,23 @@ void path_planner::waypoint_publish()
     waypoint_publisher->publish(new_waypoint);
 
     num_waypoints_published++;
+
+    return true;
   }
+  else {
+    RCLCPP_ERROR_STREAM(this->get_logger(), "No waypoints left to publish! Add more waypoints");
+  }
+}
+
+void path_planner::waypoint_publish()
+{
+
+  rosplane_msgs::msg::Waypoint new_waypoint = wps[num_waypoints_published];
+  new_waypoint.clear_wp_list = false;
+
+  waypoint_publisher->publish(new_waypoint);
+
+  num_waypoints_published++;
 }
 
 bool path_planner::update_path(const rosplane_msgs::srv::AddWaypoint::Request::SharedPtr & req,
@@ -126,7 +135,6 @@ bool path_planner::update_path(const rosplane_msgs::srv::AddWaypoint::Request::S
   new_waypoint.use_chi = req->use_chi;
   new_waypoint.va_d = req->va_d;
   new_waypoint.set_current = req->set_current;
-  new_waypoint.clear_wp_list = false;
 
   if (req->publish_now) {
     wps.insert(wps.begin() + num_waypoints_published, new_waypoint);
