@@ -29,7 +29,7 @@ void path_manager_example::manage(const input_s & input, output_s & output)
 {
   // For readability, declare the parameters that will be used in the function here
   double R_min = params.get_double("R_min");
-  double abort_altitude = params.get_double("abort_altitude");
+  double abort_altitude = params.get_double("abort_altitude"); // This is the true altitude not the down position (no need for a negative)
   double abort_airspeed = params.get_double("abort_airspeed");
 
   if (num_waypoints_ == 0) 
@@ -38,30 +38,31 @@ void path_manager_example::manage(const input_s & input, output_s & output)
     if (float(std::chrono::system_clock::to_time_t(now) - std::chrono::system_clock::to_time_t(start_time)) >= 5.0) 
     {
       RCLCPP_WARN_STREAM(this->get_logger(), "No waypoits received, orbiting origin at " << abort_altitude << "m.");
-      output.flag = false;
-      output.va_d = abort_airspeed;
-      output.c[0] = 0.0f;
+      output.flag = false; // Indicate that the path is an orbit.
+      output.va_d = abort_airspeed; // Set to the abort_airspeed.
+      output.c[0] = 0.0f; // Direcct the center of the orbit to the origin at the abort abort_altitude.
       output.c[1] = 0.0f;
-      output.c[2] = -50.0f;
-      output.rho = R_min;
-      output.lamda = 1;
+      output.c[2] = -abort_altitude;
+      output.rho = R_min; // Make the orbit at the minimum turn radius.
+      output.lamda = 1; // Orbit in a clockwise manner.
     }
   }
   else if (num_waypoints_ == 1) 
   {
+    // If only a single waypoint is given, orbit it.
     output.flag = false;
     output.va_d = waypoints_[0].va_d;
     output.c[0] = waypoints_[0].w[0];
     output.c[1] = waypoints_[0].w[1];
     output.c[2] = waypoints_[0].w[2];
     output.rho = R_min;
-    output.lamda = orbit_direction(input.pn, input.pe, input.chi, output.c[0], output.c[1]);
+    output.lamda = orbit_direction(input.pn, input.pe, input.chi, output.c[0], output.c[1]); // Calculate the most conveinent orbit direction of that point.
   }
   else 
   {
-    if (waypoints_[idx_a_].chi_valid) {
+    if (waypoints_[idx_a_].chi_valid) { // If the waypoint demands a specific heading through that waypoint, use a Dubins path.
       manage_dubins(input, output);
-    } else {
+    } else { // If the heading through the point does not matter use the default path following.
       /** Switch the following for flying directly to waypoints, or filleting corners */
       //manage_line(input, output); // TODO add ROS param for just line following or filleting?
       manage_fillet(input, output);
@@ -148,7 +149,7 @@ void path_manager_example::manage_fillet(const input_s & input,
   bool orbit_last = params.get_bool("orbit_last");
   double R_min = params.get_double("R_min");
 
-  if (num_waypoints_ < 3) //since it fillets don't make sense between just two points
+  if (num_waypoints_ < 3) // Do not attempt to fillet between only 2 points.
   {
     manage_line(input, output);
     return;
@@ -156,12 +157,14 @@ void path_manager_example::manage_fillet(const input_s & input,
 
   Eigen::Vector3f p;
   p << input.pn, input.pe, -input.h;
+  
+  // idx_a is the waypoint you are coming from.
+  int idx_b; // Next waypoint.
+  int idx_c; // Waypoint after next.
 
-  int idx_b;
-  int idx_c;
-  if (idx_a_ == num_waypoints_ - 1) {
+  if (idx_a_ == num_waypoints_ - 1) { // The logic for if it is the last waypoint.
 
-    if (orbit_last) {
+    if (orbit_last) { // If it is the last waypoint, and we orbit the last waypoint, construct the command.
       output.flag = false;
       output.va_d = waypoints_[idx_a_].va_d;
       output.c[0] = waypoints_[idx_a_].w[0];
@@ -175,7 +178,7 @@ void path_manager_example::manage_fillet(const input_s & input,
       output.q[2] = 0.0;
       output.rho = R_min;
 
-      if (waypoints_[idx_a_].chi_d < M_PI) {
+      if (waypoints_[idx_a_].chi_d < M_PI) { // TODO switch to the orbit_direction method.
         output.lamda = 1;
       } else {
         output.lamda = -1;
@@ -184,63 +187,63 @@ void path_manager_example::manage_fillet(const input_s & input,
       return;
     }
 
-    idx_b = 0;
+    idx_b = 0; // reset the path and loop the waypoints again.
     idx_c = 1;
-  } else if (idx_a_ == num_waypoints_ - 2) {
+  } else if (idx_a_ == num_waypoints_ - 2) { // If the second to last waypoint, appropriately handle the wrapping of waypoints.
     idx_b = num_waypoints_ - 1;
 
-    if (orbit_last) {
+    if (orbit_last) { // If orbiting last, handle.
       idx_c = 0;
       idx_a_ = idx_b;
       return;
     } else {
       idx_c = 0;
     }
-  } else {
+  } else { // Increment the indices of the waypoints.
     idx_b = idx_a_ + 1;
     idx_c = idx_b + 1;
   }
 
-  Eigen::Vector3f w_im1(waypoints_[idx_a_].w);
-  Eigen::Vector3f w_i(waypoints_[idx_b].w);
-  Eigen::Vector3f w_ip1(waypoints_[idx_c].w);
+  Eigen::Vector3f w_im1(waypoints_[idx_a_].w); // Previous waypoint NED im1 means i-1
+  Eigen::Vector3f w_i(waypoints_[idx_b].w); // Waypoint the aircraft is headed towards.
+  Eigen::Vector3f w_ip1(waypoints_[idx_c].w); // Waypoint after leaving waypoint idx_b.
 
-  output.va_d = waypoints_[idx_a_].va_d;
-  output.r[0] = w_im1(0);
-  output.r[1] = w_im1(1);
+  output.va_d = waypoints_[idx_a_].va_d; // Desired airspeed of this leg of the waypoints.
+  output.r[0] = w_im1(0); // See chapter 11 of the UAV book for more information.
+  output.r[1] = w_im1(1); // This is the point that is a point along the commanded path.
   output.r[2] = w_im1(2);
-  Eigen::Vector3f q_im1 = (w_i - w_im1).normalized();
-  Eigen::Vector3f q_i = (w_ip1 - w_i).normalized();
-  float beta = acosf(-q_im1.dot(q_i));
+  Eigen::Vector3f q_im1 = (w_i - w_im1).normalized(); // The vector pointing into the turn (vector pointing from previous waypoint to the next).
+  Eigen::Vector3f q_i = (w_ip1 - w_i).normalized(); // The vector pointing out of the turn (vector points from next waypoint to the next next waypoint).
+  float beta = acosf(-q_im1.dot(q_i)); // This is var_rho in the book. Angle of the turn.
 
   Eigen::Vector3f z;
   switch (fil_state_) {
     case fillet_state::STRAIGHT:
-      output.flag = true;
-      output.q[0] = q_im1(0);
+      output.flag = true; // Indicate flying a straight path.
+      output.q[0] = q_im1(0); // Fly along vector into the turn the origin of the vector is r (set as previous waypoint above).
       output.q[1] = q_im1(1);
       output.q[2] = q_im1(2);
-      output.c[0] = 1;
+      output.c[0] = 1; // Fill rest of the data though it is not used.
       output.c[1] = 1;
       output.c[2] = 1;
       output.rho = 1;
       output.lamda = 1;
-      z = w_i - q_im1 * (R_min / tanf(beta / 2.0));
-      if ((p - z).dot(q_im1) > 0) fil_state_ = fillet_state::ORBIT;
+      z = w_i - q_im1 * (R_min / tanf(beta / 2.0)); // Point in plane where after passing through the aircraft should begin the turn.
+      if ((p - z).dot(q_im1) > 0) fil_state_ = fillet_state::ORBIT; // Check to see if passed through the plane.
       break;
     case fillet_state::ORBIT:
-      output.flag = false;
-      output.q[0] = q_i(0);
+      output.flag = false; // Indicate that aircraft is following an orbit.
+      output.q[0] = q_i(0); // Load the message with the vector that will be follwed after the orbit.
       output.q[1] = q_i(1);
       output.q[2] = q_i(2);
-      Eigen::Vector3f c = w_i - (q_im1 - q_i).normalized() * (R_min / sinf(beta / 2.0));
-      output.c[0] = c(0);
+      Eigen::Vector3f c = w_i - (q_im1 - q_i).normalized() * (R_min / sinf(beta / 2.0)); // Calculate the center of the orbit.
+      output.c[0] = c(0); // Load message with the center of the orbit.
       output.c[1] = c(1);
       output.c[2] = c(2);
-      output.rho = R_min;
-      output.lamda = ((q_im1(0) * q_i(1) - q_im1(1) * q_i(0)) > 0 ? 1 : -1);
-      z = w_i + q_i * (R_min / tanf(beta / 2.0));
-      if ((p - z).dot(q_i) > 0) {
+      output.rho = R_min; // Command the orbit radius to be the minimum acheivable.
+      output.lamda = ((q_im1(0) * q_i(1) - q_im1(1) * q_i(0)) > 0 ? 1 : -1); // Find the direction to orbit the point. TODO change this to the orbit_direction.
+      z = w_i + q_i * (R_min / tanf(beta / 2.0)); // Find the point in the plane that once you pass through you should increment the indexes and follow a straight line.
+      if ((p - z).dot(q_i) > 0) { // Check to see if passed through plane.
         if (idx_a_ == num_waypoints_ - 1) idx_a_ = 0;
         else
           idx_a_++;

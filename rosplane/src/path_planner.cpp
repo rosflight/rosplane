@@ -8,7 +8,7 @@
 #include <std_srvs/srv/trigger.hpp>
 
 #define num_waypoints 7
-#define num_waypoints_to_publish 3
+#define num_waypoints_to_publish 0
 
 using std::placeholders::_1;
 using namespace std::chrono_literals;
