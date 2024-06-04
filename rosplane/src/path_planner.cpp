@@ -8,6 +8,7 @@
 #include <rclcpp/utilities.hpp>
 // #include <rosplane_msgs/msg/detail/waypoint__struct.hpp>
 #include <std_srvs/srv/trigger.hpp>
+#include <param_manager.hpp>
 #include <yaml-cpp/yaml.h>
 
 #define NUM_WAYPOINTS_TO_PUBLISH_AT_START 3
@@ -24,6 +25,8 @@ class path_planner : public rclcpp::Node
 public:
   path_planner();
   ~path_planner();
+
+  param_manager params;   /** Holds the parameters for the path_planner*/
 
 private:
   rclcpp::Publisher<rosplane_msgs::msg::Waypoint>::SharedPtr waypoint_publisher;
@@ -53,6 +56,15 @@ private:
 
   void waypoint_publish();
   void timer_callback();
+  /**
+   * This declares each parameter as a parameter so that the ROS2 parameter system can recognize each parameter.
+   * It also sets the default parameter, which will then be overridden by a launch script.
+   */
+  void declare_parameters();
+
+  OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
+  rcl_interfaces::msg::SetParametersResult
+  parametersCallback(const std::vector<rclcpp::Parameter> & parameters);
 
   int num_waypoints_published;
 
@@ -60,7 +72,7 @@ private:
 };
 
 path_planner::path_planner()
-    : Node("path_planner")
+    : Node("path_planner"), params(this)
 {
 
   waypoint_publisher = this->create_publisher<rosplane_msgs::msg::Waypoint>("waypoint_path", 10);
@@ -84,6 +96,12 @@ path_planner::path_planner()
   load_mission_service = this->create_service<rosflight_msgs::srv::ParamFile>(
     "load_mission_from_file",
     std::bind(&path_planner::load_mission, this, _1, _2));
+
+  // Set the parameter callback, for when parameters are changed.
+  parameter_callback_handle_ = this->add_on_set_parameters_callback(
+    std::bind(&path_planner::parametersCallback, this, std::placeholders::_1));
+  declare_parameters();
+  params.set_parameters();
 
   timer_ = this->create_wall_timer(1000ms, std::bind(&path_planner::timer_callback, this));
 
@@ -226,6 +244,28 @@ bool path_planner::load_mission_from_file(const std::string& filename) {
     return false;
   }
 }
+
+rcl_interfaces::msg::SetParametersResult
+path_planner::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
+{
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = false;
+  result.reason = "One of the parameters given does not is not a parameter of the controller node.";
+
+  bool success = params.set_parameters_callback(parameters);
+  if (success)
+  {
+    result.successful = true;
+    result.reason = "success";
+  }
+
+  return result;
+}
+
+void path_planner::declare_parameters() {
+  params.declare_int("num_waypoints_to_publish_at_start", 3);
+}
+
 } // namespace rosplane
 
 int main(int argc, char ** argv)
