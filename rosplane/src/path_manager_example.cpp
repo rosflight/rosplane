@@ -35,9 +35,9 @@ void path_manager_example::manage(const input_s & input, output_s & output)
   if (num_waypoints_ == 0) 
   {
     auto now = std::chrono::system_clock::now();
-    if (float(std::chrono::system_clock::to_time_t(now) - std::chrono::system_clock::to_time_t(start_time)) >= 5.0) 
+    if (float(std::chrono::system_clock::to_time_t(now) - std::chrono::system_clock::to_time_t(start_time)) >= 10.0) 
     {
-      RCLCPP_WARN_STREAM(this->get_logger(), "No waypoits received, orbiting origin at " << abort_altitude << "m.");
+      RCLCPP_WARN_STREAM(this->get_logger(), "No waypoits received, orbiting origin at " << abort_altitude << " meters.");
       output.flag = false; // Indicate that the path is an orbit.
       output.va_d = abort_airspeed; // Set to the abort_airspeed.
       output.c[0] = 0.0f; // Direcct the center of the orbit to the origin at the abort abort_altitude.
@@ -133,6 +133,11 @@ void path_manager_example::manage_line(const input_s & input,
   output.q[2] = q_im1(2);
 
   Eigen::Vector3f n_i = (q_im1 + q_i).normalized();
+
+  if (n_i.isZero()){
+    n_i = q_im1;
+  }
+
   if ((p - w_i).dot(n_i) > 0.0f) {
     if (idx_a_ == num_waypoints_ - 1) {
       idx_a_ = 0;
