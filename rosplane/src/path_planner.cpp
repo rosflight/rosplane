@@ -107,12 +107,7 @@ bool path_planner::publish_next_waypoint(const std_srvs::srv::Trigger::Request::
       this->get_logger(),
       "Publishing next waypoint, num_waypoints_published: " << num_waypoints_published);
 
-    rosplane_msgs::msg::Waypoint new_waypoint = wps[num_waypoints_published];
-    new_waypoint.clear_wp_list = false;
-
-    waypoint_publisher->publish(new_waypoint);
-
-    num_waypoints_published++;
+    waypoint_publish();
 
     res->success = true;
     return true;
