@@ -1,13 +1,14 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rosplane_msgs/msg/waypoint.hpp"
 #include "rosplane_msgs/srv/add_waypoint.hpp"
+#include "rosflight_msgs/srv/param_file.hpp"
 #include <rclcpp/executors.hpp>
 #include <rclcpp/logging.hpp>
 #include <rclcpp/service.hpp>
 #include <rclcpp/utilities.hpp>
-#include <rosplane_msgs/msg/detail/waypoint__struct.hpp>
+// #include <rosplane_msgs/msg/detail/waypoint__struct.hpp>
 #include <std_srvs/srv/trigger.hpp>
-// #include <vector>
+#include <yaml-cpp/yaml.h>
 
 #define NUM_WAYPOINTS_TO_PUBLISH_AT_START 3
 
@@ -30,6 +31,7 @@ private:
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr clear_waypoint_service;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr print_waypoint_service;
   rclcpp::Service<rosplane_msgs::srv::AddWaypoint>::SharedPtr add_waypoint_service;
+  rclcpp::Service<rosflight_msgs::srv::ParamFile>::SharedPtr load_mission_service;
   rclcpp::TimerBase::SharedPtr timer_;
 
   bool publish_next_waypoint(const std_srvs::srv::Trigger::Request::SharedPtr & req,
@@ -43,6 +45,11 @@ private:
 
   bool print_path(const std_srvs::srv::Trigger::Request::SharedPtr & req,
                   const std_srvs::srv::Trigger::Response::SharedPtr & res);
+
+  bool load_mission(const rosflight_msgs::srv::ParamFile::Request::SharedPtr & req,
+                    const rosflight_msgs::srv::ParamFile::Response::SharedPtr & res);
+  
+  bool load_mission_from_file(const std::string& filename);
 
   void waypoint_publish();
   void timer_callback();
@@ -73,7 +80,10 @@ path_planner::path_planner()
   print_waypoint_service = this->create_service<std_srvs::srv::Trigger>(
     "print_waypoints",
     std::bind(&path_planner::print_path, this, _1, _2));
-  // TODO: Add load mission from file option
+
+  load_mission_service = this->create_service<rosflight_msgs::srv::ParamFile>(
+    "load_mission_from_file",
+    std::bind(&path_planner::load_mission, this, _1, _2));
 
   timer_ = this->create_wall_timer(1000ms, std::bind(&path_planner::timer_callback, this));
 
@@ -83,7 +93,7 @@ path_planner::path_planner()
 path_planner::~path_planner() {}
 
 void path_planner::timer_callback() {
-  if (num_waypoints_published < NUM_WAYPOINTS_TO_PUBLISH_AT_START && num_waypoints_published < wps.size()) {
+  if (num_waypoints_published < NUM_WAYPOINTS_TO_PUBLISH_AT_START && num_waypoints_published < (int) wps.size()) {
     waypoint_publish();
   }
 }
@@ -92,7 +102,7 @@ bool path_planner::publish_next_waypoint(const std_srvs::srv::Trigger::Request::
                                          const std_srvs::srv::Trigger::Response::SharedPtr & res)
 {
 
-  if (num_waypoints_published < wps.size()) {
+  if (num_waypoints_published < (int) wps.size()) {
     RCLCPP_INFO_STREAM(
       this->get_logger(),
       "Publishing next waypoint, num_waypoints_published: " << num_waypoints_published);
@@ -104,10 +114,13 @@ bool path_planner::publish_next_waypoint(const std_srvs::srv::Trigger::Request::
 
     num_waypoints_published++;
 
+    res->success = true;
     return true;
   }
   else {
     RCLCPP_ERROR_STREAM(this->get_logger(), "No waypoints left to publish! Add more waypoints");
+    res->success = false;
+    return false;
   }
 }
 
@@ -170,7 +183,7 @@ bool path_planner::print_path(const std_srvs::srv::Trigger::Request::SharedPtr &
   
   output << "Printing waypoints...";
 
-  for (int i=0; i<wps.size(); ++i) {
+  for (int i=0; i < (int) wps.size(); ++i) {
     rosplane_msgs::msg::Waypoint wp = wps[i];
     output << std::endl << "----- WAYPOINT " << i << " -----" << std::endl;
     output << "Position (NED, meters): [" << wp.w[0] << ", " << wp.w[1] << ", " << wp.w[2] << "]" << std::endl;
@@ -185,6 +198,38 @@ bool path_planner::print_path(const std_srvs::srv::Trigger::Request::SharedPtr &
   res->success = true;
 
   return true;
+}
+
+bool path_planner::load_mission(const rosflight_msgs::srv::ParamFile::Request::SharedPtr & req,
+                                const rosflight_msgs::srv::ParamFile::Response::SharedPtr & res) {
+  // std::string filename = req->filename;
+  res->success = load_mission_from_file(req->filename);
+  return true;
+}
+
+bool path_planner::load_mission_from_file(const std::string& filename) {
+  try {
+    YAML::Node root = YAML::LoadFile(filename);
+    assert(root.IsSequence());
+    RCLCPP_INFO_STREAM(this->get_logger(), root);
+
+    for (YAML::const_iterator it=root.begin(); it!=root.end(); ++it) {
+      YAML::Node wp = it->second;
+
+      rosplane_msgs::msg::Waypoint new_wp;
+      new_wp.w = wp["w"].as<std::array<float, 3>>();
+      new_wp.chi_d = wp["chi_d"].as<double>();
+      new_wp.use_chi = wp["use_chi"].as<bool>();
+      new_wp.va_d = wp["va_d"].as<double>();
+
+      wps.push_back(new_wp);
+    }
+
+    return true;
+  }
+  catch (...) {
+    return false;
+  }
 }
 } // namespace rosplane
 
