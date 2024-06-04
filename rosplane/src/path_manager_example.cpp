@@ -82,6 +82,8 @@ void path_manager_example::manage_line(const input_s & input,
 
   int idx_b;
   int idx_c;
+
+  // Handle if the last waypoint should be orbited.
   if (idx_a_ == num_waypoints_ - 1) {
 
     if (orbit_last) {
@@ -120,7 +122,8 @@ void path_manager_example::manage_line(const input_s & input,
   Eigen::Vector3f w_im1(waypoints_[idx_a_].w);
   Eigen::Vector3f w_i(waypoints_[idx_b].w);
   Eigen::Vector3f w_ip1(waypoints_[idx_c].w);
-
+  
+  // Fill out data for straight line to the next point.
   output.flag = true;
   output.va_d = waypoints_[idx_a_].va_d;
   output.r[0] = w_im1(0);
@@ -134,10 +137,12 @@ void path_manager_example::manage_line(const input_s & input,
 
   Eigen::Vector3f n_i = (q_im1 + q_i).normalized();
 
-  if (n_i.isZero()){
+  // Check if the planes were aligned and then handle the normal vector correctly.
+  if (n_i.isZero()){ 
     n_i = q_im1;
   }
 
+  // If the aircraft passes through the plane that bisects the angle between the waypoint lines transition.
   if ((p - w_i).dot(n_i) > 0.0f) {
     if (idx_a_ == num_waypoints_ - 1) {
       idx_a_ = 0;
@@ -166,10 +171,12 @@ void path_manager_example::manage_fillet(const input_s & input,
   // idx_a is the waypoint you are coming from.
   int idx_b; // Next waypoint.
   int idx_c; // Waypoint after next.
-
+  
+  // TODO put below into a function, so that call is standard.
   if (idx_a_ == num_waypoints_ - 1) { // The logic for if it is the last waypoint.
-
-    if (orbit_last) { // If it is the last waypoint, and we orbit the last waypoint, construct the command.
+     
+    // If it is the last waypoint, and we orbit the last waypoint, construct the command.
+    if (orbit_last) {
       output.flag = false;
       output.va_d = waypoints_[idx_a_].va_d;
       output.c[0] = waypoints_[idx_a_].w[0];
