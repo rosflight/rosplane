@@ -74,7 +74,7 @@ void path_manager_base::new_waypoint_callback(const rosplane_msgs::msg::Waypoint
     temp_waypoint.w[2] = vehicle_state_.position[2];
 
     temp_waypoint.chi_d = 0.0; // Doesn't matter, it is never used.
-    temp_waypoint.chi_valid = false;
+    temp_waypoint.use_chi = false;
     temp_waypoint.va_d = msg.va_d; // Use the va_d for the next waypoint.
 
     waypoints_.push_back(temp_waypoint);
