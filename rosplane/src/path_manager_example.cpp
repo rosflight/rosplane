@@ -167,14 +167,14 @@ void path_manager_example::manage_fillet(const input_s & input,
   float dist_w_ip1 = q_i.norm();
   q_i = q_i.normalized();
 
-  float beta = acosf(-q_im1.dot(q_i)); // This is var_rho in the book. Angle of the turn.
+  float varrho = acosf(-q_im1.dot(q_i)); // This is var_rho in the book. Angle of the turn.
   
   // Check to see if filleting is possible for given waypoints.
   // Find closest dist to w_i
   float min_dist = std::min(dist_w_ip1, dist_w_im1);
 
-  // Use beta to find the distance to bisector from closest waypoint.
-  float max_r = min_dist * sinf(beta/2.0);
+  // Use varrho to find the distance to bisector from closest waypoint.
+  float max_r = min_dist * sinf(varrho/2.0);
 
   // If max_r (maximum radius possible for angle) is smaller than R_min, do line management.
   if (R_min > max_r)
@@ -198,7 +198,7 @@ void path_manager_example::manage_fillet(const input_s & input,
       output.c[2] = 1;
       output.rho = 1;
       output.lamda = 1;
-      z = w_i - q_im1 * (R_min / tanf(beta / 2.0)); // Point in plane where after passing through the aircraft should begin the turn.
+      z = w_i - q_im1 * (R_min / tanf(varrho / 2.0)); // Point in plane where after passing through the aircraft should begin the turn.
       if ((p - z).dot(q_im1) > 0) fil_state_ = fillet_state::TRANSITION; // Check to see if passed through the plane.
       break;
     }
@@ -208,13 +208,13 @@ void path_manager_example::manage_fillet(const input_s & input,
       output.q[0] = q_i(0); // Load the message with the vector that will be follwed after the orbit.
       output.q[1] = q_i(1);
       output.q[2] = q_i(2);
-      Eigen::Vector3f c = w_i - (q_im1 - q_i).normalized() * (R_min / sinf(beta / 2.0)); // Calculate the center of the orbit.
+      Eigen::Vector3f c = w_i - (q_im1 - q_i).normalized() * (R_min / sinf(varrho / 2.0)); // Calculate the center of the orbit.
       output.c[0] = c(0); // Load message with the center of the orbit.
       output.c[1] = c(1);
       output.c[2] = c(2);
       output.rho = R_min; // Command the orbit radius to be the minimum acheivable.
       output.lamda = ((q_im1(0) * q_i(1) - q_im1(1) * q_i(0)) > 0 ? 1 : -1); // Find the direction to orbit the point. TODO change this to the orbit_direction.
-      z = w_i + q_i * (R_min / tanf(beta / 2.0)); // Find the point in the plane that once you pass through you should increment the indexes and follow a straight line.
+      z = w_i + q_i * (R_min / tanf(varrho / 2.0)); // Find the point in the plane that once you pass through you should increment the indexes and follow a straight line.
       if ((p - z).dot(q_i) < 0) { // Check to see if passed through plane.
         fil_state_ = fillet_state::ORBIT;
       }
@@ -226,13 +226,13 @@ void path_manager_example::manage_fillet(const input_s & input,
       output.q[0] = q_i(0); // Load the message with the vector that will be follwed after the orbit.
       output.q[1] = q_i(1);
       output.q[2] = q_i(2);
-      Eigen::Vector3f c = w_i - (q_im1 - q_i).normalized() * (R_min / sinf(beta / 2.0)); // Calculate the center of the orbit.
+      Eigen::Vector3f c = w_i - (q_im1 - q_i).normalized() * (R_min / sinf(varrho / 2.0)); // Calculate the center of the orbit.
       output.c[0] = c(0); // Load message with the center of the orbit.
       output.c[1] = c(1);
       output.c[2] = c(2);
       output.rho = R_min; // Command the orbit radius to be the minimum acheivable.
       output.lamda = ((q_im1(0) * q_i(1) - q_im1(1) * q_i(0)) > 0 ? 1 : -1); // Find the direction to orbit the point. TODO change this to the orbit_direction.
-      z = w_i + q_i * (R_min / tanf(beta / 2.0)); // Find the point in the plane that once you pass through you should increment the indexes and follow a straight line.
+      z = w_i + q_i * (R_min / tanf(varrho / 2.0)); // Find the point in the plane that once you pass through you should increment the indexes and follow a straight line.
       if ((p - z).dot(q_i) > 0) { // Check to see if passed through plane.
         if (idx_a_ == num_waypoints_ - 1) idx_a_ = 0;
         else
