@@ -12,9 +12,8 @@ namespace rosplane
 enum class fillet_state
 {
   STRAIGHT,
-  ORBIT/*,
   TRANSITION,
-  FINAL_WAYPOINT*/
+  ORBIT
 };
 
 enum class dubin_state
@@ -37,6 +36,7 @@ private:
   virtual void manage(const struct input_s & input,
                       struct output_s & output);
   int orbit_direction(float pn, float pe, float chi, float c_n, float c_e);
+  void increment_indices(int & idx_a, int & idx_b, int & idx_c, const struct input_s & input, struct output_s & output);
 
   void manage_line(const struct input_s & input,
                    struct output_s & output);

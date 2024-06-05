@@ -75,7 +75,6 @@ void path_manager_example::manage_line(const input_s & input,
 {
   // For readability, declare the parameters that will be used in the function here
   bool orbit_last = params.get_bool("orbit_last");
-  double R_min = params.get_double("R_min");
 
   Eigen::Vector3f p;
   p << input.pn, input.pe, -input.h;
@@ -83,40 +82,11 @@ void path_manager_example::manage_line(const input_s & input,
   int idx_b;
   int idx_c;
 
-  // Handle if the last waypoint should be orbited.
-  if (idx_a_ == num_waypoints_ - 1) {
+  increment_indices(idx_a_, idx_b, idx_c, input, output);
 
-    if (orbit_last) {
-      output.flag = false;
-      output.va_d = waypoints_[idx_a_].va_d;
-      output.c[0] = waypoints_[idx_a_].w[0];
-      output.c[1] = waypoints_[idx_a_].w[1];
-      output.c[2] = waypoints_[idx_a_].w[2];
-      output.r[0] = 0.0;
-      output.r[1] = 0.0;
-      output.r[2] = 0.0;
-      output.q[0] = 0.0;
-      output.q[1] = 0.0;
-      output.q[2] = 0.0;
-      output.rho = R_min;
-
-      if (waypoints_[idx_a_].chi_d < M_PI) {
-        output.lamda = 1;
-      } else {
-        output.lamda = -1;
-      }
-
-      return;
-    }
-
-    idx_b = 0;
-    idx_c = 1;
-  } else if (idx_a_ == num_waypoints_ - 2) {
-    idx_b = num_waypoints_ - 1;
-    idx_c = 0;
-  } else {
-    idx_b = idx_a_ + 1;
-    idx_c = idx_b + 1;
+  if (orbit_last && (idx_a_ == num_waypoints_ - 1 || idx_a_ == num_waypoints_ -2))
+  {
+    return;
   }
 
   Eigen::Vector3f w_im1(waypoints_[idx_a_].w);
@@ -172,48 +142,13 @@ void path_manager_example::manage_fillet(const input_s & input,
   int idx_b; // Next waypoint.
   int idx_c; // Waypoint after next.
   
-  // TODO put below into a function, so that call is standard. Something like increment_pointers?
-  if (idx_a_ == num_waypoints_ - 1) { // The logic for if it is the last waypoint.
-     
-    // If it is the last waypoint, and we orbit the last waypoint, construct the command.
-    if (orbit_last) {
-      output.flag = false;
-      output.va_d = waypoints_[idx_a_].va_d;
-      output.c[0] = waypoints_[idx_a_].w[0];
-      output.c[1] = waypoints_[idx_a_].w[1];
-      output.c[2] = waypoints_[idx_a_].w[2];
-      output.r[0] = 0.0;
-      output.r[1] = 0.0;
-      output.r[2] = 0.0;
-      output.q[0] = 0.0;
-      output.q[1] = 0.0;
-      output.q[2] = 0.0;
-      output.rho = R_min;
+  RCLCPP_INFO_STREAM(this->get_logger(), "idx_a_ = " << idx_a_);
+  
+  increment_indices(idx_a_, idx_b, idx_c, input, output);
 
-      if (waypoints_[idx_a_].chi_d < M_PI) { // TODO switch to the orbit_direction method.
-        output.lamda = 1;
-      } else {
-        output.lamda = -1;
-      }
-
-      return;
-    }
-
-    idx_b = 0; // reset the path and loop the waypoints again.
-    idx_c = 1;
-  } else if (idx_a_ == num_waypoints_ - 2) { // If the second to last waypoint, appropriately handle the wrapping of waypoints.
-    idx_b = num_waypoints_ - 1;
-
-    if (orbit_last) { // If orbiting last, handle.
-      idx_c = 0;
-      idx_a_ = idx_b;
-      return;
-    } else {
-      idx_c = 0;
-    }
-  } else { // Increment the indices of the waypoints.
-    idx_b = idx_a_ + 1;
-    idx_c = idx_b + 1;
+  if (orbit_last && idx_a_ == num_waypoints_ - 1)
+  {
+    return;
   }
 
   Eigen::Vector3f w_im1(waypoints_[idx_a_].w); // Previous waypoint NED im1 means i-1
@@ -255,6 +190,7 @@ void path_manager_example::manage_fillet(const input_s & input,
   Eigen::Vector3f z;
   switch (fil_state_) {
     case fillet_state::STRAIGHT:
+    {
       output.flag = true; // Indicate flying a straight path.
       output.q[0] = q_im1(0); // Fly along vector into the turn the origin of the vector is r (set as previous waypoint above).
       output.q[1] = q_im1(1);
@@ -265,9 +201,29 @@ void path_manager_example::manage_fillet(const input_s & input,
       output.rho = 1;
       output.lamda = 1;
       z = w_i - q_im1 * (R_min / tanf(beta / 2.0)); // Point in plane where after passing through the aircraft should begin the turn.
-      if ((p - z).dot(q_im1) > 0) fil_state_ = fillet_state::ORBIT; // Check to see if passed through the plane.
+      if ((p - z).dot(q_im1) > 0) fil_state_ = fillet_state::TRANSITION; // Check to see if passed through the plane.
       break;
+    }
+    case fillet_state::TRANSITION:
+    {
+      output.flag = false; // Indicate that aircraft is following an orbit.
+      output.q[0] = q_i(0); // Load the message with the vector that will be follwed after the orbit.
+      output.q[1] = q_i(1);
+      output.q[2] = q_i(2);
+      Eigen::Vector3f c = w_i - (q_im1 - q_i).normalized() * (R_min / sinf(beta / 2.0)); // Calculate the center of the orbit.
+      output.c[0] = c(0); // Load message with the center of the orbit.
+      output.c[1] = c(1);
+      output.c[2] = c(2);
+      output.rho = R_min; // Command the orbit radius to be the minimum acheivable.
+      output.lamda = ((q_im1(0) * q_i(1) - q_im1(1) * q_i(0)) > 0 ? 1 : -1); // Find the direction to orbit the point. TODO change this to the orbit_direction.
+      z = w_i + q_i * (R_min / tanf(beta / 2.0)); // Find the point in the plane that once you pass through you should increment the indexes and follow a straight line.
+      if ((p - z).dot(q_i) < 0) { // Check to see if passed through plane.
+        fil_state_ = fillet_state::ORBIT;
+      }
+      break;
+    }
     case fillet_state::ORBIT:
+    {
       output.flag = false; // Indicate that aircraft is following an orbit.
       output.q[0] = q_i(0); // Load the message with the vector that will be follwed after the orbit.
       output.q[1] = q_i(1);
@@ -286,6 +242,7 @@ void path_manager_example::manage_fillet(const input_s & input,
         fil_state_ = fillet_state::STRAIGHT;
       }
       break;
+    }
   }
 }
 
@@ -528,8 +485,7 @@ void path_manager_example::dubinsParameters(const waypoint_s start_node, const w
       dubinspath_.L = L3;
       idx = 3;
     }
-    if (L4 < dubinspath_.L) {
-      dubinspath_.L = L4;
+    if (L4 < dubinspath_.L) { dubinspath_.L = L4;
       idx = 4;
     }
 
@@ -615,6 +571,43 @@ int path_manager_example::orbit_direction(float pn, float pe, float chi, float c
   }
 
   return 1;
+}
+
+void path_manager_example::increment_indices(int & idx_a, int & idx_b, int & idx_c, const struct input_s & input, struct output_s & output)
+{
+
+  bool orbit_last = params.get_bool("orbit_last");
+  double R_min = params.get_double("R_min");
+
+  if (idx_a == num_waypoints_ - 1) { // The logic for if it is the last waypoint.
+     
+    // If it is the last waypoint, and we orbit the last waypoint, construct the command.
+    if (orbit_last) {
+      output.flag = false;
+      output.va_d = waypoints_[idx_a_].va_d;
+      output.c[0] = waypoints_[idx_a_].w[0];
+      output.c[1] = waypoints_[idx_a_].w[1];
+      output.c[2] = waypoints_[idx_a_].w[2];
+      output.r[0] = 0.0;
+      output.r[1] = 0.0;
+      output.r[2] = 0.0;
+      output.q[0] = 0.0;
+      output.q[1] = 0.0;
+      output.q[2] = 0.0;
+      output.rho = R_min;
+      output.lamda = orbit_direction(input.pn, input.pe, input.chi, output.c[0], output.c[1]); // Calculate the most conveinent orbit direction of that point.
+      return;
+    }
+
+    idx_b = 0; // reset the path and loop the waypoints again.
+    idx_c = 1;
+  } else if (idx_a == num_waypoints_ - 2) { // If the second to last waypoint, appropriately handle the wrapping of waypoints.
+    idx_b = num_waypoints_ - 1;
+    idx_c = 0;
+  } else { // Increment the indices of the waypoints.
+    idx_b = idx_a + 1;
+    idx_c = idx_b + 1;
+  }
 }
 
 } // namespace rosplane
