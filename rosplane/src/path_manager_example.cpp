@@ -36,7 +36,7 @@ void path_manager_example::manage(const input_s & input, output_s & output)
     output.rho = R_min;
     output.lamda = 1;
   } else {
-    if (waypoints_[idx_a_].chi_valid) {
+    if (waypoints_[idx_a_].use_chi) {
       manage_dubins(input, output);
     } else {
       /** Switch the following for flying directly to waypoints, or filleting corners */

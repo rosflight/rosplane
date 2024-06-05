@@ -68,7 +68,7 @@ void path_manager_base::new_waypoint_callback(const rosplane_msgs::msg::Waypoint
     currentwp.w[1] = vehicle_state_.position[1];
     currentwp.w[2] = (vehicle_state_.position[2] > -25 ? msg.w[2] : vehicle_state_.position[2]);
     currentwp.chi_d = vehicle_state_.chi;
-    currentwp.chi_valid = msg.chi_valid;
+    currentwp.use_chi = msg.use_chi;
 
     currentwp.va_d = msg.va_d;
 
@@ -82,7 +82,7 @@ void path_manager_base::new_waypoint_callback(const rosplane_msgs::msg::Waypoint
   nextwp.w[1] = msg.w[1];
   nextwp.w[2] = msg.w[2];
   nextwp.chi_d = msg.chi_d;
-  nextwp.chi_valid = msg.chi_valid;
+  nextwp.use_chi = msg.use_chi;
   nextwp.va_d = msg.va_d;
   waypoints_.push_back(nextwp);
   num_waypoints_++;

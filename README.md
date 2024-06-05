@@ -46,4 +46,41 @@ To run ROSplane on hardware:
 2. Fly the aircraft as you would under regular RC control.
 3. When ready for autonomous flight flip throttle/attitude override switch (default channel 5).
 4. Fly autonomously!
-   - Note: the default autonomous mission is to fly a triangular loop, see path_planner_example.cpp for details.
+
+## Flying missions
+
+Autonomous waypoint missions can easily be flown using ROSplane.
+The waypoints of a mission are controlled by the `path_planner` node.
+These waypoints are sent to the `path_manager` node.
+Low level path-following is done by the `path_follower` node.
+See "Small Unmanned Aircraft: Theory and Practice" by Dr. Randy Beard and Dr. Tim McLain for more information on the architecture.
+
+### Adding waypoints
+
+ROSplane initializes with no waypoints added to the `path_planner`.
+We recommend using a mission .yaml file (an example mission can be found in `rosplane/params/fixedwing_mission.yaml`).
+Loading the mission can be done using 
+
+```ros2 service call /load_mission_from_file rosflight_msgs/srv/ParamFile "{filename: FILENAME}"```
+
+where `FILENAME` is the absolute path to the mission .yaml file.
+Note that the origin (0,0,0) is placed at the GNSS location where ROSplane was initialized.
+
+> **Important**: All waypoints must include a valid `[X, Y, Z]` value and a valid `va_d` value.
+
+Alternatively, you can add a waypoint one at a time by calling the appropriate service,
+```ros2 service call /add_waypoint rosplane_msgs/srv/AddWaypoint "{w: [X, Y, Z], chi_d: CHI_D, use_chi: USE_CHI, va_d: VA_D}"```
+where `[X, Y, Z]` is the NED position of the waypoint from the origin (in meters), `CHI_D` is the desired heading at the waypoint, and `VA_D` is the airspeed at the waypoint.
+Corners in the path are controlled by `USE_CHI`, where a value of `True` will cause ROSplane to use a Dubins path planner and a value of `False` will cause a fillet path planner to be used.
+Adding waypoints can be done after loading from a file.
+
+Clearing waypoints can be done using
+```ros2 service call /clear_waypoints std_msgs/srv/Trigger```.
+
+### Publishing Waypoints
+
+The `path_planner` node automatically publishes a small number of waypoints (default is 3) at the beginning of this mission.
+This number is controlled by the `num_waypoints_to_publish_at_start` ROS2 parameter. 
+
+Additional waypoints can be published using
+`ros2 service call /publish_next_waypoint std_srvs/srv/Trigger`.
