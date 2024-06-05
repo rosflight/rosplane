@@ -37,7 +37,7 @@ void path_manager_example::manage(const input_s & input, output_s & output)
     auto now = std::chrono::system_clock::now();
     if (float(std::chrono::system_clock::to_time_t(now) - std::chrono::system_clock::to_time_t(start_time)) >= 10.0) 
     {
-      RCLCPP_WARN_STREAM(this->get_logger(), "No waypoits received, orbiting origin at " << abort_altitude << " meters.");
+      RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "No waypoits received, orbiting origin at " << abort_altitude << " meters.");
       output.flag = false; // Indicate that the path is an orbit.
       output.va_d = abort_airspeed; // Set to the abort_airspeed.
       output.c[0] = 0.0f; // Direcct the center of the orbit to the origin at the abort abort_altitude.
@@ -142,8 +142,6 @@ void path_manager_example::manage_fillet(const input_s & input,
   int idx_b; // Next waypoint.
   int idx_c; // Waypoint after next.
   
-  RCLCPP_INFO_STREAM(this->get_logger(), "idx_a_ = " << idx_a_);
-  
   increment_indices(idx_a_, idx_b, idx_c, input, output);
 
   if (orbit_last && idx_a_ == num_waypoints_ - 1)
@@ -182,7 +180,7 @@ void path_manager_example::manage_fillet(const input_s & input,
   if (R_min > max_r)
   {
     // While in the too acute region, publish notice every 10 seconds.
-    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(),10000, "Too acute an angle, using line management. Values, max_r: " << max_r << " R_min: " << R_min);
+    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Too acute an angle, using line management. Values, max_r: " << max_r << " R_min: " << R_min);
     manage_line(input, output);
     return;
   }
@@ -578,6 +576,17 @@ void path_manager_example::increment_indices(int & idx_a, int & idx_b, int & idx
 
   bool orbit_last = params.get_bool("orbit_last");
   double R_min = params.get_double("R_min");
+
+  if (temp_waypoint_ && idx_a_ == 1)
+  {
+    waypoints_.erase(waypoints_.begin());
+    num_waypoints_--;
+    idx_a_ = 0;
+    idx_b = 1;
+    idx_c = 2;
+    temp_waypoint_ = false;
+    return;
+  }
 
   if (idx_a == num_waypoints_ - 1) { // The logic for if it is the last waypoint.
      

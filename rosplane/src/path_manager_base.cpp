@@ -19,9 +19,7 @@ path_manager_base::path_manager_base()
   current_path_pub_ = this->create_publisher<rosplane_msgs::msg::CurrentPath>("current_path", 10);
   update_timer_ =
     this->create_wall_timer(10ms, std::bind(&path_manager_base::current_path_publish, this));
-  // interesting read on wall timer
-  // https://answers.ros.org/question/375561/create-wall-timer-using-callback-with-parameters-ros2-c/
-  //
+
   // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
     std::bind(&path_manager_base::parametersCallback, this, std::placeholders::_1));
@@ -65,6 +63,23 @@ void path_manager_base::new_waypoint_callback(const rosplane_msgs::msg::Waypoint
     num_waypoints_ = 0;
     idx_a_ = 0;
     return;
+  }
+
+  if (waypoints_.size() == 0)
+  {
+    waypoint_s temp_waypoint;
+
+    temp_waypoint.w[0] = vehicle_state_.position[0];
+    temp_waypoint.w[1] = vehicle_state_.position[1];
+    temp_waypoint.w[2] = vehicle_state_.position[2];
+
+    temp_waypoint.chi_d = 0.0; // Doesn't matter, it is never used.
+    temp_waypoint.chi_valid = false;
+    temp_waypoint.va_d = msg.va_d; // Use the va_d for the next waypoint.
+
+    waypoints_.push_back(temp_waypoint);
+    num_waypoints_++;
+    temp_waypoint_ = true;
   }
   
   // Add a default comparison for the last waypoint for feasiblity check.
