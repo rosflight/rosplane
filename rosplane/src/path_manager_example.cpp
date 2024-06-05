@@ -172,7 +172,7 @@ void path_manager_example::manage_fillet(const input_s & input,
   int idx_b; // Next waypoint.
   int idx_c; // Waypoint after next.
   
-  // TODO put below into a function, so that call is standard.
+  // TODO put below into a function, so that call is standard. Something like increment_pointers?
   if (idx_a_ == num_waypoints_ - 1) { // The logic for if it is the last waypoint.
      
     // If it is the last waypoint, and we orbit the last waypoint, construct the command.
@@ -224,9 +224,33 @@ void path_manager_example::manage_fillet(const input_s & input,
   output.r[0] = w_im1(0); // See chapter 11 of the UAV book for more information.
   output.r[1] = w_im1(1); // This is the point that is a point along the commanded path.
   output.r[2] = w_im1(2);
-  Eigen::Vector3f q_im1 = (w_i - w_im1).normalized(); // The vector pointing into the turn (vector pointing from previous waypoint to the next).
-  Eigen::Vector3f q_i = (w_ip1 - w_i).normalized(); // The vector pointing out of the turn (vector points from next waypoint to the next next waypoint).
+  // The vector pointing into the turn (vector pointing from previous waypoint to the next).
+  Eigen::Vector3f q_im1 = (w_i - w_im1); 
+  float dist_w_im1 = q_im1.norm();
+  q_im1 = q_im1.normalized();
+
+  // The vector pointing out of the turn (vector points from next waypoint to the next next waypoint).
+  Eigen::Vector3f q_i = (w_ip1 - w_i); 
+  float dist_w_ip1 = q_i.norm();
+  q_i = q_i.normalized();
+
   float beta = acosf(-q_im1.dot(q_i)); // This is var_rho in the book. Angle of the turn.
+  
+  // Check to see if filleting is possible for given waypoints.
+  // Find closest dist to w_i
+  float min_dist = std::min(dist_w_ip1, dist_w_im1);
+
+  // Use beta to find the distance to bisector from closest waypoint.
+  float max_r = min_dist * sinf(beta/2.0);
+
+  // If max_r (maximum radius possible for angle) is smaller than R_min, do line management.
+  if (R_min > max_r)
+  {
+    // While in the too acute region, publish notice every 10 seconds.
+    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(),10000, "Too acute an angle, using line management. Values, max_r: " << max_r << " R_min: " << R_min);
+    manage_line(input, output);
+    return;
+  }
 
   Eigen::Vector3f z;
   switch (fil_state_) {
