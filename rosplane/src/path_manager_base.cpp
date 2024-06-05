@@ -91,7 +91,7 @@ void path_manager_base::new_waypoint_callback(const rosplane_msgs::msg::Waypoint
   nextwp.w[1] = msg.w[1];
   nextwp.w[2] = msg.w[2];
   nextwp.chi_d = msg.chi_d;
-  nextwp.chi_valid = msg.chi_valid;
+  nextwp.use_chi = msg.use_chi;
   nextwp.va_d = msg.va_d;
   // Save the last waypoint for comparison.
   if (waypoints_.size() > 0)

@@ -58,9 +58,8 @@ void path_manager_example::manage(const input_s & input, output_s & output)
     output.rho = R_min;
     output.lamda = orbit_direction(input.pn, input.pe, input.chi, output.c[0], output.c[1]); // Calculate the most conveinent orbit direction of that point.
   }
-  else 
-  {
-    if (waypoints_[idx_a_].chi_valid) { // If the waypoint demands a specific heading through that waypoint, use a Dubins path.
+  else {
+    if (waypoints_[idx_a_].use_chi) {
       manage_dubins(input, output);
     } else { // If the heading through the point does not matter use the default path following.
       /** Switch the following for flying directly to waypoints, or filleting corners */

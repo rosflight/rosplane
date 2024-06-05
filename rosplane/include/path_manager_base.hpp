@@ -37,7 +37,7 @@ protected:
   {
     float w[3];
     float chi_d;
-    bool chi_valid;
+    bool use_chi;
     float va_d;
   };
 

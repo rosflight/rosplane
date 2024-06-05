@@ -31,6 +31,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(rosplane_msgs REQUIRED)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(rosflight_msgs REQUIRED)
+pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
 
 ament_export_dependencies(rclcpp rclpy)
 ament_export_include_directories(include)
@@ -40,6 +41,7 @@ include_directories(  #use this if you need .h files for include statements.  Th
   include
   ${EIGEN3_INCLUDE_DIRS}
   ${GAZEBO_INCLUDE_DIRS}
+  ${YAML_CPP_INCLUDEDIR}
 )
 
 install(DIRECTORY launch params DESTINATION share/${PROJECT_NAME}/)
@@ -83,7 +85,10 @@ install(TARGETS
 add_executable(rosplane_path_planner
             src/path_planner.cpp
             src/param_manager.cpp)
-ament_target_dependencies(rosplane_path_planner rosplane_msgs std_srvs rclcpp rclpy Eigen3)
+target_link_libraries(rosplane_path_planner
+  ${YAML_CPP_LIBRARIES}
+)
+ament_target_dependencies(rosplane_path_planner rosplane_msgs rosflight_msgs std_srvs rclcpp rclpy Eigen3)
 install(TARGETS
   rosplane_path_planner
   DESTINATION lib/${PROJECT_NAME})

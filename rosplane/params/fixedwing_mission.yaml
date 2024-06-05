@@ -1,0 +1,21 @@
+# WAYPOINT 1
+wp:
+  w: [0.0, 0.0, -50.0]
+  chi_d: 1.1518
+  use_chi: True
+  va_d: 25.0
+wp:
+  w: [200.0, 100.0, -50.0]
+  chi_d: 1.1518
+  use_chi: True
+  va_d: 25.0
+wp:
+  w: [200.0, -100.0, -50.0]
+  chi_d: 1.1518
+  use_chi: True
+  va_d: 25.0
+wp:
+  w: [0.0, -100.0, -50.0]
+  chi_d: 1.1518
+  use_chi: True
+  va_d: 25.0
