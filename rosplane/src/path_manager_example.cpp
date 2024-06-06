@@ -557,8 +557,8 @@ void path_manager_example::declare_parameters()
 {
   params.declare_param("R_min", 25.0);
   params.declare_param("orbit_last", false);
-  params.declare_param("abort_altitude", 50.0);
-  params.declare_param("abort_airspeed", 15.0);
+  params.declare_param("default_altitude", 50.0);
+  params.declare_param("default_airspeed", 15.0);
 }
 
 int path_manager_example::orbit_direction(float pn, float pe, float chi, float c_n, float c_e)
