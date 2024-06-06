@@ -9,6 +9,7 @@
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2/LinearMath/Quaternion.h"
 #include "geometry_msgs/msg/transform_stamped.hpp"
+#include <ament_index_cpp/get_package_share_directory.hpp>
 
 #define SCALE 5.0
 #define TEXT_SCALE 15.0
@@ -73,7 +74,7 @@ rviz_waypoint_publisher::rviz_waypoint_publisher()
     aircraft_.ns = "vehicle";
     aircraft_.id = 0;
     aircraft_.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
-    aircraft_.mesh_resource = "file:///home/jacob/MAGICC/rosflight_ws/src/rosplane/rosplane_gcs/resource/skyhunter.dae";
+    aircraft_.mesh_resource = "package://rosplane_gcs/resource/skyhunter.dae";
     aircraft_.mesh_use_embedded_materials = false;
     aircraft_.action = visualization_msgs::msg::Marker::ADD;
     aircraft_.pose.position.x = 0.0;
