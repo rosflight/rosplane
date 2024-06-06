@@ -205,6 +205,21 @@ Visualization Manager:
         Target Frame: <Fixed Frame>
         Value: Orbit (rviz)
         Yaw: 0.7853981852531433
+      - Angle: 0
+        Class: rviz_default_plugins/TopDownOrtho
+        Enable Stereo Rendering:
+          Stereo Eye Separation: 0.05999999865889549
+          Stereo Focal Distance: 1
+          Swap Stereo Eyes: false
+          Value: false
+        Invert Z Axis: false
+        Name: TopDownOrtho
+        Near Clip Distance: 0.009999999776482582
+        Scale: 1.1862729787826538
+        Target Frame: <Fixed Frame>
+        Value: TopDownOrtho (rviz_default_plugins)
+        X: 103.0985107421875
+        Y: -66.21214294433594
 Window Geometry:
   Displays:
     collapsed: false
