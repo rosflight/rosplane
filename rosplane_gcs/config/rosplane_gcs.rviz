@@ -21,8 +21,6 @@ Panels:
   - Class: rviz_common/Views
     Expanded:
       - /Current View1
-      - /Vehicle1
-      - /Center1
     Name: Views
     Splitter Ratio: 0.6505576372146606
   - Class: rviz_common/Time
@@ -213,13 +211,28 @@ Visualization Manager:
           Swap Stereo Eyes: false
           Value: false
         Invert Z Axis: false
-        Name: TopDownOrtho
+        Name: TopDownCenter
         Near Clip Distance: 0.009999999776482582
         Scale: 1.1862729787826538
         Target Frame: <Fixed Frame>
         Value: TopDownOrtho (rviz_default_plugins)
         X: 103.0985107421875
         Y: -66.21214294433594
+      - Angle: 0
+        Class: rviz_default_plugins/TopDownOrtho
+        Enable Stereo Rendering:
+          Stereo Eye Separation: 0.05999999865889549
+          Stereo Focal Distance: 1
+          Swap Stereo Eyes: false
+          Value: false
+        Invert Z Axis: false
+        Name: TopDownVehicle
+        Near Clip Distance: 0.009999999776482582
+        Scale: 4.068922996520996
+        Target Frame: aircraft_body
+        Value: TopDownOrtho (rviz_default_plugins)
+        X: 0
+        Y: 0
 Window Geometry:
   Displays:
     collapsed: false

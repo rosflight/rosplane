@@ -229,7 +229,7 @@ bool path_planner::print_path(const std_srvs::srv::Trigger::Request::SharedPtr &
 
 bool path_planner::load_mission(const rosflight_msgs::srv::ParamFile::Request::SharedPtr & req,
                                 const rosflight_msgs::srv::ParamFile::Response::SharedPtr & res) {
-  // std::string filename = req->filename;
+  clear_path();
   res->success = load_mission_from_file(req->filename);
   return true;
 }
