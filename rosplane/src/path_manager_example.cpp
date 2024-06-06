@@ -576,10 +576,10 @@ int path_manager_example::orbit_direction(float pn, float pe, float chi, float c
 
   if (d.cross(course)(2) >= 0 ) 
   {
-    return -1;
+    return 1;
   }
 
-  return 1;
+  return -1;
 }
 
 void path_manager_example::increment_indices(int & idx_a, int & idx_b, int & idx_c, const struct input_s & input, struct output_s & output)
