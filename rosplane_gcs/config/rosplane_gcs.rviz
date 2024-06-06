@@ -12,6 +12,8 @@ Panels:
         - /Axes1
         - /Marker2
         - /Marker2/Topic1
+        - /Marker3
+        - /Marker3/Topic1
       Splitter Ratio: 0.5
     Tree Height: 1112
   - Class: rviz_common/Selection
@@ -85,6 +87,19 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /rviz/mesh
+      Value: true
+    - Class: rviz_default_plugins/Marker
+      Enabled: true
+      Name: Marker
+      Namespaces:
+        {}
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /rviz/mesh_path
       Value: true
   Enabled: true
   Global Options:

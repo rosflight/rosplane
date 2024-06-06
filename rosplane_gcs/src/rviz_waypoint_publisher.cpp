@@ -12,6 +12,8 @@
 
 #define SCALE 5.0
 #define TEXT_SCALE 15.0
+#define PATH_PUBLISH_MOD 10
+#define MAX_PATH_HISTORY 1000
 using std::placeholders::_1;
 
 namespace rosplane_gcs
@@ -26,6 +28,7 @@ public:
 private:
     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr rviz_wp_pub_;
     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr rviz_mesh_pub_;
+    rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr rviz_aircraft_path_pub_;
     rclcpp::Subscription<rosplane_msgs::msg::Waypoint>::SharedPtr waypoint_sub_;
     rclcpp::Subscription<rosplane_msgs::msg::State>::SharedPtr vehicle_state_sub_;
 
@@ -35,6 +38,7 @@ private:
     void state_update_callback(const rosplane_msgs::msg::State & state);
     void update_list();
     void update_mesh();
+    void update_aircraft_history();
 
     rosplane_msgs::msg::State vehicle_state_;
 
@@ -42,8 +46,11 @@ private:
     visualization_msgs::msg::Marker line_list_;
     std::vector<geometry_msgs::msg::Point> line_points_;
     visualization_msgs::msg::Marker aircraft_;
+    visualization_msgs::msg::Marker aircraft_history_;
+    std::vector<geometry_msgs::msg::Point> aircraft_history_points_;
 
     int num_wps_;
+    int i;
 };
 
 rviz_waypoint_publisher::rviz_waypoint_publisher()
@@ -53,6 +60,7 @@ rviz_waypoint_publisher::rviz_waypoint_publisher()
     qos_transient_local_20_.transient_local();
     rviz_wp_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("rviz/waypoint", qos_transient_local_20_);
     rviz_mesh_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("rviz/mesh", 5);
+    rviz_aircraft_path_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("rviz/mesh_path", 5);
     waypoint_sub_ = this->create_subscription<rosplane_msgs::msg::Waypoint>("waypoint_path", qos_transient_local_20_,
             std::bind(&rviz_waypoint_publisher::new_wp_callback, this, _1));
     vehicle_state_sub_ = this->create_subscription<rosplane_msgs::msg::State>("estimated_state", 10,
@@ -88,6 +96,7 @@ rviz_waypoint_publisher::rviz_waypoint_publisher()
     aircraft_.color.a = 1.0;
 
     num_wps_ = 0;
+    i = 0;
 }
 
 rviz_waypoint_publisher::~rviz_waypoint_publisher() {}
@@ -177,6 +186,29 @@ void rviz_waypoint_publisher::update_list() {
     line_list_.points = line_points_;
 }
 
+void rviz_waypoint_publisher::update_aircraft_history() {
+    rclcpp::Time now = this->get_clock()->now();
+    aircraft_history_.header.stamp = now;
+    aircraft_history_.header.frame_id = "NED";
+    aircraft_history_.ns = "vehicle_path";
+    aircraft_history_.id = 0;
+    aircraft_history_.type = visualization_msgs::msg::Marker::LINE_STRIP;
+    aircraft_history_.action = visualization_msgs::msg::Marker::ADD;
+    aircraft_history_.scale.x = 1.0;
+    aircraft_history_.scale.y = 1.0;
+    aircraft_history_.scale.z = 1.0;
+    aircraft_history_.color.r = 1.0f;
+    aircraft_history_.color.g = 0.894f;
+    aircraft_history_.color.b = 0.710f;
+    aircraft_history_.color.a = 1.0;
+    aircraft_history_.points = aircraft_history_points_;
+
+    // Restrict length of history
+    if (aircraft_history_points_.size() > MAX_PATH_HISTORY) {
+        aircraft_history_points_.erase(aircraft_history_points_.begin());
+    }
+}
+
 void rviz_waypoint_publisher::update_mesh() {
     rclcpp::Time now = this->get_clock()->now();
     aircraft_.header.stamp = now;
@@ -195,6 +227,18 @@ void rviz_waypoint_publisher::update_mesh() {
     t.transform.rotation.y = q.y(); //0.0; //vehicle_state_.quat[1];
     t.transform.rotation.z = q.z(); //0.0; //vehicle_state_.quat[2];
     t.transform.rotation.w = q.w(); //1.0; //vehicle_state_.quat[3];
+
+    // Update aircraft history
+    if (i % PATH_PUBLISH_MOD == 0) {
+        geometry_msgs::msg::Point new_p;
+        new_p.x = vehicle_state_.position[0];
+        new_p.y = vehicle_state_.position[1];
+        new_p.z = vehicle_state_.position[2];
+        aircraft_history_points_.push_back(new_p);
+        update_aircraft_history();
+
+        rviz_aircraft_path_pub_->publish(aircraft_history_);
+    }
 
     aircraft_tf2_broadcaster_->sendTransform(t);
     rviz_mesh_pub_->publish(aircraft_);
