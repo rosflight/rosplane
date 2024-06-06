@@ -29,20 +29,20 @@ void path_manager_example::manage(const input_s & input, output_s & output)
 {
   // For readability, declare the parameters that will be used in the function here
   double R_min = params.get_double("R_min");
-  double abort_altitude = params.get_double("abort_altitude"); // This is the true altitude not the down position (no need for a negative)
-  double abort_airspeed = params.get_double("abort_airspeed");
+  double default_altitude = params.get_double("default_altitude"); // This is the true altitude not the down position (no need for a negative)
+  double default_airspeed = params.get_double("default_airspeed");
 
   if (num_waypoints_ == 0) 
   {
     auto now = std::chrono::system_clock::now();
     if (float(std::chrono::system_clock::to_time_t(now) - std::chrono::system_clock::to_time_t(start_time)) >= 10.0) 
     {
-      RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "No waypoits received, orbiting origin at " << abort_altitude << " meters.");
+      RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "No waypoits received, orbiting origin at " << default_altitude << " meters.");
       output.flag = false; // Indicate that the path is an orbit.
-      output.va_d = abort_airspeed; // Set to the abort_airspeed.
-      output.c[0] = 0.0f; // Direcct the center of the orbit to the origin at the abort abort_altitude.
+      output.va_d = default_airspeed; // Set to the default_airspeed.
+      output.c[0] = 0.0f; // Direcct the center of the orbit to the origin at the default default_altitude.
       output.c[1] = 0.0f;
-      output.c[2] = -abort_altitude;
+      output.c[2] = -default_altitude;
       output.rho = R_min; // Make the orbit at the minimum turn radius.
       output.lamda = 1; // Orbit in a clockwise manner.
     }
