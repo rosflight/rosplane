@@ -45,6 +45,8 @@ protected:
   int num_waypoints_;
   int idx_a_; /** index to the waypoint that was most recently achieved */
 
+  bool temp_waypoint_ = false;
+
   struct input_s
   {
     float pn;  /** position north */

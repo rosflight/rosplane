@@ -1,7 +1,9 @@
 #include "path_manager_base.hpp"
+#include "Eigen/src/Core/Matrix.h"
 #include "iostream"
 #include "path_manager_example.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include <limits>
 #include <rclcpp/logging.hpp>
 
 namespace rosplane
@@ -17,9 +19,7 @@ path_manager_base::path_manager_base()
   current_path_pub_ = this->create_publisher<rosplane_msgs::msg::CurrentPath>("current_path", 10);
   update_timer_ =
     this->create_wall_timer(10ms, std::bind(&path_manager_base::current_path_publish, this));
-  // interesting read on wall timer
-  // https://answers.ros.org/question/375561/create-wall-timer-using-callback-with-parameters-ros2-c/
-  //
+
   // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
     std::bind(&path_manager_base::parametersCallback, this, std::placeholders::_1));
@@ -56,36 +56,59 @@ void path_manager_base::vehicle_state_callback(const rosplane_msgs::msg::State &
 
 void path_manager_base::new_waypoint_callback(const rosplane_msgs::msg::Waypoint & msg)
 {
+  double R_min = params.get_double("R_min");
+
   if (msg.clear_wp_list == true) {
     waypoints_.clear();
     num_waypoints_ = 0;
     idx_a_ = 0;
     return;
   }
-  if (msg.set_current || num_waypoints_ == 0) {
-    waypoint_s currentwp;
-    currentwp.w[0] = vehicle_state_.position[0];
-    currentwp.w[1] = vehicle_state_.position[1];
-    currentwp.w[2] = (vehicle_state_.position[2] > -25 ? msg.w[2] : vehicle_state_.position[2]);
-    currentwp.chi_d = vehicle_state_.chi;
-    currentwp.use_chi = msg.use_chi;
 
-    currentwp.va_d = msg.va_d;
+  if (waypoints_.size() == 0)
+  {
+    waypoint_s temp_waypoint;
 
-    waypoints_.clear();
-    waypoints_.push_back(currentwp);
-    num_waypoints_ = 1;
-    idx_a_ = 0;
+    temp_waypoint.w[0] = vehicle_state_.position[0];
+    temp_waypoint.w[1] = vehicle_state_.position[1];
+    temp_waypoint.w[2] = vehicle_state_.position[2];
+
+    temp_waypoint.chi_d = 0.0; // Doesn't matter, it is never used.
+    temp_waypoint.use_chi = false;
+    temp_waypoint.va_d = msg.va_d; // Use the va_d for the next waypoint.
+
+    waypoints_.push_back(temp_waypoint);
+    num_waypoints_++;
+    temp_waypoint_ = true;
   }
+  
+  // Add a default comparison for the last waypoint for feasiblity check.
   waypoint_s nextwp;
+  Eigen::Vector3f w_existing(std::numeric_limits<double>::infinity(),
+                             std::numeric_limits<double>::infinity(),
+                             std::numeric_limits<double>::infinity());
   nextwp.w[0] = msg.w[0];
   nextwp.w[1] = msg.w[1];
   nextwp.w[2] = msg.w[2];
   nextwp.chi_d = msg.chi_d;
   nextwp.use_chi = msg.use_chi;
   nextwp.va_d = msg.va_d;
+  // Save the last waypoint for comparison.
+  if (waypoints_.size() > 0)
+  {
+    waypoint_s waypoint = waypoints_.back();
+    w_existing << waypoint.w[0], waypoint.w[1], waypoint.w[2];
+  }
   waypoints_.push_back(nextwp);
   num_waypoints_++;
+
+  // Warn if too close to the last waypoint.
+  Eigen::Vector3f w_new(msg.w[0], msg.w[1], msg.w[2]);
+
+  if ((w_new - w_existing).norm() < R_min)
+  {
+    RCLCPP_WARN_STREAM(this->get_logger(), "A waypoint is too close to the next waypoint. Indices: " << waypoints_.size() - 2 << ", " << waypoints_.size() - 1);
+  }
 }
 
 void path_manager_base::current_path_publish() //const rclcpp::TimerEvent &
@@ -118,22 +141,6 @@ void path_manager_base::current_path_publish() //const rclcpp::TimerEvent &
   }
   current_path.rho = output.rho;
   current_path.lamda = output.lamda;
-
-  RCLCPP_DEBUG_STREAM(this->get_logger(), "Publishing Current Path!");
-
-  RCLCPP_DEBUG_STREAM(this->get_logger(), "Path Type: " << current_path.path_type);
-  RCLCPP_DEBUG_STREAM(this->get_logger(), "va_d: " << current_path.va_d);
-  RCLCPP_DEBUG_STREAM(this->get_logger(),
-                      "r: " << current_path.r[0] << ", " << current_path.r[1] << ", "
-                            << current_path.r[2]);
-  RCLCPP_DEBUG_STREAM(this->get_logger(),
-                      "q: " << current_path.q[0] << ", " << current_path.q[1] << ", "
-                            << current_path.q[2]);
-  RCLCPP_DEBUG_STREAM(this->get_logger(),
-                      "c: " << current_path.c[0] << ", " << current_path.c[1] << ", "
-                            << current_path.c[2]);
-  RCLCPP_DEBUG_STREAM(this->get_logger(), "rho: " << current_path.rho);
-  RCLCPP_DEBUG_STREAM(this->get_logger(), "lamda: " << current_path.lamda);
 
   current_path_pub_->publish(current_path);
 }
