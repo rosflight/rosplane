@@ -114,6 +114,9 @@ void rviz_waypoint_publisher::new_wp_callback(const rosplane_msgs::msg::Waypoint
         new_marker.ns = "wp_path";
         rviz_wp_pub_->publish(new_marker);
 
+        // Clear line list
+        line_points_.clear();
+
         num_wps_ = 0;
         return;
     }

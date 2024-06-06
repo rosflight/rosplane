@@ -43,8 +43,10 @@ private:
   bool update_path(const rosplane_msgs::srv::AddWaypoint::Request::SharedPtr & req,
                    const rosplane_msgs::srv::AddWaypoint::Response::SharedPtr & res);
   
-  bool clear_path(const std_srvs::srv::Trigger::Request::SharedPtr & req,
+  bool clear_path_callback(const std_srvs::srv::Trigger::Request::SharedPtr & req,
                   const std_srvs::srv::Trigger::Response::SharedPtr & res);
+  
+  void clear_path();
 
   bool print_path(const std_srvs::srv::Trigger::Request::SharedPtr & req,
                   const std_srvs::srv::Trigger::Response::SharedPtr & res);
@@ -89,7 +91,7 @@ path_planner::path_planner()
   
   clear_waypoint_service = this->create_service<std_srvs::srv::Trigger>(
     "clear_waypoints",
-    std::bind(&path_planner::clear_path, this, _1, _2));
+    std::bind(&path_planner::clear_path_callback, this, _1, _2));
 
   print_waypoint_service = this->create_service<std_srvs::srv::Trigger>(
     "print_waypoints",
@@ -108,6 +110,10 @@ path_planner::path_planner()
   timer_ = this->create_wall_timer(1000ms, std::bind(&path_planner::timer_callback, this));
 
   num_waypoints_published = 0;
+
+  // Initialize by publishing a clear path command.
+  // This makes sure rviz doesn't show stale waypoints if rosplane is restarted.
+  clear_path();
 }
 
 path_planner::~path_planner() {}
@@ -179,8 +185,15 @@ bool path_planner::update_path(const rosplane_msgs::srv::AddWaypoint::Request::S
   return true;
 }
 
-bool path_planner::clear_path(const std_srvs::srv::Trigger::Request::SharedPtr & req,
+bool path_planner::clear_path_callback(const std_srvs::srv::Trigger::Request::SharedPtr & req,
                               const std_srvs::srv::Trigger::Response::SharedPtr & res) {
+  clear_path();
+
+  res->success = true;
+  return true;
+}
+
+void path_planner::clear_path() {
   wps.clear();
 
   rosplane_msgs::msg::Waypoint new_waypoint;
@@ -188,8 +201,7 @@ bool path_planner::clear_path(const std_srvs::srv::Trigger::Request::SharedPtr &
 
   waypoint_publisher->publish(new_waypoint);
 
-  res->success = true;
-  return true;
+  num_waypoints_published = 0;
 }
 
 bool path_planner::print_path(const std_srvs::srv::Trigger::Request::SharedPtr & req,

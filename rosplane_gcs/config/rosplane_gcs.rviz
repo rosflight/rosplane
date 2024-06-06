@@ -5,14 +5,8 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /Status1
-        - /Grid1
-        - /Marker1
         - /Marker1/Topic1
-        - /Axes1
-        - /Marker2
         - /Marker2/Topic1
-        - /Marker3
         - /Marker3/Topic1
       Splitter Ratio: 0.5
     Tree Height: 1112
@@ -27,8 +21,10 @@ Panels:
   - Class: rviz_common/Views
     Expanded:
       - /Current View1
+      - /Vehicle1
+      - /Center1
     Name: Views
-    Splitter Ratio: 0.5
+    Splitter Ratio: 0.6505576372146606
   - Class: rviz_common/Time
     Experimental: false
     Name: Time
@@ -59,7 +55,9 @@ Visualization Manager:
       Enabled: true
       Name: Marker
       Namespaces:
-        {}
+        text: true
+        wp: true
+        wp_path: true
       Topic:
         Depth: 20
         Durability Policy: Transient Local
@@ -79,7 +77,7 @@ Visualization Manager:
       Enabled: true
       Name: Marker
       Namespaces:
-        {}
+        vehicle: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -92,7 +90,7 @@ Visualization Manager:
       Enabled: true
       Name: Marker
       Namespaces:
-        {}
+        vehicle_path: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -147,7 +145,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 470.8120422363281
+      Distance: 738.7273559570312
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -166,7 +164,47 @@ Visualization Manager:
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
       Yaw: 0.7853981852531433
-    Saved: ~
+    Saved:
+      - Class: rviz_default_plugins/Orbit
+        Distance: 141.64175415039062
+        Enable Stereo Rendering:
+          Stereo Eye Separation: 0.05999999865889549
+          Stereo Focal Distance: 1
+          Swap Stereo Eyes: false
+          Value: false
+        Focal Point:
+          X: 0
+          Y: 0
+          Z: 0
+        Focal Shape Fixed Size: false
+        Focal Shape Size: 0.05000000074505806
+        Invert Z Axis: false
+        Name: Vehicle
+        Near Clip Distance: 0.009999999776482582
+        Pitch: 0.7253982424736023
+        Target Frame: aircraft_body
+        Value: Orbit (rviz)
+        Yaw: 0.9853981733322144
+      - Class: rviz_default_plugins/Orbit
+        Distance: 738.7273559570312
+        Enable Stereo Rendering:
+          Stereo Eye Separation: 0.05999999865889549
+          Stereo Focal Distance: 1
+          Swap Stereo Eyes: false
+          Value: false
+        Focal Point:
+          X: 0
+          Y: 0
+          Z: 0
+        Focal Shape Fixed Size: false
+        Focal Shape Size: 0.05000000074505806
+        Invert Z Axis: false
+        Name: Center
+        Near Clip Distance: 0.009999999776482582
+        Pitch: 0.7853981852531433
+        Target Frame: <Fixed Frame>
+        Value: Orbit (rviz)
+        Yaw: 0.7853981852531433
 Window Geometry:
   Displays:
     collapsed: false
