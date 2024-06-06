@@ -46,6 +46,8 @@ path_manager:
   ros__parameters:
     R_min: 100.0
     orbit_last: False
+    abort_altitiude: 50.0 # TODO rename these to something less ominous. Default?
+    abort_airspeed: 25.0
 
 path_follower:
   ros__parameters:
