@@ -202,9 +202,9 @@ void rviz_waypoint_publisher::update_aircraft_history() {
     aircraft_history_.scale.x = 1.0;
     aircraft_history_.scale.y = 1.0;
     aircraft_history_.scale.z = 1.0;
-    aircraft_history_.color.r = 1.0f;
-    aircraft_history_.color.g = 0.894f;
-    aircraft_history_.color.b = 0.710f;
+    aircraft_history_.color.r = 0.0f;
+    aircraft_history_.color.g = 0.0f;
+    aircraft_history_.color.b = 0.0f;
     aircraft_history_.color.a = 1.0;
     aircraft_history_.points = aircraft_history_points_;
 
