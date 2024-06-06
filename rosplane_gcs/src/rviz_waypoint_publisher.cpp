@@ -68,10 +68,6 @@ rviz_waypoint_publisher::rviz_waypoint_publisher()
     
     aircraft_tf2_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
     
-    
-    // Create Line List
-    update_list();
-
     // Initialize aircraft
     aircraft_.header.frame_id = "stl_frame";
     aircraft_.ns = "vehicle";
@@ -106,12 +102,18 @@ void rviz_waypoint_publisher::new_wp_callback(const rosplane_msgs::msg::Waypoint
 
     if (wp.clear_wp_list) {
         rclcpp::Time now = this->get_clock()->now();
+        // Publish one for each ns
         new_marker.header.stamp = now;
         new_marker.header.frame_id = "NED";
         new_marker.ns = "wp";
         new_marker.id = 0;
         new_marker.action = visualization_msgs::msg::Marker::DELETEALL;
         rviz_wp_pub_->publish(new_marker);
+        new_marker.ns = "text";
+        rviz_wp_pub_->publish(new_marker);
+        new_marker.ns = "wp_path";
+        rviz_wp_pub_->publish(new_marker);
+
         num_wps_ = 0;
         return;
     }
@@ -172,7 +174,7 @@ void rviz_waypoint_publisher::update_list() {
     rclcpp::Time now = this->get_clock()->now();
     line_list_.header.stamp = now;
     line_list_.header.frame_id = "NED";
-    line_list_.ns = "path";
+    line_list_.ns = "wp_path";
     line_list_.id = 0;
     line_list_.type = visualization_msgs::msg::Marker::LINE_STRIP;
     line_list_.action = visualization_msgs::msg::Marker::ADD;
