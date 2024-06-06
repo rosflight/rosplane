@@ -41,7 +41,9 @@ path_planner::path_planner()
     : Node("path_planner")
 {
 
-  waypoint_publisher = this->create_publisher<rosplane_msgs::msg::Waypoint>("waypoint_path", 10);
+  rclcpp::QoS qos_transient_local_10_(10);
+  qos_transient_local_10_.transient_local();
+  waypoint_publisher = this->create_publisher<rosplane_msgs::msg::Waypoint>("waypoint_path", qos_transient_local_10_);
 
   waypoint_service = this->create_service<std_srvs::srv::Trigger>(
     "publish_next_waypoint",
