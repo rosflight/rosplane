@@ -12,6 +12,7 @@ namespace rosplane
 enum class fillet_state
 {
   STRAIGHT,
+  TRANSITION,
   ORBIT
 };
 
@@ -31,14 +32,18 @@ public:
   path_manager_example();
 
 private:
+  std::chrono::time_point<std::chrono::system_clock> start_time;
   virtual void manage(const struct input_s & input,
                       struct output_s & output);
+  int orbit_direction(float pn, float pe, float chi, float c_n, float c_e);
+  void increment_indices(int & idx_a, int & idx_b, int & idx_c, const struct input_s & input, struct output_s & output);
 
   void manage_line(const struct input_s & input,
                    struct output_s & output);
   void manage_fillet(const struct input_s & input,
                      struct output_s & output);
   fillet_state fil_state_;
+  void construct_straight_path();
   void manage_dubins(const struct input_s & input,
                      struct output_s & output);
   dubin_state dub_state_;
