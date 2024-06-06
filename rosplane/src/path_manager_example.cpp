@@ -198,7 +198,19 @@ void path_manager_example::manage_fillet(const input_s & input,
       output.rho = 1;
       output.lamda = 1;
       z = w_i - q_im1 * (R_min / tanf(varrho / 2.0)); // Point in plane where after passing through the aircraft should begin the turn.
-      if ((p - z).dot(q_im1) > 0) fil_state_ = fillet_state::TRANSITION; // Check to see if passed through the plane.
+
+
+      if ((p - z).dot(q_im1) > 0)
+      {
+        if (q_i == q_im1) // Check to see if the waypoint is directly between the next two.
+        {
+          if (idx_a_ == num_waypoints_ - 1) idx_a_ = 0;
+          else
+            idx_a_++;
+          break;
+        }
+        fil_state_ = fillet_state::TRANSITION; // Check to see if passed through the plane.
+      }
       break;
     }
     case fillet_state::TRANSITION:
@@ -545,8 +557,8 @@ void path_manager_example::declare_parameters()
 {
   params.declare_param("R_min", 25.0);
   params.declare_param("orbit_last", false);
-  params.declare_param("abort_altitude", 50.0);
-  params.declare_param("abort_airspeed", 15.0);
+  params.declare_param("default_altitude", 50.0);
+  params.declare_param("default_airspeed", 15.0);
 }
 
 int path_manager_example::orbit_direction(float pn, float pe, float chi, float c_n, float c_e)

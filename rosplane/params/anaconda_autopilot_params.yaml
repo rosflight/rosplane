@@ -46,6 +46,8 @@ path_manager:
   ros__parameters:
     R_min: 100.0
     orbit_last: False
+    default_altitiude: 50.0
+    default_airspeed: 25.0
 
 path_follower:
   ros__parameters:
