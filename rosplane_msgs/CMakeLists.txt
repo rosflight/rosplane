@@ -24,13 +24,22 @@ find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
-rosidl_generate_interfaces(${PROJECT_NAME}
+set(msg_files
   "msg/Command.msg"
   "msg/ControllerCommands.msg"
   "msg/ControllerInternalsDebug.msg"
   "msg/CurrentPath.msg"
   "msg/State.msg"
   "msg/Waypoint.msg"
+)
+
+set(srv_files
+  "srv/AddWaypoint.srv"
+)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  ${msg_files}
+  ${srv_files}
   DEPENDENCIES 
   std_msgs # Add packages that above messages depend on
   sensor_msgs
