@@ -46,7 +46,7 @@ void path_follower_base::update()
     msg.header.stamp = now;
 
     msg.chi_c = output.chi_c;
-    msg.va_c = output.Va_c;
+    msg.va_c = output.va_c;
     msg.h_c = output.h_c;
     msg.phi_ff = output.phi_ff;
 
@@ -70,7 +70,7 @@ void path_follower_base::vehicle_state_callback(const rosplane_msgs::msg::State:
   input_.h = -msg->position[2]; /** altitude */
   input_.chi = msg->chi;
   input_.psi = msg->psi;
-  input_.Va = msg->va;
+  input_.va = msg->va;
 
   RCLCPP_DEBUG_STREAM(this->get_logger(), "FROM STATE -- input.chi: " << input_.chi);
 
@@ -83,7 +83,7 @@ void path_follower_base::current_path_callback(const rosplane_msgs::msg::Current
   else if (msg->path_type == msg->ORBIT_PATH)
     input_.p_type = path_type::Orbit;
 
-  input_.Va_d = msg->va_d;
+  input_.va_d = msg->va_d;
   for (int i = 0; i < 3; i++) {
     input_.r_path[i] = msg->r[i];
     input_.q_path[i] = msg->q[i];
@@ -116,6 +116,8 @@ void path_follower_base::declare_parameters()
   params.declare_param("chi_infty", .5);
   params.declare_param("k_path", 0.05);
   params.declare_param("k_orbit", 4.0);
+  params.declare_param("update_rate", 100);
+  params.declare_param("gravity", 9.81);
 }
 
 } // namespace rosplane

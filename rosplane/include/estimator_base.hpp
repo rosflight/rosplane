@@ -62,7 +62,7 @@ protected:
     float pn;
     float pe;
     float h;
-    float Va;
+    float va;
     float alpha;
     float beta;
     float phi;

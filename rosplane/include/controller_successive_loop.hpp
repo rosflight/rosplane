@@ -166,11 +166,11 @@ protected:
 
   /**
    * The control loop that calculates the required throttle level to move to and maintain a commanded airspeed.
-   * @param Va_c The commanded airspeed.
-   * @param Va The current airspeed.
+   * @param va_c The commanded airspeed.
+   * @param va The current airspeed.
    * @return The required throttle between 0 (no throttle) and 1 (full throttle).
    */
-  float airspeed_with_throttle_hold(float Va_c, float Va);
+  float airspeed_with_throttle_hold(float va_c, float va);
 
   /**
    * The difference between the commanded airspeed and the current airspeed.

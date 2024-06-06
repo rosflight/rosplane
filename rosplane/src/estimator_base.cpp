@@ -43,6 +43,9 @@ void estimator_base::declare_parameters()
 {
   params.declare_param("rho", 1.225);
   params.declare_param("gravity", 9.8);
+  params.declare_param("gps_ground_speed_threshold", 0.3);  // TODO: this is a magic number. What is it determined from?
+  params.declare_param("baro_gate_gain_constant", 1.35);  // TODO: this is a magic number. What is it determined from?
+  params.declare_param("airspeed_gate_gain_constant", 5);  // TODO: this is a magic number. What is it determined from?
 }
 
 rcl_interfaces::msg::SetParametersResult 
@@ -74,7 +77,7 @@ void estimator_base::update()
     output.phi = output.theta = output.psi = 0;
     output.alpha = output.beta = output.chi = 0;
     output.p = output.q = output.r = 0;
-    output.Va = 0;
+    output.va = 0;
   }
 
   input_.gps_new = false;
@@ -92,7 +95,7 @@ void estimator_base::update()
     msg.initial_lon = init_lon_;
     msg.initial_alt = init_alt_;
   }
-  msg.va = output.Va;
+  msg.va = output.va;
   msg.alpha = output.alpha;
   msg.beta = output.beta;
   msg.phi = output.phi;
@@ -117,9 +120,9 @@ void estimator_base::update()
   msg.quat[2] = q.y();
   msg.quat[3] = q.z();
 
-  msg.u = output.Va * cos(output.theta);
+  msg.u = output.va * cos(output.theta);
   msg.v = 0;
-  msg.w = output.Va * sin(output.theta);
+  msg.w = output.va * sin(output.theta);
 
   msg.psi_deg = fmod(output.psi, 2.0 * M_PI) * 180 / M_PI; //-360 to 360
   msg.psi_deg += (msg.psi_deg < -180 ? 360 : 0);
@@ -151,13 +154,14 @@ void estimator_base::gnssFixCallback(const sensor_msgs::msg::NavSatFix::SharedPt
       EARTH_RADIUS * cos(init_lat_ * M_PI / 180.0) * (msg->longitude - init_lon_) * M_PI / 180.0;
     input_.gps_h = msg->altitude - init_alt_;
     input_.gps_new = true;
-
-    //      RCLCPP_INFO_STREAM(this->get_logger(), "gps_n: " << input_.gps_n);
   }
 }
 
 void estimator_base::gnssVelCallback(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
 {
+  // Rename parameter here for clarity
+  double ground_speed_threshold = params.get_double("gps_ground_speed_threshold", 0.3);
+
   double v_n = msg->twist.linear.x;
   double v_e = msg->twist.linear.y;
   //  double v_d = msg->twist.linear.z; // This variable was unused.
@@ -165,7 +169,7 @@ void estimator_base::gnssVelCallback(const geometry_msgs::msg::TwistStamped::Sha
   double course =
     atan2(v_e, v_n); //Does this need to be in a specific range? All uses seem to accept anything.
   input_.gps_Vg = ground_speed;
-  if (ground_speed > 0.3) //this is a magic number. What is it determined from?
+  if (ground_speed > ground_speed_threshold)
     input_.gps_course = course;
 }
 
@@ -185,6 +189,7 @@ void estimator_base::baroAltCallback(const rosflight_msgs::msg::Barometer::Share
   // For readability, declare the parameters here
   double rho = params.get_double("rho");
   double gravity = params.get_double("gravity");
+  double gate_gain_constant = params.get_double("baro_gate_gain_constant");
 
   if (armed_first_time_ && !baro_init_) {
     if (baro_count_ < 100) {
@@ -224,7 +229,7 @@ void estimator_base::baroAltCallback(const rosflight_msgs::msg::Barometer::Share
     float static_pres_old = input_.static_pres;
     input_.static_pres = -msg->pressure + init_static_;
 
-    float gate_gain = 1.35 * rho * gravity;
+    float gate_gain = gate_gain_constant * rho * gravity;
     if (input_.static_pres < static_pres_old - gate_gain) {
       input_.static_pres = static_pres_old - gate_gain;
     } else if (input_.static_pres > static_pres_old + gate_gain) {
@@ -237,11 +242,12 @@ void estimator_base::airspeedCallback(const rosflight_msgs::msg::Airspeed::Share
 {
   // For readability, declare the parameters here
   double rho = params.get_double("rho");
+  double gate_gain_constant = params.get_double("airspeed_gate_gain_constant");
 
   float diff_pres_old = input_.diff_pres;
   input_.diff_pres = msg->differential_pressure;
 
-  float gate_gain = pow(5, 2) * rho / 2.0;
+  float gate_gain = pow(gate_gain_constant, 2) * rho / 2.0;
   if (input_.diff_pres < diff_pres_old - gate_gain) {
     input_.diff_pres = diff_pres_old - gate_gain;
   } else if (input_.diff_pres > diff_pres_old + gate_gain) {

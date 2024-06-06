@@ -104,7 +104,7 @@ void controller_successive_loop::alt_hold_longitudinal_control(const struct inpu
   double adjusted_hc = adjust_h_c(input.h_c, input.h, alt_hz);
 
   // Control airspeed with throttle loop and altitude with commanded pitch and drive aircraft to commanded pitch.
-  output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va);
+  output.delta_t = airspeed_with_throttle_hold(input.va_c, input.va);
   output.theta_c = altitude_hold_control(adjusted_hc, input.h);
 
   if (pitch_tuning_debug_override) { output.theta_c = tuning_debug_override_msg_.theta_c; }
@@ -131,7 +131,7 @@ void controller_successive_loop::climb_longitudinal_control(const struct input_s
   double adjusted_hc = adjust_h_c(input.h_c, input.h, alt_hz);
 
   // Find the control efforts for throttle and find the commanded pitch angle.
-  output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va);
+  output.delta_t = airspeed_with_throttle_hold(input.va_c, input.va);
   output.theta_c = altitude_hold_control(adjusted_hc, input.h);
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q);
 }
@@ -154,7 +154,7 @@ void controller_successive_loop::take_off_longitudinal_control(const struct inpu
   
   // Set throttle to not overshoot altitude.
   output.delta_t =
-    sat(airspeed_with_throttle_hold(input.Va_c, input.va), max_takeoff_throttle, 0);
+    sat(airspeed_with_throttle_hold(input.va_c, input.va), max_takeoff_throttle, 0);
 
   // Command a shallow pitch angle to gain altitude.
   output.theta_c = cmd_takeoff_pitch * M_PI / 180.0; 
@@ -222,7 +222,7 @@ float controller_successive_loop::course_hold(float chi_c, float chi, float phi_
   float ud = c_kd * r;
 
   float phi_c =
-    sat(up + ui + ud + phi_ff, max_roll * 3.14 / 180.0, -max_roll * 3.14 / 180.0);
+    sat(up + ui + ud + phi_ff, max_roll * M_PI / 180.0, -max_roll * M_PI / 180.0);
 
   if (fabs(c_ki) >= 0.00001) {
     float phi_c_unsat = up + ui + ud + phi_ff;
@@ -296,7 +296,7 @@ float controller_successive_loop::pitch_hold(float theta_c, float theta, float q
   return -delta_e; // TODO explain subtraction.
 }
 
-float controller_successive_loop::airspeed_with_throttle_hold(float Va_c, float Va)
+float controller_successive_loop::airspeed_with_throttle_hold(float va_c, float va)
 {
   // For readability, declare parameters here that will be used in this function
   int64_t frequency = params.get_int("frequency");   // Declared in controller_base
@@ -307,7 +307,7 @@ float controller_successive_loop::airspeed_with_throttle_hold(float Va_c, float 
   double max_t = params.get_double("max_t");
   double trim_t = params.get_double("trim_t");
 
-  float error = Va_c - Va;
+  float error = va_c - va;
 
   float Ts = 1.0 / frequency;
 
@@ -373,7 +373,7 @@ float controller_successive_loop::yaw_damper(float r)
   int64_t frequency = params.get_int("frequency");   // Declared in controller_base
   float y_pwo = params.get_double("y_pwo");
   float y_kr = params.get_double("y_kr");
-  float max_r = 1.0; // TODO Add to params
+  float max_r = params.get_double("max_r");
 
   float Ts = 1.0/frequency;
 
@@ -400,6 +400,7 @@ float controller_successive_loop::yaw_damper(float r)
 //    return 0;
 //}
 
+// TODO: Add some error handling here.
 float controller_successive_loop::sat(float value, float up_limit, float low_limit)
 {
   // Set to upper limit if larger than that limit.
@@ -408,7 +409,7 @@ float controller_successive_loop::sat(float value, float up_limit, float low_lim
   
   if (up_limit < 0.0) 
   {
-    RCLCPP_WARN_ONCE(this->get_logger(), "Upper limit in saturation function is negative.");
+    RCLCPP_WARN_ONCE(this->get_logger(), "WARNING: Upper limit in saturation function is negative.");
   }
 
   float rVal;
@@ -451,6 +452,7 @@ void controller_successive_loop::declare_parameters()
   params.declare_param("r_ki", .0);
   params.declare_param("r_kd", .04);
   params.declare_param("max_a", .15);
+  params.declare_param("max_r", 1.0);
   params.declare_param("trim_a", 0.0);
 
   params.declare_param("p_kp", -.15);

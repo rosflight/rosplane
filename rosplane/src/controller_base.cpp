@@ -28,7 +28,6 @@ controller_base::controller_base()
 
   // Declare the parameters for ROS2 param system.
   declare_parameters();
-
   // Set the values for the parameters, from the param file or use the deafault value.
   params.set_parameters();
 
@@ -96,7 +95,7 @@ void controller_base::actuator_controls_publish()
   input.p = vehicle_state_.p;
   input.q = vehicle_state_.q;
   input.r = vehicle_state_.r;
-  input.Va_c = controller_commands_.va_c;
+  input.va_c = controller_commands_.va_c;
   input.h_c = controller_commands_.h_c;
   input.chi_c = controller_commands_.chi_c;
   input.phi_ff = controller_commands_.phi_ff;
@@ -167,15 +166,15 @@ rcl_interfaces::msg::SetParametersResult
 controller_base::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;
-  result.successful = true;
-  result.reason = "success";
+  result.successful = false;
+  result.reason =
+    "One of the parameters given does not is not a parameter of the controller node.";
 
   bool success = params.set_parameters_callback(parameters);
-  if (!success)
+  if (success)
   {
-    result.successful = false;
-    result.reason =
-      "One of the parameters given does not is not a parameter of the controller node.";
+    result.successful = true;
+    result.reason = "success";
   }
 
   return result;
@@ -191,7 +190,7 @@ void controller_base::set_timer()
   // Set timer to trigger bound callback (actuator_controls_publish) at the given periodicity.
   timer_ = this->create_wall_timer(timer_period,
                                    std::bind(&controller_base::actuator_controls_publish,
-                                             this)); // TODO add the period to the params.
+                                             this));
 }
 
 void controller_base::convert_to_pwm(controller_base::output_s & output)

@@ -31,7 +31,7 @@ autopilot: # node name.
     trim_t: 0.5
     max_e: 0.61
     max_a: 0.60
-    max_r: 0.523
+    max_r: 0.523  # TODO: Was hardcoded as 1.0 in code...
     max_t: 1.0
     pwm_rad_e: 1.0
     pwm_rad_a: 1.0
@@ -46,7 +46,7 @@ path_manager:
   ros__parameters:
     R_min: 100.0
     orbit_last: False
-    default_altitiude: 50.0
+    default_altitude: 50.0
     default_airspeed: 25.0
 
 path_follower:
@@ -54,3 +54,23 @@ path_follower:
     chi_infty: 0.5
     k_orbit: 4.0
     k_path: 0.05
+    update_rate: 100
+    gravity: 9.81
+
+estimator:
+  ros__parameters:
+    rho: 1.225
+    gravity: 9.8
+    gps_ground_speed_threshold: 0.3
+    baro_gate_gain_constant: 1.35
+    airspeed_gate_gain_constant: 5
+    sigma_n_gps: 0.01
+    sigma_e_gps: 0.01
+    sigma_Vg_gps: 0.005
+    sigma_course_gps: 0.00025
+    sigma_accel: 0.024525
+    frequency: 100
+    lpf_a: 50.0
+    lpf_a1: 8.0
+    gps_n_lim: 10000.
+    gps_e_lim: 10000.

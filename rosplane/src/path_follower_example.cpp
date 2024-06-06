@@ -19,6 +19,7 @@ void path_follower_example::follow(const input_s & input,
   double k_path = params.get_double("k_path");
   double k_orbit = params.get_double("k_orbit");
   double chi_infty = params.get_double("chi_infty");
+  double gravity = params.get_double("gravity");
 
   if (input.p_type == path_type::Line) // follow straight line path specified by r and q
   {
@@ -65,11 +66,11 @@ void path_follower_example::follow(const input_s & input,
     float h_d = -input.c_orbit[2];
     output.h_c = h_d;
     output.phi_ff = input.lam_orbit
-      * std::atan(pow(input.Va, 2) / (9.81 * input.rho_orbit * std::cos(input.chi - input.psi)));
+      * std::atan(pow(input.va, 2) / (gravity * input.rho_orbit * std::cos(input.chi - input.psi)));
 
     output.chi_c = wrap_within_180(0.0, output.chi_c);
   }
-  output.Va_c = input.Va_d;
+  output.va_c = input.va_d;
 }
 
 } // namespace rosplane

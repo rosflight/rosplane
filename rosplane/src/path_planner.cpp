@@ -214,8 +214,8 @@ bool path_planner::print_path(const std_srvs::srv::Trigger::Request::SharedPtr &
     rosplane_msgs::msg::Waypoint wp = wps[i];
     output << std::endl << "----- WAYPOINT " << i << " -----" << std::endl;
     output << "Position (NED, meters): [" << wp.w[0] << ", " << wp.w[1] << ", " << wp.w[2] << "]" << std::endl;
-    output << "Chi_d: " << wp.chi_d << " " << std::endl;
-    output << "Va_d: " << wp.va_d << " " << std::endl;
+    output << "chi_d: " << wp.chi_d << " " << std::endl;
+    output << "va_d: " << wp.va_d << " " << std::endl;
     output << "use_chi: " << wp.use_chi;
   }
 

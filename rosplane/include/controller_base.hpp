@@ -65,7 +65,7 @@ protected:
     float p;      /**< body frame roll rate */
     float q;      /**< body frame pitch rate */
     float r;      /**< body frame yaw rate */
-    float Va_c;   /**< commanded airspeed (m/s) */
+    float va_c;   /**< commanded airspeed (m/s) */
     float h_c;    /**< commanded altitude (m) */
     float chi_c;  /**< commanded course (rad) */
     float phi_ff; /**< feed forward term for orbits (rad) */

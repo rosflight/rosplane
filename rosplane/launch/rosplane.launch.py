@@ -54,6 +54,7 @@ def generate_launch_description():
         Node(
             package='rosplane',
             executable='rosplane_estimator_node',
-            name='estimator'
+            name='estimator',
+            parameters = [autopilot_params]
         )
     ])

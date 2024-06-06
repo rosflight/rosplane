@@ -13,6 +13,7 @@ double wrap_within_180(double fixed_heading, double wrapped_heading)
   return wrapped_heading - floor((wrapped_heading - fixed_heading) / (2 * M_PI) + 0.5) * 2 * M_PI;
 }
 
+//TODO: I need help with this estimator file
 estimator_example::estimator_example()
     : estimator_base()
     , xhat_a_(Eigen::Vector2f::Zero())
@@ -127,7 +128,7 @@ void estimator_example::estimate(const input_s & input, output_s & output)
     hhat = 0.0;
   }
 
-  // low pass filter diff pressure sensor and invert to estimate Va
+  // low pass filter diff pressure sensor and invert to estimate va
   lpf_diff_ = alpha1_ * lpf_diff_ + (1 - alpha1_) * input.diff_pres;
 
   // when the plane isn't moving or moving slowly, the noise in the sensor
@@ -135,7 +136,7 @@ void estimator_example::estimate(const input_s & input, output_s & output)
   // those cases.
   if (lpf_diff_ <= 0) lpf_diff_ = 0.000001;
 
-  float Vahat = sqrt(2 / rho * lpf_diff_);
+  float vahat = sqrt(2 / rho * lpf_diff_);
 
   // low pass filter accelerometers
   lpf_accel_x_ = alpha_ * lpf_accel_x_ + (1 - alpha_) * input.accel_x;
@@ -189,13 +190,13 @@ void estimator_example::estimate(const input_s & input, output_s & output)
   I = Eigen::Matrix2f::Identity();
 
   h_a_ = Eigen::Vector3f::Zero(3);
-  h_a_(0) = qhat * Vahat * st + gravity * st;
-  h_a_(1) = rhat * Vahat * ct - phat * Vahat * st - gravity * ct * sp;
-  h_a_(2) = -qhat * Vahat * ct - gravity * ct * cp;
+  h_a_(0) = qhat * vahat * st + gravity * st;
+  h_a_(1) = rhat * vahat * ct - phat * vahat * st - gravity * ct * sp;
+  h_a_(2) = -qhat * vahat * ct - gravity * ct * cp;
 
-  C_a_ << 0.0, qhat * Vahat * ct + gravity * ct, -gravity * cp * ct,
-    -rhat * Vahat * st - phat * Vahat * ct + gravity * sp * st, gravity * sp * ct,
-    (qhat * Vahat + gravity * cp) * st;
+  C_a_ << 0.0, qhat * vahat * ct + gravity * ct, -gravity * cp * ct,
+    -rhat * vahat * st - phat * vahat * ct + gravity * sp * st, gravity * sp * ct,
+    (qhat * vahat + gravity * cp) * st;
 
   // This calculates the Kalman Gain for all of the attitude states at once rather than one at a time.
 
@@ -232,9 +233,9 @@ void estimator_example::estimate(const input_s & input, output_s & output)
 
     psidot = (qhat * sinf(phihat_) + rhat * cosf(phihat_)) / cosf(thetahat_);
 
-    tmp = -psidot * Vahat * (xhat_p_(4) * cosf(xhat_p_(6)) + xhat_p_(5) * sinf(xhat_p_(6)))
+    tmp = -psidot * vahat * (xhat_p_(4) * cosf(xhat_p_(6)) + xhat_p_(5) * sinf(xhat_p_(6)))
       / xhat_p_(2);
-    Vgdot = Vahat / Vg * psidot * (we * cosf(psi) - wn * sinf(psi));
+    Vgdot = vahat / Vg * psidot * (we * cosf(psi) - wn * sinf(psi));
 
     f_p_ = Eigen::VectorXf::Zero(7);
     f_p_(0) = xhat_p_(2) * cosf(xhat_p_(3));
@@ -251,8 +252,8 @@ void estimator_example::estimate(const input_s & input, output_s & output)
     A_p_(1, 2) = sin(xhat_p_(3));
     A_p_(1, 3) = xhat_p_(2) * cosf(xhat_p_(3));
     A_p_(2, 2) = -Vgdot / xhat_p_(2);
-    A_p_(2, 4) = -psidot * Vahat * sinf(xhat_p_(6)) / xhat_p_(2);
-    A_p_(2, 5) = psidot * Vahat * cosf(xhat_p_(6)) / xhat_p_(2);
+    A_p_(2, 4) = -psidot * vahat * sinf(xhat_p_(6)) / xhat_p_(2);
+    A_p_(2, 5) = psidot * vahat * cosf(xhat_p_(6)) / xhat_p_(2);
     A_p_(2, 6) = tmp;
     A_p_(3, 2) = -gravity / powf(xhat_p_(2), 2) * tanf(phihat_);
 
@@ -318,26 +319,26 @@ void estimator_example::estimate(const input_s & input, output_s & output)
     P_p_ = (I_p - L_p_ * C_p_.transpose()) * P_p_;
     xhat_p_ = xhat_p_ + L_p_ * (gps_course - h_p_);
 
-    // pseudo measurement #1 y_1 = Va*cos(psi)+wn-Vg*cos(chi)
+    // pseudo measurement #1 y_1 = va*cos(psi)+wn-Vg*cos(chi)
     h_p_ =
-      Vahat * cosf(xhat_p_(6)) + xhat_p_(4) - xhat_p_(2) * cosf(xhat_p_(3)); // pseudo measurement
+      vahat * cosf(xhat_p_(6)) + xhat_p_(4) - xhat_p_(2) * cosf(xhat_p_(3)); // pseudo measurement
     C_p_ = Eigen::VectorXf::Zero(7);
     C_p_(2) = -cos(xhat_p_(3));
     C_p_(3) = xhat_p_(2) * sinf(xhat_p_(3));
     C_p_(4) = 1;
-    C_p_(6) = -Vahat * sinf(xhat_p_(6));
+    C_p_(6) = -vahat * sinf(xhat_p_(6));
     L_p_ = (P_p_ * C_p_) / (R_p_(4, 4) + (C_p_.transpose() * P_p_ * C_p_));
     P_p_ = (I_p - L_p_ * C_p_.transpose()) * P_p_;
     xhat_p_ = xhat_p_ + L_p_ * (0 - h_p_);
 
-    // pseudo measurement #2 y_2 = Va*sin(psi) + we - Vg*sin(chi)
+    // pseudo measurement #2 y_2 = va*sin(psi) + we - Vg*sin(chi)
     h_p_ =
-      Vahat * sinf(xhat_p_(6)) + xhat_p_(5) - xhat_p_(2) * sinf(xhat_p_(3)); // pseudo measurement
+      vahat * sinf(xhat_p_(6)) + xhat_p_(5) - xhat_p_(2) * sinf(xhat_p_(3)); // pseudo measurement
     C_p_ = Eigen::VectorXf::Zero(7);
     C_p_(2) = -sin(xhat_p_(3));
     C_p_(3) = -xhat_p_(2) * cosf(xhat_p_(3));
     C_p_(5) = 1;
-    C_p_(6) = Vahat * cosf(xhat_p_(6));
+    C_p_(6) = vahat * cosf(xhat_p_(6));
     L_p_ = (P_p_ * C_p_) / (R_p_(5, 5) + (C_p_.transpose() * P_p_ * C_p_));
     P_p_ = (I_p - L_p_ * C_p_.transpose()) * P_p_;
     xhat_p_ = xhat_p_ + L_p_ * (0 - h_p_);
@@ -409,7 +410,7 @@ void estimator_example::estimate(const input_s & input, output_s & output)
   output.pn = pnhat;
   output.pe = pehat;
   output.h = hhat;
-  output.Va = Vahat;
+  output.va = vahat;
   output.alpha = 0;
   output.beta = 0;
   output.phi = phihat_;
