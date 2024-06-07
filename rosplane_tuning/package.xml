@@ -3,7 +3,7 @@
 <package format="3">
   <name>rosplane_tuning</name>
   <version>1.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Contains data visualization, signal generator, and a RQT-based tuning GUI.</description>
   <maintainer email="bsuther2@byu.edu">controls</maintainer>
   <license>BSD</license>
 
@@ -23,6 +23,7 @@
 
   <export>
     <build_type>ament_cmake</build_type>
+    <rqt_gui plugin="${prefix}/plugin.xml" />
   </export>
 
 </package>

@@ -44,7 +44,7 @@ include_directories(  #use this if you need .h files for include statements.  Th
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
 
-### START OF REAL EXECUTABLES ###
+### START OF EXECUTABLES ###
 
 # Signal Generator
 add_executable(signal_generator
@@ -64,5 +64,40 @@ install(PROGRAMS
 )
 
 #### END OF EXECUTABLES ###
+
+#### RQT ####
+
+ament_python_install_package(rqt_tuning_gui
+  PACKAGE_DIR src/rqt_tuning_gui
+)
+
+install(FILES
+  plugin.xml
+  DESTINATION share/${PROJECT_NAME}
+)
+
+install(DIRECTORY
+  resource
+  DESTINATION share/${PROJECT_NAME}
+)
+
+install(PROGRAMS
+  scripts/rqt_tuning_gui
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+#### END OF RQT ####
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  # the following line skips the linter which checks for copyrights
+  # comment the line when a copyright and license is added to all source files
+  set(ament_cmake_copyright_FOUND TRUE)
+  # the following line skips cpplint (only works in a git repo)
+  # comment the line when this package is in a git repo and when
+  # a copyright and license is added to all source files
+  set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
 ament_package()
