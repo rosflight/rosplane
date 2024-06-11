@@ -563,6 +563,11 @@ void path_manager_example::declare_parameters()
 
 int path_manager_example::orbit_direction(float pn, float pe, float chi, float c_n, float c_e)
 {
+  if (orbit_dir != 0)
+  {
+    return orbit_dir;
+  }
+
   Eigen::Vector3f pos;
   pos << pn, pe, 0.0;
 
@@ -576,9 +581,11 @@ int path_manager_example::orbit_direction(float pn, float pe, float chi, float c
 
   if (d.cross(course)(2) >= 0 ) 
   {
+    orbit_dir = 1;
     return 1;
   }
-
+  
+  orbit_dir = -1;
   return -1;
 }
 
