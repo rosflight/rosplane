@@ -101,6 +101,8 @@ rviz_waypoint_publisher::~rviz_waypoint_publisher() {}
 void rviz_waypoint_publisher::new_wp_callback(const rosplane_msgs::msg::Waypoint & wp) {
     visualization_msgs::msg::Marker new_marker;
 
+    RCLCPP_INFO_STREAM(this->get_logger(), wp.lla);
+
     if (wp.clear_wp_list) {
         rclcpp::Time now = this->get_clock()->now();
         // Publish one for each ns
