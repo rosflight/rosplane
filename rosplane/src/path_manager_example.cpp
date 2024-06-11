@@ -36,7 +36,8 @@ void path_manager_example::manage(const input_s & input, output_s & output)
   {
     auto now = std::chrono::system_clock::now();
     if (float(std::chrono::system_clock::to_time_t(now) - std::chrono::system_clock::to_time_t(start_time)) >= 10.0) 
-    {
+    { 
+      // TODO: Add check to see if the aircraft has been armed. If not just send the warning once before flight then on the throttle after.
       RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "No waypoits received, orbiting origin at " << default_altitude << " meters.");
       output.flag = false; // Indicate that the path is an orbit.
       output.va_d = default_airspeed; // Set to the default_airspeed.
@@ -166,7 +167,7 @@ void path_manager_example::manage_fillet(const input_s & input,
   float dist_w_ip1 = q_i.norm();
   q_i = q_i.normalized();
 
-  float varrho = acosf(-q_im1.dot(q_i)); // This is var_rho in the book. Angle of the turn.
+  float varrho = acosf(-q_im1.dot(q_i)); // Angle of the turn.
   
   // Check to see if filleting is possible for given waypoints.
   // Find closest dist to w_i
@@ -224,8 +225,16 @@ void path_manager_example::manage_fillet(const input_s & input,
       output.c[1] = c(1);
       output.c[2] = c(2);
       output.rho = R_min; // Command the orbit radius to be the minimum acheivable.
-      output.lamda = ((q_im1(0) * q_i(1) - q_im1(1) * q_i(0)) > 0 ? 1 : -1); // Find the direction to orbit the point. TODO change this to the orbit_direction.
+      output.lamda = ((q_im1(0) * q_i(1) - q_im1(1) * q_i(0)) > 0 ? 1 : -1); // Find the direction to orbit the point.
       z = w_i + q_i * (R_min / tanf(varrho / 2.0)); // Find the point in the plane that once you pass through you should increment the indexes and follow a straight line.
+
+      if (orbit_last && idx_a_ == num_waypoints_ - 2)
+      {
+        idx_a_++;
+        fil_state_ = fillet_state::STRAIGHT;
+        break;
+      }
+
       if ((p - z).dot(q_i) < 0) { // Check to see if passed through plane.
         fil_state_ = fillet_state::ORBIT;
       }
@@ -623,6 +632,8 @@ void path_manager_example::increment_indices(int & idx_a, int & idx_b, int & idx
       output.q[2] = 0.0;
       output.rho = R_min;
       output.lamda = orbit_direction(input.pn, input.pe, input.chi, output.c[0], output.c[1]); // Calculate the most conveinent orbit direction of that point.
+      idx_b = 0; // reset the path and loop the waypoints again.
+      idx_c = 1;
       return;
     }
 
