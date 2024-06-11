@@ -1,0 +1,8 @@
+rviz_waypoint_publisher:
+  ros__parameters:
+    scale: 5.0            # Size of waypoint marker objects (m)
+    text_scale: 15.0      # Size of text labels on marker objects (m)
+    line_scale: 3.0       # Width of line between on marker objects (m)
+    path_pub_rate: 20     # How often Rviz publishes a new vehicle state 
+                          # (ex: once every 10 updates to the vehicle state)
+    max_path_hist: 10000  # Number of state updates in path before it starts erasing old messages

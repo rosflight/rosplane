@@ -29,7 +29,8 @@ find_package(geometry_msgs REQUIRED)
 
 ament_export_dependencies(rclcpp visualization_msgs)
 
-install(DIRECTORY launch config resource DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY launch config resource params
+        DESTINATION share/${PROJECT_NAME})
 
 # Publisher node executable
 add_executable(rviz_waypoint_publisher

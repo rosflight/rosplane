@@ -11,10 +11,6 @@
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
-#define SCALE 5.0
-#define TEXT_SCALE 15.0
-#define PATH_PUBLISH_MOD 10
-#define MAX_PATH_HISTORY 10000
 using std::placeholders::_1;
 
 namespace rosplane_gcs
@@ -38,14 +34,19 @@ private:
     void new_wp_callback(const rosplane_msgs::msg::Waypoint & wp);
     void state_update_callback(const rosplane_msgs::msg::State & state);
     void update_list();
+    void update_markers();
     void update_mesh();
     void update_aircraft_history();
+
+    void declare_parameters();
+    bool set_parameters_callback(const std::vector<rclcpp::Parameter> & parameters);
 
     rosplane_msgs::msg::State vehicle_state_;
 
     // Persistent rviz markers
+    visualization_msgs::msg::Marker marker_list_;
     visualization_msgs::msg::Marker line_list_;
-    std::vector<geometry_msgs::msg::Point> line_points_;
+    std::vector<geometry_msgs::msg::Point> marker_points_;
     visualization_msgs::msg::Marker aircraft_;
     visualization_msgs::msg::Marker aircraft_history_;
     std::vector<geometry_msgs::msg::Point> aircraft_history_points_;
@@ -94,14 +95,24 @@ rviz_waypoint_publisher::rviz_waypoint_publisher()
 
     num_wps_ = 0;
     i = 0;
+
+    declare_parameters();
 }
 
 rviz_waypoint_publisher::~rviz_waypoint_publisher() {}
 
-void rviz_waypoint_publisher::new_wp_callback(const rosplane_msgs::msg::Waypoint & wp) {
-    visualization_msgs::msg::Marker new_marker;
+void rviz_waypoint_publisher::declare_parameters() {
+    this->declare_parameter("scale", 5.0);
+    this->declare_parameter("text_scale", 15.0);
+    this->declare_parameter("line_scale", 3.0);
+    this->declare_parameter("path_pub_rate", 10);
+    this->declare_parameter("max_path_hist", 10000);
+}
 
+void rviz_waypoint_publisher::new_wp_callback(const rosplane_msgs::msg::Waypoint & wp) {
     if (wp.clear_wp_list) {
+        visualization_msgs::msg::Marker new_marker;
+
         rclcpp::Time now = this->get_clock()->now();
         // Publish one for each ns
         new_marker.header.stamp = now;
@@ -116,41 +127,27 @@ void rviz_waypoint_publisher::new_wp_callback(const rosplane_msgs::msg::Waypoint
         rviz_wp_pub_->publish(new_marker);
 
         // Clear line list
-        line_points_.clear();
+        marker_points_.clear();
 
         num_wps_ = 0;
         return;
     }
     
-    // Create marker
-    rclcpp::Time now = this->get_clock()->now();
-    new_marker.header.stamp = now;
-    new_marker.header.frame_id = "NED";
-    new_marker.ns = "wp";
-    new_marker.id = num_wps_;
-    new_marker.type = visualization_msgs::msg::Marker::SPHERE;
-    new_marker.action = visualization_msgs::msg::Marker::ADD;
-    new_marker.pose.position.x = wp.w[0];
-    new_marker.pose.position.y = wp.w[1];
-    new_marker.pose.position.z = wp.w[2];
-    new_marker.scale.x = SCALE;
-    new_marker.scale.y = SCALE;
-    new_marker.scale.z = SCALE;
-    new_marker.color.r = 1.0f;
-    new_marker.color.g = 0.0f;
-    new_marker.color.b = 0.0f;
-    new_marker.color.a = 1.0;
-    
-    // Add point to line list
+    // Add point to line and marker lists
     geometry_msgs::msg::Point new_p;
     new_p.x = wp.w[0];
     new_p.y = wp.w[1];
     new_p.z = wp.w[2];
-    line_points_.push_back(new_p);
+    marker_points_.push_back(new_p);
     update_list();
+    update_markers();
 
     // Add Text label to marker
+    double text_scale = this->get_parameter("text_scale").as_double();
+    double scale = this->get_parameter("scale").as_double();
+
     visualization_msgs::msg::Marker new_text;
+    rclcpp::Time now = this->get_clock()->now();
     new_text.header.stamp = now;
     new_text.header.frame_id = "NED";
     new_text.ns = "text";
@@ -159,15 +156,15 @@ void rviz_waypoint_publisher::new_wp_callback(const rosplane_msgs::msg::Waypoint
     new_text.action = visualization_msgs::msg::Marker::ADD;
     new_text.pose.position.x = wp.w[0];
     new_text.pose.position.y = wp.w[1];
-    new_text.pose.position.z = wp.w[2] - SCALE - 1.0;
-    new_text.scale.z = TEXT_SCALE;
+    new_text.pose.position.z = wp.w[2] - scale - 1.0;
+    new_text.scale.z = text_scale;
     new_text.color.r = 0.0f;
     new_text.color.g = 0.0f;
     new_text.color.b = 0.0f;
     new_text.color.a = 1.0;
     new_text.text = std::to_string(num_wps_);
 
-    rviz_wp_pub_->publish(new_marker);
+    rviz_wp_pub_->publish(marker_list_);
     rviz_wp_pub_->publish(line_list_);
     rviz_wp_pub_->publish(new_text);
 
@@ -175,6 +172,8 @@ void rviz_waypoint_publisher::new_wp_callback(const rosplane_msgs::msg::Waypoint
 }
 
 void rviz_waypoint_publisher::update_list() {
+    double line_scale = this->get_parameter("line_scale").as_double();
+
     rclcpp::Time now = this->get_clock()->now();
     line_list_.header.stamp = now;
     line_list_.header.frame_id = "NED";
@@ -182,12 +181,33 @@ void rviz_waypoint_publisher::update_list() {
     line_list_.id = 0;
     line_list_.type = visualization_msgs::msg::Marker::LINE_STRIP;
     line_list_.action = visualization_msgs::msg::Marker::ADD;
-    line_list_.scale.x = 3.0;
+    line_list_.scale.x = line_scale;
     line_list_.color.r = 0.0f;
     line_list_.color.g = 1.0f;
     line_list_.color.b = 0.0f;
     line_list_.color.a = 1.0;
-    line_list_.points = line_points_;
+    line_list_.points = marker_points_;
+}
+
+void rviz_waypoint_publisher::update_markers() {
+    double scale = this->get_parameter("scale").as_double();
+
+    // Update marker array
+    rclcpp::Time now = this->get_clock()->now();
+    marker_list_.header.stamp = now;
+    marker_list_.header.frame_id = "NED";
+    marker_list_.ns = "wp";
+    marker_list_.id = 0;
+    marker_list_.type = visualization_msgs::msg::Marker::SPHERE_LIST;
+    marker_list_.action = visualization_msgs::msg::Marker::ADD;
+    marker_list_.scale.x = scale;
+    marker_list_.scale.y = scale;
+    marker_list_.scale.z = scale;
+    marker_list_.color.r = 1.0f;
+    marker_list_.color.g = 0.0f;
+    marker_list_.color.b = 0.0f;
+    marker_list_.color.a = 1.0;
+    marker_list_.points = marker_points_;
 }
 
 void rviz_waypoint_publisher::update_aircraft_history() {
@@ -207,10 +227,15 @@ void rviz_waypoint_publisher::update_aircraft_history() {
     aircraft_history_.color.a = 1.0;
     aircraft_history_.points = aircraft_history_points_;
 
+    int max_path_history = this->get_parameter("max_path_hist").as_int();
+
     // Restrict length of history
-    if (aircraft_history_points_.size() > MAX_PATH_HISTORY) {
-        aircraft_history_points_.erase(aircraft_history_points_.begin());
+    int path_overflow = (int) aircraft_history_points_.size() - max_path_history;
+
+    if (path_overflow > 0) {
+        aircraft_history_points_.erase(aircraft_history_points_.begin(), aircraft_history_points_.begin() + path_overflow);
     }
+
 }
 
 void rviz_waypoint_publisher::update_mesh() {
@@ -232,8 +257,10 @@ void rviz_waypoint_publisher::update_mesh() {
     t.transform.rotation.z = q.z(); //0.0; //vehicle_state_.quat[2];
     t.transform.rotation.w = q.w(); //1.0; //vehicle_state_.quat[3];
 
+    int path_pub_rate = this->get_parameter("path_pub_rate").as_int();
+
     // Update aircraft history
-    if (i % PATH_PUBLISH_MOD == 0) {
+    if (i % path_pub_rate == 0) {
         geometry_msgs::msg::Point new_p;
         new_p.x = vehicle_state_.position[0];
         new_p.y = vehicle_state_.position[1];

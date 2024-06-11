@@ -8,8 +8,9 @@ def generate_launch_description():
     # Create the package directory
     rosplane_gcs_dir = get_package_share_directory('rosplane_gcs')
 
-    rviz2_config_file = rosplane_gcs_dir + '/config/rosplane_gcs.rviz'
-    rviz2_splash_file = rosplane_gcs_dir + '/resource/logo.png'
+    rviz2_config_file = os.path.join(rosplane_gcs_dir, 'config', 'rosplane_gcs.rviz')
+    rviz2_splash_file = os.path.join(rosplane_gcs_dir, 'resource', 'logo.png')
+    param_file = os.path.join(rosplane_gcs_dir, 'params', 'rosplane_gcs_params.yaml')
 
     return LaunchDescription([
         Node(
@@ -29,6 +30,7 @@ def generate_launch_description():
         ),
         Node(
             package='rosplane_gcs',
-            executable='rviz_waypoint_publisher'
+            executable='rviz_waypoint_publisher',
+            parameters=[param_file]
         )
     ])
