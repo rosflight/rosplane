@@ -2,7 +2,6 @@
 
 #include "iostream"
 #include <cmath>
-#include <rclcpp/logging.hpp>
 
 namespace rosplane
 {
