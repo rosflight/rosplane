@@ -17,12 +17,17 @@ path_manager_example::path_manager_example()
   fil_state_ = fillet_state::STRAIGHT;
   dub_state_ = dubin_state::FIRST;
 
+  rclcpp::QoS qos_transient_local_10_(10);
+  qos_transient_local_10_.transient_local();
+  target_wp_pub_ = this->create_publisher<rosplane_msgs::msg::Waypoint>("target_waypoint", qos_transient_local_10_);
+
   // Declare the parameters used in this class with the ROS2 system
   declare_parameters();
   params.set_parameters();
 
   start_time = std::chrono::system_clock::now();
 
+  update_marker_ = true;
 }
 
 void path_manager_example::manage(const input_s & input, output_s & output)
@@ -118,6 +123,7 @@ void path_manager_example::manage_line(const input_s & input,
     } else {
       idx_a_++;
     }
+    update_marker_ = true;
   }
 }
 
@@ -204,9 +210,13 @@ void path_manager_example::manage_fillet(const input_s & input,
       {
         if (q_i == q_im1) // Check to see if the waypoint is directly between the next two.
         {
-          if (idx_a_ == num_waypoints_ - 1) idx_a_ = 0;
-          else
+          if (idx_a_ == num_waypoints_ - 1) {
+            idx_a_ = 0;
+          }
+          else {
             idx_a_++;
+          }
+          update_marker_ = true;
           break;
         }
         fil_state_ = fillet_state::TRANSITION; // Check to see if passed through the plane.
@@ -245,9 +255,13 @@ void path_manager_example::manage_fillet(const input_s & input,
       output.lamda = ((q_im1(0) * q_i(1) - q_im1(1) * q_i(0)) > 0 ? 1 : -1); // Find the direction to orbit the point. TODO change this to the orbit_direction.
       z = w_i + q_i * (R_min / tanf(varrho / 2.0)); // Find the point in the plane that once you pass through you should increment the indexes and follow a straight line.
       if ((p - z).dot(q_i) > 0) { // Check to see if passed through plane.
-        if (idx_a_ == num_waypoints_ - 1) idx_a_ = 0;
-        else
+        if (idx_a_ == num_waypoints_ - 1) {
+          idx_a_ = 0;
+        }
+        else {
           idx_a_++;
+        }
+        update_marker_ = true;
         fil_state_ = fillet_state::STRAIGHT;
       }
       break;
@@ -359,6 +373,7 @@ void path_manager_example::manage_dubins(const input_s & input,
           idx_a_++;
           idx_b = idx_a_ + 1;
         }
+        update_marker_ = true;
 
         // plan new Dubin's path to next waypoint configuration
         dubinsParameters(waypoints_[idx_a_], waypoints_[idx_b], R_min);
@@ -596,6 +611,7 @@ void path_manager_example::increment_indices(int & idx_a, int & idx_b, int & idx
     idx_b = 1;
     idx_c = 2;
     temp_waypoint_ = false;
+    update_marker_ = true;
     return;
   }
 
@@ -616,7 +632,20 @@ void path_manager_example::increment_indices(int & idx_a, int & idx_b, int & idx
       output.q[2] = 0.0;
       output.rho = R_min;
       output.lamda = orbit_direction(input.pn, input.pe, input.chi, output.c[0], output.c[1]); // Calculate the most conveinent orbit direction of that point.
-      return;
+
+      if (update_marker_) {
+        // Publish the target waypoint for visualization
+        rosplane_msgs::msg::Waypoint target_wp;
+        target_wp.w[0] = waypoints_[idx_a_].w[0];
+        target_wp.w[1] = waypoints_[idx_a_].w[1];
+        target_wp.w[2] = waypoints_[idx_a_].w[2];
+        target_wp.va_d = waypoints_[idx_a_].va_d;
+        target_wp.lla = false;
+        target_wp_pub_->publish(target_wp);
+        
+        update_marker_ = false;
+        return;
+      }
     }
 
     idx_b = 0; // reset the path and loop the waypoints again.
@@ -627,6 +656,19 @@ void path_manager_example::increment_indices(int & idx_a, int & idx_b, int & idx
   } else { // Increment the indices of the waypoints.
     idx_b = idx_a + 1;
     idx_c = idx_b + 1;
+  }
+
+  if (update_marker_) {
+    // Publish the target waypoint for visualization
+    rosplane_msgs::msg::Waypoint target_wp;
+    target_wp.w[0] = waypoints_[idx_b].w[0];
+    target_wp.w[1] = waypoints_[idx_b].w[1];
+    target_wp.w[2] = waypoints_[idx_b].w[2];
+    target_wp.va_d = waypoints_[idx_b].va_d;
+    target_wp.lla = false;
+    target_wp_pub_->publish(target_wp);
+
+    update_marker_ = false;
   }
 }
 

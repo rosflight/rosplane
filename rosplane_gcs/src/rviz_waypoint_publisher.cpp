@@ -28,11 +28,13 @@ private:
     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr rviz_aircraft_path_pub_;
     rclcpp::Subscription<rosplane_msgs::msg::Waypoint>::SharedPtr waypoint_sub_;
     rclcpp::Subscription<rosplane_msgs::msg::State>::SharedPtr vehicle_state_sub_;
+    rclcpp::Subscription<rosplane_msgs::msg::Waypoint>::SharedPtr target_wp_sub_;
 
     std::unique_ptr<tf2_ros::TransformBroadcaster> aircraft_tf2_broadcaster_;
 
     void new_wp_callback(const rosplane_msgs::msg::Waypoint & wp);
     void state_update_callback(const rosplane_msgs::msg::State & state);
+    void target_wp_callback(const rosplane_msgs::msg::Waypoint & wp);
     void update_list();
     void update_markers();
     void update_mesh();
@@ -47,6 +49,7 @@ private:
     visualization_msgs::msg::Marker marker_list_;
     visualization_msgs::msg::Marker line_list_;
     std::vector<geometry_msgs::msg::Point> marker_points_;
+    visualization_msgs::msg::Marker target_wp_marker_;
     visualization_msgs::msg::Marker aircraft_;
     visualization_msgs::msg::Marker aircraft_history_;
     std::vector<geometry_msgs::msg::Point> aircraft_history_points_;
@@ -67,6 +70,8 @@ rviz_waypoint_publisher::rviz_waypoint_publisher()
             std::bind(&rviz_waypoint_publisher::new_wp_callback, this, _1));
     vehicle_state_sub_ = this->create_subscription<rosplane_msgs::msg::State>("estimated_state", 10,
             std::bind(&rviz_waypoint_publisher::state_update_callback, this, _1));
+    target_wp_sub_ = this->create_subscription<rosplane_msgs::msg::Waypoint>("target_waypoint", qos_transient_local_20_,
+            std::bind(&rviz_waypoint_publisher::target_wp_callback, this, _1));
     
     aircraft_tf2_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
     
@@ -104,6 +109,7 @@ rviz_waypoint_publisher::~rviz_waypoint_publisher() {}
 void rviz_waypoint_publisher::declare_parameters() {
     this->declare_parameter("scale", 5.0);
     this->declare_parameter("text_scale", 15.0);
+    this->declare_parameter("arrow_scale", 1.0);
     this->declare_parameter("line_scale", 3.0);
     this->declare_parameter("path_pub_rate", 10);
     this->declare_parameter("max_path_hist", 10000);
@@ -235,7 +241,6 @@ void rviz_waypoint_publisher::update_aircraft_history() {
     if (path_overflow > 0) {
         aircraft_history_points_.erase(aircraft_history_points_.begin(), aircraft_history_points_.begin() + path_overflow);
     }
-
 }
 
 void rviz_waypoint_publisher::update_mesh() {
@@ -278,6 +283,38 @@ void rviz_waypoint_publisher::update_mesh() {
 void rviz_waypoint_publisher::state_update_callback(const rosplane_msgs::msg::State & msg) {
     vehicle_state_ = msg;
     update_mesh();
+}
+
+void rviz_waypoint_publisher::target_wp_callback(const rosplane_msgs::msg::Waypoint & msg) {
+    double scale = this->get_parameter("scale").as_double();
+    double arrow_scale = this->get_parameter("arrow_scale").as_double();
+
+    target_wp_marker_.header.frame_id = "NED";
+    target_wp_marker_.header.stamp = this->get_clock()->now();
+    target_wp_marker_.ns = "wp";
+    target_wp_marker_.id = -1;
+    target_wp_marker_.type = visualization_msgs::msg::Marker::ARROW;
+    target_wp_marker_.action = visualization_msgs::msg::Marker::ADD;
+    target_wp_marker_.scale.x = 2.0 * arrow_scale;
+    target_wp_marker_.scale.y = 4.0 * arrow_scale;
+    target_wp_marker_.scale.z = 3.0 * arrow_scale;
+    target_wp_marker_.color.r = 0.0f;
+    target_wp_marker_.color.g = 0.0f;
+    target_wp_marker_.color.b = 1.0f;
+    target_wp_marker_.color.a = 0.5;
+
+    geometry_msgs::msg::Point pt1;
+    geometry_msgs::msg::Point pt2;
+    pt2.x = msg.w[0] - scale;
+    pt2.y = msg.w[1] - scale;
+    pt2.z = msg.w[2] - scale;
+    pt1.x = pt2.x - 10.0 * arrow_scale;
+    pt1.y = pt2.y - 10.0 * arrow_scale;
+    pt1.z = pt2.z - 10.0 * arrow_scale;
+
+    target_wp_marker_.points = {pt1, pt2};
+
+    rviz_wp_pub_->publish(target_wp_marker_);
 }
 
 } // namespace rosplane_gcs

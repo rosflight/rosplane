@@ -73,6 +73,10 @@ private:
   Eigen::Matrix3f rotz(float theta);
   float mo(float in);
 
+  rclcpp::Publisher<rosplane_msgs::msg::Waypoint>::SharedPtr
+    target_wp_pub_;   /**< target waypoint publication */
+  bool update_marker_;
+
   /**
    * This declares each parameter as a parameter so that the ROS2 parameter system can recognize each parameter.
    * It also sets the default parameter, which will then be overridden by a launch script.
