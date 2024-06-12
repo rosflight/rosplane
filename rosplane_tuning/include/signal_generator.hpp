@@ -43,7 +43,6 @@
 #define TUNING_SIGNAL_GENERATOR_HPP
 
 #include "rosplane_msgs/msg/controller_commands.hpp"
-#include "rosplane_msgs/msg/controller_internals_debug.hpp"
 #include <rcl_interfaces/msg/set_parameters_result.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/trigger.hpp>
@@ -103,8 +102,6 @@ private:
 
   /// Controller command ROS message publisher.
   rclcpp::Publisher<rosplane_msgs::msg::ControllerCommands>::SharedPtr command_publisher_;
-  /// Controller internals ROS message publisher.
-  rclcpp::Publisher<rosplane_msgs::msg::ControllerInternalsDebug>::SharedPtr internals_publisher_;
 
   /// ROS timer to run timer callback, which publishes commands
   rclcpp::TimerBase::SharedPtr publish_timer_;
