@@ -55,14 +55,6 @@ install(TARGETS
         signal_generator
         DESTINATION lib/${PROJECT_NAME})
 
-# Data viz
-install(PROGRAMS
-  src/data_viz/data_storage.py
-  src/data_viz/data_viz.py
-  src/data_viz/plot_window.py
-  DESTINATION lib/${PROJECT_NAME}
-)
-
 #### END OF EXECUTABLES ###
 
 #### RQT ####
