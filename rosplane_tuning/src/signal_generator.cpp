@@ -71,8 +71,6 @@ TuningSignalGenerator::TuningSignalGenerator()
   update_params();
   initial_time_ = this->get_clock()->now().seconds();
 
-  internals_publisher_ =
-    this->create_publisher<rosplane_msgs::msg::ControllerInternalsDebug>("/tuning_debug", 1);
   command_publisher_ =
     this->create_publisher<rosplane_msgs::msg::ControllerCommands>("/controller_commands", 1);
 
@@ -137,7 +135,7 @@ void TuningSignalGenerator::publish_timer_callback()
     case ControllerOutput::ALTITUDE:
       center_value = default_h_c_;
       break;
-    case ControllerOutput::HEADING:
+    case ControllerOutput::COURSE:
       center_value = default_chi_c_;
       break;
     case ControllerOutput::AIRSPEED:
@@ -170,23 +168,21 @@ void TuningSignalGenerator::publish_timer_callback()
   command_message.va_c = default_va_c_;
   command_message.h_c = default_h_c_;
   command_message.chi_c = default_chi_c_;
-  rosplane_msgs::msg::ControllerInternalsDebug internals_message;
-  internals_message.header.stamp = this->get_clock()->now();
-  internals_message.theta_c = default_theta_c_;
-  internals_message.phi_c = default_phi_c_;
+  command_message.theta_c = default_theta_c_;
+  command_message.phi_c = default_phi_c_;
 
   // Publish message
   switch (controller_output_) {
     case ControllerOutput::ROLL:
-      internals_message.phi_c = signal_value;
+      command_message.phi_c = signal_value;
       break;
     case ControllerOutput::PITCH:
-      internals_message.theta_c = signal_value;
+      command_message.theta_c = signal_value;
       break;
     case ControllerOutput::ALTITUDE:
       command_message.h_c = signal_value;
       break;
-    case ControllerOutput::HEADING:
+    case ControllerOutput::COURSE:
       command_message.chi_c = signal_value;
       break;
     case ControllerOutput::AIRSPEED:
@@ -194,7 +190,6 @@ void TuningSignalGenerator::publish_timer_callback()
       break;
   }
   command_publisher_->publish(command_message);
-  internals_publisher_->publish(internals_message);
 }
 
 rcl_interfaces::msg::SetParametersResult
@@ -336,8 +331,8 @@ void TuningSignalGenerator::update_params()
     controller_output_ = ControllerOutput::PITCH;
   } else if (controller_output_string == "altitude") {
     controller_output_ = ControllerOutput::ALTITUDE;
-  } else if (controller_output_string == "heading") {
-    controller_output_ = ControllerOutput::HEADING;
+  } else if (controller_output_string == "course") {
+    controller_output_ = ControllerOutput::COURSE;
   } else if (controller_output_string == "airspeed") {
     controller_output_ = ControllerOutput::AIRSPEED;
   } else {
