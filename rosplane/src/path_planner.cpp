@@ -13,7 +13,7 @@
 #include <yaml-cpp/yaml.h>
 #include <cmath>
 
-#define EARTH_RADIUS 6378100
+#define EARTH_RADIUS 6378145.0f
 
 using std::placeholders::_1;
 using std::placeholders::_2;
@@ -113,6 +113,9 @@ path_planner::path_planner()
   // Initialize by publishing a clear path command.
   // This makes sure rviz doesn't show stale waypoints if rosplane is restarted.
   clear_path();
+
+  // Print out helpful information
+  RCLCPP_INFO_STREAM(this->get_logger(), "Path Planner will publish the first {" << this->get_parameter("num_waypoints_to_publish_at_start").as_int() << "} available waypoints!");
 }
 
 path_planner::~path_planner() {}
@@ -174,7 +177,20 @@ bool path_planner::update_path(const rosplane_msgs::srv::AddWaypoint::Request::S
   rclcpp::Time now = this->get_clock()->now();
 
   new_waypoint.header.stamp = now;
-  new_waypoint.w = req->w;
+  
+  // Convert to NED if given in LLA
+  std::string lla_or_ned = "LLA";
+  if (req->lla) {
+    std::array<double, 3> ned = lla2ned(req->w);
+
+    new_waypoint.w[0] = ned[0];
+    new_waypoint.w[1] = ned[1];
+    new_waypoint.w[2] = ned[2];
+  }
+  else {
+    new_waypoint.w = req->w;
+    lla_or_ned = "NED";
+  }
   new_waypoint.chi_d = req->chi_d;
   new_waypoint.lla = req->lla;
   new_waypoint.use_chi = req->use_chi;
@@ -184,15 +200,14 @@ bool path_planner::update_path(const rosplane_msgs::srv::AddWaypoint::Request::S
   if (req->publish_now) {
     wps.insert(wps.begin() + num_waypoints_published, new_waypoint);
     waypoint_publish();
-    res->message = "Adding waypoint was successful! Waypoint published.";
+    res->message = "Adding " + lla_or_ned + " waypoint was successful! Waypoint published.";
   }
   else {
     wps.push_back(new_waypoint);
-    res->message = "Adding waypoint was successful!";
+    res->message = "Adding " + lla_or_ned + " waypoint was successful!";
   }
 
   res->success = true;
-  
   return true;
 }
 
@@ -288,17 +303,17 @@ bool path_planner::load_mission_from_file(const std::string& filename) {
 }
 
 std::array<double, 3> path_planner::lla2ned(std::array<float, 3> lla) {
-  double lat1 = lla[0] * M_PI / 180.0;
-  double lon1 = lla[1] * M_PI / 180.0;
+  double lat1 = lla[0];
+  double lon1 = lla[1];
   double alt1 = lla[2];
 
-  double lat0 = initial_lat_ * M_PI / 180.0;
-  double lon0 = initial_lon_ * M_PI / 180.0;
+  double lat0 = initial_lat_;
+  double lon0 = initial_lon_;
   double alt0 = initial_alt_;
 
-  double n = EARTH_RADIUS * 2 * sin(lat1 - lat0);
-  double e = EARTH_RADIUS * 2 * sin(lon1 - lon0);
-  double d = alt0 - alt1;
+  double n = EARTH_RADIUS * (lat1 - lat0) * M_PI / 180.0;
+  double e = EARTH_RADIUS * cos(lat0 * M_PI / 180.0) * (lon1 - lon0) * M_PI / 180.0;
+  double d = -(alt1 - alt0);
 
   if (fabs(initial_lat_) == 0.0 || fabs(initial_lon_) == 0.0 || fabs(initial_alt_) == 0.0) {
     RCLCPP_WARN_STREAM(this->get_logger(), "NED position set to [" << n << "," << e << "," << d << "]! Waypoints may be incorrect. Check GPS health");
