@@ -57,9 +57,3 @@ To call a service from the command line use this command, replacing <service> wi
 ros2 service call <service> std_srvs/srv/Trigger
 ```
 
-## Data Viz
-
-Data viz is a python utility that can be used to plot the controller commands and response, as an alternative to PlotJuggler. To run data viz,
-```
-ros2 run rosplane_tuning data_viz.py
-```
