@@ -650,15 +650,7 @@ void path_manager_example::increment_indices(int & idx_a, int & idx_b, int & idx
       output.lamda = orbit_direction(input.pn, input.pe, input.chi, output.c[0], output.c[1]); // Calculate the most conveinent orbit direction of that point.
 
       if (update_marker_) {
-        // Publish the target waypoint for visualization
-        rosplane_msgs::msg::Waypoint target_wp;
-        target_wp.w[0] = waypoints_[idx_a_].w[0];
-        target_wp.w[1] = waypoints_[idx_a_].w[1];
-        target_wp.w[2] = waypoints_[idx_a_].w[2];
-        target_wp.va_d = waypoints_[idx_a_].va_d;
-        target_wp.lla = false;
-        target_wp_pub_->publish(target_wp);
-        
+        publish_target_wp(idx_a_);
         update_marker_ = false;
       }
 
@@ -678,17 +670,20 @@ void path_manager_example::increment_indices(int & idx_a, int & idx_b, int & idx
   }
 
   if (update_marker_) {
-    // Publish the target waypoint for visualization
-    rosplane_msgs::msg::Waypoint target_wp;
-    target_wp.w[0] = waypoints_[idx_b].w[0];
-    target_wp.w[1] = waypoints_[idx_b].w[1];
-    target_wp.w[2] = waypoints_[idx_b].w[2];
-    target_wp.va_d = waypoints_[idx_b].va_d;
-    target_wp.lla = false;
-    target_wp_pub_->publish(target_wp);
-
+    publish_target_wp(idx_b);
     update_marker_ = false;
   }
+}
+
+void path_manager_example::publish_target_wp(int idx) {
+  // Publish the target waypoint for visualization
+  rosplane_msgs::msg::Waypoint target_wp;
+  target_wp.w[0] = waypoints_[idx].w[0];
+  target_wp.w[1] = waypoints_[idx].w[1];
+  target_wp.w[2] = waypoints_[idx].w[2];
+  target_wp.va_d = waypoints_[idx].va_d;
+  target_wp.lla = false;
+  target_wp_pub_->publish(target_wp);
 }
 
 } // namespace rosplane
