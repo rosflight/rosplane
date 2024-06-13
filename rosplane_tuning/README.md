@@ -10,7 +10,7 @@ Signal generator is a ROS2 node that will generate step inputs, square waves, si
 
 This is useful for tuning autopilots as we can give a clear and repeatable command to any portion of the autopilot and observe its response to that input. We can then tune gains, re-issue the same commands, and observe whether performance improved or worsened.
 
-Signal generator works by publishing autopilot commands on the ROS network on the `controller_commands` and `tuning_debug` topics. Each control output (roll, pitch, altitude, course, airspeed) has a default values that is set by a ROS parameter. The signal generator will then add the generated signal to one of the control outputs with a set magnitude and frequency.
+Signal generator works by publishing autopilot commands on the ROS network on the `controller_commands` topic. Each control output (roll, pitch, altitude, course, airspeed) has a default values that is set by a ROS parameter. The signal generator will then add the generated signal to one of the control outputs with a set magnitude and frequency.
 
 ### Signal Types
 - Step: This is a non-continuous signal, where the generated signal will jump between the default value and the default+magnitude every time the `toggle_step_signal` service is called.

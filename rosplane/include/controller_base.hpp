@@ -17,6 +17,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rosflight_msgs/msg/command.hpp>
 #include <rosplane_msgs/msg/controller_commands.hpp>
+#include <rosplane_msgs/msg/controller_internals.hpp>
 #include <rosplane_msgs/msg/state.hpp>
 #include <param_manager.hpp>
 
@@ -120,7 +121,7 @@ private:
   /**
    * This publisher publishes the current commands in the control algorithm.
    */
-  rclcpp::Publisher<rosplane_msgs::msg::ControllerCommands>::SharedPtr controller_commands_pub_;
+  rclcpp::Publisher<rosplane_msgs::msg::ControllerInternals>::SharedPtr controller_internals_pub_;
 
   /**
    * This subscriber subscribes to the commands the controller uses to calculate control effort.

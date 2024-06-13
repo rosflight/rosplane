@@ -13,8 +13,8 @@ controller_base::controller_base()
 
   // Advertise published topics.
   actuators_pub_ = this->create_publisher<rosflight_msgs::msg::Command>("command", 10);
-  controller_commands_pub_ = this->create_publisher<rosplane_msgs::msg::ControllerCommands>(
-    "controller_commands_out", 10);
+  controller_internals_pub_ = this->create_publisher<rosplane_msgs::msg::ControllerInternals>(
+    "controller_internals", 10);
 
   // Advertise subscribed topics and set bound callbacks.
   controller_commands_sub_ = this->create_subscription<rosplane_msgs::msg::ControllerCommands>(
@@ -120,25 +120,24 @@ void controller_base::actuator_controls_publish()
     actuators_pub_->publish(actuators);
 
     // Publish the current control values
-    rosplane_msgs::msg::ControllerCommands controller_commands;
-    controller_commands.header.stamp = now;
-    controller_commands.phi_c = output.phi_c;
-    controller_commands.theta_c = output.theta_c;
+    rosplane_msgs::msg::ControllerInternals controller_internals;
+    controller_internals.header.stamp = now;
+    controller_internals.phi_c = output.phi_c;
+    controller_internals.theta_c = output.theta_c;
     switch (output.current_zone) {
       case alt_zones::TAKE_OFF:
-        controller_commands.alt_zone = controller_commands.ZONE_TAKE_OFF;
+        controller_internals.alt_zone = controller_internals.ZONE_TAKE_OFF;
         break;
       case alt_zones::CLIMB:
-        controller_commands.alt_zone = controller_commands.ZONE_CLIMB;
+        controller_internals.alt_zone = controller_internals.ZONE_CLIMB;
         break;
       case alt_zones::ALTITUDE_HOLD:
-        controller_commands.alt_zone = controller_commands.ZONE_ALTITUDE_HOLD;
+        controller_internals.alt_zone = controller_internals.ZONE_ALTITUDE_HOLD;
         break;
       default:
         break;
     }
-    controller_commands.aux_valid = false;
-    controller_commands_pub_->publish(controller_commands);
+    controller_internals_pub_->publish(controller_internals);
   }
 }
 
