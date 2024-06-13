@@ -66,21 +66,22 @@ Loading the mission can be done using
 where `FILENAME` is the absolute path to the mission .yaml file.
 Note that the origin (0,0,0) is placed at the GNSS location where ROSplane was initialized.
 
-> **Important**: All waypoints must include a valid `[X, Y, Z]` value and a valid `va_d` value.
+> **Important**: All waypoints must include a valid `[X, Y, Z]`, `va_d`, and `lla` values.
 
-Alternatively, you can add a waypoint one at a time by calling the appropriate service,
-```ros2 service call /add_waypoint rosplane_msgs/srv/AddWaypoint "{w: [X, Y, Z], chi_d: CHI_D, use_chi: USE_CHI, va_d: VA_D}"```
-where `[X, Y, Z]` is the NED position of the waypoint from the origin (in meters), `CHI_D` is the desired heading at the waypoint, and `VA_D` is the airspeed at the waypoint.
+Alternatively, you can add a waypoint one at a time by calling the appropriate service
+
+```ros2 service call /add_waypoint rosplane_msgs/srv/AddWaypoint "{w: [X, Y, Z], chi_d: CHI_D, lla: USE_LLA, use_chi: USE_CHI, va_d: VA_D}"```
+
+where `[X, Y, Z]` is the NED position of the waypoint from the origin (in meters) OR the GNSS location of the waypoint (LLA), `CHI_D` is the desired heading at the waypoint, and `VA_D` is the airspeed at the waypoint.
+Set the `lla` field to `true` if the waypoint `[X, Y, Z]` field is given in GNSS coordinates and `false` if given in NED coordinates.
 Corners in the path are controlled by `USE_CHI`, where a value of `True` will cause ROSplane to use a Dubins path planner and a value of `False` will cause a fillet path planner to be used.
-Adding waypoints can be done after loading from a file.
+Adding waypoints can be done at any time, even after loading from a file.
 
-Clearing waypoints can be done using
-```ros2 service call /clear_waypoints std_msgs/srv/Trigger```.
+Clearing waypoints can be done using `ros2 service call /clear_waypoints std_msgs/srv/Trigger`.
 
 ### Publishing Waypoints
 
 The `path_planner` node automatically publishes a small number of waypoints (default is 3) at the beginning of this mission.
 This number is controlled by the `num_waypoints_to_publish_at_start` ROS2 parameter. 
 
-Additional waypoints can be published using
-`ros2 service call /publish_next_waypoint std_srvs/srv/Trigger`.
+Additional waypoints can be published using `ros2 service call /publish_next_waypoint std_srvs/srv/Trigger`.

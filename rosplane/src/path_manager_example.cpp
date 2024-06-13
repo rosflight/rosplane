@@ -38,7 +38,7 @@ void path_manager_example::manage(const input_s & input, output_s & output)
     if (float(std::chrono::system_clock::to_time_t(now) - std::chrono::system_clock::to_time_t(start_time)) >= 10.0) 
     { 
       // TODO: Add check to see if the aircraft has been armed. If not just send the warning once before flight then on the throttle after.
-      RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "No waypoits received, orbiting origin at " << default_altitude << " meters.");
+      RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "No waypoints received, orbiting origin at " << default_altitude << " meters.");
       output.flag = false; // Indicate that the path is an orbit.
       output.va_d = default_airspeed; // Set to the default_airspeed.
       output.c[0] = 0.0f; // Direcct the center of the orbit to the origin at the default default_altitude.
