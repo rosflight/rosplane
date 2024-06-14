@@ -2,7 +2,6 @@
 
 #include "iostream"
 #include <cmath>
-#include <rclcpp/logging.hpp>
 
 namespace rosplane
 {
@@ -79,16 +78,15 @@ void controller_successive_loop::alt_hold_lateral_control(const struct input_s &
                                                           struct output_s & output)
 {
   // For readability, declare parameters here that will be used in this function
-  bool roll_tuning_debug_override = params.get_bool("roll_tuning_debug_override");   // Declared in controller_base
+  bool roll_override = params.get_bool("roll_command_override");   // Declared in controller_base
 
-
-  // Set rudder command to zero, can use cooridinated_turn_hold if implemented.
+  // Set rudder command to zero, can use coordinated_turn_hold if implemented.
   // Find commanded roll angle in order to achieve commanded course.
-  // Find aileron deflection required to acheive required roll angle.
-  output.delta_r = yaw_damper(input.r); //cooridinated_turn_hold(input.beta, params)
+  // Find aileron deflection required to achieve required roll angle.
+  output.delta_r = yaw_damper(input.r); //coordinated_turn_hold(input.beta, params)
   output.phi_c = course_hold(input.chi_c, input.chi, input.phi_ff, input.r);
 
-  if (roll_tuning_debug_override) { output.phi_c = tuning_debug_override_msg_.phi_c; }
+  if (roll_override) { output.phi_c = get_phi_c(); }
 
   output.delta_a = roll_hold(output.phi_c, input.phi, input.p);
 }
@@ -98,7 +96,7 @@ void controller_successive_loop::alt_hold_longitudinal_control(const struct inpu
 {
   // For readability, declare parameters here that will be used in this function
   double alt_hz = params.get_double("alt_hz");   // Declared in controller_state_machine
-  bool pitch_tuning_debug_override = params.get_bool("pitch_tuning_debug_override");   // Declared in controller_base
+  bool pitch_override = params.get_bool("pitch_command_override");   // Declared in controller_base
 
   // Saturate the altitude command.
   double adjusted_hc = adjust_h_c(input.h_c, input.h, alt_hz);
@@ -107,7 +105,7 @@ void controller_successive_loop::alt_hold_longitudinal_control(const struct inpu
   output.delta_t = airspeed_with_throttle_hold(input.Va_c, input.va);
   output.theta_c = altitude_hold_control(adjusted_hc, input.h);
 
-  if (pitch_tuning_debug_override) { output.theta_c = tuning_debug_override_msg_.theta_c; }
+  if (pitch_override) { output.theta_c = get_theta_c(); }
 
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q);
 }
