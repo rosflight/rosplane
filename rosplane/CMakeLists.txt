@@ -50,11 +50,11 @@ install(DIRECTORY launch params DESTINATION share/${PROJECT_NAME}/)
 
 # Controller
 add_executable(rosplane_controller
-            src/controller_base.cpp
-            src/controller_state_machine.cpp
-            src/controller_successive_loop.cpp
-            src/controller_total_energy.cpp
-            src/param_manager.cpp)
+  src/controller_base.cpp
+  src/controller_state_machine.cpp
+  src/controller_successive_loop.cpp
+  src/controller_total_energy.cpp
+  src/param_manager.cpp)
 ament_target_dependencies(rosplane_controller rosplane_msgs rosflight_msgs rclcpp rclpy Eigen3)
 install(TARGETS
   rosplane_controller
@@ -63,9 +63,9 @@ install(TARGETS
 
 # Follower
 add_executable(rosplane_path_follower
-            src/path_follower_example.cpp
-            src/path_follower_base.cpp
-            src/param_manager.cpp)
+  src/path_follower_example.cpp
+  src/path_follower_base.cpp
+  src/param_manager.cpp)
 ament_target_dependencies(rosplane_path_follower rosplane_msgs rclcpp rclpy Eigen3)
 install(TARGETS
   rosplane_path_follower
@@ -73,9 +73,9 @@ install(TARGETS
 
 # Manager
 add_executable(rosplane_path_manager
-            src/path_manager_base.cpp
-            src/path_manager_example.cpp
-            src/param_manager.cpp)
+  src/path_manager_base.cpp
+  src/path_manager_example.cpp
+  src/param_manager.cpp)
 ament_target_dependencies(rosplane_path_manager rosplane_msgs rclcpp rclpy Eigen3)
 install(TARGETS
   rosplane_path_manager
@@ -83,8 +83,8 @@ install(TARGETS
 
 # Planner
 add_executable(rosplane_path_planner
-            src/path_planner.cpp
-            src/param_manager.cpp)
+  src/path_planner.cpp
+  src/param_manager.cpp)
 target_link_libraries(rosplane_path_planner
   ${YAML_CPP_LIBRARIES}
 )
@@ -95,13 +95,22 @@ install(TARGETS
 
 # Estimator
 add_executable(rosplane_estimator_node
-              src/estimator_base.cpp
-              src/estimator_example.cpp
-              src/param_manager.cpp)
+  src/estimator_base.cpp
+  src/estimator_example.cpp
+  src/param_manager.cpp)
 ament_target_dependencies(rosplane_estimator_node rosplane_msgs rosflight_msgs rclcpp Eigen3)
 install(TARGETS
-        rosplane_estimator_node
-        DESTINATION lib/${PROJECT_NAME})
+  rosplane_estimator_node
+  DESTINATION lib/${PROJECT_NAME})
+
+# Input Mixer
+add_executable(input_mixer
+  src/input_mixer.cpp
+  src/param_manager.cpp)
+ament_target_dependencies(input_mixer rosplane_msgs rosflight_msgs rclcpp)
+install(TARGETS
+  input_mixer
+  DESTINATION lib/${PROJECT_NAME})
 
 #### END OF EXECUTABLES ###
 
