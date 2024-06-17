@@ -49,7 +49,16 @@ public:
    */
   // TODO: Check to make sure that setting a parameter before declaring it won't give an error.
   // Hypothesis is that it will break, but is that not desired behavior?
-  void set_parameters();    
+  void set_parameters();
+
+  /**
+   * This function sets a previously declared parameter to a new value in both the parameter object
+   * and the ROS system.
+   */
+  void set_parameter(std::string param_name, double value);
+  void set_parameter(std::string param_name, bool value);
+  void set_int(std::string param_name, int64_t value);
+  void set_parameter(std::string param_name, std::string value);
   
   /**
    * This function should be called in the parametersCallback function in a containing ROS node.

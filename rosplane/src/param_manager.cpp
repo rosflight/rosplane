@@ -37,6 +37,66 @@ void param_manager::declare_string(std::string param_name, std::string value)
   container_node_->declare_parameter(param_name, value);
 }
 
+void param_manager::set_parameter(std::string param_name, double value)
+{
+  // Check that the parameter is in the parameter struct
+  if (params_.find(param_name) == params_.end())
+  {
+    RCLCPP_ERROR_STREAM(container_node_->get_logger(), "Parameter not found in parameter struct: " + param_name);
+    return;
+  }
+
+  // Set the parameter in the parameter struct
+  params_[param_name] = value;
+  // Set the parameter in the ROS2 param system
+  container_node_->set_parameter(rclcpp::Parameter(param_name, value));
+}
+
+void param_manager::set_parameter(std::string param_name, bool value)
+{
+  // Check that the parameter is in the parameter struct
+  if (params_.find(param_name) == params_.end())
+  {
+    RCLCPP_ERROR_STREAM(container_node_->get_logger(), "Parameter not found in parameter struct: " + param_name);
+    return;
+  }
+
+  // Set the parameter in the parameter struct
+  params_[param_name] = value;
+  // Set the parameter in the ROS2 param system
+  container_node_->set_parameter(rclcpp::Parameter(param_name, value));
+}
+
+void param_manager::set_int(std::string param_name, int64_t value)
+{
+  // Check that the parameter is in the parameter struct
+  if (params_.find(param_name) == params_.end())
+  {
+    RCLCPP_ERROR_STREAM(container_node_->get_logger(), "Parameter not found in parameter struct: " + param_name);
+    return;
+  }
+
+  // Set the parameter in the parameter struct
+  params_[param_name] = value;
+  // Set the parameter in the ROS2 param system
+  container_node_->set_parameter(rclcpp::Parameter(param_name, value));
+}
+
+void param_manager::set_parameter(std::string param_name, std::string value)
+{
+  // Check that the parameter is in the parameter struct
+  if (params_.find(param_name) == params_.end())
+  {
+    RCLCPP_ERROR_STREAM(container_node_->get_logger(), "Parameter not found in parameter struct: " + param_name);
+    return;
+  }
+
+  // Set the parameter in the parameter struct
+  params_[param_name] = value;
+  // Set the parameter in the ROS2 param system
+  container_node_->set_parameter(rclcpp::Parameter(param_name, value));
+}
+
 double param_manager::get_double(std::string param_name)
 {
     try
