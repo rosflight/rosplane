@@ -96,8 +96,8 @@ void controller_state_machine::control(const input_s & input,
 void controller_state_machine::declare_parameters()
 {
   // Declare param with ROS2 and set the default value.
-  params.declare_param("alt_toz", 5.0);
-  params.declare_param("alt_hz", 10.0);
+  params.declare_double("alt_toz", 5.0);
+  params.declare_double("alt_hz", 10.0);
 }
 
 } // namespace rosplane

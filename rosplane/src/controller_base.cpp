@@ -41,11 +41,11 @@ controller_base::controller_base()
 void controller_base::declare_parameters()
 {
   // Declare default parameters associated with this controller, controller_base
-  params.declare_param("roll_command_override", false);
-  params.declare_param("pitch_command_override", false);
-  params.declare_param("pwm_rad_e", 1.0);
-  params.declare_param("pwm_rad_a", 1.0);
-  params.declare_param("pwm_rad_r", 1.0);
+  params.declare_bool("roll_command_override", false);
+  params.declare_bool("pitch_command_override", false);
+  params.declare_double("pwm_rad_e", 1.0);
+  params.declare_double("pwm_rad_a", 1.0);
+  params.declare_double("pwm_rad_r", 1.0);
   params.declare_int("frequency", 100);
 }
 

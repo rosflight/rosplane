@@ -38,10 +38,10 @@ public:
    * Helper functions to declare parameters in the param_manager object
    * Inserts a parameter into the parameter object and declares it with the ROS system
   */
-  void declare_param(std::string param_name, double value);
-  void declare_param(std::string param_name, bool value);
+  void declare_double(std::string param_name, double value);
+  void declare_bool(std::string param_name, bool value);
   void declare_int(std::string param_name, int64_t value);  
-  void declare_param(std::string param_name, std::string value);
+  void declare_string(std::string param_name, std::string value);
 
   /**
    * This sets the parameters with the values in the params_ object from the supplied parameter file, or sets them to

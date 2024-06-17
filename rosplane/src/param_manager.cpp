@@ -5,7 +5,7 @@ namespace rosplane
 
 param_manager::param_manager(rclcpp::Node * node) : container_node_{node} {}
 
-void param_manager::declare_param(std::string param_name, double value)
+void param_manager::declare_double(std::string param_name, double value)
 {
   // Insert the parameter into the parameter struct
   params_[param_name] = value;
@@ -13,7 +13,7 @@ void param_manager::declare_param(std::string param_name, double value)
   container_node_->declare_parameter(param_name, value);
 }
 
-void param_manager::declare_param(std::string param_name, bool value)
+void param_manager::declare_bool(std::string param_name, bool value)
 {
   // Insert the parameter into the parameter struct
   params_[param_name] = value;
@@ -29,7 +29,7 @@ void param_manager::declare_int(std::string param_name, int64_t value)
   container_node_->declare_parameter(param_name, value);
 }
 
-void param_manager::declare_param(std::string param_name, std::string value)
+void param_manager::declare_string(std::string param_name, std::string value)
 {
   // Insert the parameter into the parameter struct
   params_[param_name] = value;
@@ -46,7 +46,7 @@ double param_manager::get_double(std::string param_name)
     catch (std::bad_variant_access & e)
     {
       RCLCPP_ERROR_STREAM(container_node_->get_logger(), "ERROR GETTING PARAMETER: " + param_name);
-      throw std::runtime_error("error");
+      throw std::runtime_error(e.what());
     }
 } 
 
@@ -59,7 +59,7 @@ bool param_manager::get_bool(std::string param_name)
     catch (std::bad_variant_access & e)
     {
       RCLCPP_ERROR_STREAM(container_node_->get_logger(), "ERROR GETTING PARAMETER: " + param_name);
-      throw std::runtime_error("error");
+      throw std::runtime_error(e.what());
     }
 } 
 
@@ -72,7 +72,7 @@ int64_t param_manager::get_int(std::string param_name)
     catch (std::bad_variant_access & e)
     {
       RCLCPP_ERROR_STREAM(container_node_->get_logger(), "ERROR GETTING PARAMETER: " + param_name);
-      throw std::runtime_error("error");
+      throw std::runtime_error(e.what());
     }
 } 
 
@@ -85,7 +85,7 @@ std::string param_manager::get_string(std::string param_name)
     catch (std::bad_variant_access & e)
     {
       RCLCPP_ERROR_STREAM(container_node_->get_logger(), "ERROR GETTING PARAMETER: " + param_name);
-      throw std::runtime_error("error");
+      throw std::runtime_error(e.what());
     }
 } 
 
@@ -120,7 +120,7 @@ bool param_manager::set_parameters_callback(const std::vector<rclcpp::Parameter>
       RCLCPP_ERROR_STREAM(container_node_->get_logger(), "One of the parameters given does not is not a parameter of the controller node. Parameter: " + param.get_name());
       return false;
     }
-    
+
     if (param.get_type() == rclcpp::ParameterType::PARAMETER_DOUBLE)
       params_[param.get_name()] = param.as_double();
     else if (param.get_type() == rclcpp::ParameterType::PARAMETER_BOOL)

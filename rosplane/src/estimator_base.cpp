@@ -41,8 +41,8 @@ estimator_base::estimator_base()
 
 void estimator_base::declare_parameters()
 {
-  params.declare_param("rho", 1.225);
-  params.declare_param("gravity", 9.8);
+  params.declare_double("rho", 1.225);
+  params.declare_double("gravity", 9.8);
 }
 
 rcl_interfaces::msg::SetParametersResult 
