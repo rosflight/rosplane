@@ -54,3 +54,7 @@ path_follower:
     chi_infty: 0.5
     k_orbit: 4.0
     k_path: 0.05
+
+path_planner:
+  ros__parameters:
+    num_waypoints_to_publish_at_start: 5

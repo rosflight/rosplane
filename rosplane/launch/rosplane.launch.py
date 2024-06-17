@@ -50,6 +50,7 @@ def generate_launch_description():
             package='rosplane',
             executable='rosplane_path_planner',
             name='path_planner',
+            parameters=[autopilot_params],
         ),
         Node(
             package='rosplane',
