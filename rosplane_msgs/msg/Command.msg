@@ -1,4 +1,4 @@
-# Offboard control command message. Currently a duplicate of the command message in rosflight_msgs.
+# Offboard control command message
 
 # control mode flags
 uint8 MODE_PASS_THROUGH = 0
@@ -18,4 +18,4 @@ uint8 ignore # bitmask for ignore specific setpoint values
 float32 x
 float32 y
 float32 z
-float32 f
+float32 f # This threw an error with the original name of F
