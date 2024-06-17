@@ -19,14 +19,14 @@ class param_manager
 {
 public:
   /**
-   * Public constructor
+   * @brief Public constructor
    * 
    * @param node: the ROS2 node that has this parameter object. Used to poll the ROS2 parameters
   */
   param_manager(rclcpp::Node * node);
 
   /**
-   * Helper functions to access parameter values stored in param_manager object
+   * @brief Helper functions to access parameter values stored in param_manager object
    * Returns a std::variant that holds the value of the given parameter
   */
   double get_double(std::string param_name);
@@ -35,7 +35,7 @@ public:
   std::string get_string(std::string param_name);
 
   /**
-   * Helper functions to declare parameters in the param_manager object
+   * @brief Helper functions to declare parameters in the param_manager object
    * Inserts a parameter into the parameter object and declares it with the ROS system
   */
   void declare_param(std::string param_name, double value);
@@ -44,7 +44,7 @@ public:
   void declare_param(std::string param_name, std::string value);
 
   /**
-   * This sets the parameters with the values in the params_ object from the supplied parameter file, or sets them to
+   * @brief This sets the parameters with the values in the params_ object from the supplied parameter file, or sets them to
    * the default if no value is given for a parameter.
    */
   // TODO: Check to make sure that setting a parameter before declaring it won't give an error.
@@ -52,7 +52,7 @@ public:
   void set_parameters();    
   
   /**
-   * This function should be called in the parametersCallback function in a containing ROS node.
+   * @brief This function should be called in the parametersCallback function in a containing ROS node.
    * It takes in a vector of changed parameters and updates them within the params_ object.
    * 
    * @param parameters: Vector of ROS Parameter objects that have been changed. 

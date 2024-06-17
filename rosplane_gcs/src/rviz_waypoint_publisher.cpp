@@ -63,17 +63,23 @@ rviz_waypoint_publisher::rviz_waypoint_publisher()
     
     rclcpp::QoS qos_transient_local_20_(20);
     qos_transient_local_20_.transient_local();
+    // Publishers
     rviz_wp_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("rviz/waypoint", qos_transient_local_20_);
     rviz_mesh_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("rviz/mesh", 5);
     rviz_aircraft_path_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("rviz/mesh_path", 5);
+    aircraft_tf2_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+
+    // Subscribers
     waypoint_sub_ = this->create_subscription<rosplane_msgs::msg::Waypoint>("waypoint_path", qos_transient_local_20_,
             std::bind(&rviz_waypoint_publisher::new_wp_callback, this, _1));
     vehicle_state_sub_ = this->create_subscription<rosplane_msgs::msg::State>("estimated_state", 10,
             std::bind(&rviz_waypoint_publisher::state_update_callback, this, _1));
     target_wp_sub_ = this->create_subscription<rosplane_msgs::msg::Waypoint>("target_waypoint", qos_transient_local_20_,
             std::bind(&rviz_waypoint_publisher::target_wp_callback, this, _1));
+
+    // Services
+    // orbit_last_srv_ = this->create_service<std_msgs::srv::Bool>
     
-    aircraft_tf2_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
     
     // Initialize aircraft
     aircraft_.header.frame_id = "stl_frame";
