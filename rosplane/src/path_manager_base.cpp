@@ -17,16 +17,27 @@ path_manager_base::path_manager_base()
   new_waypoint_sub_ = this->create_subscription<rosplane_msgs::msg::Waypoint>(
     "waypoint_path", 10, std::bind(&path_manager_base::new_waypoint_callback, this, _1));
   current_path_pub_ = this->create_publisher<rosplane_msgs::msg::CurrentPath>("current_path", 10);
-  update_timer_ =
-    this->create_wall_timer(10ms, std::bind(&path_manager_base::current_path_publish, this));
 
   // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
     std::bind(&path_manager_base::parametersCallback, this, std::placeholders::_1));
 
+  declare_parameters();
+  params.set_parameters();
+
+  // Now that the update rate has been updated in parameters, create the timer
+  update_rate_ = params.get_int("current_path_pub_period");
+  update_timer_ =
+    this->create_wall_timer(std::chrono::duration<int64_t>(update_rate_), std::bind(&path_manager_base::current_path_publish, this));
+
   num_waypoints_ = 0;
 
   state_init_ = false;
+}
+
+void path_manager_base::declare_parameters() {
+  params.declare_param("R_min", 50.0);
+  params.declare_int("current_path_pub_period", 10);
 }
 
 rcl_interfaces::msg::SetParametersResult

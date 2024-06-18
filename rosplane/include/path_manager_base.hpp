@@ -74,7 +74,7 @@ private:
 
   rosplane_msgs::msg::State vehicle_state_; /**< vehicle state */
 
-  double update_rate_;
+  int64_t update_rate_;
   rclcpp::TimerBase::SharedPtr update_timer_;
 
   void vehicle_state_callback(const rosplane_msgs::msg::State & msg);
@@ -85,6 +85,11 @@ private:
   OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
   rcl_interfaces::msg::SetParametersResult
   parametersCallback(const std::vector<rclcpp::Parameter> & parameters);
+
+  /**
+   * @brief Declares parameters with ROS2 and adds it to the parameter manager object
+   */
+  void declare_parameters();
 };
 } // namespace rosplane
 #endif // PATH_MANAGER_BASE_H

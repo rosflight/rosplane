@@ -45,7 +45,7 @@ void estimator_base::declare_parameters()
   params.declare_param("gravity", 9.8);
   params.declare_param("gps_ground_speed_threshold", 0.3);  // TODO: this is a magic number. What is it determined from?
   params.declare_param("baro_gate_gain_constant", 1.35);  // TODO: this is a magic number. What is it determined from?
-  params.declare_param("airspeed_gate_gain_constant", 5);  // TODO: this is a magic number. What is it determined from?
+  params.declare_param("airspeed_gate_gain_constant", 5.0);  // TODO: this is a magic number. What is it determined from?
 }
 
 rcl_interfaces::msg::SetParametersResult 
@@ -160,7 +160,7 @@ void estimator_base::gnssFixCallback(const sensor_msgs::msg::NavSatFix::SharedPt
 void estimator_base::gnssVelCallback(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
 {
   // Rename parameter here for clarity
-  double ground_speed_threshold = params.get_double("gps_ground_speed_threshold", 0.3);
+  double ground_speed_threshold = params.get_double("gps_ground_speed_threshold");
 
   double v_n = msg->twist.linear.x;
   double v_e = msg->twist.linear.y;

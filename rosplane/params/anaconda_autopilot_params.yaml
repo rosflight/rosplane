@@ -48,6 +48,7 @@ path_manager:
     orbit_last: False
     default_altitude: 50.0
     default_airspeed: 25.0
+    current_path_pub_period: 10   # in milliseconds
 
 path_follower:
   ros__parameters:
