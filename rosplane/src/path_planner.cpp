@@ -181,6 +181,7 @@ path_planner::path_planner()
     std::bind(&path_planner::parametersCallback, this, std::placeholders::_1));
 
   declare_parameters();
+  params.set_parameters();
 
   num_waypoints_published = 0;
 
