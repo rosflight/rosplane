@@ -447,39 +447,39 @@ float controller_successive_loop::adjust_h_c(float h_c, float h, float max_diff)
 void controller_successive_loop::declare_parameters()
 {
   // Declare param with ROS2 and set the default value.
-  params.declare_param("max_takeoff_throttle", 0.55);
-  params.declare_param("c_kp", 2.37);
-  params.declare_param("c_ki", .4);
-  params.declare_param("c_kd", .0);
-  params.declare_param("max_roll", 25.0);
-  params.declare_param("cmd_takeoff_pitch", 5.0);
+  params.declare_double("max_takeoff_throttle", 0.55);
+  params.declare_double("c_kp", 2.37);
+  params.declare_double("c_ki", .4);
+  params.declare_double("c_kd", .0);
+  params.declare_double("max_roll", 25.0);
+  params.declare_double("cmd_takeoff_pitch", 5.0);
 
-  params.declare_param("r_kp", .06);
-  params.declare_param("r_ki", .0);
-  params.declare_param("r_kd", .04);
-  params.declare_param("max_a", .15);
-  params.declare_param("trim_a", 0.0);
+  params.declare_double("r_kp", .06);
+  params.declare_double("r_ki", .0);
+  params.declare_double("r_kd", .04);
+  params.declare_double("max_a", .15);
+  params.declare_double("trim_a", 0.0);
 
-  params.declare_param("p_kp", -.15);
-  params.declare_param("p_ki", .0);
-  params.declare_param("p_kd", -.05);
-  params.declare_param("max_e", .15);
-  params.declare_param("max_pitch", 20.0);
-  params.declare_param("trim_e", 0.02);
+  params.declare_double("p_kp", -.15);
+  params.declare_double("p_ki", .0);
+  params.declare_double("p_kd", -.05);
+  params.declare_double("max_e", .15);
+  params.declare_double("max_pitch", 20.0);
+  params.declare_double("trim_e", 0.02);
 
-  params.declare_param("tau", 50.0);
-  params.declare_param("a_t_kp", .05);
-  params.declare_param("a_t_ki", .005);
-  params.declare_param("a_t_kd", 0.0);
-  params.declare_param("max_t", 1.0);
-  params.declare_param("trim_t", 0.5);
+  params.declare_double("tau", 50.0);
+  params.declare_double("a_t_kp", .05);
+  params.declare_double("a_t_ki", .005);
+  params.declare_double("a_t_kd", 0.0);
+  params.declare_double("max_t", 1.0);
+  params.declare_double("trim_t", 0.5);
 
-  params.declare_param("a_kp", 0.015);
-  params.declare_param("a_ki", 0.003);
-  params.declare_param("a_kd", 0.0);
+  params.declare_double("a_kp", 0.015);
+  params.declare_double("a_ki", 0.003);
+  params.declare_double("a_kd", 0.0);
 
-  params.declare_param("y_pwo", .6349);
-  params.declare_param("y_kr", .85137);
+  params.declare_double("y_pwo", .6349);
+  params.declare_double("y_kr", .85137);
 }
 
 } // namespace rosplane

@@ -170,16 +170,16 @@ void controller_total_energy::update_energies(float va_c, float va, float h_c, f
 void controller_total_energy::declare_parameters()
 {
   // Declare parameter with ROS2 and set the default value
-  params.declare_param("e_kp", 5.0);
-  params.declare_param("e_ki", 0.9);
-  params.declare_param("e_kd", 0.0);
+  params.declare_double("e_kp", 5.0);
+  params.declare_double("e_ki", 0.9);
+  params.declare_double("e_kd", 0.0);
 
-  params.declare_param("l_kp", 1.0);
-  params.declare_param("l_ki", 0.05);
-  params.declare_param("l_kd", 0.0);
+  params.declare_double("l_kp", 1.0);
+  params.declare_double("l_ki", 0.05);
+  params.declare_double("l_kd", 0.0);
 
-  params.declare_param("mass", 2.28);
-  params.declare_param("gravity", 9.8);
-  params.declare_param("max_energy", 5.0);
+  params.declare_double("mass", 2.28);
+  params.declare_double("gravity", 9.8);
+  params.declare_double("max_energy", 5.0);
 }
 } // namespace rosplane
