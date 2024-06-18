@@ -34,7 +34,7 @@ path_manager_base::parametersCallback(const std::vector<rclcpp::Parameter> & par
 {
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = false;
-  result.reason = "One of the parameters given does not is not a parameter of the controller node.";
+  result.reason = "One of the parameters given is not a parameter of the controller node.";
 
   bool success = params.set_parameters_callback(parameters);
   if (success)

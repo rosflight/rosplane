@@ -47,8 +47,6 @@ public:
    * This sets the parameters with the values in the params_ object from the supplied parameter file, or sets them to
    * the default if no value is given for a parameter.
    */
-  // TODO: Check to make sure that setting a parameter before declaring it won't give an error.
-  // Hypothesis is that it will break, but is that not desired behavior?
   void set_parameters();    
   
   /**

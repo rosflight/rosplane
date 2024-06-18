@@ -30,13 +30,13 @@ public:
   param_manager params;   /** Holds the parameters for the path_planner*/
 
 private:
-  rclcpp::Publisher<rosplane_msgs::msg::Waypoint>::SharedPtr waypoint_publisher;
-  rclcpp::Subscription<rosplane_msgs::msg::State>::SharedPtr state_subscription;
-  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr next_waypoint_service;
-  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr clear_waypoint_service;
-  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr print_waypoint_service;
-  rclcpp::Service<rosplane_msgs::srv::AddWaypoint>::SharedPtr add_waypoint_service;
-  rclcpp::Service<rosflight_msgs::srv::ParamFile>::SharedPtr load_mission_service;
+  rclcpp::Publisher<rosplane_msgs::msg::Waypoint>::SharedPtr waypoint_publisher_;
+  rclcpp::Subscription<rosplane_msgs::msg::State>::SharedPtr state_subscription_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr next_waypoint_service_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr clear_waypoint_service_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr print_waypoint_service_;
+  rclcpp::Service<rosplane_msgs::srv::AddWaypoint>::SharedPtr add_waypoint_service_;
+  rclcpp::Service<rosflight_msgs::srv::ParamFile>::SharedPtr load_mission_service_;
 
   /**
    * @brief "publish_next_waypoint" service callback. Publish the next waypoint from the internal vector of waypoint objects. Will not publish if there are no more waypoints in the vector.
@@ -156,24 +156,24 @@ path_planner::path_planner()
   // Make this publisher transient_local so that it publishes the last 10 waypoints to late subscribers
   rclcpp::QoS qos_transient_local_10_(10);
   qos_transient_local_10_.transient_local();
-  waypoint_publisher = this->create_publisher<rosplane_msgs::msg::Waypoint>("waypoint_path", qos_transient_local_10_);
+  waypoint_publisher_ = this->create_publisher<rosplane_msgs::msg::Waypoint>("waypoint_path", qos_transient_local_10_);
 
-  next_waypoint_service = this->create_service<std_srvs::srv::Trigger>(
+  next_waypoint_service_ = this->create_service<std_srvs::srv::Trigger>(
     "publish_next_waypoint", std::bind(&path_planner::publish_next_waypoint, this, _1, _2));
   
-  add_waypoint_service = this->create_service<rosplane_msgs::srv::AddWaypoint>(
+  add_waypoint_service_ = this->create_service<rosplane_msgs::srv::AddWaypoint>(
     "add_waypoint", std::bind(&path_planner::update_path, this, _1, _2));
   
-  clear_waypoint_service = this->create_service<std_srvs::srv::Trigger>(
+  clear_waypoint_service_ = this->create_service<std_srvs::srv::Trigger>(
     "clear_waypoints", std::bind(&path_planner::clear_path_callback, this, _1, _2));
 
-  print_waypoint_service = this->create_service<std_srvs::srv::Trigger>(
+  print_waypoint_service_ = this->create_service<std_srvs::srv::Trigger>(
     "print_waypoints", std::bind(&path_planner::print_path, this, _1, _2));
 
-  load_mission_service = this->create_service<rosflight_msgs::srv::ParamFile>(
+  load_mission_service_ = this->create_service<rosflight_msgs::srv::ParamFile>(
     "load_mission_from_file", std::bind(&path_planner::load_mission, this, _1, _2));
   
-  state_subscription = this->create_subscription<rosplane_msgs::msg::State>("estimated_state", 10,
+  state_subscription_ = this->create_subscription<rosplane_msgs::msg::State>("estimated_state", 10,
     std::bind(&path_planner::state_callback, this, _1));
 
   // Set the parameter callback, for when parameters are changed.
@@ -239,7 +239,7 @@ void path_planner::waypoint_publish()
   rosplane_msgs::msg::Waypoint new_waypoint = wps[num_waypoints_published];
   new_waypoint.clear_wp_list = false;
 
-  waypoint_publisher->publish(new_waypoint);
+  waypoint_publisher_->publish(new_waypoint);
 
   num_waypoints_published++;
 }
@@ -300,7 +300,7 @@ void path_planner::clear_path() {
   rosplane_msgs::msg::Waypoint new_waypoint;
   new_waypoint.clear_wp_list = true;
 
-  waypoint_publisher->publish(new_waypoint);
+  waypoint_publisher_->publish(new_waypoint);
 
   num_waypoints_published = 0;
 }
@@ -402,7 +402,7 @@ path_planner::parametersCallback(const std::vector<rclcpp::Parameter> & paramete
 {
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = false;
-  result.reason = "One of the parameters given does not is not a parameter of the controller node.";
+  result.reason = "One of the parameters given is not a parameter of the controller node.";
 
   bool success = params.set_parameters_callback(parameters);
   if (success)

@@ -153,7 +153,7 @@ controller_base::parametersCallback(const std::vector<rclcpp::Parameter> & param
   {
     result.successful = false;
     result.reason =
-      "One of the parameters given does not is not a parameter of the controller node.";
+      "One of the parameters given is not a parameter of the controller node.";
   }
 
   return result;
