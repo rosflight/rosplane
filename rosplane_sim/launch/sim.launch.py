@@ -34,16 +34,5 @@ def generate_launch_description():
             package = 'rosplane_sim',
             executable='rosplane_gazebo_truth_publisher',
             name='gazebo_truth'
-        ),
-        Node(
-            package='rosplane_tuning',
-            executable='data_viz.py',
-            name='uav_plotter',
-            parameters=[{
-                'use_sim_time': False,
-                't_horizon': 100.,
-                'plot_sensors': False
-            }],
-            output='screen'
         )
     ])

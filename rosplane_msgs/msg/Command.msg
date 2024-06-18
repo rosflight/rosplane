@@ -18,4 +18,4 @@ uint8 ignore # bitmask for ignore specific setpoint values
 float32 x
 float32 y
 float32 z
-float32 f # This threw an error with the original name of F
+float32 f
