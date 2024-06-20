@@ -157,7 +157,7 @@ void controller_total_energy::update_energies(float va_c, float va, float h_c, f
   // For readability, declare parameters here that will be used in this function
   double mass = params.get_double("mass");
   double gravity = params.get_double("gravity");
-  double max_energy = params.get_double("max_energy");
+  double max_alt_error = params.get_double("max_alt_error");
 
   // Calculate the error in kinetic energy.
   K_error = 0.5 * mass * (pow(va_c, 2) - pow(va, 2));
@@ -166,22 +166,22 @@ void controller_total_energy::update_energies(float va_c, float va, float h_c, f
   K_ref = 0.5 * mass * pow(va_c, 2);
 
   // Calculate the error in the potential energy.
-  U_error = mass * gravity * sat(h_c - h, max_energy, -max_energy);
+  U_error = mass * gravity * sat(h_c - h, max_alt_error, -max_alt_error);
 }
 
 void controller_total_energy::declare_parameters()
 {
   // Declare parameter with ROS2 and set the default value
-  params.declare_param("e_kp", 5.0);
-  params.declare_param("e_ki", 0.9);
-  params.declare_param("e_kd", 0.0);
+  params.declare_double("e_kp", 5.0);
+  params.declare_double("e_ki", 0.9);
+  params.declare_double("e_kd", 0.0);
 
-  params.declare_param("l_kp", 1.0);
-  params.declare_param("l_ki", 0.05);
-  params.declare_param("l_kd", 0.0);
+  params.declare_double("l_kp", 1.0);
+  params.declare_double("l_ki", 0.05);
+  params.declare_double("l_kd", 0.0);
 
-  params.declare_param("mass", 2.28);
-  params.declare_param("gravity", 9.8);
-  params.declare_param("max_energy", 5.0);
+  params.declare_double("mass", 2.28);
+  params.declare_double("gravity", 9.8);
+  params.declare_double("max_alt_error", 5.0);
 }
 } // namespace rosplane

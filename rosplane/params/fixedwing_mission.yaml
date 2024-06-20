@@ -1,21 +1,25 @@
-# WAYPOINT 1
+# WAYPOINTS
 wp:
-  w: [0.0, 0.0, -50.0]
+  w: [40.247, -111.648, 1700.0]
   chi_d: 1.1518
+  lla: True
   use_chi: False
   va_d: 25.0
 wp:
   w: [1000.0, 400.0, -50.0]
   chi_d: 1.1518
+  lla: False
   use_chi: False
   va_d: 25.0
 wp:
   w: [1000.0, -500.0, -50.0]
   chi_d: 1.1518
+  lla: False
   use_chi: False
   va_d: 25.0
 wp:
   w: [0.0, -800.0, -50.0]
   chi_d: 1.1518
+  lla: False
   use_chi: False
   va_d: 25.0

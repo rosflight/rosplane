@@ -2,7 +2,6 @@
 
 #include "iostream"
 #include <cmath>
-#include <rclcpp/logging.hpp>
 
 namespace rosplane
 {
@@ -79,16 +78,15 @@ void controller_successive_loop::alt_hold_lateral_control(const struct input_s &
                                                           struct output_s & output)
 {
   // For readability, declare parameters here that will be used in this function
-  bool roll_tuning_debug_override = params.get_bool("roll_tuning_debug_override");   // Declared in controller_base
+  bool roll_override = params.get_bool("roll_command_override");   // Declared in controller_base
 
-
-  // Set rudder command to zero, can use cooridinated_turn_hold if implemented.
+  // Set rudder command to zero, can use coordinated_turn_hold if implemented.
   // Find commanded roll angle in order to achieve commanded course.
-  // Find aileron deflection required to acheive required roll angle.
-  output.delta_r = yaw_damper(input.r); //cooridinated_turn_hold(input.beta, params)
+  // Find aileron deflection required to achieve required roll angle.
+  output.delta_r = yaw_damper(input.r); //coordinated_turn_hold(input.beta, params)
   output.phi_c = course_hold(input.chi_c, input.chi, input.phi_ff, input.r);
 
-  if (roll_tuning_debug_override) { output.phi_c = tuning_debug_override_msg_.phi_c; }
+  if (roll_override) { output.phi_c = get_phi_c(); }
 
   output.delta_a = roll_hold(output.phi_c, input.phi, input.p);
 }
@@ -98,7 +96,7 @@ void controller_successive_loop::alt_hold_longitudinal_control(const struct inpu
 {
   // For readability, declare parameters here that will be used in this function
   double alt_hz = params.get_double("alt_hz");   // Declared in controller_state_machine
-  bool pitch_tuning_debug_override = params.get_bool("pitch_tuning_debug_override");   // Declared in controller_base
+  bool pitch_override = params.get_bool("pitch_command_override");   // Declared in controller_base
 
   // Saturate the altitude command.
   double adjusted_hc = adjust_h_c(input.h_c, input.h, alt_hz);
@@ -107,7 +105,7 @@ void controller_successive_loop::alt_hold_longitudinal_control(const struct inpu
   output.delta_t = airspeed_with_throttle_hold(input.va_c, input.va);
   output.theta_c = altitude_hold_control(adjusted_hc, input.h);
 
-  if (pitch_tuning_debug_override) { output.theta_c = tuning_debug_override_msg_.theta_c; }
+  if (pitch_override) { output.theta_c = get_theta_c(); }
 
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q);
 }
@@ -170,7 +168,9 @@ void controller_successive_loop::take_off_longitudinal_control(const struct inpu
       float error = commanded_val - actual_val;
 
       float Ts = 1.0/params.frequency;
-
+      
+      // Make a note of the previous integrator value.
+      float state_integrator_prev = state_integrator_;
       // Integrate the error of the state by using the trapezoid method with the stored value for the previous error.
       state_integrator_ = state_integrator_ + (Ts/2.0)*(error + state_error_);
 
@@ -185,12 +185,12 @@ void controller_successive_loop::take_off_longitudinal_control(const struct inpu
       // float ud = params.state_kd*state_differentiator;
 
       // Saturate the control effort between a defined max and min value.
-      // If the saturation occurs, and you are using integral control, adjust the integrator.
+      // Integrator anti-windup, if saturation occurs do not integrate that step.
       float control_effort = sat(up + ui + ud, max_value, min_value);
-      if (fabs(params.c_ki) >= 0.00001)
+      float control_effort_unsat = up + ui + ud + phi_ff;
+      if (fabs(control_effort - control_effort_unsat) < 0.0001)
       {
-        float control_effort_unsat = up + ui + ud + phi_ff;
-        state_integrator_ = state_integrator_ + (Ts/params.state_ki)*(control_effort - control_effort_unsat);
+        state_integrator_ = state_integrator_prev;
       }
 
       // Save the error to use for integration and differentiation.
@@ -215,6 +215,7 @@ float controller_successive_loop::course_hold(float chi_c, float chi, float phi_
 
   float Ts = 1.0 / frequency;
 
+  float c_integrator_prev = c_integrator_;
   c_integrator_ = c_integrator_ + (Ts / 2.0) * (error + c_error_);
 
   float up = c_kp * error;
@@ -223,10 +224,10 @@ float controller_successive_loop::course_hold(float chi_c, float chi, float phi_
 
   float phi_c =
     sat(up + ui + ud + phi_ff, max_roll * M_PI / 180.0, -max_roll * M_PI / 180.0);
+  float phi_c_unsat = up + ui + ud + phi_ff;
 
-  if (fabs(c_ki) >= 0.00001) {
-    float phi_c_unsat = up + ui + ud + phi_ff;
-    c_integrator_ = c_integrator_ + (Ts / c_ki) * (phi_c - phi_c_unsat);
+  if (fabs(phi_c - phi_c_unsat) > 0.0001) { // If the controller is saturating don't integrate.
+    c_integrator_ = c_integrator_prev;
   }
 
   c_error_ = error;
@@ -248,6 +249,7 @@ float controller_successive_loop::roll_hold(float phi_c, float phi, float p)
 
   float Ts = 1.0 / frequency;
 
+  float r_integrator_prev = r_integrator;
   r_integrator = r_integrator + (Ts / 2.0) * (error + r_error_);
 
   float up = r_kp * error;
@@ -255,9 +257,10 @@ float controller_successive_loop::roll_hold(float phi_c, float phi, float p)
   float ud = r_kd * p;
 
   float delta_a = sat(trim_a / pwm_rad_a + up + ui - ud, max_a, -max_a);
-  if (fabs(r_ki) >= 0.00001) {
-    float delta_a_unsat = trim_a / pwm_rad_a + up + ui - ud;
-    r_integrator = r_integrator + (Ts / r_ki) * (delta_a - delta_a_unsat);
+  float delta_a_unsat = trim_a / pwm_rad_a + up + ui - ud;
+
+  if (fabs(delta_a - delta_a_unsat) > 0.0001) {
+    r_integrator = r_integrator_prev;
   }
 
   r_error_ = error;
@@ -279,6 +282,7 @@ float controller_successive_loop::pitch_hold(float theta_c, float theta, float q
 
   float Ts = 1.0 / frequency;
 
+  float p_integrator_prev = p_integrator_;
   p_integrator_ = p_integrator_ + (Ts / 2.0) * (error + p_error_);
 
   float up = p_kp * error;
@@ -286,10 +290,10 @@ float controller_successive_loop::pitch_hold(float theta_c, float theta, float q
   float ud = p_kd * q;
 
   float delta_e = sat(trim_e / pwm_rad_e + up + ui - ud, max_e, -max_e);
+  float delta_e_unsat = trim_e / pwm_rad_e + up + ui - ud;
 
-  if (fabs(p_ki) >= 0.00001) {
-    float delta_e_unsat = trim_e / pwm_rad_e + up + ui - ud;
-    p_integrator_ = p_integrator_ + (Ts / p_ki) * (delta_e - delta_e_unsat);
+  if (fabs(delta_e - delta_e_unsat) > 0.0001) {
+    p_integrator_ = p_integrator_prev;
   }
 
   p_error_ = error;
@@ -311,6 +315,7 @@ float controller_successive_loop::airspeed_with_throttle_hold(float va_c, float 
 
   float Ts = 1.0 / frequency;
 
+  float at_integrator_prev = at_integrator_;
   at_integrator_ = at_integrator_ + (Ts / 2.0) * (error + at_error_);
   at_differentiator_ = (2.0 * tau - Ts) / (2.0 * tau + Ts) * at_differentiator_
     + (2.0 / (2.0 * tau + Ts)) * (error - at_error_);
@@ -321,9 +326,10 @@ float controller_successive_loop::airspeed_with_throttle_hold(float va_c, float 
 
   // Why isn't this one divided by the pwm_rad_t?
   float delta_t = sat(trim_t + up + ui + ud, max_t, 0);
-  if (fabs(a_t_ki) >= 0.00001) {
-    float delta_t_unsat = trim_t + up + ui + ud;
-    at_integrator_ = at_integrator_ + (Ts / a_t_ki) * (delta_t - delta_t_unsat);
+  float delta_t_unsat = trim_t + up + ui + ud;
+
+  if (fabs(delta_t - delta_t_unsat) > 0.0001) {
+    at_integrator_ = at_integrator_prev;
   }
 
   at_error_ = error;
@@ -345,6 +351,7 @@ float controller_successive_loop::altitude_hold_control(float h_c, float h)
 
   float Ts = 1.0 / frequency;
 
+  float a_integrator_prev = a_integrator_;
   if (-alt_hz + .01 < error && error < alt_hz - .01) {
     a_integrator_ = a_integrator_ + (Ts / 2.0) * (error + a_error_);
   } else {
@@ -359,9 +366,9 @@ float controller_successive_loop::altitude_hold_control(float h_c, float h)
   float ud = a_kd * a_differentiator_;
 
   float theta_c = sat(up + ui + ud, max_pitch * M_PI / 180.0, -max_pitch * M_PI / 180.0);
-  if (fabs(a_ki) >= 0.00001) {
-    float theta_c_unsat = up + ui + ud;
-    a_integrator_ = a_integrator_ + (Ts / a_ki) * (theta_c - theta_c_unsat);
+  float theta_c_unsat = up + ui + ud;
+  if (fabs(theta_c - theta_c_unsat) > 0.0001) {
+    a_integrator_ = a_integrator_prev;
   }
 
   a_error_ = error;
@@ -441,12 +448,12 @@ float controller_successive_loop::adjust_h_c(float h_c, float h, float max_diff)
 void controller_successive_loop::declare_parameters()
 {
   // Declare param with ROS2 and set the default value.
-  params.declare_param("max_takeoff_throttle", 0.55);
-  params.declare_param("c_kp", 2.37);
-  params.declare_param("c_ki", .4);
-  params.declare_param("c_kd", .0);
-  params.declare_param("max_roll", 25.0);
-  params.declare_param("cmd_takeoff_pitch", 5.0);
+  params.declare_double("max_takeoff_throttle", 0.55);
+  params.declare_double("c_kp", 2.37);
+  params.declare_double("c_ki", .4);
+  params.declare_double("c_kd", .0);
+  params.declare_double("max_roll", 25.0);
+  params.declare_double("cmd_takeoff_pitch", 5.0);
 
   params.declare_param("r_kp", .06);
   params.declare_param("r_ki", .0);
@@ -455,26 +462,26 @@ void controller_successive_loop::declare_parameters()
   params.declare_param("max_r", 1.0);
   params.declare_param("trim_a", 0.0);
 
-  params.declare_param("p_kp", -.15);
-  params.declare_param("p_ki", .0);
-  params.declare_param("p_kd", -.05);
-  params.declare_param("max_e", .15);
-  params.declare_param("max_pitch", 20.0);
-  params.declare_param("trim_e", 0.02);
+  params.declare_double("p_kp", -.15);
+  params.declare_double("p_ki", .0);
+  params.declare_double("p_kd", -.05);
+  params.declare_double("max_e", .15);
+  params.declare_double("max_pitch", 20.0);
+  params.declare_double("trim_e", 0.02);
 
-  params.declare_param("tau", 50.0);
-  params.declare_param("a_t_kp", .05);
-  params.declare_param("a_t_ki", .005);
-  params.declare_param("a_t_kd", 0.0);
-  params.declare_param("max_t", 1.0);
-  params.declare_param("trim_t", 0.5);
+  params.declare_double("tau", 50.0);
+  params.declare_double("a_t_kp", .05);
+  params.declare_double("a_t_ki", .005);
+  params.declare_double("a_t_kd", 0.0);
+  params.declare_double("max_t", 1.0);
+  params.declare_double("trim_t", 0.5);
 
-  params.declare_param("a_kp", 0.015);
-  params.declare_param("a_ki", 0.003);
-  params.declare_param("a_kd", 0.0);
+  params.declare_double("a_kp", 0.015);
+  params.declare_double("a_ki", 0.003);
+  params.declare_double("a_kd", 0.0);
 
-  params.declare_param("y_pwo", .6349);
-  params.declare_param("y_kr", .85137);
+  params.declare_double("y_pwo", .6349);
+  params.declare_double("y_kr", .85137);
 }
 
 } // namespace rosplane

@@ -310,7 +310,7 @@ void estimator_example::estimate(const input_s & input, output_s & output)
     //wrap course measurement
     float gps_course = fmodf(input.gps_course, radians(360.0f));
 
-    xhat_p_(3) = wrap_within_180(xhat_p_(3), gps_course);
+    gps_course = wrap_within_180(xhat_p_(3), gps_course);
     h_p_ = xhat_p_(3);
 
     C_p_ = Eigen::VectorXf::Zero(7);
@@ -459,16 +459,16 @@ void estimator_example::check_xhat_a()
 
 void estimator_example::declare_parameters()
 {
-  params.declare_param("sigma_n_gps", .01);
-  params.declare_param("sigma_e_gps", .01);
-  params.declare_param("sigma_Vg_gps", .005);
-  params.declare_param("sigma_course_gps", .005 / 20);
-  params.declare_param("sigma_accel", .0025 * 9.81);
+  params.declare_double("sigma_n_gps", .01);
+  params.declare_double("sigma_e_gps", .01);
+  params.declare_double("sigma_Vg_gps", .005);
+  params.declare_double("sigma_course_gps", .005 / 20);
+  params.declare_double("sigma_accel", .0025 * 9.81);
   params.declare_int("frequency", 100);
-  params.declare_param("lpf_a", 50.0);
-  params.declare_param("lpf_a1", 8.0);
-  params.declare_param("gps_n_lim", 10000.);
-  params.declare_param("gps_e_lim", 10000.);
+  params.declare_double("lpf_a", 50.0);
+  params.declare_double("lpf_a1", 8.0);
+  params.declare_double("gps_n_lim", 10000.);
+  params.declare_double("gps_e_lim", 10000.);
 }
 
 } // namespace rosplane

@@ -39,6 +39,7 @@ protected:
   int idx_a_; /** index to the waypoint that was most recently achieved */
 
   bool temp_waypoint_ = false;
+  int orbit_dir = 0;
 
   struct input_s
   {

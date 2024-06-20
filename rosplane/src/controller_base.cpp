@@ -3,7 +3,6 @@
 #include "controller_total_energy.hpp"
 #include <functional>
 #include <rclcpp/logging.hpp>
-#include <rosplane_msgs/msg/detail/controller_internals_debug__struct.hpp>
 
 namespace rosplane
 {
@@ -14,8 +13,8 @@ controller_base::controller_base()
 
   // Advertise published topics.
   actuators_pub_ = this->create_publisher<rosflight_msgs::msg::Command>("command", 10);
-  internals_pub_ = this->create_publisher<rosplane_msgs::msg::ControllerInternalsDebug>(
-    "controller_inners_debug", 10);
+  controller_internals_pub_ = this->create_publisher<rosplane_msgs::msg::ControllerInternals>(
+    "controller_internals", 10);
 
   // Advertise subscribed topics and set bound callbacks.
   controller_commands_sub_ = this->create_subscription<rosplane_msgs::msg::ControllerCommands>(
@@ -31,14 +30,6 @@ controller_base::controller_base()
   // Set the values for the parameters, from the param file or use the deafault value.
   params.set_parameters();
 
-  bool roll_tuning_debug_override = params.get_bool("roll_tuning_debug_override");
-  bool pitch_tuning_debug_override = params.get_bool("pitch_tuning_debug_override");
-
-  if (roll_tuning_debug_override || pitch_tuning_debug_override) {
-    tuning_debug_sub_ = this->create_subscription<rosplane_msgs::msg::ControllerInternalsDebug>(
-      "/tuning_debug", 10, std::bind(&controller_base::tuning_debug_callback, this, _1));
-  }
-
   // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
     std::bind(&controller_base::parametersCallback, this, std::placeholders::_1));
@@ -49,11 +40,11 @@ controller_base::controller_base()
 void controller_base::declare_parameters()
 {
   // Declare default parameters associated with this controller, controller_base
-  params.declare_param("roll_tuning_debug_override", false);
-  params.declare_param("pitch_tuning_debug_override", false);
-  params.declare_param("pwm_rad_e", 1.0);
-  params.declare_param("pwm_rad_a", 1.0);
-  params.declare_param("pwm_rad_r", 1.0);
+  params.declare_bool("roll_command_override", false); // TODO: move this to controller_successive_loop.
+  params.declare_bool("pitch_command_override", false); // TODO: move this to controller_successive_loop.
+  params.declare_double("pwm_rad_e", 1.0);
+  params.declare_double("pwm_rad_a", 1.0);
+  params.declare_double("pwm_rad_r", 1.0);
   params.declare_int("frequency", 100);
 }
 
@@ -73,13 +64,6 @@ void controller_base::vehicle_state_callback(const rosplane_msgs::msg::State::Sh
 
   // Save the message to use in calculations.
   vehicle_state_ = *msg;
-}
-
-void controller_base::tuning_debug_callback(
-  const rosplane_msgs::msg::ControllerInternalsDebug::SharedPtr msg)
-{
-  // Save the message to use in calculations.
-  tuning_debug_override_msg_ = *msg;
 }
 
 void controller_base::actuator_controls_publish()
@@ -134,35 +118,29 @@ void controller_base::actuator_controls_publish()
     // Publish actuators.
     actuators_pub_->publish(actuators);
 
-    // If there is a subscriber to the controller inners topic, publish the altitude zone and intermediate
-    // control values, phi_c (commanded roll angle), and theta_c (commanded pitch angle).
-    if (internals_pub_->get_subscription_count() > 0) {
-      rosplane_msgs::msg::ControllerInternalsDebug inners;
-
-      inners.header.stamp = now;
-
-      inners.phi_c = output.phi_c;
-      inners.theta_c = output.theta_c;
-      switch (output.current_zone) {
-        case alt_zones::TAKE_OFF:
-          inners.alt_zone = inners.ZONE_TAKE_OFF;
-          break;
-        case alt_zones::CLIMB:
-          inners.alt_zone = inners.ZONE_CLIMB;
-          break;
-        case alt_zones::ALTITUDE_HOLD:
-          inners.alt_zone = inners.ZONE_ALTITUDE_HOLD;
-          break;
-        default:
-          break;
-      }
-      inners.aux_valid = false;
-      internals_pub_->publish(inners);
+    // Publish the current control values
+    rosplane_msgs::msg::ControllerInternals controller_internals;
+    controller_internals.header.stamp = now;
+    controller_internals.phi_c = output.phi_c;
+    controller_internals.theta_c = output.theta_c;
+    switch (output.current_zone) {
+      case alt_zones::TAKE_OFF:
+        controller_internals.alt_zone = controller_internals.ZONE_TAKE_OFF;
+        break;
+      case alt_zones::CLIMB:
+        controller_internals.alt_zone = controller_internals.ZONE_CLIMB;
+        break;
+      case alt_zones::ALTITUDE_HOLD:
+        controller_internals.alt_zone = controller_internals.ZONE_ALTITUDE_HOLD;
+        break;
+      default:
+        break;
     }
+    controller_internals_pub_->publish(controller_internals);
   }
 }
 
-rcl_interfaces::msg::SetParametersResult 
+rcl_interfaces::msg::SetParametersResult
 controller_base::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;

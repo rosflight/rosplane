@@ -165,7 +165,7 @@ fi
 
 # Check to see if rc_sim has been passed an arg
 if $rc_sim; then
-  tmux send-keys -t rosplane_sim_session:0.3 'ros2 run rosflight_sim rc_sim.py --ros-args --remap RC:=/fixedwing/RC' C-m
+  tmux send-keys -t rosplane_sim_session:0.3 'ros2 run rosflight_sim rc.py --ros-args --remap RC:=/fixedwing/RC' C-m
 fi
 
 if $sim; then

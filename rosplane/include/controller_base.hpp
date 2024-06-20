@@ -17,8 +17,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rosflight_msgs/msg/command.hpp>
 #include <rosplane_msgs/msg/controller_commands.hpp>
-#include <rosplane_msgs/msg/controller_internals_debug.hpp>
-#include <rosplane_msgs/msg/detail/controller_internals_debug__struct.hpp>
+#include <rosplane_msgs/msg/controller_internals.hpp>
 #include <rosplane_msgs/msg/state.hpp>
 #include <param_manager.hpp>
 
@@ -48,6 +47,22 @@ public:
    * Constructor for ROS2 setup and parameter initialization.
    */
   controller_base();
+
+  /**
+   * Gets the current phi_c value from the current private command message.
+   *
+   * @return The latest phi_c value in the controller commands message, as received by the
+   * ROS callback.
+   */
+  float get_phi_c() { return controller_commands_.phi_c; }
+
+  /**
+   * Gets the current theta_c value from the current private command message.
+   *
+   * @return The latest theta_c value in the controller commands message, as received by the
+   * ROS callback.
+   */
+  float get_theta_c() { return controller_commands_.theta_c; };
 
 protected:
 
@@ -95,14 +110,7 @@ protected:
    * @param input Inputs to the control algorithm.
    * @param output Outputs of the controller, including selected intermediate values and final control efforts.
    */
-  virtual void control(const struct input_s & input,
-                       struct output_s & output) = 0;
-
-  /**
-   * The override for the intermediate values for the controller.
-   */
-  rosplane_msgs::msg::ControllerInternalsDebug
-    tuning_debug_override_msg_; // TODO find a better and more permanent place for this.
+  virtual void control(const struct input_s & input, struct output_s & output) = 0;
 
 private:
   /**
@@ -111,9 +119,9 @@ private:
   rclcpp::Publisher<rosflight_msgs::msg::Command>::SharedPtr actuators_pub_;
 
   /**
-   * This publisher publishes the intermediate commands in the control algorithm.
+   * This publisher publishes the current commands in the control algorithm.
    */
-  rclcpp::Publisher<rosplane_msgs::msg::ControllerInternalsDebug>::SharedPtr internals_pub_;
+  rclcpp::Publisher<rosplane_msgs::msg::ControllerInternals>::SharedPtr controller_internals_pub_;
 
   /**
    * This subscriber subscribes to the commands the controller uses to calculate control effort.
@@ -124,11 +132,6 @@ private:
    * This subscriber subscribes to the current state of the aircraft.
    */
   rclcpp::Subscription<rosplane_msgs::msg::State>::SharedPtr vehicle_state_sub_;
-
-  /**
-   * Subscribes to the tuning messages for later use in the control calculations
-  */
-  rclcpp::Subscription<rosplane_msgs::msg::ControllerInternalsDebug>::SharedPtr tuning_debug_sub_;
 
   /**
    * This timer controls how often commands are published by the autopilot.
@@ -174,13 +177,6 @@ private:
    * @param msg
    */
   void vehicle_state_callback(const rosplane_msgs::msg::State::SharedPtr msg);
-
-  /**
-   * Callback for the overrided intermediate values of the controller interface for tuning.
-   * This saves the message as the member variable tuing_debug_override_msg_.
-   * @param msg
-   */
-  void tuning_debug_callback(const rosplane_msgs::msg::ControllerInternalsDebug::SharedPtr msg);
 
   /**
    * ROS2 parameter system interface. This connects ROS2 parameters with the defined update callback, parametersCallback.

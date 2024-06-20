@@ -68,6 +68,7 @@ void path_manager_base::vehicle_state_callback(const rosplane_msgs::msg::State &
 void path_manager_base::new_waypoint_callback(const rosplane_msgs::msg::Waypoint & msg)
 {
   double R_min = params.get_double("R_min");
+  orbit_dir = 0;
 
   if (msg.clear_wp_list == true) {
     waypoints_.clear();
