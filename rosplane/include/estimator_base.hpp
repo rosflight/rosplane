@@ -103,7 +103,6 @@ private:
   void airspeedCallback(const rosflight_msgs::msg::Airspeed::SharedPtr msg);
   void statusCallback(const rosflight_msgs::msg::Status::SharedPtr msg);
 
-  // double update_rate_ = 100.0;
   rclcpp::TimerBase::SharedPtr update_timer_;
   std::string gnss_fix_topic_ = "navsat_compat/fix";
   std::string gnss_vel_topic_ = "navsat_compat/vel";

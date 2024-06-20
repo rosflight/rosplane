@@ -24,8 +24,6 @@ estimator_base::estimator_base()
   status_sub_ = this->create_subscription<rosflight_msgs::msg::Status>(
     status_topic_, 10, std::bind(&estimator_base::statusCallback, this, std::placeholders::_1));
 
-  update_timer_ = this->create_wall_timer(10ms, std::bind(&estimator_base::update, this));
-
   // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
     std::bind(&estimator_base::parametersCallback, this, std::placeholders::_1));
@@ -37,6 +35,9 @@ estimator_base::estimator_base()
   // Declare and set parameters with the ROS2 system
   declare_parameters();
   params.set_parameters();
+
+  //TODO: Change this timer frequency
+  update_timer_ = this->create_wall_timer(10ms, std::bind(&estimator_base::update, this));
 }
 
 void estimator_base::declare_parameters()
@@ -44,8 +45,9 @@ void estimator_base::declare_parameters()
   params.declare_double("rho", 1.225);
   params.declare_double("gravity", 9.8);
   params.declare_double("gps_ground_speed_threshold", 0.3);  // TODO: this is a magic number. What is it determined from?
-  params.declare_double("baro_gate_gain_constant", 1.35);  // TODO: this is a magic number. What is it determined from?
-  params.declare_double("airspeed_gate_gain_constant", 5.0);  // TODO: this is a magic number. What is it determined from?
+  params.declare_double("baro_measurement_gate", 1.35);  // TODO: this is a magic number. What is it determined from?
+  params.declare_double("airspeed_meaurement_gate", 5.0);  // TODO: this is a magic number. What is it determined from?
+  params.declare_int("baro_calibration_count", 100);  // TODO: this is a magic number. What is it determined from?
 }
 
 rcl_interfaces::msg::SetParametersResult 
@@ -189,10 +191,11 @@ void estimator_base::baroAltCallback(const rosflight_msgs::msg::Barometer::Share
   // For readability, declare the parameters here
   double rho = params.get_double("rho");
   double gravity = params.get_double("gravity");
-  double gate_gain_constant = params.get_double("baro_gate_gain_constant");
+  double gate_gain_constant = params.get_double("baro_measurement_gate");
+  double baro_calib_count = params.get_int("baro_calibration_count");
 
   if (armed_first_time_ && !baro_init_) {
-    if (baro_count_ < 100) {
+    if (baro_count_ < baro_calib_count) {
       init_static_ += msg->pressure;
       init_static_vector_.push_back(msg->pressure);
       input_.static_pres = 0;
@@ -209,7 +212,7 @@ void estimator_base::baroAltCallback(const rosflight_msgs::msg::Barometer::Share
       float IQR = q3 - q1;
       float upper_bound = q3 + 2.0 * IQR;
       float lower_bound = q1 - 2.0 * IQR;
-      for (int i = 0; i < 100; i++) {
+      for (int i = 0; i < baro_calib_count; i++) {
         if (init_static_vector_[i] > upper_bound) {
           baro_init_ = false;
           baro_count_ = 0;
@@ -242,7 +245,7 @@ void estimator_base::airspeedCallback(const rosflight_msgs::msg::Airspeed::Share
 {
   // For readability, declare the parameters here
   double rho = params.get_double("rho");
-  double gate_gain_constant = params.get_double("airspeed_gate_gain_constant");
+  double gate_gain_constant = params.get_double("airspeed_measurement_gate");
 
   float diff_pres_old = input_.diff_pres;
   input_.diff_pres = msg->differential_pressure;

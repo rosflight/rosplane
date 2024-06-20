@@ -13,11 +13,10 @@ double wrap_within_180(double fixed_heading, double wrapped_heading)
   return wrapped_heading - floor((wrapped_heading - fixed_heading) / (2 * M_PI) + 0.5) * 2 * M_PI;
 }
 
-//TODO: I need help with this estimator file
 estimator_example::estimator_example()
     : estimator_base()
     , xhat_a_(Eigen::Vector2f::Zero())
-    , P_a_(Eigen::Matrix2f::Zero())
+    , P_a_(Eigen::Matrix2f::Identity())
     , xhat_p_(Eigen::VectorXf::Zero(7))
     , P_p_(Eigen::MatrixXf::Identity(7, 7))
     , Q_a_(Eigen::Matrix2f::Identity())
@@ -30,24 +29,6 @@ estimator_example::estimator_example()
     , C_p_(7)
     , L_p_(7)
 {
-  P_a_ *= powf(radians(5.0f), 2);
-
-  Q_a_(0, 0) = 0.0001;
-  Q_a_(1, 1) = 0.0000001;
-
-  Q_g_ *= pow(M_PI * .13 / 180.0, 2); // TODO connect this to the actual params.
-
-  P_p_ = Eigen::MatrixXf::Identity(7, 7);
-  P_p_(0, 0) = .03; // TODO Add params for these?
-  P_p_(1, 1) = .03;
-  P_p_(2, 2) = .01;
-  P_p_(3, 3) = radians(5.0f);
-  P_p_(4, 4) = .04;
-  P_p_(5, 5) = .04;
-  P_p_(6, 6) = radians(5.0f);
-
-  Q_p_ *= 0.1f;
-
   phat_ = 0;
   qhat_ = 0;
   rhat_ = 0;
@@ -59,18 +40,61 @@ estimator_example::estimator_example()
   lpf_static_ = 0.0;
   lpf_diff_ = 0.0;
 
-  N_ = 10;
-
   alpha_ = 0.0f;
 
   // Declare and set parameters with the ROS2 system
   declare_parameters();
   params.set_parameters();
+
+  // Initialize covariance matrices from ROS2 parameters
+  initialize_uncertainties();
+
   // Inits R matrix and alpha values with ROS2 parameters
-  init_variables();
+  update_measurement_model_parameters();
+
+  N_ = params.get_int("num_propagation_steps");
 }
 
-void estimator_example::init_variables()
+void estimator_example::initialize_state_covariances() {
+  double pos_n_initial_cov = params.get_double("pos_n_initial_cov");
+  double pos_e_initial_cov = params.get_double("pos_e_initial_cov");
+  double vg_initial_cov = params.get_double("vg_initial_cov");
+  double chi_initial_cov = params.get_double("chi_initial_cov");
+  double wind_n_initial_cov = params.get_double("wind_n_initial_cov");
+  double wind_e_initial_cov = params.get_double("wind_e_initial_cov");
+  double psi_initial_cov = params.get_double("psi_initial_cov");
+
+  P_p_ = Eigen::MatrixXf::Identity(7, 7);
+  P_p_(0, 0) = pos_n_initial_cov;
+  P_p_(1, 1) = pos_e_initial_cov;
+  P_p_(2, 2) = vg_initial_cov;
+  P_p_(3, 3) = radians(chi_initial_cov);
+  P_p_(4, 4) = wind_n_initial_cov;
+  P_p_(5, 5) = wind_e_initial_cov;
+  P_p_(6, 6) = radians(psi_initial_cov);
+}
+
+void estimator_example::initialize_uncertainties() {
+  double roll_process_noise = params.get_double("roll_process_noise");
+  double pitch_process_noise = params.get_double("pitch_process_noise");
+  double gyro_process_noise = params.get_double("gyro_process_noise");
+  double position_process_noise = params.get_double("pos_process_noise");
+
+  double attitude_initial_cov = params.get_double("attitude_initial_cov");
+  
+  P_a_ *= powf(radians(attitude_initial_cov), 2);
+
+  Q_a_(0, 0) = roll_process_noise;
+  Q_a_(1, 1) = pitch_process_noise;
+
+  Q_g_ *= pow(radians(gyro_process_noise), 2);
+
+  Q_p_ *= position_process_noise;
+
+  initialize_state_covariances();
+}
+
+void estimator_example::update_measurement_model_parameters()
 {
   // For readability, declare the parameters used in the function here
   double sigma_n_gps = params.get_double("sigma_n_gps");
@@ -78,6 +102,9 @@ void estimator_example::init_variables()
   double sigma_Vg_gps = params.get_double("sigma_Vg_gps");
   double sigma_course_gps = params.get_double("sigma_course_gps");
   double sigma_accel = params.get_double("sigma_accel");
+  double sigma_pseudo_wind_n = params.get_double("sigma_pseudo_wind_n");
+  double sigma_pseudo_wind_e = params.get_double("sigma_pseudo_wind_e");
+  double sigma_heading = params.get_double("sigma_heading");
   int64_t frequency = params.get_int("frequency");
   double Ts = 1.0 / frequency;
   float lpf_a = params.get_double("lpf_a");
@@ -89,9 +116,9 @@ void estimator_example::init_variables()
   R_p_(1, 1) = powf(sigma_e_gps, 2);
   R_p_(2, 2) = powf(sigma_Vg_gps, 2);
   R_p_(3, 3) = powf(sigma_course_gps, 2);
-  R_p_(4, 4) = 0.01;
-  R_p_(5, 5) = 0.01;
-  R_p_(6, 6) = 0.01;
+  R_p_(4, 4) = sigma_pseudo_wind_n;
+  R_p_(5, 5) = sigma_pseudo_wind_e;
+  R_p_(6, 6) = sigma_heading;
 
   alpha_ = exp(-lpf_a * Ts);
   alpha1_ = exp(-lpf_a1 * Ts);
@@ -108,7 +135,7 @@ void estimator_example::estimate(const input_s & input, output_s & output)
   double Ts = 1.0 / frequency;
 
   // Inits R matrix and alpha values with ROS2 parameters
-  init_variables();
+  update_measurement_model_parameters();
 
   // low pass filter gyros to estimate angular rates
   lpf_gyro_x_ = alpha_ * lpf_gyro_x_ + (1 - alpha_) * input.gyro_x;
@@ -380,14 +407,8 @@ void estimator_example::estimate(const input_s & input, output_s & output)
         default:
           xhat_p_(i) = 0;
       }
-      P_p_ = Eigen::MatrixXf::Identity(7, 7);
-      P_p_(0, 0) = .03;
-      P_p_(1, 1) = .03;
-      P_p_(2, 2) = .01;
-      P_p_(3, 3) = radians(5.0f);
-      P_p_(4, 4) = .04;
-      P_p_(5, 5) = .04;
-      P_p_(6, 6) = radians(5.0f);
+      
+      initialize_state_covariances();
     }
   }
   if (problem) {
@@ -427,33 +448,34 @@ void estimator_example::estimate(const input_s & input, output_s & output)
 
 void estimator_example::check_xhat_a()
 {
-  if (xhat_a_(0) > radians(85.0) || xhat_a_(0) < radians(-85.0) || !std::isfinite(xhat_a_(0))) {
-    if (!std::isfinite(xhat_a_(0))) {
-      xhat_a_(0) = 0;
-      P_a_ = Eigen::Matrix2f::Identity();
-      P_a_ *= powf(radians(20.0f), 2);
-      RCLCPP_WARN(this->get_logger(), "attiude estimator reinitialized due to non-finite roll");
-    } else if (xhat_a_(0) > radians(85.0)) {
-      xhat_a_(0) = radians(82.0);
-      RCLCPP_WARN(this->get_logger(), "max roll angle");
-    } else if (xhat_a_(0) < radians(-85.0)) {
-      xhat_a_(0) = radians(-82.0);
-      RCLCPP_WARN(this->get_logger(), "min roll angle");
-    }
+  double max_phi = params.get_double("max_estimated_phi");
+  double max_theta = params.get_double("max_estimated_theta");
+  double buff = params.get_double("estimator_max_buffer");
+
+  if (!std::isfinite(xhat_a_(0))) {
+    xhat_a_(0) = 0;
+    P_a_ = Eigen::Matrix2f::Identity();
+    P_a_ *= powf(radians(20.0f), 2);
+    RCLCPP_WARN(this->get_logger(), "attiude estimator reinitialized due to non-finite roll");
+  } else if (xhat_a_(0) > radians(max_phi)) {
+    xhat_a_(0) = radians(max_phi - buff);
+    RCLCPP_WARN(this->get_logger(), "max roll angle");
+  } else if (xhat_a_(0) < radians(-max_phi)) {
+    xhat_a_(0) = radians(-max_phi + buff);
+    RCLCPP_WARN(this->get_logger(), "min roll angle");
   }
-  if (xhat_a_(1) > radians(80.0) || xhat_a_(1) < radians(-80.0) || !std::isfinite(xhat_a_(1))) {
-    if (!std::isfinite(xhat_a_(1))) {
-      xhat_a_(1) = 0;
-      P_a_ = Eigen::Matrix2f::Identity();
-      P_a_ *= powf(radians(20.0f), 2);
-      RCLCPP_WARN(this->get_logger(), "attiude estimator reinitialized due to non-finite pitch");
-    } else if (xhat_a_(1) > radians(80.0)) {
-      xhat_a_(1) = radians(77.0);
-      RCLCPP_WARN(this->get_logger(), "max pitch angle");
-    } else if (xhat_a_(1) < radians(-80.0)) {
-      xhat_a_(1) = radians(-77.0);
-      RCLCPP_WARN(this->get_logger(), "min pitch angle");
-    }
+  
+  if (!std::isfinite(xhat_a_(1))) {
+    xhat_a_(1) = 0;
+    P_a_ = Eigen::Matrix2f::Identity();
+    P_a_ *= powf(radians(20.0f), 2);
+    RCLCPP_WARN(this->get_logger(), "attiude estimator reinitialized due to non-finite pitch");
+  } else if (xhat_a_(1) > radians(max_theta)) {
+    xhat_a_(1) = radians(max_theta - buff);
+    RCLCPP_WARN(this->get_logger(), "max pitch angle");
+  } else if (xhat_a_(1) < radians(-max_theta)) {
+    xhat_a_(1) = radians(-max_theta + buff);
+    RCLCPP_WARN(this->get_logger(), "min pitch angle");
   }
 }
 
@@ -464,11 +486,34 @@ void estimator_example::declare_parameters()
   params.declare_double("sigma_Vg_gps", .005);
   params.declare_double("sigma_course_gps", .005 / 20);
   params.declare_double("sigma_accel", .0025 * 9.81);
+  params.declare_double("sigma_pseudo_wind_n", 0.01);
+  params.declare_double("sigma_pseudo_wind_e", 0.01);
+  params.declare_double("sigma_heading", 0.01);
   params.declare_int("frequency", 100);
   params.declare_double("lpf_a", 50.0);
   params.declare_double("lpf_a1", 8.0);
   params.declare_double("gps_n_lim", 10000.);
   params.declare_double("gps_e_lim", 10000.);
+
+  params.declare_double("roll_process_noise", 0.0001);   // Radians?, should be already squared
+  params.declare_double("pitch_process_noise", 0.0000001);   // Radians?, already squared
+  params.declare_double("gyro_process_noise", 0.13);   // Deg, not squared
+  params.declare_double("pos_process_noise", 0.1);   // already squared
+
+  params.declare_double("attitude_initial_cov", 5.0); // Deg, not squared
+  params.declare_double("pos_n_initial_cov", 0.03);
+  params.declare_double("pos_e_initial_cov", 0.03);
+  params.declare_double("vg_initial_cov", 0.01);
+  params.declare_double("chi_initial_cov", 5.0);  // Deg
+  params.declare_double("wind_n_initial_cov", 0.04);
+  params.declare_double("wind_e_initial_cov", 0.04);
+  params.declare_double("psi_initial_cov", 5.0);  // Deg
+
+  params.declare_int("num_propagation_steps", 10);
+
+  params.declare_double("max_estimated_phi", 85.0); // Deg
+  params.declare_double("max_estimated_theta", 80.0); // Deg
+  params.declare_double("estimator_max_buffer", 3.0);   // Deg
 }
 
 } // namespace rosplane

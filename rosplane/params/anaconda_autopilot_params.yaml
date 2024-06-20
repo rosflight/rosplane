@@ -63,15 +63,35 @@ estimator:
     rho: 1.225
     gravity: 9.8
     gps_ground_speed_threshold: 0.3
-    baro_gate_gain_constant: 1.35
-    airspeed_gate_gain_constant: 5
+    baro_measurement_gate: 1.35
+    airspeed_measurement_gate: 5
+    baro_calibration_count: 100
     sigma_n_gps: 0.01
     sigma_e_gps: 0.01
     sigma_Vg_gps: 0.005
     sigma_course_gps: 0.00025
     sigma_accel: 0.024525
+    sigma_pseudo_wind_n: 0.01
+    sigma_pseudo_wind_e: 0.01
+    sigma_heading: 0.01
     frequency: 100
     lpf_a: 50.0
     lpf_a1: 8.0
     gps_n_lim: 10000.
     gps_e_lim: 10000.
+    roll_process_noise: 0.0001
+    pitch_process_noise: 0.0000001
+    gyro_process_noise: 0.13
+    pos_process_noise: 0.1
+    attitude_initial_cov: 5.0
+    pos_n_initial_cov: 0.03
+    pos_e_initial_cov: 0.03
+    vg_initial_cov: 0.01
+    chi_initial_cov: 5.0
+    wind_n_initial_cov: 0.04
+    wind_e_initial_cov: 0.04
+    psi_initial_cov: 5.0
+    num_propagation_steps: 10
+    max_estimated_phi: 85.0
+    max_estimated_theta: 80.0
+    estimator_max_buffer: 3.0
