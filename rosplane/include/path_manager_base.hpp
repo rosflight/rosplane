@@ -34,7 +34,15 @@ public:
 
 protected:
 
-  std::vector<rosplane_msgs::msg::Waypoint> waypoints_;
+  struct waypoint_s
+  {
+    float w[3];
+    float chi_d;
+    bool use_chi;
+    float va_d;
+  };
+
+  std::vector<waypoint_s> waypoints_;
   int num_waypoints_;
   int idx_a_; /** index to the waypoint that was most recently achieved */
 

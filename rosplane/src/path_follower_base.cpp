@@ -113,11 +113,11 @@ path_follower_base::parametersCallback(const std::vector<rclcpp::Parameter> & pa
 
 void path_follower_base::declare_parameters()
 {
-  params.declare_param("chi_infty", .5);
-  params.declare_param("k_path", 0.05);
-  params.declare_param("k_orbit", 4.0);
+  params.declare_double("chi_infty", .5);
+  params.declare_double("k_path", 0.05);
+  params.declare_double("k_orbit", 4.0);
   params.declare_int("update_rate", 100);
-  params.declare_param("gravity", 9.81);
+  params.declare_double("gravity", 9.81);
 }
 
 } // namespace rosplane

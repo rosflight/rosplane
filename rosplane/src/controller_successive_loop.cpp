@@ -455,12 +455,12 @@ void controller_successive_loop::declare_parameters()
   params.declare_double("max_roll", 25.0);
   params.declare_double("cmd_takeoff_pitch", 5.0);
 
-  params.declare_param("r_kp", .06);
-  params.declare_param("r_ki", .0);
-  params.declare_param("r_kd", .04);
-  params.declare_param("max_a", .15);
-  params.declare_param("max_r", 1.0);
-  params.declare_param("trim_a", 0.0);
+  params.declare_double("r_kp", .06);
+  params.declare_double("r_ki", .0);
+  params.declare_double("r_kd", .04);
+  params.declare_double("max_a", .15);
+  params.declare_double("max_r", 1.0);
+  params.declare_double("trim_a", 0.0);
 
   params.declare_double("p_kp", -.15);
   params.declare_double("p_ki", .0);

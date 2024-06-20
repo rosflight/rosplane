@@ -41,11 +41,11 @@ estimator_base::estimator_base()
 
 void estimator_base::declare_parameters()
 {
-  params.declare_param("rho", 1.225);
-  params.declare_param("gravity", 9.8);
-  params.declare_param("gps_ground_speed_threshold", 0.3);  // TODO: this is a magic number. What is it determined from?
-  params.declare_param("baro_gate_gain_constant", 1.35);  // TODO: this is a magic number. What is it determined from?
-  params.declare_param("airspeed_gate_gain_constant", 5.0);  // TODO: this is a magic number. What is it determined from?
+  params.declare_double("rho", 1.225);
+  params.declare_double("gravity", 9.8);
+  params.declare_double("gps_ground_speed_threshold", 0.3);  // TODO: this is a magic number. What is it determined from?
+  params.declare_double("baro_gate_gain_constant", 1.35);  // TODO: this is a magic number. What is it determined from?
+  params.declare_double("airspeed_gate_gain_constant", 5.0);  // TODO: this is a magic number. What is it determined from?
 }
 
 rcl_interfaces::msg::SetParametersResult 

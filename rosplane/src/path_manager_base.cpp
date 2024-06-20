@@ -36,7 +36,7 @@ path_manager_base::path_manager_base()
 }
 
 void path_manager_base::declare_parameters() {
-  params.declare_param("R_min", 50.0);
+  params.declare_double("R_min", 50.0);
   params.declare_int("current_path_pub_period", 10);
 }
 
