@@ -96,7 +96,7 @@ void controller_total_energy::altitude_hold_exit()
 float controller_total_energy::total_energy_throttle(float va_c, float va, float h_c, float h)
 {
   // For readability, declare parameters here that will be used in this function
-  int64_t frequency = params.get_double("frequency");
+  double frequency = params.get_double("controller_output_frequency");
   double e_kp = params.get_double("e_kp");
   double e_ki = params.get_double("e_ki");
   double e_kd = params.get_double("e_kd");
@@ -127,7 +127,7 @@ float controller_total_energy::total_energy_throttle(float va_c, float va, float
 float controller_total_energy::total_energy_pitch(float va_c, float va, float h_c, float h)
 {
   // For readability, declare parameters here that will be used in this function
-  int64_t frequency = params.get_double("frequency");
+  double frequency = params.get_double("controller_output_frequency");
   double l_kp = params.get_double("l_kp");
   double l_ki = params.get_double("l_ki");
   double l_kd = params.get_double("l_kd");

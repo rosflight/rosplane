@@ -203,7 +203,7 @@ void controller_successive_loop::take_off_longitudinal_control(const struct inpu
 float controller_successive_loop::course_hold(float chi_c, float chi, float phi_ff, float r)
 {
   // For readability, declare parameters here that will be used in this function
-  int64_t frequency = params.get_int("frequency");   // Declared in controller_base
+  double frequency = params.get_double("controller_output_frequency");   // Declared in controller_base
   double c_kp = params.get_double("c_kp");
   double c_ki = params.get_double("c_ki");
   double c_kd = params.get_double("c_kd");
@@ -237,7 +237,7 @@ float controller_successive_loop::course_hold(float chi_c, float chi, float phi_
 float controller_successive_loop::roll_hold(float phi_c, float phi, float p)
 {
   // For readability, declare parameters here that will be used in this function
-  int64_t frequency = params.get_int("frequency");   // Declared in controller_base
+  double frequency = params.get_double("controller_output_frequency");   // Declared in controller_base
   double r_kp = params.get_double("r_kp");
   double r_ki = params.get_double("r_ki");
   double r_kd = params.get_double("r_kd");
@@ -270,7 +270,7 @@ float controller_successive_loop::roll_hold(float phi_c, float phi, float p)
 float controller_successive_loop::pitch_hold(float theta_c, float theta, float q)
 {
   // For readability, declare parameters here that will be used in this function
-  int64_t frequency = params.get_int("frequency");   // Declared in controller_base
+  double frequency = params.get_double("controller_output_frequency");   // Declared in controller_base
   double p_kp = params.get_double("p_kp");
   double p_ki = params.get_double("p_ki");
   double p_kd = params.get_double("p_kd");
@@ -303,7 +303,7 @@ float controller_successive_loop::pitch_hold(float theta_c, float theta, float q
 float controller_successive_loop::airspeed_with_throttle_hold(float va_c, float va)
 {
   // For readability, declare parameters here that will be used in this function
-  int64_t frequency = params.get_int("frequency");   // Declared in controller_base
+  double frequency = params.get_double("controller_output_frequency");   // Declared in controller_base
   double tau = params.get_double("tau");
   double a_t_kp = params.get_double("a_t_kp");
   double a_t_ki = params.get_double("a_t_ki");
@@ -339,7 +339,7 @@ float controller_successive_loop::airspeed_with_throttle_hold(float va_c, float 
 float controller_successive_loop::altitude_hold_control(float h_c, float h)
 {
   // For readability, declare parameters here that will be used in this function
-  int64_t frequency = params.get_int("frequency");   // Declared in controller_base
+  double frequency = params.get_double("controller_output_frequency");   // Declared in controller_base
   double alt_hz = params.get_double("alt_hz");
   double tau = params.get_double("tau");
   double a_kp = params.get_double("a_kp");
@@ -377,7 +377,7 @@ float controller_successive_loop::altitude_hold_control(float h_c, float h)
 
 float controller_successive_loop::yaw_damper(float r)
 {
-  int64_t frequency = params.get_int("frequency");   // Declared in controller_base
+  double frequency = params.get_double("controller_output_frequency");   // Declared in controller_base
   float y_pwo = params.get_double("y_pwo");
   float y_kr = params.get_double("y_kr");
   float max_r = params.get_double("max_r");
@@ -448,6 +448,9 @@ float controller_successive_loop::adjust_h_c(float h_c, float h, float max_diff)
 void controller_successive_loop::declare_parameters()
 {
   // Declare param with ROS2 and set the default value.
+  params.declare_bool("roll_command_override", false);
+  params.declare_bool("pitch_command_override", false);
+
   params.declare_double("max_takeoff_throttle", 0.55);
   params.declare_double("c_kp", 2.37);
   params.declare_double("c_ki", .4);
