@@ -40,7 +40,7 @@ autopilot: # node name.
     mass: 4.5
     gravity: 9.8
     max_roll: 35.0
-    frequency: 100
+    controller_output_frequency: 100.0
 
 path_manager:
   ros__parameters:
@@ -48,23 +48,24 @@ path_manager:
     orbit_last: False
     default_altitude: 50.0
     default_airspeed: 25.0
-    current_path_pub_period: 10   # in milliseconds
+    current_path_pub_frequency: 100.0
 
 path_follower:
   ros__parameters:
+    controller_commands_pub_frequency: 10.0
     chi_infty: 0.5
     k_orbit: 4.0
     k_path: 0.05
-    update_rate: 100
     gravity: 9.81
 
 estimator:
   ros__parameters:
+    estimator_update_frequency: 100.0
     rho: 1.225
     gravity: 9.8
     gps_ground_speed_threshold: 0.3
     baro_measurement_gate: 1.35
-    airspeed_measurement_gate: 5
+    airspeed_measurement_gate: 5.0
     baro_calibration_count: 100
     sigma_n_gps: 0.01
     sigma_e_gps: 0.01
@@ -74,7 +75,6 @@ estimator:
     sigma_pseudo_wind_n: 0.01
     sigma_pseudo_wind_e: 0.01
     sigma_heading: 0.01
-    frequency: 100
     lpf_a: 50.0
     lpf_a1: 8.0
     gps_n_lim: 10000.
