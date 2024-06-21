@@ -18,6 +18,35 @@ public:
    *
    * The input_mapper class is responsible for mixing various input commands, such as controller
    * commands and RC raw signals.
+   *
+   * This node has the following ROS parameters:
+   * Mapping Options:
+   * - `aileron_input`: The type of input to use for the aileron channel. Options are
+   *   "path_follower", "rc_course", and "rc_roll_angle". Path follower just pipes the
+   *   control commands from path follower to the autopilot. RC course uses the RC controller to
+   *   adjust course command at a rate specified by `rc_course_rate`. RC roll angle uses the RC
+   *   controller to set the commanded roll angle directly.
+   * - `elevator_input`: The type of input to use for the elevator channel. Options are
+   *   "path_follower", "rc_altitude", and "rc_pitch_angle". Path follower just pipes the
+   *   control commands from path follower to the autopilot. RC altitude uses the RC controller
+   *   to adjust altitude command at a rate specified by `rc_altitude_rate`. RC pitch angle uses
+   *   the RC controller to set the commanded pitch angle directly.
+   * - `throttle_input`: The type of input to use for the throttle channel. Options are
+   *   "path_follower" and "rc_airspeed". Path follower just pipes the control commands from path
+   *   follower to the autopilot. RC airspeed uses the RC controller to adjust the airspeed
+   *   command at a rate specified by `rc_airspeed_rate`.
+   *
+   * Control Parameters:
+   * - `rc_roll_angle_min_max`: The maximum roll angle in radians that can be commanded by the RC
+   *   controller. Roll is centered about 0 radians.
+   * - `rc_course_rate`: The max rate in radians per second at which the RC controller can adjust
+   *   the course command.
+   * - `rc_pitch_angle_min_max`: The maximum pitch angle in radians that can be commanded by the RC
+   *   controller. Pitch is centered about 0 radians.
+   * - `rc_altitude_rate`: The max rate in meters per second at which the RC controller can adjust
+   *   the altitude command.
+   * - `rc_airspeed_rate`: The max rate in meters per second at which the RC controller can adjust
+   *   the airspeed command.
    */
   input_mapper();
 

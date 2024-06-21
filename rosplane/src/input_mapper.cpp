@@ -134,21 +134,24 @@ void input_mapper::controller_commands_callback(const rosplane_msgs::msg::Contro
   std::string aileron_input = params_.get_string("aileron_input");
   std::string elevator_input = params_.get_string("elevator_input");
   std::string throttle_input = params_.get_string("throttle_input");
+
   double elapsed_time = (this->now() - last_command_time_).seconds();
   last_command_time_ = this->now();
+
+  double norm_aileron = (rc_raw_msg_->values[0] - 1500) / 500.0;
+  double norm_elevator = (rc_raw_msg_->values[1] - 1500) / 500.0;
+  double norm_throttle = (rc_raw_msg_->values[2] - 1500) / 500.0;
 
   if (aileron_input == "path_follower") {
     set_roll_override(false);
     mixed_commands_msg_->chi_c = msg->chi_c;
   } else if (aileron_input == "rc_course") {
     set_roll_override(false);
-    double norm_aileron = (rc_raw_msg_->values[0] - 1500) / 500.0;
     mixed_commands_msg_->chi_c += norm_aileron *
                                   params_.get_double("rc_course_rate") *
                                   elapsed_time;
   } else if (aileron_input == "rc_roll_angle") {
     set_roll_override(true);
-    double norm_aileron = (rc_raw_msg_->values[0] - 1500) / 500.0;
     mixed_commands_msg_->phi_c = norm_aileron * params_.get_double("rc_roll_angle_min_max");
     mixed_commands_msg_->chi_c = state_msg_->chi;
   } else {
@@ -164,13 +167,11 @@ void input_mapper::controller_commands_callback(const rosplane_msgs::msg::Contro
     mixed_commands_msg_->h_c = msg->h_c;
   } else if (elevator_input == "rc_altitude") {
     set_pitch_override(false);
-    double norm_elevator = (rc_raw_msg_->values[1] - 1500) / 500.0;
     mixed_commands_msg_->h_c += norm_elevator *
                                 params_.get_double("rc_altitude_rate") *
                                 elapsed_time;
   } else if (elevator_input == "rc_pitch_angle") {
     set_pitch_override(true);
-    double norm_elevator = (rc_raw_msg_->values[1] - 1500) / 500.0;
     mixed_commands_msg_->theta_c = norm_elevator * params_.get_double("rc_pitch_angle_min_max");
     mixed_commands_msg_->h_c = -state_msg_->position[2];
   } else {
@@ -184,7 +185,6 @@ void input_mapper::controller_commands_callback(const rosplane_msgs::msg::Contro
   if (throttle_input == "path_follower") {
     mixed_commands_msg_->va_c = msg->va_c;
   } else if (throttle_input == "rc_airspeed") {
-    double norm_throttle = (rc_raw_msg_->values[2] - 1500) / 500.0;
     mixed_commands_msg_->va_c += norm_throttle *
                                  params_.get_double("rc_airspeed_rate") *
                                  elapsed_time;
