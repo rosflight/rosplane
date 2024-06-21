@@ -103,13 +103,13 @@ install(TARGETS
   rosplane_estimator_node
   DESTINATION lib/${PROJECT_NAME})
 
-# Input Mixer
-add_executable(input_mixer
-  src/input_mixer.cpp
+# Input Mapper
+add_executable(input_mapper
+  src/input_mapper.cpp
   src/param_manager.cpp)
-ament_target_dependencies(input_mixer rosplane_msgs rosflight_msgs rclcpp)
+ament_target_dependencies(input_mapper rosplane_msgs rosflight_msgs rclcpp)
 install(TARGETS
-  input_mixer
+  input_mapper
   DESTINATION lib/${PROJECT_NAME})
 
 #### END OF EXECUTABLES ###

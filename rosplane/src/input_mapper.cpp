@@ -1,12 +1,12 @@
-#include "input_mixer.hpp"
+#include "input_mapper.hpp"
 
 using std::placeholders::_1;
 
 namespace rosplane
 {
 
-input_mixer::input_mixer() :
-  Node("input_mixer"),
+input_mapper::input_mapper() :
+  Node("input_mapper"),
   roll_override_(false),
   pitch_override_(false),
   param_change_pending_(false),
@@ -17,15 +17,15 @@ input_mixer::input_mixer() :
 
   controller_commands_sub_ = this->create_subscription<rosplane_msgs::msg::ControllerCommands>(
     "controller_commands", 10,
-    std::bind(&input_mixer::controller_commands_callback, this, _1));
+    std::bind(&input_mapper::controller_commands_callback, this, _1));
   rc_raw_sub_ = this->create_subscription<rosflight_msgs::msg::RCRaw>(
       "rc_raw", 10,
-      std::bind(&input_mixer::rc_raw_callback, this, _1));
+      std::bind(&input_mapper::rc_raw_callback, this, _1));
 
   set_param_client_ = this->create_client<rcl_interfaces::srv::SetParameters>(
     "/autopilot/set_parameters", rmw_qos_profile_services_default);
   set_param_timer_ = this->create_wall_timer(
-    std::chrono::milliseconds(100), std::bind(&input_mixer::set_param_timer_callback, this));
+    std::chrono::milliseconds(100), std::bind(&input_mapper::set_param_timer_callback, this));
   set_param_timer_->cancel();
 
   /// Parameters stuff
@@ -36,10 +36,10 @@ input_mixer::input_mixer() :
 
   // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
-    std::bind(&input_mixer::parametersCallback, this, _1));
+    std::bind(&input_mapper::parametersCallback, this, _1));
 }
 
-void input_mixer::set_param_timer_callback()
+void input_mapper::set_param_timer_callback()
 {
   // Check that the service is ready
   if (!set_param_client_->service_is_ready()) {
@@ -70,7 +70,7 @@ void input_mixer::set_param_timer_callback()
   param_change_pending_ = false;
 }
 
-void input_mixer::set_roll_override(bool roll_override)
+void input_mapper::set_roll_override(bool roll_override)
 {
   // Value hasn't changed, return
   if (roll_override == roll_override_) {
@@ -93,7 +93,7 @@ void input_mixer::set_roll_override(bool roll_override)
   param_change_pending_ = true;
 }
 
-void input_mixer::set_pitch_override(bool pitch_override)
+void input_mapper::set_pitch_override(bool pitch_override)
 {
   // Value hasn't changed, return
   if (pitch_override == pitch_override_) {
@@ -116,7 +116,7 @@ void input_mixer::set_pitch_override(bool pitch_override)
   param_change_pending_ = true;
 }
 
-void input_mixer::controller_commands_callback(const rosplane_msgs::msg::ControllerCommands::SharedPtr msg)
+void input_mapper::controller_commands_callback(const rosplane_msgs::msg::ControllerCommands::SharedPtr msg)
 {
   std::string aileron_input = params_.get_string("aileron_input");
   std::string elevator_input = params_.get_string("elevator_input");
@@ -171,13 +171,13 @@ void input_mixer::controller_commands_callback(const rosplane_msgs::msg::Control
   mixed_commands_pub_->publish(mixed_msg_);
 }
 
-void input_mixer::rc_raw_callback(const rosflight_msgs::msg::RCRaw::SharedPtr msg)
+void input_mapper::rc_raw_callback(const rosflight_msgs::msg::RCRaw::SharedPtr msg)
 {
   rc_raw_msg_ = msg;
 }
 
 rcl_interfaces::msg::SetParametersResult
-input_mixer::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
+input_mapper::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
@@ -188,7 +188,7 @@ input_mixer::parametersCallback(const std::vector<rclcpp::Parameter> & parameter
   {
     result.successful = false;
     result.reason =
-      "One of the parameters given does not is not a parameter of the input mixer node.";
+      "One of the parameters given does not is not a parameter of the input mapper node.";
   }
 
   return result;
@@ -198,7 +198,7 @@ input_mixer::parametersCallback(const std::vector<rclcpp::Parameter> & parameter
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<rosplane::input_mixer>();
+  auto node = std::make_shared<rosplane::input_mapper>();
   rclcpp::spin(node);
   return 0;
 }

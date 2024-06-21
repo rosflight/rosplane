@@ -7,13 +7,13 @@ from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
     input_commands_remap = '/path_follower_controller_commands'
-    output_commands_remap = '/input_mixer_controller_commands'
+    output_commands_remap = '/input_mapper_controller_commands'
 
     return LaunchDescription([
         Node(
             package='rosplane',
-            executable='input_mixer',
-            name='input_mixer',
+            executable='input_mapper',
+            name='input_mapper',
             output='screen',
             remappings=[
                 ('/controller_commands', input_commands_remap),

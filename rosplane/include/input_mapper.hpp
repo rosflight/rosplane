@@ -1,5 +1,5 @@
-#ifndef INPUT_MIXER_HPP
-#define INPUT_MIXER_HPP
+#ifndef INPUT_MAPPER_HPP
+#define INPUT_MAPPER_HPP
 
 #include <rclcpp/rclcpp.hpp>
 #include <rosflight_msgs/msg/rc_raw.hpp>
@@ -8,17 +8,17 @@
 
 namespace rosplane
 {
-class input_mixer : public rclcpp::Node
+class input_mapper : public rclcpp::Node
 {
 public:
   /**
-   * @class input_mixer
+   * @class input_mapper
    * @brief Class for input mixing.
    *
-   * The input_mixer class is responsible for mixing various input commands, such as controller
+   * The input_mapper class is responsible for mixing various input commands, such as controller
    * commands and RC raw signals.
    */
-  input_mixer();
+  input_mapper();
 
 private:
   /**
@@ -141,4 +141,4 @@ private:
 };
 }
 
-#endif //INPUT_MIXER_HPP
+#endif //INPUT_MAPPER_HPP
