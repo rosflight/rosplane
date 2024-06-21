@@ -21,6 +21,9 @@ input_mapper::input_mapper() :
   rc_raw_sub_ = this->create_subscription<rosflight_msgs::msg::RCRaw>(
       "rc_raw", 10,
       std::bind(&input_mapper::rc_raw_callback, this, _1));
+  state_sub_ = this->create_subscription<rosplane_msgs::msg::State>(
+      "estimated_state", 10,
+      std::bind(&input_mapper::state_callback, this, _1));
 
   set_param_client_ = this->create_client<rcl_interfaces::srv::SetParameters>(
     "/autopilot/set_parameters", rmw_qos_profile_services_default);
@@ -31,6 +34,7 @@ input_mapper::input_mapper() :
   last_command_time_ = this->now();
   mixed_commands_msg_ = std::make_shared<rosplane_msgs::msg::ControllerCommands>();
   rc_raw_msg_ = std::make_shared<rosflight_msgs::msg::RCRaw>();
+  state_msg_ = std::make_shared<rosplane_msgs::msg::State>();
 
   /// Parameters stuff
 
@@ -38,8 +42,9 @@ input_mapper::input_mapper() :
   params_.declare_string("elevator_input", "path_follower");
   params_.declare_string("throttle_input", "path_follower");
   params_.declare_double("rc_roll_angle_min_max", 0.5);
+  params_.declare_double("rc_course_rate", 0.5);
   params_.declare_double("rc_pitch_angle_min_max", 0.5);
-  params_.declare_double("rc_altitude_rate", 2.0);
+  params_.declare_double("rc_altitude_rate", 3.0);
   params_.declare_double("rc_airspeed_rate", 1.0);
 
   // Set the parameter callback, for when parameters are changed.
@@ -135,13 +140,21 @@ void input_mapper::controller_commands_callback(const rosplane_msgs::msg::Contro
   if (aileron_input == "path_follower") {
     set_roll_override(false);
     mixed_commands_msg_->chi_c = msg->chi_c;
+  } else if (aileron_input == "rc_course") {
+    set_roll_override(false);
+    double norm_aileron = (rc_raw_msg_->values[0] - 1500) / 500.0;
+    mixed_commands_msg_->chi_c += norm_aileron *
+                                  params_.get_double("rc_course_rate") *
+                                  elapsed_time;
   } else if (aileron_input == "rc_roll_angle") {
     set_roll_override(true);
     double norm_aileron = (rc_raw_msg_->values[0] - 1500) / 500.0;
     mixed_commands_msg_->phi_c = norm_aileron * params_.get_double("rc_roll_angle_min_max");
+    mixed_commands_msg_->chi_c = state_msg_->chi;
   } else {
     RCLCPP_ERROR(this->get_logger(), "Invalid aileron input type: %s. Valid options are "
-                                     "path_follower and rc_roll_angle. Setting to path_follower.",
+                                     "path_follower, rc_course, and rc_roll_angle. Setting to "
+                                     "path_follower.",
                  aileron_input.c_str());
     params_.set_string("aileron_input", "path_follower");
   }
@@ -159,6 +172,7 @@ void input_mapper::controller_commands_callback(const rosplane_msgs::msg::Contro
     set_pitch_override(true);
     double norm_elevator = (rc_raw_msg_->values[1] - 1500) / 500.0;
     mixed_commands_msg_->theta_c = norm_elevator * params_.get_double("rc_pitch_angle_min_max");
+    mixed_commands_msg_->h_c = -state_msg_->position[2];
   } else {
     RCLCPP_ERROR(this->get_logger(), "Invalid elevator input type: %s. Valid options are "
                                      "path_follower, rc_altitude, and rc_pitch_angle. Setting to "
@@ -187,6 +201,11 @@ void input_mapper::controller_commands_callback(const rosplane_msgs::msg::Contro
 void input_mapper::rc_raw_callback(const rosflight_msgs::msg::RCRaw::SharedPtr msg)
 {
   rc_raw_msg_ = msg;
+}
+
+void input_mapper::state_callback(const rosplane_msgs::msg::State::SharedPtr msg)
+{
+  state_msg_ = msg;
 }
 
 rcl_interfaces::msg::SetParametersResult

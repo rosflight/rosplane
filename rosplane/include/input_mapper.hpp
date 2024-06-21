@@ -4,6 +4,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rosflight_msgs/msg/rc_raw.hpp>
 #include <rosplane_msgs/msg/controller_commands.hpp>
+#include <rosplane_msgs/msg/state.hpp>
 #include <param_manager.hpp>
 
 namespace rosplane
@@ -29,7 +30,6 @@ private:
    * This bool keeps track of whether pitch override is enabled.
    */
   bool pitch_override_;
-
   /**
    * Bool value to keep track of whether a parameter change is pending.
    */
@@ -53,16 +53,24 @@ private:
    * This subscriber subscribes to the RC raw signals.
    */
   rclcpp::Subscription<rosflight_msgs::msg::RCRaw>::SharedPtr rc_raw_sub_;
+  /**
+   * This subscriber subscribes to the estimated state, to help make more intelligent
+   * decisions/transitions within input_mapper.
+   */
+  rclcpp::Subscription<rosplane_msgs::msg::State>::SharedPtr state_sub_;
 
   /**
    * RC raw message, for storing the last RC input before being mixed and published.
    */
   rosflight_msgs::msg::RCRaw::SharedPtr rc_raw_msg_;
-
   /**
    * Controller commands message, for storing the last commands after being mixed.
    */
   rosplane_msgs::msg::ControllerCommands::SharedPtr mixed_commands_msg_;
+  /**
+   * State message, for storing the last state message received.
+   */
+  rosplane_msgs::msg::State::SharedPtr state_msg_;
 
   /**
    * Service object for setting parameters of other nodes in autopilot.
@@ -78,11 +86,6 @@ private:
   rclcpp::TimerBase::SharedPtr set_param_timer_;
 
   /**
-   * Executor for setting parameters.
-   */
-  rclcpp::executors::SingleThreadedExecutor set_param_executor_;
-
-  /**
    * Parameter request object, for setting parameters of other nodes while using alternate threads.
    */
   rcl_interfaces::srv::SetParameters::Request::SharedPtr set_param_request_;
@@ -96,7 +99,6 @@ private:
    * Helper function for knowing when to call a ROS service to change roll override.
    */
   void set_roll_override(bool roll_override);
-
   /**
    * Helper function for knowing when to call a ROS service to change pitch override.
    */
@@ -125,6 +127,12 @@ private:
    * @param msg A shared pointer to the received message.
    */
   void rc_raw_callback(const rosflight_msgs::msg::RCRaw::SharedPtr msg);
+  /**
+   * This function is called when a new message of type `rosplane_msgs::msg::State` is received.
+   *
+   * @param msg A shared pointer to the received message.
+   */
+  void state_callback(const rosplane_msgs::msg::State::SharedPtr msg);
 
   /// Parameters stuff
 
