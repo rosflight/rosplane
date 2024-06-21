@@ -35,6 +35,11 @@ private:
    */
   bool param_change_pending_;
 
+ /**
+  * Keeps track of previous time of the last command sent.
+  */
+  rclcpp::Time last_command_time_;
+
   /**
    * This publisher publishes the mixed control commands.
    */
@@ -53,6 +58,11 @@ private:
    * RC raw message, for storing the last RC input before being mixed and published.
    */
   rosflight_msgs::msg::RCRaw::SharedPtr rc_raw_msg_;
+
+  /**
+   * Controller commands message, for storing the last commands after being mixed.
+   */
+  rosplane_msgs::msg::ControllerCommands::SharedPtr mixed_commands_msg_;
 
   /**
    * Service object for setting parameters of other nodes in autopilot.
