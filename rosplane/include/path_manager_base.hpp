@@ -83,7 +83,8 @@ private:
 
   rosplane_msgs::msg::State vehicle_state_; /**< vehicle state */
 
-  int64_t update_rate_;
+  bool params_initialized_;
+  std::chrono::microseconds timer_period_;
   rclcpp::TimerBase::SharedPtr update_timer_;
 
   void vehicle_state_callback(const rosplane_msgs::msg::State & msg);
@@ -99,6 +100,11 @@ private:
    * @brief Declares parameters with ROS2 and adds it to the parameter manager object
    */
   void declare_parameters();
+
+  /**
+   * @brief Sets up the timer with the period specified by the parameters
+   */
+  void set_timer();
 };
 } // namespace rosplane
 #endif // PATH_MANAGER_BASE_H
