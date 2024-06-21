@@ -61,7 +61,15 @@ private:
   rclcpp::Subscription<rosplane_msgs::msg::CurrentPath>::SharedPtr current_path_sub_;
 
   rclcpp::Publisher<rosplane_msgs::msg::ControllerCommands>::SharedPtr controller_commands_pub_;
+  
+  bool params_initialized_;
+  std::chrono::microseconds timer_period_;
   rclcpp::TimerBase::SharedPtr update_timer_;
+
+  /**
+   * @brief Sets the timer with the timer period as specified by the ROS2 parameters
+   */
+  void set_timer();
 
   rosplane_msgs::msg::ControllerCommands controller_commands_;
   struct input_s input_;
