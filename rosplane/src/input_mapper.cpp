@@ -46,6 +46,7 @@ input_mapper::input_mapper() :
   params_.declare_string("aileron_input", "path_follower");
   params_.declare_string("elevator_input", "path_follower");
   params_.declare_string("throttle_input", "path_follower");
+  params_.declare_string("rudder_input", "path_follower");
   params_.declare_double("rc_roll_angle_min_max", 0.5);
   params_.declare_double("rc_course_rate", 0.5);
   params_.declare_double("rc_pitch_angle_min_max", 0.5);
@@ -139,6 +140,7 @@ void input_mapper::controller_commands_callback(const rosplane_msgs::msg::Contro
   std::string aileron_input = params_.get_string("aileron_input");
   std::string elevator_input = params_.get_string("elevator_input");
   std::string throttle_input = params_.get_string("throttle_input");
+  std::string rudder_input = params_.get_string("rudder_input");
 
   double elapsed_time = (this->now() - last_command_time_).seconds();
   last_command_time_ = this->now();
@@ -150,6 +152,7 @@ void input_mapper::controller_commands_callback(const rosplane_msgs::msg::Contro
   mixed_controller_commands_msg_->header.stamp = this->now();
   mixed_controller_commands_msg_->phi_ff = msg->phi_ff;
 
+  // Aileron channel
   if (aileron_input == "path_follower") {
     set_roll_override(false);
     mixed_controller_commands_msg_->chi_c = msg->chi_c;
@@ -171,6 +174,7 @@ void input_mapper::controller_commands_callback(const rosplane_msgs::msg::Contro
     params_.set_string("aileron_input", "path_follower");
   }
 
+  // Elevator channel
   if (elevator_input == "path_follower") {
     set_pitch_override(false);
     mixed_controller_commands_msg_->h_c = msg->h_c;
@@ -192,6 +196,7 @@ void input_mapper::controller_commands_callback(const rosplane_msgs::msg::Contro
     params_.set_string("elevator_input", "path_follower");
   }
 
+  // Throttle channel
   if (throttle_input == "path_follower") {
     mixed_controller_commands_msg_->va_c = msg->va_c;
   } else if (throttle_input == "rc_airspeed") {
@@ -207,6 +212,16 @@ void input_mapper::controller_commands_callback(const rosplane_msgs::msg::Contro
     params_.set_string("throttle_input", "path_follower");
   }
 
+  // Rudder channel
+  if (rudder_input == "yaw_damper") {
+  } else if (rudder_input == "rc_rudder") {
+  } else {
+    RCLCPP_ERROR(this->get_logger(), "Invalid rudder input type: %s. Valid options are "
+                                     "yaw_damper and rc_rudder. Setting to yaw_damper.",
+                 rudder_input.c_str());
+    params_.set_string("rudder_input", "yaw_damper");
+  }
+
   mixed_controller_commands_pub_->publish(*mixed_controller_commands_msg_);
 }
 
@@ -218,6 +233,9 @@ void input_mapper::command_callback(const rosflight_msgs::msg::Command::SharedPt
   }
   if (params_.get_string("elevator_input") == "rc_elevator") {
     ignore |= rosflight_msgs::msg::Command::IGNORE_Y;
+  }
+  if (params_.get_string("rudder_input") == "rc_rudder") {
+    ignore |= rosflight_msgs::msg::Command::IGNORE_Z;
   }
   if (params_.get_string("throttle_input") == "rc_throttle") {
     ignore |= rosflight_msgs::msg::Command::IGNORE_F;

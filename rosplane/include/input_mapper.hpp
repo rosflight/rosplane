@@ -36,6 +36,8 @@ public:
    *   "path_follower", "rc_airspeed", "rc_throttle". Path follower just pipes the control commands from path
    *   follower to the autopilot. RC airspeed uses the RC controller to adjust the airspeed
    *   command at a rate specified by `rc_airspeed_rate`. RC throttle is an RC passthrough mode.
+   * - `rudder_input`: The type of input to use for the rudder channel. Options are "yaw_damper" and
+   *   "rc_rudder". Yaw damper lets the autopilot control the rudder. RC rudder is an RC passthrough mode.
    *
    * Control Parameters:
    * - `rc_roll_angle_min_max`: The maximum roll angle in radians that can be commanded by the RC
