@@ -18,7 +18,7 @@ controller_base::controller_base()
 
   // Advertise subscribed topics and set bound callbacks.
   controller_commands_sub_ = this->create_subscription<rosplane_msgs::msg::ControllerCommands>(
-    "controller_commands", 10, std::bind(&controller_base::controller_commands_callback, this, _1));
+    "controller_command", 10, std::bind(&controller_base::controller_commands_callback, this, _1));
   vehicle_state_sub_ = this->create_subscription<rosplane_msgs::msg::State>(
     "estimated_state", 10, std::bind(&controller_base::vehicle_state_callback, this, _1));
 

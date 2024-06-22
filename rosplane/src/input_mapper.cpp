@@ -12,12 +12,17 @@ input_mapper::input_mapper() :
   param_change_pending_(false),
   params_(this)
 {
-  mixed_commands_pub_ = this->create_publisher<rosplane_msgs::msg::ControllerCommands>(
-    "mixed_commands", 10);
+  mixed_controller_commands_pub_ = this->create_publisher<rosplane_msgs::msg::ControllerCommands>(
+    "mixed_controller_command", 10);
+  mixed_command_pub_ = this->create_publisher<rosflight_msgs::msg::Command>(
+    "mixed_command", 10);
 
   controller_commands_sub_ = this->create_subscription<rosplane_msgs::msg::ControllerCommands>(
-    "controller_commands", 10,
+    "controller_command", 10,
     std::bind(&input_mapper::controller_commands_callback, this, _1));
+  command_sub_ = this->create_subscription<rosflight_msgs::msg::Command>(
+    "command", 10,
+    std::bind(&input_mapper::command_callback, this, _1));
   rc_raw_sub_ = this->create_subscription<rosflight_msgs::msg::RCRaw>(
       "rc_raw", 10,
       std::bind(&input_mapper::rc_raw_callback, this, _1));
@@ -32,7 +37,7 @@ input_mapper::input_mapper() :
   set_param_timer_->cancel();
 
   last_command_time_ = this->now();
-  mixed_commands_msg_ = std::make_shared<rosplane_msgs::msg::ControllerCommands>();
+  mixed_controller_commands_msg_ = std::make_shared<rosplane_msgs::msg::ControllerCommands>();
   rc_raw_msg_ = std::make_shared<rosflight_msgs::msg::RCRaw>();
   state_msg_ = std::make_shared<rosplane_msgs::msg::State>();
 
@@ -144,58 +149,78 @@ void input_mapper::controller_commands_callback(const rosplane_msgs::msg::Contro
 
   if (aileron_input == "path_follower") {
     set_roll_override(false);
-    mixed_commands_msg_->chi_c = msg->chi_c;
+    mixed_controller_commands_msg_->chi_c = msg->chi_c;
   } else if (aileron_input == "rc_course") {
     set_roll_override(false);
-    mixed_commands_msg_->chi_c += norm_aileron *
+    mixed_controller_commands_msg_->chi_c += norm_aileron *
                                   params_.get_double("rc_course_rate") *
                                   elapsed_time;
   } else if (aileron_input == "rc_roll_angle") {
     set_roll_override(true);
-    mixed_commands_msg_->phi_c = norm_aileron * params_.get_double("rc_roll_angle_min_max");
-    mixed_commands_msg_->chi_c = state_msg_->chi;
+    mixed_controller_commands_msg_->phi_c = norm_aileron * params_.get_double("rc_roll_angle_min_max");
+    mixed_controller_commands_msg_->chi_c = state_msg_->chi;
+  } else if (aileron_input == "rc_aileron") {
   } else {
     RCLCPP_ERROR(this->get_logger(), "Invalid aileron input type: %s. Valid options are "
-                                     "path_follower, rc_course, and rc_roll_angle. Setting to "
-                                     "path_follower.",
+                                     "path_follower, rc_course, rc_roll_angle, and rc_aileron."
+                                     "Setting to path_follower.",
                  aileron_input.c_str());
     params_.set_string("aileron_input", "path_follower");
   }
 
   if (elevator_input == "path_follower") {
     set_pitch_override(false);
-    mixed_commands_msg_->h_c = msg->h_c;
+    mixed_controller_commands_msg_->h_c = msg->h_c;
   } else if (elevator_input == "rc_altitude") {
     set_pitch_override(false);
-    mixed_commands_msg_->h_c += norm_elevator *
+    mixed_controller_commands_msg_->h_c += norm_elevator *
                                 params_.get_double("rc_altitude_rate") *
                                 elapsed_time;
   } else if (elevator_input == "rc_pitch_angle") {
     set_pitch_override(true);
-    mixed_commands_msg_->theta_c = norm_elevator * params_.get_double("rc_pitch_angle_min_max");
-    mixed_commands_msg_->h_c = -state_msg_->position[2];
+    mixed_controller_commands_msg_->theta_c = norm_elevator * params_.get_double("rc_pitch_angle_min_max");
+    mixed_controller_commands_msg_->h_c = -state_msg_->position[2];
+  } else if (elevator_input == "rc_elevator") {
   } else {
     RCLCPP_ERROR(this->get_logger(), "Invalid elevator input type: %s. Valid options are "
-                                     "path_follower, rc_altitude, and rc_pitch_angle. Setting to "
-                                     "path_follower.",
+                                     "path_follower, rc_altitude, rc_pitch_angle, and rc_elevator. "
+                                     "Setting to path_follower.",
                  elevator_input.c_str());
     params_.set_string("elevator_input", "path_follower");
   }
 
   if (throttle_input == "path_follower") {
-    mixed_commands_msg_->va_c = msg->va_c;
+    mixed_controller_commands_msg_->va_c = msg->va_c;
   } else if (throttle_input == "rc_airspeed") {
-    mixed_commands_msg_->va_c += norm_throttle *
+    mixed_controller_commands_msg_->va_c += norm_throttle *
                                  params_.get_double("rc_airspeed_rate") *
                                  elapsed_time;
+  } else if (throttle_input == "rc_throttle") {
   } else {
     RCLCPP_ERROR(this->get_logger(), "Invalid throttle input type: %s. Valid options are "
-                                     "path_follower and rc_airspeed. Setting to path_follower.",
+                                     "path_follower, rc_airspeed and rc_throttle. Setting to "
+                                     "path_follower.",
                  throttle_input.c_str());
     params_.set_string("throttle_input", "path_follower");
   }
 
-  mixed_commands_pub_->publish(*mixed_commands_msg_);
+  mixed_controller_commands_pub_->publish(*mixed_controller_commands_msg_);
+}
+
+void input_mapper::command_callback(const rosflight_msgs::msg::Command::SharedPtr msg)
+{
+  u_int8_t ignore = rosflight_msgs::msg::Command::IGNORE_NONE;
+  if (params_.get_string("aileron_input") == "rc_aileron") {
+    ignore |= rosflight_msgs::msg::Command::IGNORE_X;
+  }
+  if (params_.get_string("elevator_input") == "rc_elevator") {
+    ignore |= rosflight_msgs::msg::Command::IGNORE_Y;
+  }
+  if (params_.get_string("throttle_input") == "rc_throttle") {
+    ignore |= rosflight_msgs::msg::Command::IGNORE_F;
+  }
+  msg->ignore = ignore;
+  mixed_command_pub_->publish(*msg);
 }
 
 void input_mapper::rc_raw_callback(const rosflight_msgs::msg::RCRaw::SharedPtr msg)

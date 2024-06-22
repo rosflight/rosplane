@@ -6,8 +6,10 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
-    input_commands_remap = '/path_follower_controller_commands'
-    output_commands_remap = '/input_mapper_controller_commands'
+    input_controller_command_remap = '/path_follower_controller_command'
+    output_controller_command_remap = '/controller_command'
+    input_command_remap = '/autopilot_command'
+    output_command_remap = '/command'
 
     return LaunchDescription([
         Node(
@@ -16,8 +18,10 @@ def generate_launch_description():
             name='input_mapper',
             output='screen',
             remappings=[
-                ('/controller_commands', input_commands_remap),
-                ('/mixed_commands', output_commands_remap)
+                ('/controller_command', input_controller_command_remap),
+                ('/mixed_controller_command', output_controller_command_remap),
+                ('/command', input_command_remap),
+                ('/mixed_command', output_command_remap)
             ]
         ),
         IncludeLaunchDescription(
@@ -28,8 +32,9 @@ def generate_launch_description():
                 )
             ),
             launch_arguments={
-                'controller_commands_publisher_remap': input_commands_remap,
-                'controller_commands_subscriber_remap': output_commands_remap
+                'controller_command_publisher_remap': input_controller_command_remap,
+                'controller_command_subscriber_remap': output_controller_command_remap,
+                'command_publisher_remap': input_command_remap,
             }.items()
         )
     ])

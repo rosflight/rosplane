@@ -3,6 +3,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <rosflight_msgs/msg/rc_raw.hpp>
+#include <rosflight_msgs/msg/command.hpp>
 #include <rosplane_msgs/msg/controller_commands.hpp>
 #include <rosplane_msgs/msg/state.hpp>
 #include <param_manager.hpp>
@@ -22,19 +23,19 @@ public:
    * This node has the following ROS parameters:
    * Mapping Options:
    * - `aileron_input`: The type of input to use for the aileron channel. Options are
-   *   "path_follower", "rc_course", and "rc_roll_angle". Path follower just pipes the
+   *   "path_follower", "rc_course", "rc_roll_angle", and "rc_aileron". Path follower just pipes the
    *   control commands from path follower to the autopilot. RC course uses the RC controller to
    *   adjust course command at a rate specified by `rc_course_rate`. RC roll angle uses the RC
-   *   controller to set the commanded roll angle directly.
+   *   controller to set the commanded roll angle directly. RC aileron is a RC passthrough mode.
    * - `elevator_input`: The type of input to use for the elevator channel. Options are
-   *   "path_follower", "rc_altitude", and "rc_pitch_angle". Path follower just pipes the
+   *   "path_follower", "rc_altitude", "rc_pitch_angle", and "rc_elevator. Path follower just pipes the
    *   control commands from path follower to the autopilot. RC altitude uses the RC controller
    *   to adjust altitude command at a rate specified by `rc_altitude_rate`. RC pitch angle uses
-   *   the RC controller to set the commanded pitch angle directly.
+   *   the RC controller to set the commanded pitch angle directly. RC elevator is an RC passthrough mode.
    * - `throttle_input`: The type of input to use for the throttle channel. Options are
-   *   "path_follower" and "rc_airspeed". Path follower just pipes the control commands from path
+   *   "path_follower", "rc_airspeed", "rc_throttle". Path follower just pipes the control commands from path
    *   follower to the autopilot. RC airspeed uses the RC controller to adjust the airspeed
-   *   command at a rate specified by `rc_airspeed_rate`.
+   *   command at a rate specified by `rc_airspeed_rate`. RC throttle is an RC passthrough mode.
    *
    * Control Parameters:
    * - `rc_roll_angle_min_max`: The maximum roll angle in radians that can be commanded by the RC
@@ -70,14 +71,23 @@ private:
   rclcpp::Time last_command_time_;
 
   /**
-   * This publisher publishes the mixed control commands.
+   * This publisher publishes the mixed controller commands.
    */
-  rclcpp::Publisher<rosplane_msgs::msg::ControllerCommands>::SharedPtr mixed_commands_pub_;
+  rclcpp::Publisher<rosplane_msgs::msg::ControllerCommands>::SharedPtr
+      mixed_controller_commands_pub_;
+  /**
+   * This publisher publishes the mixed command.
+   */
+  rclcpp::Publisher<rosflight_msgs::msg::Command>::SharedPtr mixed_command_pub_;
 
   /**
-   * This subscriber subscribes to the controller commands.
+   * This subscriber subscribes to the path follower controller commands.
    */
   rclcpp::Subscription<rosplane_msgs::msg::ControllerCommands>::SharedPtr controller_commands_sub_;
+  /**
+   * This subscriber subscribes to the commands being sent to the firmware.
+   */
+  rclcpp::Subscription<rosflight_msgs::msg::Command>::SharedPtr command_sub_;
   /**
    * This subscriber subscribes to the RC raw signals.
    */
@@ -95,7 +105,7 @@ private:
   /**
    * Controller commands message, for storing the last commands after being mixed.
    */
-  rosplane_msgs::msg::ControllerCommands::SharedPtr mixed_commands_msg_;
+  rosplane_msgs::msg::ControllerCommands::SharedPtr mixed_controller_commands_msg_;
   /**
    * State message, for storing the last state message received.
    */
@@ -150,6 +160,12 @@ private:
    * @param msg A shared pointer to the received message.
    */
   void controller_commands_callback(const rosplane_msgs::msg::ControllerCommands::SharedPtr msg);
+  /**
+   * This function is called when a new message of type `rosplane_msgs::msg::Command` is received.
+   *
+   * @param msg A shared pointer to the received message.
+   */
+  void command_callback(const rosflight_msgs::msg::Command::SharedPtr msg);
   /**
    * This function is called when a new message of type `rosflight_msgs::msg::RCRaw` is received.
    *
