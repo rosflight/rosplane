@@ -66,17 +66,17 @@ private:
   bool param_change_pending_;
 
  /**
-  * Keeps track of previous time of the last command sent.
+  * Keeps track of previous time of the last controller command sent for rate control.
   */
   rclcpp::Time last_command_time_;
 
   /**
-   * This publisher publishes the mixed controller commands.
+   * This publisher publishes the mixed controller commands for the autopilot.
    */
   rclcpp::Publisher<rosplane_msgs::msg::ControllerCommands>::SharedPtr
       mixed_controller_commands_pub_;
   /**
-   * This publisher publishes the mixed command.
+   * This publisher publishes the mixed command for the firmware.
    */
   rclcpp::Publisher<rosflight_msgs::msg::Command>::SharedPtr mixed_command_pub_;
 
@@ -112,7 +112,7 @@ private:
   rosplane_msgs::msg::State::SharedPtr state_msg_;
 
   /**
-   * Service object for setting parameters of other nodes in autopilot.
+   * Service object for setting parameters of the controller.
    */
   rclcpp::Client<rcl_interfaces::srv::SetParameters>::SharedPtr set_param_client_;
 
@@ -125,12 +125,13 @@ private:
   rclcpp::TimerBase::SharedPtr set_param_timer_;
 
   /**
-   * Parameter request object, for setting parameters of other nodes while using alternate threads.
+   * Parameter request object, for setting parameters of other nodes.
    */
   rcl_interfaces::srv::SetParameters::Request::SharedPtr set_param_request_;
 
   /**
-   * FutureAndRequestId result for param set request.
+   * FutureAndRequestId result for param set request. Used to obtain the result of the request
+   * and print errors if the service failed.
    */
   rclcpp::Client<rcl_interfaces::srv::SetParameters>::SharedFuture set_param_future_;
 
@@ -149,12 +150,7 @@ private:
   void set_param_timer_callback();
 
   /**
-   * Sets a parameter in a different node over the ROS2 parameter system.
-   */
-  void set_external_param(std::string name, rclcpp::Parameter parameter);
-
-  /**
-   * This function is called when a new message of type rosplane_msgs::msg::ControllerCommands is
+   * This function is called when a new message of type `rosplane_msgs::msg::ControllerCommands` is
    * received.
    *
    * @param msg A shared pointer to the received message.

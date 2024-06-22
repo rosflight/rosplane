@@ -147,6 +147,9 @@ void input_mapper::controller_commands_callback(const rosplane_msgs::msg::Contro
   double norm_elevator = (rc_raw_msg_->values[1] - 1500) / 500.0;
   double norm_throttle = (rc_raw_msg_->values[2] - 1500) / 500.0;
 
+  mixed_controller_commands_msg_->header.stamp = this->now();
+  mixed_controller_commands_msg_->phi_ff = msg->phi_ff;
+
   if (aileron_input == "path_follower") {
     set_roll_override(false);
     mixed_controller_commands_msg_->chi_c = msg->chi_c;
