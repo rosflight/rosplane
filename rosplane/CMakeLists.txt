@@ -107,7 +107,7 @@ install(TARGETS
 add_executable(input_mapper
   src/input_mapper.cpp
   src/param_manager.cpp)
-ament_target_dependencies(input_mapper rosplane_msgs rosflight_msgs rclcpp)
+ament_target_dependencies(input_mapper rosplane_msgs rosflight_msgs rclcpp std_srvs)
 install(TARGETS
   input_mapper
   DESTINATION lib/${PROJECT_NAME})

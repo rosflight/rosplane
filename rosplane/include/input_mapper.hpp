@@ -6,6 +6,7 @@
 #include <rosflight_msgs/msg/command.hpp>
 #include <rosplane_msgs/msg/controller_commands.hpp>
 #include <rosplane_msgs/msg/state.hpp>
+#include <std_srvs/srv/trigger.hpp>
 #include <param_manager.hpp>
 
 namespace rosplane
@@ -138,6 +139,23 @@ private:
   rclcpp::Client<rcl_interfaces::srv::SetParameters>::SharedFuture set_param_future_;
 
   /**
+   * Service for setting input methods to path follower mode.
+   */
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr path_follower_mode_service_;
+  /**
+   * Service for setting input methods to altitude course airspeed control mode.
+   */
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr altitude_course_airspeed_control_mode_service_;
+  /**
+   * Service for setting input methods to angle control mode.
+   */
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr angle_control_mode_service_;
+  /**
+   * Service for setting input methods to RC passthrough mode.
+   */
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr rc_passthrough_mode_service_;
+
+  /**
    * Helper function for knowing when to call a ROS service to change roll override.
    */
   void set_roll_override(bool roll_override);
@@ -176,6 +194,47 @@ private:
    * @param msg A shared pointer to the received message.
    */
   void state_callback(const rosplane_msgs::msg::State::SharedPtr msg);
+
+  /**
+   * This function is called when the path follower mode service is called, setting the input
+   * modes to path follower mode.
+   *
+   * @param request The request object for the service.
+   * @param response The response object for the service.
+   */
+  void path_follower_mode_callback(
+      const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+      std::shared_ptr<std_srvs::srv::Trigger::Response> response);
+  /**
+   * This function is called when the altitude course airspeed control mode service is called,
+   * setting the input modes to altitude, course, and airspeed rate control.
+   *
+   * @param request The request object for the service.
+   * @param response The response object for the service.
+   */
+  void altitude_course_airspeed_control_mode_callback(
+      const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+      std::shared_ptr<std_srvs::srv::Trigger::Response> response);
+  /**
+   * This function is called when the angle control mode service is called, setting the input
+   * modes to angle control mode.
+   *
+   * @param request The request object for the service.
+   * @param response The response object for the service.
+   */
+  void angle_control_mode_callback(
+        const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+        std::shared_ptr<std_srvs::srv::Trigger::Response> response);
+  /**
+   * This function is called when the RC passthrough mode service is called, setting the input
+   * modes to RC passthrough.
+   *
+   * @param request The request object for the service.
+   * @param response The response object for the service.
+   */
+  void rc_passthrough_mode_callback(
+        const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+        std::shared_ptr<std_srvs::srv::Trigger::Response> response);
 
   /// Parameters stuff
 

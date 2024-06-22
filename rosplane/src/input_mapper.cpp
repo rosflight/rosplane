@@ -1,6 +1,7 @@
 #include "input_mapper.hpp"
 
 using std::placeholders::_1;
+using std::placeholders::_2;
 
 namespace rosplane
 {
@@ -35,6 +36,16 @@ input_mapper::input_mapper() :
   set_param_timer_ = this->create_wall_timer(
     std::chrono::milliseconds(100), std::bind(&input_mapper::set_param_timer_callback, this));
   set_param_timer_->cancel();
+
+  path_follower_mode_service_ = this->create_service<std_srvs::srv::Trigger>(
+    "path_follower_mode", std::bind(&input_mapper::path_follower_mode_callback, this, _1, _2));
+  altitude_course_airspeed_control_mode_service_ = this->create_service<std_srvs::srv::Trigger>(
+    "altitude_course_airspeed_control_mode",
+    std::bind(&input_mapper::altitude_course_airspeed_control_mode_callback, this, _1, _2));
+  angle_control_mode_service_ = this->create_service<std_srvs::srv::Trigger>(
+    "angle_control_mode", std::bind(&input_mapper::angle_control_mode_callback, this, _1, _2));
+  rc_passthrough_mode_service_ = this->create_service<std_srvs::srv::Trigger>(
+    "rc_passthrough_mode", std::bind(&input_mapper::rc_passthrough_mode_callback, this, _1, _2));
 
   last_command_time_ = this->now();
   mixed_controller_commands_msg_ = std::make_shared<rosplane_msgs::msg::ControllerCommands>();
@@ -252,6 +263,50 @@ void input_mapper::rc_raw_callback(const rosflight_msgs::msg::RCRaw::SharedPtr m
 void input_mapper::state_callback(const rosplane_msgs::msg::State::SharedPtr msg)
 {
   state_msg_ = msg;
+}
+
+void input_mapper::path_follower_mode_callback(
+  const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+{
+  params_.set_string("aileron_input", "path_follower");
+  params_.set_string("elevator_input", "path_follower");
+  params_.set_string("throttle_input", "path_follower");
+  params_.set_string("rudder_input", "yaw_damper");
+  response->success = true;
+}
+
+void input_mapper::altitude_course_airspeed_control_mode_callback(
+  const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+{
+  params_.set_string("aileron_input", "rc_course");
+  params_.set_string("elevator_input", "rc_altitude");
+  params_.set_string("throttle_input", "rc_airspeed");
+  params_.set_string("rudder_input", "yaw_damper");
+  response->success = true;
+}
+
+void input_mapper::angle_control_mode_callback(
+  const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+{
+  params_.set_string("aileron_input", "rc_roll_angle");
+  params_.set_string("elevator_input", "rc_pitch_angle");
+  params_.set_string("throttle_input", "rc_throttle");
+  params_.set_string("rudder_input", "yaw_damper");
+  response->success = true;
+}
+
+void input_mapper::rc_passthrough_mode_callback(
+  const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+{
+  params_.set_string("aileron_input", "rc_aileron");
+  params_.set_string("elevator_input", "rc_elevator");
+  params_.set_string("throttle_input", "rc_throttle");
+  params_.set_string("rudder_input", "rc_rudder");
+  response->success = true;
 }
 
 rcl_interfaces::msg::SetParametersResult
