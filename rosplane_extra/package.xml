@@ -12,6 +12,7 @@
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
+  <depend>rosplane</depend>
   <depend>rosplane_msgs</depend>
   <depend>rosflight_msgs</depend>
 
