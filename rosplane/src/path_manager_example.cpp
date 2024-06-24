@@ -564,7 +564,6 @@ void path_manager_example::dubinsParameters(const waypoint_s start_node, const w
 
 void path_manager_example::declare_parameters()
 {
-  params.declare_double("R_min", 25.0);
   params.declare_bool("orbit_last", false);
   params.declare_double("default_altitude", 50.0);
   params.declare_double("default_airspeed", 15.0);

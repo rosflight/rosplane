@@ -8,7 +8,7 @@ namespace rosplane
 {
 
 controller_base::controller_base()
-    : Node("controller_base"), params(this)
+    : Node("controller_base"), params(this), params_initialized_(false)
 {
 
   // Advertise published topics.
@@ -25,15 +25,16 @@ controller_base::controller_base()
   // This flag indicates whether the first set of commands have been received.
   command_recieved_ = false;
 
-  // Declare the parameters for ROS2 param system.
-  declare_parameters();
-
-  // Set the values for the parameters, from the param file or use the deafault value.
-  params.set_parameters();
-
   // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
     std::bind(&controller_base::parametersCallback, this, std::placeholders::_1));
+
+  // Declare the parameters for ROS2 param system.
+  declare_parameters();
+  // Set the values for the parameters, from the param file or use the deafault value.
+  params.set_parameters();
+
+  params_initialized_ = true;
 
   set_timer();
 }
@@ -41,12 +42,10 @@ controller_base::controller_base()
 void controller_base::declare_parameters()
 {
   // Declare default parameters associated with this controller, controller_base
-  params.declare_bool("roll_command_override", false); // TODO: move this to controller_successive_loop.
-  params.declare_bool("pitch_command_override", false); // TODO: move this to controller_successive_loop.
   params.declare_double("pwm_rad_e", 1.0);
   params.declare_double("pwm_rad_a", 1.0);
   params.declare_double("pwm_rad_r", 1.0);
-  params.declare_int("frequency", 100);
+  params.declare_double("controller_output_frequency", 100.0);
 }
 
 void controller_base::controller_commands_callback(
@@ -80,7 +79,7 @@ void controller_base::actuator_controls_publish()
   input.p = vehicle_state_.p;
   input.q = vehicle_state_.q;
   input.r = vehicle_state_.r;
-  input.Va_c = controller_commands_.va_c;
+  input.va_c = controller_commands_.va_c;
   input.h_c = controller_commands_.h_c;
   input.chi_c = controller_commands_.chi_c;
   input.phi_ff = controller_commands_.phi_ff;
@@ -145,15 +144,23 @@ rcl_interfaces::msg::SetParametersResult
 controller_base::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;
-  result.successful = true;
-  result.reason = "success";
+  result.successful = false;
+  result.reason =
+    "One of the parameters given does not is not a parameter of the controller node.";
 
   bool success = params.set_parameters_callback(parameters);
-  if (!success)
+  if (success)
   {
-    result.successful = false;
-    result.reason =
-      "One of the parameters given does not is not a parameter of the controller node.";
+    result.successful = true;
+    result.reason = "success";
+  }
+
+  if (params_initialized_ && success) {
+    std::chrono::microseconds curr_period = std::chrono::microseconds(static_cast<long long>(1.0 / params.get_double("controller_output_frequency") * 1'000'000));
+    if (timer_period_ != curr_period) {
+      timer_->cancel();
+      set_timer();
+    }
   }
 
   return result;
@@ -162,14 +169,14 @@ controller_base::parametersCallback(const std::vector<rclcpp::Parameter> & param
 void controller_base::set_timer()
 {
 
-  int64_t frequency = params.get_int("frequency");
-  auto timer_period =
+  double frequency = params.get_double("controller_output_frequency");
+  timer_period_ =
     std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1'000'000));
 
   // Set timer to trigger bound callback (actuator_controls_publish) at the given periodicity.
-  timer_ = this->create_wall_timer(timer_period,
+  timer_ = this->create_wall_timer(timer_period_,
                                    std::bind(&controller_base::actuator_controls_publish,
-                                             this)); // TODO add the period to the params.
+                                             this));
 }
 
 void controller_base::convert_to_pwm(controller_base::output_s & output)
@@ -179,7 +186,6 @@ void controller_base::convert_to_pwm(controller_base::output_s & output)
   double pwm_rad_e = params.get_double("pwm_rad_e");
   double pwm_rad_a = params.get_double("pwm_rad_a");
   double pwm_rad_r = params.get_double("pwm_rad_r");
-  // double test = get_double("frequency");
 
   // Multiply each control effort (in radians) by a scaling factor to a pwm.
   // TODO investigate why this is named "pwm". The actual scaling to pwm happens in rosflight_io.

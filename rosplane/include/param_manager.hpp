@@ -73,7 +73,7 @@ private:
   /**
    * Data structure to hold all of the parameters
   */
-  std::map<std::string, std::variant<double, bool, int64_t, std::string>> params_;   // Can I cast ROS int to int?
+  std::map<std::string, std::variant<double, bool, int64_t, std::string>> params_;
   rclcpp::Node * container_node_;
 };
 

@@ -6,7 +6,7 @@ namespace rosplane
 {
 
 path_follower_base::path_follower_base()
-    : Node("path_follower_base"), params(this)
+    : Node("path_follower_base"), params(this), params_initialized_(false)
 {
   vehicle_state_sub_ = this->create_subscription<rosplane_msgs::msg::State>(
     "estimated_state", 10, std::bind(&path_follower_base::vehicle_state_callback, this, _1));
@@ -14,10 +14,6 @@ path_follower_base::path_follower_base()
     "current_path", 100,
     std::bind(&path_follower_base::current_path_callback, this, _1)); // the 1 may need to be 100
 
-  update_timer_ = this->create_wall_timer(
-    100ms,
-    std::bind(&path_follower_base::update,
-              this)); // TODO change this duration to change based on update rate.
   controller_commands_pub_ =
     this->create_publisher<rosplane_msgs::msg::ControllerCommands>("controller_commands", 1);
 
@@ -28,8 +24,23 @@ path_follower_base::path_follower_base()
   declare_parameters();
   params.set_parameters();
 
+  params_initialized_ = true;
+
+  // Now that the parameters have been set and loaded from the launch file, create the timer.
+  set_timer();
+
   state_init_ = false;
   current_path_init_ = false;
+}
+
+void path_follower_base::set_timer() {
+  double frequency = params.get_double("controller_commands_pub_frequency"); 
+  timer_period_ = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1e6));
+
+  update_timer_ = this->create_wall_timer(
+    timer_period_,
+    std::bind(&path_follower_base::update,
+              this));
 }
 
 void path_follower_base::update()
@@ -46,7 +57,7 @@ void path_follower_base::update()
     msg.header.stamp = now;
 
     msg.chi_c = output.chi_c;
-    msg.va_c = output.Va_c;
+    msg.va_c = output.va_c;
     msg.h_c = output.h_c;
     msg.phi_ff = output.phi_ff;
 
@@ -70,7 +81,7 @@ void path_follower_base::vehicle_state_callback(const rosplane_msgs::msg::State:
   input_.h = -msg->position[2]; /** altitude */
   input_.chi = msg->chi;
   input_.psi = msg->psi;
-  input_.Va = msg->va;
+  input_.va = msg->va;
 
   RCLCPP_DEBUG_STREAM(this->get_logger(), "FROM STATE -- input.chi: " << input_.chi);
 
@@ -83,7 +94,7 @@ void path_follower_base::current_path_callback(const rosplane_msgs::msg::Current
   else if (msg->path_type == msg->ORBIT_PATH)
     input_.p_type = path_type::Orbit;
 
-  input_.Va_d = msg->va_d;
+  input_.va_d = msg->va_d;
   for (int i = 0; i < 3; i++) {
     input_.r_path[i] = msg->r[i];
     input_.q_path[i] = msg->q[i];
@@ -108,14 +119,27 @@ path_follower_base::parametersCallback(const std::vector<rclcpp::Parameter> & pa
     result.reason = "success";
   }
 
+  if (params_initialized_ && success) {
+    double frequency = params.get_double("controller_commands_pub_frequency");
+
+    std::chrono::microseconds curr_period = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1e6));
+    if (timer_period_ != curr_period) {
+      update_timer_->cancel();
+      set_timer();
+    }
+  }
+
   return result;
 }
 
 void path_follower_base::declare_parameters()
 {
+  params.declare_double("controller_commands_pub_frequency", 10.0);
   params.declare_double("chi_infty", .5);
   params.declare_double("k_path", 0.05);
   params.declare_double("k_orbit", 4.0);
+  params.declare_int("update_rate", 100);
+  params.declare_double("gravity", 9.81);
 }
 
 } // namespace rosplane

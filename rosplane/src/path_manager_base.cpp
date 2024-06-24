@@ -10,23 +10,41 @@ namespace rosplane
 {
 
 path_manager_base::path_manager_base()
-    : Node("rosplane_path_manager"), params(this)
+    : Node("rosplane_path_manager"), params(this), params_initialized_(false)
 {
   vehicle_state_sub_ = this->create_subscription<rosplane_msgs::msg::State>(
     "estimated_state", 10, std::bind(&path_manager_base::vehicle_state_callback, this, _1));
   new_waypoint_sub_ = this->create_subscription<rosplane_msgs::msg::Waypoint>(
     "waypoint_path", 10, std::bind(&path_manager_base::new_waypoint_callback, this, _1));
   current_path_pub_ = this->create_publisher<rosplane_msgs::msg::CurrentPath>("current_path", 10);
-  update_timer_ =
-    this->create_wall_timer(10ms, std::bind(&path_manager_base::current_path_publish, this));
 
   // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
     std::bind(&path_manager_base::parametersCallback, this, std::placeholders::_1));
 
+  declare_parameters();
+  params.set_parameters();
+
+  params_initialized_ = true;
+
+  // Now that the update rate has been updated in parameters, create the timer
+  set_timer();
+
   num_waypoints_ = 0;
 
   state_init_ = false;
+}
+
+void path_manager_base::declare_parameters() {
+  params.declare_double("R_min", 50.0);
+  params.declare_double("current_path_pub_frequency", 100.0);
+}
+
+void path_manager_base::set_timer() {
+  double frequency = params.get_double("current_path_pub_frequency");
+  timer_period_ = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1e6));
+  update_timer_ =
+    this->create_wall_timer(timer_period_, std::bind(&path_manager_base::current_path_publish, this));
 }
 
 rcl_interfaces::msg::SetParametersResult
@@ -41,6 +59,15 @@ path_manager_base::parametersCallback(const std::vector<rclcpp::Parameter> & par
   {
     result.successful = true;
     result.reason = "success";
+  }
+
+  if (params_initialized_ && success) {
+    double frequency = params.get_double("current_path_pub_frequency");
+    std::chrono::microseconds curr_period = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1e6));
+    if (timer_period_ != curr_period) {
+      update_timer_->cancel();
+      set_timer();
+    }
   }
 
   return result;
