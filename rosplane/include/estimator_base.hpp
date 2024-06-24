@@ -104,6 +104,8 @@ private:
   void statusCallback(const rosflight_msgs::msg::Status::SharedPtr msg);
 
   rclcpp::TimerBase::SharedPtr update_timer_;
+  std::chrono::microseconds update_period_;
+  bool params_initialized_;
   std::string gnss_fix_topic_ = "navsat_compat/fix";
   std::string gnss_vel_topic_ = "navsat_compat/vel";
   std::string imu_topic_ = "imu/data";
@@ -126,6 +128,11 @@ private:
    * It also sets the default parameter, which will then be overridden by a launch script.
    */
   void declare_parameters();
+
+  /**
+   * @brief Determines the period of a timer based on the ROS2 parameter and starts it 
+   */
+  void set_timer();
 
   /**
    * ROS2 parameter system interface. This connects ROS2 parameters with the defined update callback, parametersCallback.

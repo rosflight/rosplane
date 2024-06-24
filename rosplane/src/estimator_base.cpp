@@ -6,9 +6,8 @@ namespace rosplane
 {
 
 estimator_base::estimator_base()
-    : Node("estimator_base"), params(this)
+    : Node("estimator_base"), params(this), params_initialized_(false)
 {
-
   vehicle_state_pub_ = this->create_publisher<rosplane_msgs::msg::State>("estimated_state", 10);
 
   gnss_fix_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
@@ -24,30 +23,41 @@ estimator_base::estimator_base()
   status_sub_ = this->create_subscription<rosflight_msgs::msg::Status>(
     status_topic_, 10, std::bind(&estimator_base::statusCallback, this, std::placeholders::_1));
 
-  // Set the parameter callback, for when parameters are changed.
-  parameter_callback_handle_ = this->add_on_set_parameters_callback(
-    std::bind(&estimator_base::parametersCallback, this, std::placeholders::_1));
-
   init_static_ = 0;
   baro_count_ = 0;
   armed_first_time_ = false;
+  baro_init_ = false;
+  gps_init_ = false;
+
+  // Set the parameter callback, for when parameters are changed.
+  parameter_callback_handle_ = this->add_on_set_parameters_callback(
+    std::bind(&estimator_base::parametersCallback, this, std::placeholders::_1));
 
   // Declare and set parameters with the ROS2 system
   declare_parameters();
   params.set_parameters();
 
-  //TODO: Change this timer frequency
-  update_timer_ = this->create_wall_timer(10ms, std::bind(&estimator_base::update, this));
+  params_initialized_ = true;
+
+  set_timer();
 }
 
 void estimator_base::declare_parameters()
 {
+  params.declare_double("estimator_update_frequency", 100.0);
   params.declare_double("rho", 1.225);
   params.declare_double("gravity", 9.8);
   params.declare_double("gps_ground_speed_threshold", 0.3);  // TODO: this is a magic number. What is it determined from?
   params.declare_double("baro_measurement_gate", 1.35);  // TODO: this is a magic number. What is it determined from?
-  params.declare_double("airspeed_meaurement_gate", 5.0);  // TODO: this is a magic number. What is it determined from?
+  params.declare_double("airspeed_measurement_gate", 5.0);  // TODO: this is a magic number. What is it determined from?
   params.declare_int("baro_calibration_count", 100);  // TODO: this is a magic number. What is it determined from?
+}
+
+void estimator_base::set_timer() {
+  double frequency = params.get_double("estimator_update_frequency");
+
+  update_period_ = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1'000'000));
+  update_timer_ = this->create_wall_timer(update_period_, std::bind(&estimator_base::update, this));
 }
 
 rcl_interfaces::msg::SetParametersResult 
@@ -63,6 +73,16 @@ estimator_base::parametersCallback(const std::vector<rclcpp::Parameter> & parame
     result.successful = false;
     result.reason =
       "One of the parameters given is not a parameter of the estimator node.";
+  }
+
+  // Check to see if the timer period was changed. If it was, recreate the timer with the new period
+  if (params_initialized_ && success) {
+    std::chrono::microseconds curr_period = std::chrono::microseconds(static_cast<long long>(1.0 / params.get_double("estimator_update_frequency") * 1'000'000));
+    if (update_period_ != curr_period) {
+      update_timer_->cancel();
+      set_timer();
+    }
+
   }
 
   return result;

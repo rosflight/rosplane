@@ -105,7 +105,7 @@ void estimator_example::update_measurement_model_parameters()
   double sigma_pseudo_wind_n = params.get_double("sigma_pseudo_wind_n");
   double sigma_pseudo_wind_e = params.get_double("sigma_pseudo_wind_e");
   double sigma_heading = params.get_double("sigma_heading");
-  int64_t frequency = params.get_int("frequency");
+  double frequency = params.get_double("estimator_update_frequency");
   double Ts = 1.0 / frequency;
   float lpf_a = params.get_double("lpf_a");
   float lpf_a1 = params.get_double("lpf_a1");
@@ -129,7 +129,7 @@ void estimator_example::estimate(const input_s & input, output_s & output)
   // For readability, declare the parameters here
   double rho = params.get_double("rho");
   double gravity = params.get_double("gravity");
-  int64_t frequency = params.get_int("frequency");
+  double frequency = params.get_double("estimator_update_frequency");
   double gps_n_lim = params.get_double("gps_n_lim");
   double gps_e_lim = params.get_double("gps_e_lim");
   double Ts = 1.0 / frequency;
@@ -452,6 +452,8 @@ void estimator_example::check_xhat_a()
   double max_theta = params.get_double("max_estimated_theta");
   double buff = params.get_double("estimator_max_buffer");
 
+  if (xhat_a_(0) > radians(85.0) || xhat_a_(0) < radians(-85.0) || !std::isfinite(xhat_a_(0))) {
+
   if (!std::isfinite(xhat_a_(0))) {
     xhat_a_(0) = 0;
     P_a_ = Eigen::Matrix2f::Identity();
@@ -463,6 +465,7 @@ void estimator_example::check_xhat_a()
   } else if (xhat_a_(0) < radians(-max_phi)) {
     xhat_a_(0) = radians(-max_phi + buff);
     RCLCPP_WARN(this->get_logger(), "min roll angle");
+  }
   }
   
   if (!std::isfinite(xhat_a_(1))) {
@@ -489,7 +492,6 @@ void estimator_example::declare_parameters()
   params.declare_double("sigma_pseudo_wind_n", 0.01);
   params.declare_double("sigma_pseudo_wind_e", 0.01);
   params.declare_double("sigma_heading", 0.01);
-  params.declare_int("frequency", 100);
   params.declare_double("lpf_a", 50.0);
   params.declare_double("lpf_a1", 8.0);
   params.declare_double("gps_n_lim", 10000.);
