@@ -38,14 +38,14 @@ input_mapper::input_mapper() :
   set_param_timer_->cancel();
 
   path_follower_mode_service_ = this->create_service<std_srvs::srv::Trigger>(
-    "path_follower_mode", std::bind(&input_mapper::path_follower_mode_callback, this, _1, _2));
+    "/input_mapper/set_path_follower_mode", std::bind(&input_mapper::path_follower_mode_callback, this, _1, _2));
   altitude_course_airspeed_control_mode_service_ = this->create_service<std_srvs::srv::Trigger>(
-    "altitude_course_airspeed_control_mode",
+    "/input_mapper/set_altitude_course_airspeed_control_mode",
     std::bind(&input_mapper::altitude_course_airspeed_control_mode_callback, this, _1, _2));
   angle_control_mode_service_ = this->create_service<std_srvs::srv::Trigger>(
-    "angle_control_mode", std::bind(&input_mapper::angle_control_mode_callback, this, _1, _2));
+    "/input_mapper/set_angle_control_mode", std::bind(&input_mapper::angle_control_mode_callback, this, _1, _2));
   rc_passthrough_mode_service_ = this->create_service<std_srvs::srv::Trigger>(
-    "rc_passthrough_mode", std::bind(&input_mapper::rc_passthrough_mode_callback, this, _1, _2));
+    "/input_mapper/set_rc_passthrough_mode", std::bind(&input_mapper::rc_passthrough_mode_callback, this, _1, _2));
 
   last_command_time_ = this->now();
   mapped_controller_commands_msg_ = std::make_shared<rosplane_msgs::msg::ControllerCommands>();
@@ -172,11 +172,15 @@ void input_mapper::controller_commands_callback(const rosplane_msgs::msg::Contro
     mapped_controller_commands_msg_->chi_c += norm_aileron *
                                   params_.get_double("rc_course_rate") *
                                   elapsed_time;
+    mapped_controller_commands_msg_->chi_c = mapped_controller_commands_msg_->chi_c -
+      floor((mapped_controller_commands_msg_->chi_c - state_msg_->chi) / (2 * M_PI) + 0.5) *
+        2 * M_PI;
   } else if (aileron_input == "rc_roll_angle") {
     set_roll_override(true);
     mapped_controller_commands_msg_->phi_c = norm_aileron * params_.get_double("rc_roll_angle_min_max");
     mapped_controller_commands_msg_->chi_c = state_msg_->chi;
   } else if (aileron_input == "rc_aileron") {
+    mapped_controller_commands_msg_->chi_c = state_msg_->chi;
   } else {
     RCLCPP_ERROR(this->get_logger(), "Invalid aileron input type: %s. Valid options are "
                                      "path_follower, rc_course, rc_roll_angle, and rc_aileron."
@@ -199,6 +203,7 @@ void input_mapper::controller_commands_callback(const rosplane_msgs::msg::Contro
     mapped_controller_commands_msg_->theta_c = norm_elevator * params_.get_double("rc_pitch_angle_min_max");
     mapped_controller_commands_msg_->h_c = -state_msg_->position[2];
   } else if (elevator_input == "rc_elevator") {
+    mapped_controller_commands_msg_->h_c = -state_msg_->position[2];
   } else {
     RCLCPP_ERROR(this->get_logger(), "Invalid elevator input type: %s. Valid options are "
                                      "path_follower, rc_altitude, rc_pitch_angle, and rc_elevator. "
@@ -215,6 +220,7 @@ void input_mapper::controller_commands_callback(const rosplane_msgs::msg::Contro
                                  params_.get_double("rc_airspeed_rate") *
                                  elapsed_time;
   } else if (throttle_input == "rc_throttle") {
+    mapped_controller_commands_msg_->va_c = state_msg_->va;
   } else {
     RCLCPP_ERROR(this->get_logger(), "Invalid throttle input type: %s. Valid options are "
                                      "path_follower, rc_airspeed and rc_throttle. Setting to "
