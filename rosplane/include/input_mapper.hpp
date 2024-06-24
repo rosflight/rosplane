@@ -74,14 +74,14 @@ private:
   rclcpp::Time last_command_time_;
 
   /**
-   * This publisher publishes the mixed controller commands for the autopilot.
+   * This publisher publishes the mapped controller commands for the autopilot.
    */
   rclcpp::Publisher<rosplane_msgs::msg::ControllerCommands>::SharedPtr
-      mixed_controller_commands_pub_;
+      mapped_controller_commands_pub_;
   /**
-   * This publisher publishes the mixed command for the firmware.
+   * This publisher publishes the mapped command for the firmware.
    */
-  rclcpp::Publisher<rosflight_msgs::msg::Command>::SharedPtr mixed_command_pub_;
+  rclcpp::Publisher<rosflight_msgs::msg::Command>::SharedPtr mapped_command_pub_;
 
   /**
    * This subscriber subscribes to the path follower controller commands.
@@ -102,13 +102,13 @@ private:
   rclcpp::Subscription<rosplane_msgs::msg::State>::SharedPtr state_sub_;
 
   /**
-   * RC raw message, for storing the last RC input before being mixed and published.
+   * RC raw message, for storing the last RC input before being mapped and published.
    */
   rosflight_msgs::msg::RCRaw::SharedPtr rc_raw_msg_;
   /**
-   * Controller commands message, for storing the last commands after being mixed.
+   * Controller commands message, for storing the last commands after being mapped.
    */
-  rosplane_msgs::msg::ControllerCommands::SharedPtr mixed_controller_commands_msg_;
+  rosplane_msgs::msg::ControllerCommands::SharedPtr mapped_controller_commands_msg_;
   /**
    * State message, for storing the last state message received.
    */

@@ -48,10 +48,6 @@ def generate_launch_description():
 
     return LaunchDescription([
         launch.actions.DeclareLaunchArgument(
-            'controller_command_subscriber_remap',
-            default_value='/controller_command',
-        ),
-        launch.actions.DeclareLaunchArgument(
             'command_publisher_remap',
             default_value='/command',
         ),
@@ -63,7 +59,6 @@ def generate_launch_description():
             output='screen',
             arguments=[control_type],
             remappings=[
-                ('/controller_command', launch.substitutions.LaunchConfiguration('controller_command_subscriber_remap')),
                 ('/command', launch.substitutions.LaunchConfiguration('command_publisher_remap'))
             ]
         ),
@@ -77,7 +72,7 @@ def generate_launch_description():
             name='path_follower',
             parameters=[autopilot_params],
             remappings=[
-                ('/controller_command', launch.substitutions.LaunchConfiguration('controller_command_publisher_remap')),
+                ('/controller_command', launch.substitutions.LaunchConfiguration('controller_command_publisher_remap'))
             ]
         ),
         Node(
