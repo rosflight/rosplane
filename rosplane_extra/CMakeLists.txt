@@ -38,4 +38,10 @@ install(
   DESTINATION lib/${PROJECT_NAME}
 )
 
+# Launch files
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}/
+)
+
 ament_package()

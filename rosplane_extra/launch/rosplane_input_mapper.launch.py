@@ -13,7 +13,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         Node(
-            package='rosplane',
+            package='rosplane_extra',
             executable='input_mapper',
             name='input_mapper',
             output='screen',
