@@ -6,7 +6,6 @@
 #include <fstream>
 #include <iostream>
 #include <rclcpp/logging.hpp>
-//#include <sensor_msgs/nav_sat_status.hpp>
 
 namespace rosplane
 {
@@ -330,14 +329,11 @@ int main(int argc, char ** argv)
   
   rclcpp::init(argc, argv);
 
-  double init_lat = std::atof(argv[1]);
-  double init_long = std::atof(argv[2]);
-  double init_alt = std::atof(argv[3]);
+  char* use_params = argv[1];
 
-
-  if (init_lat != 0.0 || init_long != 0.0 || init_alt != 0.0)
+  if (!strcmp(use_params, "true"))
   {
-    rclcpp::spin(std::make_shared<rosplane::estimator_example>(init_lat, init_long, init_alt));
+    rclcpp::spin(std::make_shared<rosplane::estimator_example>(use_params));
   }
 
   rclcpp::spin(std::make_shared<rosplane::estimator_example>());

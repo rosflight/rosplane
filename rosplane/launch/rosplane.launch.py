@@ -11,10 +11,7 @@ def generate_launch_description():
     # Determine the appropriate control scheme.
     control_type = "default"
     aircraft = "skyhunter" # Default aircraft 
-    init_lat = "0.0" # init lat if seeding the estimator (typically not done)
-    init_long = "0.0"
-    init_alt = "0.0"
-    init_baro_alt = "0.0"
+    use_params = 'false'
 
     for arg in sys.argv:
         if arg.startswith("control_type:="):
@@ -23,20 +20,15 @@ def generate_launch_description():
         if arg.startswith("aircraft:="):
             aircraft = arg.split(":=")[1]
         
-        if arg.startswith("init_lat:="):
-            init_lat = float(arg.split(":=")[1])
-            assert isinstance(init_lat, float)
-            init_lat = str(init_lat)
+        if arg.startswith("seed_estimator:="):
+            use_params = arg.split(":=")[1].lower()
 
-        if arg.startswith("init_long:="):
-            init_long = float(arg.split(":=")[1])
-            assert isinstance(init_long, float)
-            init_long = str(init_long)
+            print(use_params)
 
-        if arg.startswith("init_alt:="):
-            init_alt = float(arg.split(":=")[1])
-            assert isinstance(init_alt, float)
-            init_alt = str(init_alt)
+            if use_params != 'true' and use_params != 'false':
+                print('Not a valid value for seed_estimator. Enter true or false.')
+                print('Defaulting to false.')
+                use_params = 'false'
     
     autopilot_params = os.path.join(
         rosplane_dir,
@@ -76,6 +68,6 @@ def generate_launch_description():
             name='estimator',
             output='screen',
             parameters = [autopilot_params],
-            arguments = [init_lat, init_long, init_alt, init_baro_alt]
+            arguments = [use_params]
         )
     ])
