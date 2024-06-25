@@ -108,9 +108,12 @@ private:
   void imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg);
   void baroAltCallback(const rosflight_msgs::msg::Barometer::SharedPtr msg);
   /**
-   * @brief Saves the barometer calibration for future use.
+   * @brief This saves parameters to the param file for later use.
+   *
+   * @param param_name The name of the parameter.
+   * @param param_val The value of the parameter.
    */
-  void saveBaroCalibration();
+  void saveParameter(std::string param_name, double param_val);
   void airspeedCallback(const rosflight_msgs::msg::Airspeed::SharedPtr msg);
   void statusCallback(const rosflight_msgs::msg::Status::SharedPtr msg);
 

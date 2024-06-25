@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <rclcpp/logging.hpp>
 //#include <sensor_msgs/nav_sat_status.hpp>
 
 namespace rosplane
@@ -65,6 +66,9 @@ void estimator_base::declare_parameters()
   params.declare_double("airspeed_measurement_gate", 5.0);  // TODO: this is a magic number. What is it determined from?
   params.declare_int("baro_calibration_count", 100);  // TODO: this is a magic number. What is it determined from?
   params.declare_double("baro_calibration_val", 0.0);
+  params.declare_double("init_lat", 0.0);
+  params.declare_double("init_lon", 0.0);
+  params.declare_double("init_alt", 0.0);
 }
 
 void estimator_base::set_timer() {
@@ -184,6 +188,9 @@ void estimator_base::gnssFixCallback(const sensor_msgs::msg::NavSatFix::SharedPt
     init_alt_ = msg->altitude;
     init_lat_ = msg->latitude;
     init_lon_ = msg->longitude;
+    saveParameter("init_lat", init_lat_);
+    saveParameter("init_lon", init_lon_);
+    saveParameter("init_alt", init_alt_);
   } else {
     input_.gps_n = EARTH_RADIUS * (msg->latitude - init_lat_) * M_PI / 180.0;
     input_.gps_e =
@@ -238,7 +245,7 @@ void estimator_base::baroAltCallback(const rosflight_msgs::msg::Barometer::Share
       init_static_ = std::accumulate(init_static_vector_.begin(), init_static_vector_.end(), 0.0)
         / init_static_vector_.size();
       baro_init_ = true;
-      saveBaroCalibration();
+      saveParameter("baro_calibration_val", init_static_);
 
       //Check that it got a good calibration.
       std::sort(init_static_vector_.begin(), init_static_vector_.end());
@@ -298,18 +305,18 @@ void estimator_base::statusCallback(const rosflight_msgs::msg::Status::SharedPtr
   if (!armed_first_time_ && msg->armed) armed_first_time_ = true;
 }
 
-void estimator_base::saveBaroCalibration()
+void estimator_base::saveParameter(std::string param_name, double param_val)
 {
 
   YAML::Node param_yaml_file = YAML::LoadFile(param_filepath_);
 
-  if (param_yaml_file["estimator"]["ros__parameters"]["baro_calibration_val"])
+  if (param_yaml_file["estimator"]["ros__parameters"][param_name])
   {
-    param_yaml_file["estimator"]["ros__parameters"]["baro_calibration_val"] = init_static_;
+    param_yaml_file["estimator"]["ros__parameters"][param_name] = param_val;
   }
   else 
   {
-    RCLCPP_ERROR(this->get_logger(), "Barometer calibration parameter is not in parameter file.");
+    RCLCPP_ERROR_STREAM(this->get_logger(), "Parameter [" << param_name << "] is not in parameter file.");
   }
 
   std::ofstream fout(param_filepath_);
