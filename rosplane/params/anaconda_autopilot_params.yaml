@@ -1,4 +1,4 @@
-autopilot: # node name.
+autopilot:
   ros__parameters:
     alt_hz: 10.0
     alt_toz: 5.0
@@ -31,7 +31,7 @@ autopilot: # node name.
     trim_t: 0.5
     max_e: 0.61
     max_a: 0.60
-    max_r: 0.523  # TODO: Was hardcoded as 1.0 in code...
+    max_r: 0.523
     max_t: 1.0
     pwm_rad_e: 1.0
     pwm_rad_a: 1.0
@@ -41,7 +41,6 @@ autopilot: # node name.
     gravity: 9.8
     max_roll: 35.0
     controller_output_frequency: 100.0
-
 path_manager:
   ros__parameters:
     R_min: 100.0
@@ -49,7 +48,6 @@ path_manager:
     default_altitude: 50.0
     default_airspeed: 25.0
     current_path_pub_frequency: 100.0
-
 path_follower:
   ros__parameters:
     controller_commands_pub_frequency: 10.0
@@ -57,7 +55,6 @@ path_follower:
     k_orbit: 4.0
     k_path: 0.05
     gravity: 9.81
-
 estimator:
   ros__parameters:
     rho: 1.225
@@ -72,3 +69,4 @@ estimator:
     gps_n_lim: 10000.
     gps_e_lim: 10000.
     frequency: 100
+    baro_calibration_val: 0.0

@@ -13,7 +13,8 @@
 #include <chrono>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <math.h>
-#include <numeric>
+#include <yaml-cpp/yaml.h>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rosflight_msgs/msg/airspeed.hpp>
 #include <rosflight_msgs/msg/barometer.hpp>
@@ -99,11 +100,17 @@ private:
   rclcpp::Subscription<rosflight_msgs::msg::Airspeed>::SharedPtr airspeed_sub_;
   rclcpp::Subscription<rosflight_msgs::msg::Status>::SharedPtr status_sub_;
 
+  std::string param_filepath_ = "estimator_params.yaml";
+
   void update();
   void gnssFixCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg);
   void gnssVelCallback(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
   void imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg);
   void baroAltCallback(const rosflight_msgs::msg::Barometer::SharedPtr msg);
+  /**
+   * @brief Saves the barometer calibration for future use.
+   */
+  void saveBaroCalibration();
   void airspeedCallback(const rosflight_msgs::msg::Airspeed::SharedPtr msg);
   void statusCallback(const rosflight_msgs::msg::Status::SharedPtr msg);
 

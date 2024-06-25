@@ -1,6 +1,5 @@
 #include "estimator_example.hpp"
 #include "estimator_base.hpp"
-#include <rclcpp/logging.hpp>
 
 namespace rosplane
 {
@@ -65,7 +64,6 @@ estimator_example::estimator_example(float init_lat, float init_long, float init
   init_lat_ = init_lat;
   init_lon_ = init_long;
   init_alt_ = init_alt;
-
 }
 
 void estimator_example::initialize_state_covariances() {

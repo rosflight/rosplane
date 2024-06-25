@@ -5,6 +5,7 @@
 
 #include <Eigen/Geometry>
 #include <math.h>
+#include <yaml-cpp/yaml.h>
 
 namespace rosplane
 {

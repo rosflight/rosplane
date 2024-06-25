@@ -1,6 +1,10 @@
 #include "estimator_base.hpp"
 #include "estimator_example.hpp"
 #include <cstdlib>
+#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
 //#include <sensor_msgs/nav_sat_status.hpp>
 
 namespace rosplane
@@ -40,6 +44,14 @@ estimator_base::estimator_base()
 
   params_initialized_ = true;
 
+  std::filesystem::path rosplane_dir = ament_index_cpp::get_package_share_directory("rosplane");
+
+  std::filesystem::path params_dir = "params";
+  std::filesystem::path params_file = "anaconda_autopilot_params.yaml";
+  std::filesystem::path full_path = rosplane_dir/params_dir/params_file;
+
+  param_filepath_ = full_path.string();
+
   set_timer();
 }
 
@@ -52,6 +64,7 @@ void estimator_base::declare_parameters()
   params.declare_double("baro_measurement_gate", 1.35);  // TODO: this is a magic number. What is it determined from?
   params.declare_double("airspeed_measurement_gate", 5.0);  // TODO: this is a magic number. What is it determined from?
   params.declare_int("baro_calibration_count", 100);  // TODO: this is a magic number. What is it determined from?
+  params.declare_double("baro_calibration_val", 0.0);
 }
 
 void estimator_base::set_timer() {
@@ -225,6 +238,7 @@ void estimator_base::baroAltCallback(const rosflight_msgs::msg::Barometer::Share
       init_static_ = std::accumulate(init_static_vector_.begin(), init_static_vector_.end(), 0.0)
         / init_static_vector_.size();
       baro_init_ = true;
+      saveBaroCalibration();
 
       //Check that it got a good calibration.
       std::sort(init_static_vector_.begin(), init_static_vector_.end());
@@ -282,6 +296,24 @@ void estimator_base::airspeedCallback(const rosflight_msgs::msg::Airspeed::Share
 void estimator_base::statusCallback(const rosflight_msgs::msg::Status::SharedPtr msg)
 {
   if (!armed_first_time_ && msg->armed) armed_first_time_ = true;
+}
+
+void estimator_base::saveBaroCalibration()
+{
+
+  YAML::Node param_yaml_file = YAML::LoadFile(param_filepath_);
+
+  if (param_yaml_file["estimator"]["ros__parameters"]["baro_calibration_val"])
+  {
+    param_yaml_file["estimator"]["ros__parameters"]["baro_calibration_val"] = init_static_;
+  }
+  else 
+  {
+    RCLCPP_ERROR(this->get_logger(), "Barometer calibration parameter is not in parameter file.");
+  }
+
+  std::ofstream fout(param_filepath_);
+  fout << param_yaml_file;
 }
 
 } // namespace rosplane
