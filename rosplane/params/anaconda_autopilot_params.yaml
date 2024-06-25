@@ -70,3 +70,6 @@ estimator:
     gps_e_lim: 10000.
     frequency: 100
     baro_calibration_val: 0.0
+    init_lat: 0.0
+    init_lon: 0.0
+    init_alt: 0.0
