@@ -13,6 +13,7 @@ class estimator_example : public estimator_base
 {
 public:
   estimator_example();
+  estimator_example(float init_lat, float init_long, float init_alt);
 
 private:
   virtual void estimate(const input_s & input, output_s & output);

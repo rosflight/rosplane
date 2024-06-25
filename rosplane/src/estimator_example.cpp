@@ -55,6 +55,19 @@ estimator_example::estimator_example()
   N_ = params.get_int("num_propagation_steps");
 }
 
+estimator_example::estimator_example(float init_lat, float init_long, float init_alt) : estimator_example()
+{
+  RCLCPP_INFO_STREAM(this->get_logger(), "init_lat: " << init_lat);
+  RCLCPP_INFO_STREAM(this->get_logger(), "init_long: " << init_long);
+  RCLCPP_INFO_STREAM(this->get_logger(), "init_alt: " << init_alt);
+
+  gps_init_ = true;
+  init_lat_ = init_lat;
+  init_lon_ = init_long;
+  init_alt_ = init_alt;
+
+}
+
 void estimator_example::initialize_state_covariances() {
   double pos_n_initial_cov = params.get_double("pos_n_initial_cov");
   double pos_e_initial_cov = params.get_double("pos_e_initial_cov");

@@ -202,8 +202,6 @@ int main(int argc, char * argv[])
   // Initialize ROS2 and then begin to spin control node.
   rclcpp::init(argc, argv);
 
-  std::cout << argv[1] << std::endl;
-
   if (strcmp(argv[1], "total_energy") == 0) {
     auto node = std::make_shared<rosplane::controller_total_energy>();
     RCLCPP_INFO_STREAM(node->get_logger(), "Using total energy control.");

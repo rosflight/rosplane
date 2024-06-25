@@ -84,6 +84,10 @@ protected:
 
 protected:
   param_manager params;
+  bool gps_init_;
+  double init_lat_ = 0.0;                 /**< Initial latitude in degrees */
+  double init_lon_ = 0.0;                 /**< Initial longitude in degrees */
+  float init_alt_ = 0.0;                  /**< Initial altitude in meters above MSL  */
 
 private:
   rclcpp::Publisher<rosplane_msgs::msg::State>::SharedPtr vehicle_state_pub_;
@@ -114,10 +118,6 @@ private:
   std::string status_topic_ = "status";
 
   bool gps_new_;
-  bool gps_init_;
-  double init_lat_ = 0.0;                 /**< Initial latitude in degrees */
-  double init_lon_ = 0.0;                 /**< Initial longitude in degrees */
-  float init_alt_ = 0.0;                  /**< Initial altitude in meters above MSL  */
   bool armed_first_time_;                 /**< Arm before starting estimation  */
   float init_static_;                     /**< Initial static pressure (mbar)  */
   int baro_count_;                        /**< Used to grab the first set of baro measurements */

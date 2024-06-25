@@ -1,5 +1,6 @@
 #include "estimator_base.hpp"
 #include "estimator_example.hpp"
+#include <cstdlib>
 //#include <sensor_msgs/nav_sat_status.hpp>
 
 namespace rosplane
@@ -287,7 +288,18 @@ void estimator_base::statusCallback(const rosflight_msgs::msg::Status::SharedPtr
 
 int main(int argc, char ** argv)
 {
+  
   rclcpp::init(argc, argv);
+
+  double init_lat = std::atof(argv[1]);
+  double init_long = std::atof(argv[2]);
+  double init_alt = std::atof(argv[3]);
+
+
+  if (init_lat != 0.0 || init_long != 0.0 || init_alt != 0.0)
+  {
+    rclcpp::spin(std::make_shared<rosplane::estimator_example>(init_lat, init_long, init_alt));
+  }
 
   rclcpp::spin(std::make_shared<rosplane::estimator_example>());
 
