@@ -113,6 +113,9 @@ install(TARGETS
 add_executable(rosplane_estimator_node
   src/estimator_base.cpp
   src/estimator_example.cpp)
+target_link_libraries(rosplane_estimator_node
+  ${YAML_CPP_LIBRARIES}
+)
 ament_target_dependencies(rosplane_estimator_node rosplane_msgs rosflight_msgs rclcpp Eigen3)
 target_link_libraries(rosplane_estimator_node param_manager)
 install(TARGETS

@@ -13,7 +13,8 @@
 #include <chrono>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <math.h>
-#include <numeric>
+#include <yaml-cpp/yaml.h>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rosflight_msgs/msg/airspeed.hpp>
 #include <rosflight_msgs/msg/barometer.hpp>
@@ -88,6 +89,7 @@ protected:
   double init_lat_ = 0.0;                 /**< Initial latitude in degrees */
   double init_lon_ = 0.0;                 /**< Initial longitude in degrees */
   float init_alt_ = 0.0;                  /**< Initial altitude in meters above MSL  */
+  float init_static_;                     /**< Initial static pressure (mbar)  */
 
 private:
   rclcpp::Publisher<rosplane_msgs::msg::State>::SharedPtr vehicle_state_pub_;
@@ -99,11 +101,20 @@ private:
   rclcpp::Subscription<rosflight_msgs::msg::Airspeed>::SharedPtr airspeed_sub_;
   rclcpp::Subscription<rosflight_msgs::msg::Status>::SharedPtr status_sub_;
 
+  std::string param_filepath_ = "estimator_params.yaml";
+
   void update();
   void gnssFixCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg);
   void gnssVelCallback(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
   void imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg);
   void baroAltCallback(const rosflight_msgs::msg::Barometer::SharedPtr msg);
+  /**
+   * @brief This saves parameters to the param file for later use.
+   *
+   * @param param_name The name of the parameter.
+   * @param param_val The value of the parameter.
+   */
+  void saveParameter(std::string param_name, double param_val);
   void airspeedCallback(const rosflight_msgs::msg::Airspeed::SharedPtr msg);
   void statusCallback(const rosflight_msgs::msg::Status::SharedPtr msg);
 
@@ -119,7 +130,6 @@ private:
 
   bool gps_new_;
   bool armed_first_time_;                 /**< Arm before starting estimation  */
-  float init_static_;                     /**< Initial static pressure (mbar)  */
   int baro_count_;                        /**< Used to grab the first set of baro measurements */
   std::vector<float> init_static_vector_; /**< Used to grab the first set of baro measurements */
 
