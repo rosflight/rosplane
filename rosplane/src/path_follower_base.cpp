@@ -15,7 +15,7 @@ path_follower_base::path_follower_base()
     std::bind(&path_follower_base::current_path_callback, this, _1)); // the 1 may need to be 100
 
   controller_commands_pub_ =
-    this->create_publisher<rosplane_msgs::msg::ControllerCommands>("controller_commands", 1);
+    this->create_publisher<rosplane_msgs::msg::ControllerCommands>("controller_command", 1);
 
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
     std::bind(&path_follower_base::parametersCallback, this, std::placeholders::_1));

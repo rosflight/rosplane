@@ -33,59 +33,75 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(rosflight_msgs REQUIRED)
 pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
 
-ament_export_dependencies(rclcpp rclpy)
-ament_export_include_directories(include)
-
-#install(DIRECTORY originalFiles DESTINATION share/${PROJECT_NAME}/)
-include_directories(  #use this if you need .h files for include statements.  The include will need to have the directories where each .h is respectively.
+include_directories(
   include
+  include/param_manager
   ${EIGEN3_INCLUDE_DIRS}
   ${GAZEBO_INCLUDE_DIRS}
   ${YAML_CPP_INCLUDEDIR}
 )
 
+### EXTRA FILES TO INSTALL ###
+
 install(DIRECTORY launch params DESTINATION share/${PROJECT_NAME}/)
 
-### START OF REAL EXECUTABLES ###
+### LIBRARIES ###
+
+# Param Manager
+add_library(param_manager
+  include/param_manager/param_manager.hpp
+  src/param_manager/param_manager.cpp
+)
+ament_target_dependencies(param_manager rclcpp)
+ament_export_targets(param_manager HAS_LIBRARY_TARGET)
+install(DIRECTORY include/param_manager DESTINATION include)
+install(TARGETS param_manager
+  EXPORT param_manager
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include
+)
+
+### START OF EXECUTABLES ###
 
 # Controller
 add_executable(rosplane_controller
-            src/controller_base.cpp
-            src/controller_state_machine.cpp
-            src/controller_successive_loop.cpp
-            src/controller_total_energy.cpp
-            src/param_manager.cpp)
+  src/controller_base.cpp
+  src/controller_state_machine.cpp
+  src/controller_successive_loop.cpp
+  src/controller_total_energy.cpp)
 ament_target_dependencies(rosplane_controller rosplane_msgs rosflight_msgs rclcpp rclpy Eigen3)
+target_link_libraries(rosplane_controller param_manager)
 install(TARGETS
   rosplane_controller
   DESTINATION lib/${PROJECT_NAME})
 
-
 # Follower
 add_executable(rosplane_path_follower
-            src/path_follower_example.cpp
-            src/path_follower_base.cpp
-            src/param_manager.cpp)
+  src/path_follower_example.cpp
+  src/path_follower_base.cpp)
 ament_target_dependencies(rosplane_path_follower rosplane_msgs rclcpp rclpy Eigen3)
+target_link_libraries(rosplane_path_follower param_manager)
 install(TARGETS
   rosplane_path_follower
   DESTINATION lib/${PROJECT_NAME})
 
 # Manager
 add_executable(rosplane_path_manager
-            src/path_manager_base.cpp
-            src/path_manager_example.cpp
-            src/param_manager.cpp)
+  src/path_manager_base.cpp
+  src/path_manager_example.cpp)
 ament_target_dependencies(rosplane_path_manager rosplane_msgs rclcpp rclpy Eigen3)
+target_link_libraries(rosplane_path_manager param_manager)
 install(TARGETS
   rosplane_path_manager
   DESTINATION lib/${PROJECT_NAME})
 
 # Planner
 add_executable(rosplane_path_planner
-            src/path_planner.cpp
-            src/param_manager.cpp)
+  src/path_planner.cpp)
 target_link_libraries(rosplane_path_planner
+  param_manager
   ${YAML_CPP_LIBRARIES}
 )
 ament_target_dependencies(rosplane_path_planner rosplane_msgs rosflight_msgs std_srvs rclcpp rclpy Eigen3)
@@ -95,16 +111,16 @@ install(TARGETS
 
 # Estimator
 add_executable(rosplane_estimator_node
-              src/estimator_base.cpp
-              src/estimator_example.cpp
-              src/param_manager.cpp)
+  src/estimator_base.cpp
+  src/estimator_example.cpp)
 target_link_libraries(rosplane_estimator_node
   ${YAML_CPP_LIBRARIES}
 )
 ament_target_dependencies(rosplane_estimator_node rosplane_msgs rosflight_msgs rclcpp Eigen3)
+target_link_libraries(rosplane_estimator_node param_manager)
 install(TARGETS
-        rosplane_estimator_node
-        DESTINATION lib/${PROJECT_NAME})
+  rosplane_estimator_node
+  DESTINATION lib/${PROJECT_NAME})
 
 #### END OF EXECUTABLES ###
 

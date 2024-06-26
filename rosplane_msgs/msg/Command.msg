@@ -1,4 +1,4 @@
-# Offboard control command message
+# Offboard control command message. Currently a duplicate of the command message in rosflight_msgs.
 
 # control mode flags
 uint8 MODE_PASS_THROUGH = 0
