@@ -1,5 +1,5 @@
-#include "estimator_example.hpp"
-#include "estimator_base.hpp"
+#include "estimator_continuous_discrete.hpp"
+#include "estimator_ros.hpp"
 
 namespace rosplane
 {
@@ -12,8 +12,8 @@ double wrap_within_180(double fixed_heading, double wrapped_heading)
   return wrapped_heading - floor((wrapped_heading - fixed_heading) / (2 * M_PI) + 0.5) * 2 * M_PI;
 }
 
-estimator_example::estimator_example()
-    : estimator_base()
+estimator_continuous_discrete::estimator_continuous_discrete()
+    : estimator_ros()
     , xhat_a_(Eigen::Vector2f::Zero())
     , P_a_(Eigen::Matrix2f::Identity())
     , xhat_p_(Eigen::VectorXf::Zero(7))
@@ -54,7 +54,7 @@ estimator_example::estimator_example()
   N_ = params.get_int("num_propagation_steps");
 }
 
-estimator_example::estimator_example(bool use_params) : estimator_example()
+estimator_continuous_discrete::estimator_continuous_discrete(bool use_params) : estimator_continuous_discrete()
 {
   double init_lat = params.get_double("init_lat");
   double init_long = params.get_double("init_lon");
@@ -76,7 +76,7 @@ estimator_example::estimator_example(bool use_params) : estimator_example()
   init_static_ = init_static;
 }
 
-void estimator_example::initialize_state_covariances() {
+void estimator_continuous_discrete::initialize_state_covariances() {
   double pos_n_initial_cov = params.get_double("pos_n_initial_cov");
   double pos_e_initial_cov = params.get_double("pos_e_initial_cov");
   double vg_initial_cov = params.get_double("vg_initial_cov");
@@ -95,7 +95,7 @@ void estimator_example::initialize_state_covariances() {
   P_p_(6, 6) = radians(psi_initial_cov);
 }
 
-void estimator_example::initialize_uncertainties() {
+void estimator_continuous_discrete::initialize_uncertainties() {
   double roll_process_noise = params.get_double("roll_process_noise");
   double pitch_process_noise = params.get_double("pitch_process_noise");
   double gyro_process_noise = params.get_double("gyro_process_noise");
@@ -115,7 +115,7 @@ void estimator_example::initialize_uncertainties() {
   initialize_state_covariances();
 }
 
-void estimator_example::update_measurement_model_parameters()
+void estimator_continuous_discrete::update_measurement_model_parameters()
 {
   // For readability, declare the parameters used in the function here
   double sigma_n_gps = params.get_double("sigma_n_gps");
@@ -145,7 +145,7 @@ void estimator_example::update_measurement_model_parameters()
   alpha1_ = exp(-lpf_a1 * Ts);
 }
 
-void estimator_example::estimate(const input_s & input, output_s & output)
+void estimator_continuous_discrete::estimate(const input_s & input, output_s & output)
 {
   // For readability, declare the parameters here
   double rho = params.get_double("rho");
@@ -467,7 +467,7 @@ void estimator_example::estimate(const input_s & input, output_s & output)
   output.psi = psihat;
 }
 
-void estimator_example::check_xhat_a()
+void estimator_continuous_discrete::check_xhat_a()
 {
   double max_phi = params.get_double("max_estimated_phi");
   double max_theta = params.get_double("max_estimated_theta");
@@ -503,7 +503,7 @@ void estimator_example::check_xhat_a()
   }
 }
 
-void estimator_example::declare_parameters()
+void estimator_continuous_discrete::declare_parameters()
 {
   params.declare_double("sigma_n_gps", .01);
   params.declare_double("sigma_e_gps", .01);

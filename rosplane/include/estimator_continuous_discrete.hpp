@@ -1,7 +1,7 @@
-#ifndef ESTIMATOR_EXAMPLE_H
-#define ESTIMATOR_EXAMPLE_H
+#ifndef ESTIMATOR_CONTINUOUS_DISCRETE_H
+#define ESTIMATOR_CONTINUOUS_DISCRETE_H
 
-#include "estimator_base.hpp"
+#include "estimator_ros.hpp"
 
 #include <Eigen/Geometry>
 #include <math.h>
@@ -10,11 +10,11 @@
 namespace rosplane
 {
 
-class estimator_example : public estimator_base
+class estimator_continuous_discrete : public estimator_ros
 {
 public:
-  estimator_example();
-  estimator_example(bool use_params);
+  estimator_continuous_discrete();
+  estimator_continuous_discrete(bool use_params);
 
 private:
   virtual void estimate(const input_s & input, output_s & output);
@@ -98,4 +98,4 @@ private:
 
 } // namespace rosplane
 
-#endif // ESTIMATOR_EXAMPLE_H
+#endif // ESTIMATOR_CONTINUOUS_DISCRETE_H

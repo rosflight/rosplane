@@ -1,13 +1,15 @@
 /**
- * @file estimator_base.h
+ * @file estimator_ros.h
  *
- * Base class definition for autopilot estimator in chapter 8 of UAVbook, see http://uavbook.byu.edu/doku.php
+ * ROS-interface class definition for autopilot estimator in chapter 8 of UAVbook, see http://uavbook.byu.edu/doku.php
  *
- * @author Gary Ellingson <gary.ellingson@byu.edu>
+ * Based on orignal work by Gary Ellingson.
+ *
+ * @author Ian Reid <ian.reid@byu.edu>
  */
 
-#ifndef ESTIMATOR_BASE_H
-#define ESTIMATOR_BASE_H
+#ifndef ESTIMATOR_ROS_H
+#define ESTIMATOR_ROS_H
 
 #include <Eigen/Eigen>
 #include <chrono>
@@ -32,10 +34,10 @@ using namespace std::chrono_literals;
 namespace rosplane
 {
 
-class estimator_base : public rclcpp::Node
+class estimator_ros : public rclcpp::Node
 {
 public:
-  estimator_base();
+  estimator_ros();
 
 protected:
   struct input_s
@@ -140,7 +142,7 @@ private:
   void declare_parameters();
 
   /**
-   * @brief Determines the period of a timer based on the ROS2 parameter and starts it 
+   * @brief Determines the period of a timer rosd on the ROS2 parameter and starts it 
    */
   void set_timer();
 
@@ -163,4 +165,4 @@ private:
 
 } // namespace rosplane
 
-#endif // ESTIMATOR_BASE_H
+#endif // ESTIMATOR_ROS_H
