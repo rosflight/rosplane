@@ -1,6 +1,5 @@
 #include "estimator_example.hpp"
 #include "estimator_base.hpp"
-#include <rclcpp/logging.hpp>
 
 namespace rosplane
 {
@@ -55,17 +54,26 @@ estimator_example::estimator_example()
   N_ = params.get_int("num_propagation_steps");
 }
 
-estimator_example::estimator_example(float init_lat, float init_long, float init_alt) : estimator_example()
+estimator_example::estimator_example(bool use_params) : estimator_example()
 {
-  RCLCPP_INFO_STREAM(this->get_logger(), "init_lat: " << init_lat);
-  RCLCPP_INFO_STREAM(this->get_logger(), "init_long: " << init_long);
-  RCLCPP_INFO_STREAM(this->get_logger(), "init_alt: " << init_alt);
+  double init_lat = params.get_double("init_lat");
+  double init_long = params.get_double("init_lon");
+  double init_alt = params.get_double("init_alt");
+  double init_static = params.get_double("baro_calibration_val");
+
+  RCLCPP_INFO_STREAM(this->get_logger(), "Using seeded estimator values.");
+  RCLCPP_INFO_STREAM(this->get_logger(), "Seeded initial latitude: " << init_lat);
+  RCLCPP_INFO_STREAM(this->get_logger(), "Seeded initial longitude: " << init_long);
+  RCLCPP_INFO_STREAM(this->get_logger(), "Seeded initial altitude: " << init_alt);
+  RCLCPP_INFO_STREAM(this->get_logger(), "Seeded barometer calibration value: " << init_static);
 
   gps_init_ = true;
   init_lat_ = init_lat;
   init_lon_ = init_long;
   init_alt_ = init_alt;
 
+  baro_init_ = true;
+  init_static_ = init_static;
 }
 
 void estimator_example::initialize_state_covariances() {
