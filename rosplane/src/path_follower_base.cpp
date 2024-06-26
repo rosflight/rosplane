@@ -10,13 +10,15 @@ path_follower_base::path_follower_base()
 {
   vehicle_state_sub_ = this->create_subscription<rosplane_msgs::msg::State>(
     "estimated_state", 10, std::bind(&path_follower_base::vehicle_state_callback, this, _1));
+
   current_path_sub_ = this->create_subscription<rosplane_msgs::msg::CurrentPath>(
     "current_path", 100,
-    std::bind(&path_follower_base::current_path_callback, this, _1)); // the 1 may need to be 100
+    std::bind(&path_follower_base::current_path_callback, this, _1));
 
   controller_commands_pub_ =
     this->create_publisher<rosplane_msgs::msg::ControllerCommands>("controller_commands", 1);
 
+  // Define the callback to handle on_set_parameter_callback events
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
     std::bind(&path_follower_base::parametersCallback, this, std::placeholders::_1));
 
@@ -34,6 +36,7 @@ path_follower_base::path_follower_base()
 }
 
 void path_follower_base::set_timer() {
+  // Convert the frequency to a period in microseconds
   double frequency = params.get_double("controller_commands_pub_frequency"); 
   timer_period_ = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1e6));
 
@@ -54,21 +57,12 @@ void path_follower_base::update()
 
     rclcpp::Time now = this->get_clock()->now();
 
+    // Populate the message with the required information
     msg.header.stamp = now;
-
     msg.chi_c = output.chi_c;
     msg.va_c = output.va_c;
     msg.h_c = output.h_c;
     msg.phi_ff = output.phi_ff;
-
-    RCLCPP_DEBUG_STREAM(this->get_logger(), "Publishing Contoller Commands!");
-
-    RCLCPP_DEBUG_STREAM(this->get_logger(), "chi_c: " << msg.chi_c);
-    RCLCPP_DEBUG_STREAM(this->get_logger(), "va_c: " << msg.va_c);
-    RCLCPP_DEBUG_STREAM(this->get_logger(), "h_c: " << msg.h_c);
-    RCLCPP_DEBUG_STREAM(this->get_logger(), "phi_ff: " << msg.phi_ff);
-
-    // RCLCPP_DEBUG_STREAM(this->get_logger(), "k_orbit: " << params.get_double("k_orbit"));
 
     controller_commands_pub_->publish(msg);
   }
@@ -90,10 +84,14 @@ void path_follower_base::vehicle_state_callback(const rosplane_msgs::msg::State:
 
 void path_follower_base::current_path_callback(const rosplane_msgs::msg::CurrentPath::SharedPtr msg)
 {
-  if (msg->path_type == msg->LINE_PATH) input_.p_type = path_type::Line;
-  else if (msg->path_type == msg->ORBIT_PATH)
+  if (msg->path_type == msg->LINE_PATH) {
+    input_.p_type = path_type::Line;
+  }
+  else if (msg->path_type == msg->ORBIT_PATH) {
     input_.p_type = path_type::Orbit;
+  }
 
+  // Populate the input message with the correct information
   input_.va_d = msg->va_d;
   for (int i = 0; i < 3; i++) {
     input_.r_path[i] = msg->r[i];
@@ -112,6 +110,7 @@ path_follower_base::parametersCallback(const std::vector<rclcpp::Parameter> & pa
   result.successful = false;
   result.reason = "One of the parameters given is not a parameter of the path_follower node";
 
+  // Update the param_manager object with the new parameters
   bool success = params.set_parameters_callback(parameters);
   if (success)
   {
@@ -119,6 +118,7 @@ path_follower_base::parametersCallback(const std::vector<rclcpp::Parameter> & pa
     result.reason = "success";
   }
 
+  // Check to see if the timer frequency parameter has changed
   if (params_initialized_ && success) {
     double frequency = params.get_double("controller_commands_pub_frequency");
 
