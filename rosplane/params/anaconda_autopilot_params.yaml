@@ -69,6 +69,7 @@ estimator:
     gps_n_lim: 10000.
     gps_e_lim: 10000.
     frequency: 100
+    # These will be overridden on each boot the workspace is symlink installed.
     baro_calibration_val: 0.0
     init_lat: 0.0
     init_lon: 0.0
