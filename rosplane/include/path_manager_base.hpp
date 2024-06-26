@@ -14,14 +14,14 @@
 #include <math.h>
 #include <rclcpp/rclcpp.hpp>
 #include <rosplane_msgs/msg/current_path.hpp>
-#include <rosplane_msgs/msg/state.hpp> // src/rosplane_msgs/msg/State.msg
+#include <rosplane_msgs/msg/state.hpp> 
 #include <rosplane_msgs/msg/waypoint.hpp>
 #include <sensor_msgs/msg/fluid_pressure.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <std_msgs/msg/float32.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
 #include <param_manager.hpp>
-//#include <rosplane/ControllerConfig.hpp>!!!
+
 using std::placeholders::_1;
 using namespace std::chrono_literals;
 
@@ -42,7 +42,7 @@ protected:
     float va_d;
   };
 
-  std::vector<waypoint_s> waypoints_;
+  std::vector<waypoint_s> waypoints_; /** Vector of waypoints maintained by path_manager */
   int num_waypoints_;
   int idx_a_; /** index to the waypoint that was most recently achieved */
 
@@ -68,8 +68,14 @@ protected:
     int8_t lamda; /** Direction of orbital path (cw is 1, ccw is -1) */
   };
 
-  param_manager params;   /** Holds the parameters for the path_manager and children */
+  param_manager params_;   /** Holds the parameters for the path_manager and children */
 
+  /**
+   * @brief Manages the current path based on the stored waypoint list
+   * 
+   * @param input: input_s object that contains information about the waypoint
+   * @param output: output_s object that contains the parameters for the desired type of line, based on the current and next waypoints
+   */
   virtual void manage(const struct input_s & input,
                       struct output_s & output) = 0;
 
@@ -84,15 +90,23 @@ private:
   rosplane_msgs::msg::State vehicle_state_; /**< vehicle state */
 
   bool params_initialized_;
+  bool state_init_;
   std::chrono::microseconds timer_period_;
   rclcpp::TimerBase::SharedPtr update_timer_;
-
-  void vehicle_state_callback(const rosplane_msgs::msg::State & msg);
-  bool state_init_;
-  void new_waypoint_callback(const rosplane_msgs::msg::Waypoint & msg);
-  void current_path_publish();
-
   OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
+
+  void vehicle_state_callback(const rosplane_msgs::msg::State & msg);   /** subscribes to the estimated state from the estimator */
+  void new_waypoint_callback(const rosplane_msgs::msg::Waypoint & msg); /** subscribes to waypoint messages from the path_planner */
+  void current_path_publish();  /** Publishes the current path to the path follower */
+
+
+  /**
+   * @brief Callback that gets triggered when a ROS2 parameter is changed
+   * 
+   * @param parameters: Vector of rclcpp::Parameter objects
+   * 
+   * @return SetParametersResult object with the success of the parameter change
+   */
   rcl_interfaces::msg::SetParametersResult
   parametersCallback(const std::vector<rclcpp::Parameter> & parameters);
 
