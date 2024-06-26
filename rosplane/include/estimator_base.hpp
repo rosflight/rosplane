@@ -62,7 +62,7 @@ protected:
     float pn;
     float pe;
     float h;
-    float Va;
+    float va;
     float alpha;
     float beta;
     float phi;
@@ -84,6 +84,10 @@ protected:
 
 protected:
   param_manager params;
+  bool gps_init_;
+  double init_lat_ = 0.0;                 /**< Initial latitude in degrees */
+  double init_lon_ = 0.0;                 /**< Initial longitude in degrees */
+  float init_alt_ = 0.0;                  /**< Initial altitude in meters above MSL  */
 
 private:
   rclcpp::Publisher<rosplane_msgs::msg::State>::SharedPtr vehicle_state_pub_;
@@ -103,8 +107,9 @@ private:
   void airspeedCallback(const rosflight_msgs::msg::Airspeed::SharedPtr msg);
   void statusCallback(const rosflight_msgs::msg::Status::SharedPtr msg);
 
-  // double update_rate_ = 100.0;
   rclcpp::TimerBase::SharedPtr update_timer_;
+  std::chrono::microseconds update_period_;
+  bool params_initialized_;
   std::string gnss_fix_topic_ = "navsat_compat/fix";
   std::string gnss_vel_topic_ = "navsat_compat/vel";
   std::string imu_topic_ = "imu/data";
@@ -113,10 +118,6 @@ private:
   std::string status_topic_ = "status";
 
   bool gps_new_;
-  bool gps_init_;
-  double init_lat_ = 0.0;                 /**< Initial latitude in degrees */
-  double init_lon_ = 0.0;                 /**< Initial longitude in degrees */
-  float init_alt_ = 0.0;                  /**< Initial altitude in meters above MSL  */
   bool armed_first_time_;                 /**< Arm before starting estimation  */
   float init_static_;                     /**< Initial static pressure (mbar)  */
   int baro_count_;                        /**< Used to grab the first set of baro measurements */
@@ -127,6 +128,11 @@ private:
    * It also sets the default parameter, which will then be overridden by a launch script.
    */
   void declare_parameters();
+
+  /**
+   * @brief Determines the period of a timer based on the ROS2 parameter and starts it 
+   */
+  void set_timer();
 
   /**
    * ROS2 parameter system interface. This connects ROS2 parameters with the defined update callback, parametersCallback.

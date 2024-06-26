@@ -13,6 +13,7 @@ class estimator_example : public estimator_base
 {
 public:
   estimator_example();
+  estimator_example(float init_lat, float init_long, float init_alt);
 
 private:
   virtual void estimate(const input_s & input, output_s & output);
@@ -42,7 +43,7 @@ private:
   float Vwhat_;
   float phihat_;
   float thetahat_;
-  float psihat_ = 0.0;     // TODO link to an inital condiditons param
+  float psihat_;     // TODO link to an inital condiditons param
   Eigen::Vector2f xhat_a_; // 2
   Eigen::Matrix2f P_a_;    // 2x2
 
@@ -67,21 +68,32 @@ private:
   Eigen::VectorXf C_p_; // 7
   Eigen::VectorXf L_p_; // 7
 
+  // TODO: not used
   float gate_threshold_ = 9.21; // chi2(q = .01, df = 2)
 
   void check_xhat_a();
 
   /**
-   * This declares each parameter as a parameter so that the ROS2 parameter system can recognize each parameter.
+   * @brief This declares each parameter as a parameter so that the ROS2 parameter system can recognize each parameter.
    * It also sets the default parameter, which will then be overridden by a launch script.
    */
   void declare_parameters();
 
   /**
-   * Initializes some variables that depend on ROS2 parameters
+   * @brief Initializes some variables that depend on ROS2 parameters
   */
-  void init_variables();
-};
+  void update_measurement_model_parameters();
+
+  /**
+   * @brief Initializes the covariance matrices and process noise matrices with the ROS2 parameters
+   */
+  void initialize_uncertainties();
+
+  /**
+   * @brief Initializes the state covariance matrix with the ROS2 parameters
+   */
+  void initialize_state_covariances();
+}; 
 
 } // namespace rosplane
 

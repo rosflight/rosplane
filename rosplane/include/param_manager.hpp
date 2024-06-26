@@ -38,16 +38,25 @@ public:
    * Helper functions to declare parameters in the param_manager object
    * Inserts a parameter into the parameter object and declares it with the ROS system
   */
-  void declare_param(std::string param_name, double value);
-  void declare_param(std::string param_name, bool value);
+  void declare_double(std::string param_name, double value);
+  void declare_bool(std::string param_name, bool value);
   void declare_int(std::string param_name, int64_t value);  
-  void declare_param(std::string param_name, std::string value);
+  void declare_string(std::string param_name, std::string value);
 
   /**
    * This sets the parameters with the values in the params_ object from the supplied parameter file, or sets them to
    * the default if no value is given for a parameter.
    */
-  void set_parameters();    
+  void set_parameters();
+
+  /**
+   * This function sets a previously declared parameter to a new value in both the parameter object
+   * and the ROS system.
+   */
+  void set_double(std::string param_name, double value);
+  void set_bool(std::string param_name, bool value);
+  void set_int(std::string param_name, int64_t value);
+  void set_string(std::string param_name, std::string value);
   
   /**
    * This function should be called in the parametersCallback function in a containing ROS node.
@@ -62,7 +71,7 @@ private:
   /**
    * Data structure to hold all of the parameters
   */
-  std::map<std::string, std::variant<double, bool, int64_t, std::string>> params_;   // Can I cast ROS int to int?
+  std::map<std::string, std::variant<double, bool, int64_t, std::string>> params_;
   rclcpp::Node * container_node_;
 };
 

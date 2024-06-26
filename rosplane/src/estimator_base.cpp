@@ -1,14 +1,14 @@
 #include "estimator_base.hpp"
 #include "estimator_example.hpp"
+#include <cstdlib>
 //#include <sensor_msgs/nav_sat_status.hpp>
 
 namespace rosplane
 {
 
 estimator_base::estimator_base()
-    : Node("estimator_base"), params(this)
+    : Node("estimator_base"), params(this), params_initialized_(false)
 {
-
   vehicle_state_pub_ = this->create_publisher<rosplane_msgs::msg::State>("estimated_state", 10);
 
   gnss_fix_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
@@ -24,25 +24,41 @@ estimator_base::estimator_base()
   status_sub_ = this->create_subscription<rosflight_msgs::msg::Status>(
     status_topic_, 10, std::bind(&estimator_base::statusCallback, this, std::placeholders::_1));
 
-  update_timer_ = this->create_wall_timer(10ms, std::bind(&estimator_base::update, this));
+  init_static_ = 0;
+  baro_count_ = 0;
+  armed_first_time_ = false;
+  baro_init_ = false;
+  gps_init_ = false;
 
   // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
     std::bind(&estimator_base::parametersCallback, this, std::placeholders::_1));
 
-  init_static_ = 0;
-  baro_count_ = 0;
-  armed_first_time_ = false;
-
   // Declare and set parameters with the ROS2 system
   declare_parameters();
   params.set_parameters();
+
+  params_initialized_ = true;
+
+  set_timer();
 }
 
 void estimator_base::declare_parameters()
 {
-  params.declare_param("rho", 1.225);
-  params.declare_param("gravity", 9.8);
+  params.declare_double("estimator_update_frequency", 100.0);
+  params.declare_double("rho", 1.225);
+  params.declare_double("gravity", 9.8);
+  params.declare_double("gps_ground_speed_threshold", 0.3);  // TODO: this is a magic number. What is it determined from?
+  params.declare_double("baro_measurement_gate", 1.35);  // TODO: this is a magic number. What is it determined from?
+  params.declare_double("airspeed_measurement_gate", 5.0);  // TODO: this is a magic number. What is it determined from?
+  params.declare_int("baro_calibration_count", 100);  // TODO: this is a magic number. What is it determined from?
+}
+
+void estimator_base::set_timer() {
+  double frequency = params.get_double("estimator_update_frequency");
+
+  update_period_ = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1'000'000));
+  update_timer_ = this->create_wall_timer(update_period_, std::bind(&estimator_base::update, this));
 }
 
 rcl_interfaces::msg::SetParametersResult 
@@ -60,6 +76,16 @@ estimator_base::parametersCallback(const std::vector<rclcpp::Parameter> & parame
       "One of the parameters given is not a parameter of the estimator node.";
   }
 
+  // Check to see if the timer period was changed. If it was, recreate the timer with the new period
+  if (params_initialized_ && success) {
+    std::chrono::microseconds curr_period = std::chrono::microseconds(static_cast<long long>(1.0 / params.get_double("estimator_update_frequency") * 1'000'000));
+    if (update_period_ != curr_period) {
+      update_timer_->cancel();
+      set_timer();
+    }
+
+  }
+
   return result;
 }
 
@@ -74,7 +100,7 @@ void estimator_base::update()
     output.phi = output.theta = output.psi = 0;
     output.alpha = output.beta = output.chi = 0;
     output.p = output.q = output.r = 0;
-    output.Va = 0;
+    output.va = 0;
   }
 
   input_.gps_new = false;
@@ -92,7 +118,7 @@ void estimator_base::update()
     msg.initial_lon = init_lon_;
     msg.initial_alt = init_alt_;
   }
-  msg.va = output.Va;
+  msg.va = output.va;
   msg.alpha = output.alpha;
   msg.beta = output.beta;
   msg.phi = output.phi;
@@ -117,9 +143,9 @@ void estimator_base::update()
   msg.quat[2] = q.y();
   msg.quat[3] = q.z();
 
-  msg.u = output.Va * cos(output.theta);
+  msg.u = output.va * cos(output.theta);
   msg.v = 0;
-  msg.w = output.Va * sin(output.theta);
+  msg.w = output.va * sin(output.theta);
 
   msg.psi_deg = fmod(output.psi, 2.0 * M_PI) * 180 / M_PI; //-360 to 360
   msg.psi_deg += (msg.psi_deg < -180 ? 360 : 0);
@@ -151,13 +177,14 @@ void estimator_base::gnssFixCallback(const sensor_msgs::msg::NavSatFix::SharedPt
       EARTH_RADIUS * cos(init_lat_ * M_PI / 180.0) * (msg->longitude - init_lon_) * M_PI / 180.0;
     input_.gps_h = msg->altitude - init_alt_;
     input_.gps_new = true;
-
-    //      RCLCPP_INFO_STREAM(this->get_logger(), "gps_n: " << input_.gps_n);
   }
 }
 
 void estimator_base::gnssVelCallback(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
 {
+  // Rename parameter here for clarity
+  double ground_speed_threshold = params.get_double("gps_ground_speed_threshold");
+
   double v_n = msg->twist.linear.x;
   double v_e = msg->twist.linear.y;
   //  double v_d = msg->twist.linear.z; // This variable was unused.
@@ -165,7 +192,7 @@ void estimator_base::gnssVelCallback(const geometry_msgs::msg::TwistStamped::Sha
   double course =
     atan2(v_e, v_n); //Does this need to be in a specific range? All uses seem to accept anything.
   input_.gps_Vg = ground_speed;
-  if (ground_speed > 0.3) //this is a magic number. What is it determined from?
+  if (ground_speed > ground_speed_threshold)
     input_.gps_course = course;
 }
 
@@ -185,9 +212,11 @@ void estimator_base::baroAltCallback(const rosflight_msgs::msg::Barometer::Share
   // For readability, declare the parameters here
   double rho = params.get_double("rho");
   double gravity = params.get_double("gravity");
+  double gate_gain_constant = params.get_double("baro_measurement_gate");
+  double baro_calib_count = params.get_int("baro_calibration_count");
 
   if (armed_first_time_ && !baro_init_) {
-    if (baro_count_ < 100) {
+    if (baro_count_ < baro_calib_count) {
       init_static_ += msg->pressure;
       init_static_vector_.push_back(msg->pressure);
       input_.static_pres = 0;
@@ -204,7 +233,7 @@ void estimator_base::baroAltCallback(const rosflight_msgs::msg::Barometer::Share
       float IQR = q3 - q1;
       float upper_bound = q3 + 2.0 * IQR;
       float lower_bound = q1 - 2.0 * IQR;
-      for (int i = 0; i < 100; i++) {
+      for (int i = 0; i < baro_calib_count; i++) {
         if (init_static_vector_[i] > upper_bound) {
           baro_init_ = false;
           baro_count_ = 0;
@@ -224,7 +253,7 @@ void estimator_base::baroAltCallback(const rosflight_msgs::msg::Barometer::Share
     float static_pres_old = input_.static_pres;
     input_.static_pres = -msg->pressure + init_static_;
 
-    float gate_gain = 1.35 * rho * gravity;
+    float gate_gain = gate_gain_constant * rho * gravity;
     if (input_.static_pres < static_pres_old - gate_gain) {
       input_.static_pres = static_pres_old - gate_gain;
     } else if (input_.static_pres > static_pres_old + gate_gain) {
@@ -237,11 +266,12 @@ void estimator_base::airspeedCallback(const rosflight_msgs::msg::Airspeed::Share
 {
   // For readability, declare the parameters here
   double rho = params.get_double("rho");
+  double gate_gain_constant = params.get_double("airspeed_measurement_gate");
 
   float diff_pres_old = input_.diff_pres;
   input_.diff_pres = msg->differential_pressure;
 
-  float gate_gain = pow(5, 2) * rho / 2.0;
+  float gate_gain = pow(gate_gain_constant, 2) * rho / 2.0;
   if (input_.diff_pres < diff_pres_old - gate_gain) {
     input_.diff_pres = diff_pres_old - gate_gain;
   } else if (input_.diff_pres > diff_pres_old + gate_gain) {
@@ -258,7 +288,18 @@ void estimator_base::statusCallback(const rosflight_msgs::msg::Status::SharedPtr
 
 int main(int argc, char ** argv)
 {
+  
   rclcpp::init(argc, argv);
+
+  double init_lat = std::atof(argv[1]);
+  double init_long = std::atof(argv[2]);
+  double init_alt = std::atof(argv[3]);
+
+
+  if (init_lat != 0.0 || init_long != 0.0 || init_alt != 0.0)
+  {
+    rclcpp::spin(std::make_shared<rosplane::estimator_example>(init_lat, init_long, init_alt));
+  }
 
   rclcpp::spin(std::make_shared<rosplane::estimator_example>());
 

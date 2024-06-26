@@ -80,7 +80,7 @@ protected:
     float p;      /**< body frame roll rate */
     float q;      /**< body frame pitch rate */
     float r;      /**< body frame yaw rate */
-    float Va_c;   /**< commanded airspeed (m/s) */
+    float va_c;   /**< commanded airspeed (m/s) */
     float h_c;    /**< commanded altitude (m) */
     float chi_c;  /**< commanded course (rad) */
     float phi_ff; /**< feed forward term for orbits (rad) */
@@ -137,6 +137,16 @@ private:
    * This timer controls how often commands are published by the autopilot.
    */
   rclcpp::TimerBase::SharedPtr timer_;
+  
+  /**
+   * Period of the timer that controlls how often commands are published.
+   */
+  std::chrono::microseconds timer_period_;
+
+  /**
+   * Flag that determines when params have been initialized to prevent errors when setting the timer
+   */
+  bool params_initialized_;
 
   /**
    * The stored value for the most up to date commands for the controller.

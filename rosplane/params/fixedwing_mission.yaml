@@ -1,8 +1,8 @@
 # WAYPOINTS
 wp:
-  w: [40.247, -111.648, 1700.0]
+  w: [40.247, -111.648, -50.0]
   chi_d: 1.1518
-  lla: True
+  lla: False
   use_chi: False
   va_d: 25.0
 wp:
