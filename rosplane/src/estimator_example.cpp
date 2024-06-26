@@ -61,9 +61,11 @@ estimator_example::estimator_example(bool use_params) : estimator_example()
   double init_alt = params.get_double("init_alt");
   double init_static = params.get_double("baro_calibration_val");
 
-  RCLCPP_INFO_STREAM(this->get_logger(), "init_lat: " << init_lat);
-  RCLCPP_INFO_STREAM(this->get_logger(), "init_long: " << init_long);
-  RCLCPP_INFO_STREAM(this->get_logger(), "init_alt: " << init_alt);
+  RCLCPP_INFO_STREAM(this->get_logger(), "Using seeded estimator values.");
+  RCLCPP_INFO_STREAM(this->get_logger(), "Seeded initial latitude: " << init_lat);
+  RCLCPP_INFO_STREAM(this->get_logger(), "Seeded initial longitude: " << init_long);
+  RCLCPP_INFO_STREAM(this->get_logger(), "Seeded initial altitude: " << init_alt);
+  RCLCPP_INFO_STREAM(this->get_logger(), "Seeded barometer calibration value: " << init_static);
 
   gps_init_ = true;
   init_lat_ = init_lat;

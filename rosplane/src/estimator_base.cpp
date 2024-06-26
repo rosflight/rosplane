@@ -2,6 +2,7 @@
 #include "estimator_example.hpp"
 #include <cstdlib>
 #include <ament_index_cpp/get_package_share_directory.hpp>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -182,7 +183,6 @@ void estimator_base::gnssFixCallback(const sensor_msgs::msg::NavSatFix::SharedPt
     return;
   }
   if (!gps_init_ && has_fix) {
-    RCLCPP_INFO_STREAM(this->get_logger(), "init_lat: " << msg->latitude);
     gps_init_ = true;
     init_alt_ = msg->altitude;
     init_lat_ = msg->latitude;
@@ -335,8 +335,17 @@ int main(int argc, char ** argv)
   {
     rclcpp::spin(std::make_shared<rosplane::estimator_example>(use_params));
   }
+  else if(strcmp(use_params, "false")) // If the string is not true or false print error.
+  {
+    auto estimator_node = std::make_shared<rosplane::estimator_example>();
+    RCLCPP_WARN(estimator_node->get_logger(), "Invalid option for seeding estimator, defaulting to unseeded.");
+    rclcpp::spin(estimator_node);
+  }
+  else 
+  {
+    rclcpp::spin(std::make_shared<rosplane::estimator_example>());
+  }
 
-  rclcpp::spin(std::make_shared<rosplane::estimator_example>());
 
   return 0;
 }

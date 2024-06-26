@@ -22,13 +22,6 @@ def generate_launch_description():
         
         if arg.startswith("seed_estimator:="):
             use_params = arg.split(":=")[1].lower()
-
-            print(use_params)
-
-            if use_params != 'true' and use_params != 'false':
-                print('Not a valid value for seed_estimator. Enter true or false.')
-                print('Defaulting to false.')
-                use_params = 'false'
     
     autopilot_params = os.path.join(
         rosplane_dir,
