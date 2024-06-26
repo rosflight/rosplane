@@ -1,4 +1,5 @@
 #include "param_manager.hpp"
+#include <variant>
 
 namespace rosplane
 {
@@ -153,7 +154,7 @@ void param_manager::set_parameters()
 {
 
   // Get the parameters from the launch file, if given.
-  // If not, use the default value defined in the header file.
+  // If not, use the default value defined at declaration
   for (const auto& [key, value] : params_)
   {
     auto type = container_node_->get_parameter(key).get_type();
