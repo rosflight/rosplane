@@ -66,7 +66,7 @@ path_planner::~path_planner() {}
 void path_planner::publish_initial_waypoints() {
   int num_waypoints_to_publish_at_start = this->get_parameter("num_waypoints_to_publish_at_start").as_int();
 
-  RCLCPP_INFO_STREAM(this->get_logger(), "Path Planner will publish the first {" << num_waypoints_to_publish_at_start << "} available waypoints!");
+  RCLCPP_INFO_STREAM_ONCE(this->get_logger(), "Path Planner will publish the first {" << num_waypoints_to_publish_at_start << "} available waypoints!");
 
   // Publish the first waypoints as defined by the num_waypoints_to_publish_at_start parameter
   while (num_waypoints_published_ < num_waypoints_to_publish_at_start && num_waypoints_published_ < (int) wps.size()) {
@@ -157,6 +157,8 @@ bool path_planner::update_path(const rosplane_msgs::srv::AddWaypoint::Request::S
     res->message = "Adding " + lla_or_ned + " waypoint was successful!";
   }
 
+  publish_initial_waypoints();
+
   res->success = true;
   return true;
 }
@@ -214,6 +216,7 @@ bool path_planner::load_mission(const rosflight_msgs::srv::ParamFile::Request::S
                                 const rosflight_msgs::srv::ParamFile::Response::SharedPtr & res) {
   clear_path();
   res->success = load_mission_from_file(req->filename);
+  publish_initial_waypoints();
   return true;
 }
 
