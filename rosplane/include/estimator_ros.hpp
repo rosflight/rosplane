@@ -85,7 +85,6 @@ protected:
   virtual void estimate(const struct input_s & input,
                         struct output_s & output) = 0;
 
-protected:
   param_manager params;
   bool gps_init_;
   double init_lat_ = 0.0;                 /**< Initial latitude in degrees */

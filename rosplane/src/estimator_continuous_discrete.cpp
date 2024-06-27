@@ -51,8 +51,7 @@ estimator_continuous_discrete::estimator_continuous_discrete()
   // Inits R matrix and alpha values with ROS2 parameters
   update_measurement_model_parameters();
 
-  N_ = params.get_int("num_propagation_steps");
-}
+  N_ = params.get_int("num_propagation_steps");}
 
 estimator_continuous_discrete::estimator_continuous_discrete(bool use_params) : estimator_continuous_discrete()
 {
