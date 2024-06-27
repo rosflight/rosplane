@@ -11,15 +11,16 @@ estimator_ekf::estimator_ekf() : estimator_ros()
 {}
   
 std::tuple<Eigen::MatrixXf, Eigen::VectorXf> estimator_ekf::measurement_update(Eigen::VectorXf x,
-                                                                std::function<Eigen::VectorXf(Eigen::VectorXf)> measurement_model,
+                                                                Eigen::VectorXf inputs,
+                                                                std::function<Eigen::VectorXf(const Eigen::VectorXf, const Eigen::VectorXf)> measurement_model,
                                                                 Eigen::VectorXf y,
-                                                                std::function<Eigen::MatrixXf(Eigen::VectorXf)> measurement_jacobian,
+                                                                std::function<Eigen::MatrixXf(const Eigen::VectorXf, const Eigen::VectorXf)> measurement_jacobian,
                                                                 Eigen::MatrixXf R,
                                                                 Eigen::MatrixXf P)
 {
   
-  Eigen::VectorXf h = measurement_model(x);
-  Eigen::MatrixXf C = measurement_jacobian(x);
+  Eigen::VectorXf h = measurement_model(x, inputs);
+  Eigen::MatrixXf C = measurement_jacobian(x, inputs);
   
   // Find the S_inv to find the Kalman gain.
   Eigen::MatrixXf S_inv = (R + C * P * C.transpose()).inverse();

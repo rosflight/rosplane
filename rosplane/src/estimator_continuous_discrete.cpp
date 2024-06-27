@@ -2,6 +2,7 @@
 #include "Eigen/src/Core/Matrix.h"
 #include "estimator_ros.hpp"
 #include <functional>
+#include <rclcpp/logging.hpp>
 #include <tuple>
 
 namespace rosplane
@@ -51,7 +52,7 @@ Eigen::MatrixXf estimator_continuous_discrete::attitude_jacobian(const Eigen::Ve
     return A;
 }
 
-Eigen::MatrixXf estimator_continuous_discrete::attitude_input_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& anglular_rates)
+Eigen::MatrixXf estimator_continuous_discrete::attitude_input_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& inputs)
 {
   float cp = cosf(state(0)); // cos(phi)
   float sp = sinf(state(0)); // sin(phi)
@@ -63,9 +64,57 @@ Eigen::MatrixXf estimator_continuous_discrete::attitude_input_jacobian(const Eig
   return G;
 }
 
+Eigen::VectorXf estimator_continuous_discrete::attitude_measurement_prediction(const Eigen::VectorXf& state, const Eigen::VectorXf& inputs)
+{
+  double gravity = params.get_double("gravity");
+  float cp = cosf(state(0)); // cos(phi)
+  float sp = sinf(state(0)); // sin(phi)
+  float st = sinf(state(1)); // sin(theta)
+  float ct = cosf(state(1)); // cos(theta)
+  
+  float p = inputs(0);
+  float q = inputs(1);
+  float r = inputs(2);
+  float va = inputs(3);
+
+  Eigen::Vector3f h;
+  h = Eigen::Vector3f::Zero(3);
+  h(0) = q * va * st + gravity * st;
+  h(1) = r * va * ct - p * va * st - gravity * ct * sp;
+  h(2) = -q * va * ct - gravity * ct * cp;
+
+  return h;
+}
+
+Eigen::MatrixXf estimator_continuous_discrete::attitude_measurement_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& inputs)
+{
+  double gravity = params.get_double("gravity");
+  float cp = cosf(state(0));
+  float sp = sinf(state(0));
+  float ct = cosf(state(1));
+  float st = sinf(state(1));
+  
+  float p = inputs(0);
+  float q = inputs(1);
+  float r = inputs(2);
+  float va = inputs(3);
+
+  Eigen::Matrix<float, 3, 2> C;
+
+  C << 0.0, q * va * ct + gravity * ct, -gravity * cp * ct,
+    -r * va * st - p * va * ct + gravity * sp * st, gravity * sp * ct,
+    (q * va + gravity * cp) * st;
+
+  return C;
+}
 
 estimator_continuous_discrete::estimator_continuous_discrete()
     : estimator_ekf()
+    , attitude_dynamics_model(std::bind(&estimator_continuous_discrete::attitude_dynamics, this, std::placeholders::_1, std::placeholders::_2))
+    , attitude_jacobian_model(std::bind(&estimator_continuous_discrete::attitude_jacobian, this, std::placeholders::_1, std::placeholders::_2))
+    , attitude_input_jacobian_model(std::bind(&estimator_continuous_discrete::attitude_input_jacobian, this, std::placeholders::_1, std::placeholders::_2))
+    , attitude_measurement_model(std::bind(&estimator_continuous_discrete::attitude_measurement_prediction, this, std::placeholders::_1, std::placeholders::_2))
+    , attitude_measurement_jacobian_model(std::bind(&estimator_continuous_discrete::attitude_measurement_jacobian, this, std::placeholders::_1, std::placeholders::_2))
     , xhat_a_(Eigen::Vector2f::Zero())
     , P_a_(Eigen::Matrix2f::Identity())
     , xhat_p_(Eigen::VectorXf::Zero(7))
@@ -244,54 +293,25 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
   lpf_accel_x_ = alpha_ * lpf_accel_x_ + (1 - alpha_) * input.accel_x;
   lpf_accel_y_ = alpha_ * lpf_accel_y_ + (1 - alpha_) * input.accel_y;
   lpf_accel_z_ = alpha_ * lpf_accel_z_ + (1 - alpha_) * input.accel_z;
+  
+  Eigen::Vector4f inputs;
+  inputs << angular_rates, vahat;
+  
+  Eigen::Vector3f y;
+  y << lpf_accel_x_, lpf_accel_y_, lpf_accel_z_;
 
   // implement continuous-discrete EKF to estimate roll and pitch angles
   // prediction step
-  float cp; // cos(phi)
-  float sp; // sin(phi)
-  float tt; // tan(thata)
-  float ct; // cos(thata)F
-  float st; // sin(theta) std::bind(&MyClass::memberFunction, &myObject, std::placeholders::_1)
-  
-  std::tie(P_a_, xhat_a_) = propagate_model(xhat_a_,
-                                            std::bind(&estimator_continuous_discrete::attitude_dynamics, this, std::placeholders::_1, std::placeholders::_2),
-                                            std::bind(&estimator_continuous_discrete::attitude_jacobian, this, std::placeholders::_1, std::placeholders::_2),
-                                            angular_rates,
-                                            std::bind(&estimator_continuous_discrete::attitude_input_jacobian, this, std::placeholders::_1, std::placeholders::_2),
-                                            P_a_,
-                                            Q_a_,
-                                            Q_g_,
-                                            Ts);
+  std::tie(P_a_, xhat_a_) = propagate_model(xhat_a_, attitude_dynamics_model, attitude_jacobian_model, angular_rates,
+                                            attitude_input_jacobian_model, P_a_, Q_a_, Q_g_, Ts);
 
-  // measurement updates
-  cp = cosf(xhat_a_(0));
-  sp = sinf(xhat_a_(0));
-  ct = cosf(xhat_a_(1));
-  st = sinf(xhat_a_(1));
-  Eigen::Matrix2f I;
-  I = Eigen::Matrix2f::Identity();
-
-  h_a_ = Eigen::Vector3f::Zero(3);
-  h_a_(0) = qhat * vahat * st + gravity * st;
-  h_a_(1) = rhat * vahat * ct - phat * vahat * st - gravity * ct * sp;
-  h_a_(2) = -qhat * vahat * ct - gravity * ct * cp;
-
-  C_a_ << 0.0, qhat * vahat * ct + gravity * ct, -gravity * cp * ct,
-    -rhat * vahat * st - phat * vahat * ct + gravity * sp * st, gravity * sp * ct,
-    (qhat * vahat + gravity * cp) * st;
-
-  // This calculates the Kalman Gain for all of the attitude states at once rather than one at a time.
-
-  Eigen::Vector3f y;
-
-  y << lpf_accel_x_, lpf_accel_y_, lpf_accel_z_;
-
-  Eigen::MatrixXf S_inv = (R_accel_ + C_a_ * P_a_ * C_a_.transpose()).inverse();
-  Eigen::MatrixXf L_a_ = P_a_ * C_a_.transpose() * S_inv;
-  Eigen::MatrixXf temp = Eigen::MatrixXf::Identity(2, 2) - L_a_ * C_a_;
-
-  P_a_ = temp * P_a_ * temp.transpose() + L_a_ * R_accel_ * L_a_.transpose();
-  xhat_a_ = xhat_a_ + L_a_ * (y - h_a_);
+  std::tie(P_a_, xhat_a_) = measurement_update(xhat_a_,
+                                               inputs,
+                                               attitude_measurement_model,
+                                               y,
+                                               attitude_measurement_jacobian_model,
+                                               R_accel_,
+                                               P_a_);
 
   check_xhat_a();
 

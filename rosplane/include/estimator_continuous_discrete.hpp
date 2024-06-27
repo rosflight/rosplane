@@ -49,8 +49,20 @@ private:
   
 
   Eigen::VectorXf attitude_dynamics(const Eigen::VectorXf& state, const Eigen::VectorXf& measurements);
+  std::function<Eigen::VectorXf(const Eigen::VectorXf, const Eigen::VectorXf)> attitude_dynamics_model;
+
   Eigen::MatrixXf attitude_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& anglular_rates);
+  std::function<Eigen::MatrixXf(const Eigen::VectorXf&, const Eigen::VectorXf&)> attitude_jacobian_model;
+
   Eigen::MatrixXf attitude_input_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& anglular_rates);
+  std::function<Eigen::MatrixXf(const Eigen::VectorXf&, const Eigen::VectorXf&)> attitude_input_jacobian_model;
+  
+  Eigen::VectorXf attitude_measurement_prediction(const Eigen::VectorXf& state, const Eigen::VectorXf& inputs);
+  std::function<Eigen::VectorXf(const Eigen::VectorXf, const Eigen::VectorXf)> attitude_measurement_model;
+
+  Eigen::MatrixXf attitude_measurement_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& inputs);
+  std::function<Eigen::MatrixXf(const Eigen::VectorXf, const Eigen::VectorXf)> attitude_measurement_jacobian_model;
+
   Eigen::Vector2f xhat_a_; // 2
   Eigen::Matrix2f P_a_;    // 2x2
 

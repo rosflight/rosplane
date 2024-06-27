@@ -18,16 +18,17 @@ public:
 
 protected:
   std::tuple<Eigen::MatrixXf, Eigen::VectorXf> measurement_update(Eigen::VectorXf x,
-                                                                  std::function<Eigen::VectorXf(Eigen::VectorXf)> measurement_model,
+                                                                  Eigen::VectorXf inputs,
+                                                                  std::function<Eigen::VectorXf(const Eigen::VectorXf, const Eigen::VectorXf)> measurement_model,
                                                                   Eigen::VectorXf y,
-                                                                  std::function<Eigen::MatrixXf(Eigen::VectorXf)> measurement_jacobian,
+                                                                  std::function<Eigen::MatrixXf(const Eigen::VectorXf, const Eigen::VectorXf)> measurement_jacobian,
                                                                   Eigen::MatrixXf R,
                                                                   Eigen::MatrixXf P);
   std::tuple<Eigen::MatrixXf, Eigen::VectorXf> propagate_model(Eigen::VectorXf x,
                                                                std::function<Eigen::VectorXf(const Eigen::VectorXf&, const Eigen::VectorXf&)> dynamic_model,
                                                                std::function<Eigen::MatrixXf(const Eigen::VectorXf&, const Eigen::VectorXf&)> jacobian,
                                                                Eigen::VectorXf inputs,
-                                                             std::function<Eigen::MatrixXf(const Eigen::VectorXf&, const Eigen::VectorXf&)> input_jacobian,
+                                                               std::function<Eigen::MatrixXf(const Eigen::VectorXf&, const Eigen::VectorXf&)> input_jacobian,
                                                                Eigen::MatrixXf P,
                                                                Eigen::MatrixXf Q,
                                                                Eigen::MatrixXf Q_g,
