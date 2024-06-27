@@ -1,6 +1,7 @@
 #ifndef ESTIMATOR_CONTINUOUS_DISCRETE_H
 #define ESTIMATOR_CONTINUOUS_DISCRETE_H
 
+#include "estimator_ekf.hpp"
 #include "estimator_ros.hpp"
 
 #include <Eigen/Geometry>
@@ -10,7 +11,7 @@
 namespace rosplane
 {
 
-class estimator_continuous_discrete : public estimator_ros
+class estimator_continuous_discrete : public estimator_ekf
 {
 public:
   estimator_continuous_discrete();

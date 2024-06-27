@@ -13,7 +13,7 @@ double wrap_within_180(double fixed_heading, double wrapped_heading)
 }
 
 estimator_continuous_discrete::estimator_continuous_discrete()
-    : estimator_ros()
+    : estimator_ekf()
     , xhat_a_(Eigen::Vector2f::Zero())
     , P_a_(Eigen::Matrix2f::Identity())
     , xhat_p_(Eigen::VectorXf::Zero(7))

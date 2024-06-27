@@ -18,40 +18,22 @@ public:
 
 protected:
   std::tuple<Eigen::MatrixXf, Eigen::VectorXf> measurement_update(Eigen::VectorXf x,
-                                                                  Eigen::VectorXf u,
-                                                                  Eigen::VectorXf h,
+                                                                  std::function<Eigen::VectorXf(Eigen::VectorXf)> measurement_model,
                                                                   Eigen::VectorXf y,
+                                                                  std::function<Eigen::MatrixXf(Eigen::VectorXf)> measurement_jacobian,
                                                                   Eigen::MatrixXf R,
-                                                                  Eigen::MatrixXf C,
-                                                                  Eigen::MatrixXf P,
-                                                                  float Ts);        
+                                                                  Eigen::MatrixXf P);
   std::tuple<Eigen::MatrixXf, Eigen::VectorXf> propagate_model(Eigen::VectorXf x,
-                                                               Eigen::VectorXf f,
-                                                               Eigen::MatrixXf A,
-                                                               Eigen::MatrixXf P,
-                                                               Eigen::MatrixXf G,
+                                                               std::function<Eigen::VectorXf(Eigen::VectorXf)> dynamic_model,
+                                                               std::function<Eigen::MatrixXf(Eigen::VectorXf)> jacobian,
                                                                Eigen::MatrixXf Q_g,
+                                                               std::function<Eigen::MatrixXf(Eigen::VectorXf)> input_jacobian,
+                                                               Eigen::MatrixXf P,
                                                                Eigen::MatrixXf Q,
                                                                float Ts);          
 
 private:
   virtual void estimate(const input_s & input, output_s & output) override = 0;
-  void check_measurment_update_input(Eigen::VectorXf x,
-                                     Eigen::VectorXf u,
-                                     Eigen::VectorXf h,
-                                     Eigen::VectorXf y,
-                                     Eigen::MatrixXf R,
-                                     Eigen::MatrixXf C,
-                                     Eigen::MatrixXf P,
-                                     float Ts);        
-  void check_propagate_model_input(Eigen::VectorXf x,
-                                     Eigen::VectorXf f,
-                                     Eigen::MatrixXf A,
-                                     Eigen::MatrixXf P,
-                                     Eigen::MatrixXf G,
-                                     Eigen::MatrixXf Q_g,
-                                     Eigen::MatrixXf Q,
-                                     float Ts);          
 }; 
 
 } // namespace rosplane
