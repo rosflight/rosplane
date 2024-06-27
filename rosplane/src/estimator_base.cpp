@@ -1,7 +1,12 @@
 #include "estimator_base.hpp"
 #include "estimator_example.hpp"
 #include <cstdlib>
-//#include <sensor_msgs/nav_sat_status.hpp>
+#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <rclcpp/logging.hpp>
 
 namespace rosplane
 {
@@ -40,6 +45,14 @@ estimator_base::estimator_base()
 
   params_initialized_ = true;
 
+  std::filesystem::path rosplane_dir = ament_index_cpp::get_package_share_directory("rosplane");
+
+  std::filesystem::path params_dir = "params";
+  std::filesystem::path params_file = "anaconda_autopilot_params.yaml";
+  std::filesystem::path full_path = rosplane_dir/params_dir/params_file;
+
+  param_filepath_ = full_path.string();
+
   set_timer();
 }
 
@@ -52,6 +65,10 @@ void estimator_base::declare_parameters()
   params.declare_double("baro_measurement_gate", 1.35);  // TODO: this is a magic number. What is it determined from?
   params.declare_double("airspeed_measurement_gate", 5.0);  // TODO: this is a magic number. What is it determined from?
   params.declare_int("baro_calibration_count", 100);  // TODO: this is a magic number. What is it determined from?
+  params.declare_double("baro_calibration_val", 0.0);
+  params.declare_double("init_lat", 0.0);
+  params.declare_double("init_lon", 0.0);
+  params.declare_double("init_alt", 0.0);
 }
 
 void estimator_base::set_timer() {
@@ -166,11 +183,13 @@ void estimator_base::gnssFixCallback(const sensor_msgs::msg::NavSatFix::SharedPt
     return;
   }
   if (!gps_init_ && has_fix) {
-    RCLCPP_INFO_STREAM(this->get_logger(), "init_lat: " << msg->latitude);
     gps_init_ = true;
     init_alt_ = msg->altitude;
     init_lat_ = msg->latitude;
     init_lon_ = msg->longitude;
+    saveParameter("init_lat", init_lat_);
+    saveParameter("init_lon", init_lon_);
+    saveParameter("init_alt", init_alt_);
   } else {
     input_.gps_n = EARTH_RADIUS * (msg->latitude - init_lat_) * M_PI / 180.0;
     input_.gps_e =
@@ -225,6 +244,7 @@ void estimator_base::baroAltCallback(const rosflight_msgs::msg::Barometer::Share
       init_static_ = std::accumulate(init_static_vector_.begin(), init_static_vector_.end(), 0.0)
         / init_static_vector_.size();
       baro_init_ = true;
+      saveParameter("baro_calibration_val", init_static_);
 
       //Check that it got a good calibration.
       std::sort(init_static_vector_.begin(), init_static_vector_.end());
@@ -284,6 +304,24 @@ void estimator_base::statusCallback(const rosflight_msgs::msg::Status::SharedPtr
   if (!armed_first_time_ && msg->armed) armed_first_time_ = true;
 }
 
+void estimator_base::saveParameter(std::string param_name, double param_val)
+{
+
+  YAML::Node param_yaml_file = YAML::LoadFile(param_filepath_);
+
+  if (param_yaml_file["estimator"]["ros__parameters"][param_name])
+  {
+    param_yaml_file["estimator"]["ros__parameters"][param_name] = param_val;
+  }
+  else 
+  {
+    RCLCPP_ERROR_STREAM(this->get_logger(), "Parameter [" << param_name << "] is not in parameter file.");
+  }
+
+  std::ofstream fout(param_filepath_);
+  fout << param_yaml_file;
+}
+
 } // namespace rosplane
 
 int main(int argc, char ** argv)
@@ -291,17 +329,23 @@ int main(int argc, char ** argv)
   
   rclcpp::init(argc, argv);
 
-  double init_lat = std::atof(argv[1]);
-  double init_long = std::atof(argv[2]);
-  double init_alt = std::atof(argv[3]);
+  char* use_params = argv[1];
 
-
-  if (init_lat != 0.0 || init_long != 0.0 || init_alt != 0.0)
+  if (!strcmp(use_params, "true"))
   {
-    rclcpp::spin(std::make_shared<rosplane::estimator_example>(init_lat, init_long, init_alt));
+    rclcpp::spin(std::make_shared<rosplane::estimator_example>(use_params));
+  }
+  else if(strcmp(use_params, "false")) // If the string is not true or false print error.
+  {
+    auto estimator_node = std::make_shared<rosplane::estimator_example>();
+    RCLCPP_WARN(estimator_node->get_logger(), "Invalid option for seeding estimator, defaulting to unseeded.");
+    rclcpp::spin(estimator_node);
+  }
+  else 
+  {
+    rclcpp::spin(std::make_shared<rosplane::estimator_example>());
   }
 
-  rclcpp::spin(std::make_shared<rosplane::estimator_example>());
 
   return 0;
 }
