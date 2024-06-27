@@ -1,6 +1,8 @@
 #include "estimator_continuous_discrete.hpp"
 #include "Eigen/src/Core/Matrix.h"
 #include "estimator_ros.hpp"
+#include <functional>
+#include <tuple>
 
 namespace rosplane
 {
@@ -15,10 +17,6 @@ double wrap_within_180(double fixed_heading, double wrapped_heading)
 
 Eigen::VectorXf estimator_continuous_discrete::attitude_dynamics(const Eigen::VectorXf& state, const Eigen::VectorXf& anglular_rates)
 {
-    int N = params.get_int("num_propagation_steps");
-    double frequency = params.get_double("estimator_update_frequency");
-    double Ts = 1.0 / frequency;
-
     float cp = cosf(state(0)); // cos(phi)
     float sp = sinf(state(0)); // sin(phi)
     float tt = tanf(state(1)); // tan(theta)
@@ -32,11 +30,7 @@ Eigen::VectorXf estimator_continuous_discrete::attitude_dynamics(const Eigen::Ve
     f(0) = p + (q * sp + r * cp) * tt;
     f(1) = q * cp - r * sp;
 
-    Eigen::Vector2f new_state;
-
-    new_state = state + f * (Ts / N);
-
-    return new_state;
+    return f;
 }
 
 Eigen::MatrixXf estimator_continuous_discrete::attitude_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& anglular_rates)
@@ -56,6 +50,19 @@ Eigen::MatrixXf estimator_continuous_discrete::attitude_jacobian(const Eigen::Ve
 
     return A;
 }
+
+Eigen::MatrixXf estimator_continuous_discrete::attitude_input_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& anglular_rates)
+{
+  float cp = cosf(state(0)); // cos(phi)
+  float sp = sinf(state(0)); // sin(phi)
+  float tt = tanf(state(1)); // tan(theta)
+
+  Eigen::Matrix<float, 2, 3> G;
+  G << 1, sp * tt, cp * tt, 0.0, cp, -sp;
+
+  return G;
+}
+
 
 estimator_continuous_discrete::estimator_continuous_discrete()
     : estimator_ekf()
@@ -244,27 +251,18 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
   float sp; // sin(phi)
   float tt; // tan(thata)
   float ct; // cos(thata)F
-  float st; // sin(theta)
-  for (int i = 0; i < N_; i++) {
+  float st; // sin(theta) std::bind(&MyClass::memberFunction, &myObject, std::placeholders::_1)
+  
+  std::tie(P_a_, xhat_a_) = propagate_model(xhat_a_,
+                                            std::bind(&estimator_continuous_discrete::attitude_dynamics, this, std::placeholders::_1, std::placeholders::_2),
+                                            std::bind(&estimator_continuous_discrete::attitude_jacobian, this, std::placeholders::_1, std::placeholders::_2),
+                                            angular_rates,
+                                            std::bind(&estimator_continuous_discrete::attitude_input_jacobian, this, std::placeholders::_1, std::placeholders::_2),
+                                            P_a_,
+                                            Q_a_,
+                                            Q_g_,
+                                            Ts);
 
-    xhat_a_ = attitude_dynamics(xhat_a_, angular_rates);
-
-    A_a_ = attitude_jacobian(xhat_a_, angular_rates);
-
-    cp = cosf(xhat_a_(0)); // cos(phi)
-    sp = sinf(xhat_a_(0)); // sin(phi)
-    tt = tanf(xhat_a_(1)); // tan(theta)
-    ct = cosf(xhat_a_(1)); // cos(theta)
-
-    Eigen::MatrixXf A_d = Eigen::MatrixXf::Identity(2, 2) + Ts / N_ * A_a_
-      + pow(Ts / N_, 2) / 2.0 * A_a_ * A_a_;
-
-    Eigen::Matrix<float, 2, 3> G;
-    G << 1, sp * tt, cp * tt, 0.0, cp, -sp;
-
-    P_a_ =
-      (A_d * P_a_ * A_d.transpose() + (Q_a_ + G * Q_g_ * G.transpose()) * pow(Ts / N_, 2));
-  }
   // measurement updates
   cp = cosf(xhat_a_(0));
   sp = sinf(xhat_a_(0));

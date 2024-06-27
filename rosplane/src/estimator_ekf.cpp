@@ -49,8 +49,6 @@ std::tuple<Eigen::MatrixXf, Eigen::VectorXf> estimator_ekf::propagate_model(Eige
                                                              float Ts)
 {
 
-  // check_propagate_model_input(x, f, A, P, G, Q_g, Q, Ts); // TODO: Add back in!
-
   int N = params.get_int("num_propagation_steps");
 
   for (int _ = 0; _ < N; _++)
@@ -69,7 +67,7 @@ std::tuple<Eigen::MatrixXf, Eigen::VectorXf> estimator_ekf::propagate_model(Eige
     Eigen::MatrixXf G = input_jacobian(x, inputs);
 
     // Propagate the covariance.
-    P = A_d * P * A_d.transpose() + (Q + G * Q_g * G.transpose() * pow(Ts / N, 2));
+    P = A_d * P * A_d.transpose() + (Q + G * Q_g * G.transpose()) * pow(Ts / N, 2);
     
   }
 
