@@ -57,38 +57,64 @@ protected:
   param_manager params;
 
 private:
+  /**
+   * Subscribes to state from the estimator
+   */
   rclcpp::Subscription<rosplane_msgs::msg::State>::SharedPtr vehicle_state_sub_;
+
+  /** 
+   * Subscribes to the current_path topic from the path manager
+   */
   rclcpp::Subscription<rosplane_msgs::msg::CurrentPath>::SharedPtr current_path_sub_;
 
+  /**
+   * Publishes commands to the controller
+   */
   rclcpp::Publisher<rosplane_msgs::msg::ControllerCommands>::SharedPtr controller_commands_pub_;
   
-  bool params_initialized_;
   std::chrono::microseconds timer_period_;
   rclcpp::TimerBase::SharedPtr update_timer_;
+
+  bool params_initialized_;
+  bool state_init_;
+  bool current_path_init_;
+
+  OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
+  rosplane_msgs::msg::ControllerCommands controller_commands_;
+  struct input_s input_;
 
   /**
    * @brief Sets the timer with the timer period as specified by the ROS2 parameters
    */
   void set_timer();
 
-  rosplane_msgs::msg::ControllerCommands controller_commands_;
-  struct input_s input_;
-
+  /**
+   * @brief Callback for the subscribed state messages from the estimator
+   */
   void vehicle_state_callback(const rosplane_msgs::msg::State::SharedPtr msg);
-  bool state_init_;
-  void current_path_callback(const rosplane_msgs::msg::CurrentPath::SharedPtr msg);
-  bool current_path_init_;
 
+  /**
+   * @brief Callback for the subscribed current_path messages from the path_manager
+   */
+  void current_path_callback(const rosplane_msgs::msg::CurrentPath::SharedPtr msg);
+
+  /**
+   * @brief Calculates and publishes the commands messages
+   */
   void update();
 
-  OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
-
+  /**
+   * @brief Callback for when ROS2 parameters change.
+   * 
+   * @param Vector of rclcpp::Parameter objects that have changed
+   * @return SetParametersResult object that describes the success or failure of the request
+   */
   rcl_interfaces::msg::SetParametersResult
   parametersCallback(const std::vector<rclcpp::Parameter> & parameters);
 
   /**
    * This declares each parameter as a parameter so that the ROS2 parameter system can recognize each parameter.
-   * It also sets the default parameter, which can be overridden by a launch script.
+   * It also sets the default parameter, which can be overridden by a parameter file
    */
   void declare_parameters();
 };
