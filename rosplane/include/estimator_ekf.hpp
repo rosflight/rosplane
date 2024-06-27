@@ -24,12 +24,13 @@ protected:
                                                                   Eigen::MatrixXf R,
                                                                   Eigen::MatrixXf P);
   std::tuple<Eigen::MatrixXf, Eigen::VectorXf> propagate_model(Eigen::VectorXf x,
-                                                               std::function<Eigen::VectorXf(Eigen::VectorXf)> dynamic_model,
+                                                               std::function<Eigen::VectorXf(const Eigen::VectorXf&, const Eigen::VectorXf&)> dynamic_model,
                                                                std::function<Eigen::MatrixXf(Eigen::VectorXf)> jacobian,
-                                                               Eigen::MatrixXf Q_g,
+                                                               Eigen::VectorXf inputs,
                                                                std::function<Eigen::MatrixXf(Eigen::VectorXf)> input_jacobian,
                                                                Eigen::MatrixXf P,
                                                                Eigen::MatrixXf Q,
+                                                               Eigen::MatrixXf Q_g,
                                                                float Ts);          
 
 private:

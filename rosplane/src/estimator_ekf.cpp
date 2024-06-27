@@ -38,12 +38,13 @@ std::tuple<Eigen::MatrixXf, Eigen::VectorXf> estimator_ekf::measurement_update(E
 }
 
 std::tuple<Eigen::MatrixXf, Eigen::VectorXf> estimator_ekf::propagate_model(Eigen::VectorXf x,
-                                                             std::function<Eigen::VectorXf(Eigen::VectorXf)> dynamic_model,
+                                                             std::function<Eigen::VectorXf(const Eigen::VectorXf&, const Eigen::VectorXf&)> dynamic_model,
                                                              std::function<Eigen::MatrixXf(Eigen::VectorXf)> jacobian,
-                                                             Eigen::MatrixXf Q_g,
+                                                             Eigen::VectorXf inputs,
                                                              std::function<Eigen::MatrixXf(Eigen::VectorXf)> input_jacobian,
                                                              Eigen::MatrixXf P,
                                                              Eigen::MatrixXf Q,
+                                                             Eigen::MatrixXf Q_g,
                                                              float Ts)
 {
 
@@ -54,7 +55,7 @@ std::tuple<Eigen::MatrixXf, Eigen::VectorXf> estimator_ekf::propagate_model(Eige
   for (int _ = 0; _ < N; _++)
   {
 
-    Eigen::VectorXf f = dynamic_model(x);
+    Eigen::VectorXf f = dynamic_model(x, inputs);
     // Propagate model by a step.
     x += f * (Ts/N);
 

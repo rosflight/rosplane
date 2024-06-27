@@ -45,7 +45,10 @@ private:
   float Vwhat_;
   float phihat_;
   float thetahat_;
-  float psihat_;     // TODO link to an inital condiditons param
+  float psihat_;     // TODO: link to an inital condiditons param
+  
+
+  Eigen::VectorXf attitude_dynamics(const Eigen::VectorXf& state, const Eigen::VectorXf& measurements);
   Eigen::Vector2f xhat_a_; // 2
   Eigen::Matrix2f P_a_;    // 2x2
 

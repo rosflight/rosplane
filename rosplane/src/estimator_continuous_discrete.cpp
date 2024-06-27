@@ -12,6 +12,32 @@ double wrap_within_180(double fixed_heading, double wrapped_heading)
   return wrapped_heading - floor((wrapped_heading - fixed_heading) / (2 * M_PI) + 0.5) * 2 * M_PI;
 }
 
+Eigen::VectorXf estimator_continuous_discrete::attitude_dynamics(const Eigen::VectorXf& state, const Eigen::VectorXf& anglular_rates)
+{
+    int N = params.get_int("num_propagation_steps");
+    double frequency = params.get_double("estimator_update_frequency");
+    double Ts = 1.0 / frequency;
+
+    float cp = cosf(state(0)); // cos(phi)
+    float sp = sinf(state(0)); // sin(phi)
+    float tt = tanf(state(1)); // tan(theta)
+    
+    float p = anglular_rates(0);
+    float q = anglular_rates(1);
+    float r = anglular_rates(2);
+    
+    Eigen::Vector2f f;
+
+    f(0) = p + (q * sp + r * cp) * tt;
+    f(1) = q * cp - r * sp;
+
+    Eigen::Vector2f new_state;
+
+    new_state = state + f * (Ts / N);
+
+    return new_state;
+}
+
 estimator_continuous_discrete::estimator_continuous_discrete()
     : estimator_ekf()
     , xhat_a_(Eigen::Vector2f::Zero())
