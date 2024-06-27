@@ -1,4 +1,5 @@
 #include "estimator_continuous_discrete.hpp"
+#include "Eigen/src/Core/Matrix.h"
 #include "estimator_ros.hpp"
 
 namespace rosplane
@@ -36,6 +37,24 @@ Eigen::VectorXf estimator_continuous_discrete::attitude_dynamics(const Eigen::Ve
     new_state = state + f * (Ts / N);
 
     return new_state;
+}
+
+Eigen::MatrixXf estimator_continuous_discrete::attitude_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& anglular_rates)
+{
+    float cp = cosf(state(0)); // cos(phi)
+    float sp = sinf(state(0)); // sin(phi)
+    float tt = tanf(state(1)); // tan(theta)
+    float ct = cosf(state(1)); // cos(theta)
+    
+    float q = anglular_rates(1);
+    float r = anglular_rates(2);
+
+  Eigen::Matrix2f A = Eigen::Matrix2f::Zero();
+    A(0, 0) = (q * cp - r * sp) * tt;
+    A(0, 1) = (q * sp + r * cp) / ct / ct;
+    A(1, 0) = -q * sp - r * cp;
+
+    return A;
 }
 
 estimator_continuous_discrete::estimator_continuous_discrete()
@@ -192,6 +211,9 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
   float qhat = lpf_gyro_y_;
   float rhat = lpf_gyro_z_;
 
+  Eigen::Vector3f angular_rates;
+  angular_rates << phat, qhat, rhat;
+
   // low pass filter static pressure sensor and invert to esimate altitude
   lpf_static_ = alpha1_ * lpf_static_ + (1 - alpha1_) * input.static_pres;
   float hhat = lpf_static_ / rho / gravity;
@@ -225,25 +247,14 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
   float st; // sin(theta)
   for (int i = 0; i < N_; i++) {
 
-    cp = cosf(xhat_a_(0)); // cos(phi)
-    sp = sinf(xhat_a_(0)); // sin(phi)
-    tt = tanf(xhat_a_(1)); // tan(theta)
-    ct = cosf(xhat_a_(1)); // cos(theta)
+    xhat_a_ = attitude_dynamics(xhat_a_, angular_rates);
 
-    f_a_(0) = phat + (qhat * sp + rhat * cp) * tt;
-    f_a_(1) = qhat * cp - rhat * sp;
-
-    xhat_a_ += f_a_ * (Ts / N_);
+    A_a_ = attitude_jacobian(xhat_a_, angular_rates);
 
     cp = cosf(xhat_a_(0)); // cos(phi)
     sp = sinf(xhat_a_(0)); // sin(phi)
     tt = tanf(xhat_a_(1)); // tan(theta)
     ct = cosf(xhat_a_(1)); // cos(theta)
-
-    A_a_ = Eigen::Matrix2f::Zero();
-    A_a_(0, 0) = (qhat * cp - rhat * sp) * tt;
-    A_a_(0, 1) = (qhat * sp + rhat * cp) / ct / ct;
-    A_a_(1, 0) = -qhat * sp - rhat * cp;
 
     Eigen::MatrixXf A_d = Eigen::MatrixXf::Identity(2, 2) + Ts / N_ * A_a_
       + pow(Ts / N_, 2) / 2.0 * A_a_ * A_a_;

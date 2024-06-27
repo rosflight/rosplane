@@ -1,4 +1,5 @@
 #include "estimator_ekf.hpp"
+#include "Eigen/src/Core/Matrix.h"
 #include "estimator_ros.hpp"
 #include <functional>
 #include <tuple>
@@ -39,9 +40,9 @@ std::tuple<Eigen::MatrixXf, Eigen::VectorXf> estimator_ekf::measurement_update(E
 
 std::tuple<Eigen::MatrixXf, Eigen::VectorXf> estimator_ekf::propagate_model(Eigen::VectorXf x,
                                                              std::function<Eigen::VectorXf(const Eigen::VectorXf&, const Eigen::VectorXf&)> dynamic_model,
-                                                             std::function<Eigen::MatrixXf(Eigen::VectorXf)> jacobian,
+                                                             std::function<Eigen::MatrixXf(const Eigen::VectorXf&, const Eigen::VectorXf&)> jacobian,
                                                              Eigen::VectorXf inputs,
-                                                             std::function<Eigen::MatrixXf(Eigen::VectorXf)> input_jacobian,
+                                                             std::function<Eigen::MatrixXf(const Eigen::VectorXf&, const Eigen::VectorXf&)> input_jacobian,
                                                              Eigen::MatrixXf P,
                                                              Eigen::MatrixXf Q,
                                                              Eigen::MatrixXf Q_g,
@@ -59,13 +60,13 @@ std::tuple<Eigen::MatrixXf, Eigen::VectorXf> estimator_ekf::propagate_model(Eige
     // Propagate model by a step.
     x += f * (Ts/N);
 
-    Eigen::MatrixXf A = jacobian(x);
+    Eigen::MatrixXf A = jacobian(x, inputs);
     
     // Find the second order approx of the matrix exponential.
     Eigen::MatrixXf A_d = Eigen::MatrixXf::Identity(A.rows(), A.cols()) + Ts / N * A
       + pow(Ts / N, 2) / 2.0 * A * A;
 
-    Eigen::MatrixXf G = input_jacobian(x);
+    Eigen::MatrixXf G = input_jacobian(x, inputs);
 
     // Propagate the covariance.
     P = A_d * P * A_d.transpose() + (Q + G * Q_g * G.transpose() * pow(Ts / N, 2));

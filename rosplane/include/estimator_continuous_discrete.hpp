@@ -49,6 +49,7 @@ private:
   
 
   Eigen::VectorXf attitude_dynamics(const Eigen::VectorXf& state, const Eigen::VectorXf& measurements);
+  Eigen::MatrixXf attitude_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& anglular_rates);
   Eigen::Vector2f xhat_a_; // 2
   Eigen::Matrix2f P_a_;    // 2x2
 
