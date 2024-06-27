@@ -16,98 +16,6 @@ double wrap_within_180(double fixed_heading, double wrapped_heading)
   return wrapped_heading - floor((wrapped_heading - fixed_heading) / (2 * M_PI) + 0.5) * 2 * M_PI;
 }
 
-Eigen::VectorXf estimator_continuous_discrete::attitude_dynamics(const Eigen::VectorXf& state, const Eigen::VectorXf& anglular_rates)
-{
-    float cp = cosf(state(0)); // cos(phi)
-    float sp = sinf(state(0)); // sin(phi)
-    float tt = tanf(state(1)); // tan(theta)
-    
-    float p = anglular_rates(0);
-    float q = anglular_rates(1);
-    float r = anglular_rates(2);
-    
-    Eigen::Vector2f f;
-
-    f(0) = p + (q * sp + r * cp) * tt;
-    f(1) = q * cp - r * sp;
-
-    return f;
-}
-
-Eigen::MatrixXf estimator_continuous_discrete::attitude_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& anglular_rates)
-{
-    float cp = cosf(state(0)); // cos(phi)
-    float sp = sinf(state(0)); // sin(phi)
-    float tt = tanf(state(1)); // tan(theta)
-    float ct = cosf(state(1)); // cos(theta)
-    
-    float q = anglular_rates(1);
-    float r = anglular_rates(2);
-
-  Eigen::Matrix2f A = Eigen::Matrix2f::Zero();
-    A(0, 0) = (q * cp - r * sp) * tt;
-    A(0, 1) = (q * sp + r * cp) / ct / ct;
-    A(1, 0) = -q * sp - r * cp;
-
-    return A;
-}
-
-Eigen::MatrixXf estimator_continuous_discrete::attitude_input_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& inputs)
-{
-  float cp = cosf(state(0)); // cos(phi)
-  float sp = sinf(state(0)); // sin(phi)
-  float tt = tanf(state(1)); // tan(theta)
-
-  Eigen::Matrix<float, 2, 3> G;
-  G << 1, sp * tt, cp * tt, 0.0, cp, -sp;
-
-  return G;
-}
-
-Eigen::VectorXf estimator_continuous_discrete::attitude_measurement_prediction(const Eigen::VectorXf& state, const Eigen::VectorXf& inputs)
-{
-  double gravity = params.get_double("gravity");
-  float cp = cosf(state(0)); // cos(phi)
-  float sp = sinf(state(0)); // sin(phi)
-  float st = sinf(state(1)); // sin(theta)
-  float ct = cosf(state(1)); // cos(theta)
-  
-  float p = inputs(0);
-  float q = inputs(1);
-  float r = inputs(2);
-  float va = inputs(3);
-
-  Eigen::Vector3f h;
-  h = Eigen::Vector3f::Zero(3);
-  h(0) = q * va * st + gravity * st;
-  h(1) = r * va * ct - p * va * st - gravity * ct * sp;
-  h(2) = -q * va * ct - gravity * ct * cp;
-
-  return h;
-}
-
-Eigen::MatrixXf estimator_continuous_discrete::attitude_measurement_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& inputs)
-{
-  double gravity = params.get_double("gravity");
-  float cp = cosf(state(0));
-  float sp = sinf(state(0));
-  float ct = cosf(state(1));
-  float st = sinf(state(1));
-  
-  float p = inputs(0);
-  float q = inputs(1);
-  float r = inputs(2);
-  float va = inputs(3);
-
-  Eigen::Matrix<float, 3, 2> C;
-
-  C << 0.0, q * va * ct + gravity * ct, -gravity * cp * ct,
-    -r * va * st - p * va * ct + gravity * sp * st, gravity * sp * ct,
-    (q * va + gravity * cp) * st;
-
-  return C;
-}
-
 estimator_continuous_discrete::estimator_continuous_discrete()
     : estimator_ekf()
     , attitude_dynamics_model(std::bind(&estimator_continuous_discrete::attitude_dynamics, this, std::placeholders::_1, std::placeholders::_2))
@@ -519,6 +427,98 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
   output.wn = wnhat;
   output.we = wehat;
   output.psi = psihat;
+}
+
+Eigen::VectorXf estimator_continuous_discrete::attitude_dynamics(const Eigen::VectorXf& state, const Eigen::VectorXf& anglular_rates)
+{
+    float cp = cosf(state(0)); // cos(phi)
+    float sp = sinf(state(0)); // sin(phi)
+    float tt = tanf(state(1)); // tan(theta)
+    
+    float p = anglular_rates(0);
+    float q = anglular_rates(1);
+    float r = anglular_rates(2);
+    
+    Eigen::Vector2f f;
+
+    f(0) = p + (q * sp + r * cp) * tt;
+    f(1) = q * cp - r * sp;
+
+    return f;
+}
+
+Eigen::MatrixXf estimator_continuous_discrete::attitude_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& anglular_rates)
+{
+    float cp = cosf(state(0)); // cos(phi)
+    float sp = sinf(state(0)); // sin(phi)
+    float tt = tanf(state(1)); // tan(theta)
+    float ct = cosf(state(1)); // cos(theta)
+    
+    float q = anglular_rates(1);
+    float r = anglular_rates(2);
+
+  Eigen::Matrix2f A = Eigen::Matrix2f::Zero();
+    A(0, 0) = (q * cp - r * sp) * tt;
+    A(0, 1) = (q * sp + r * cp) / ct / ct;
+    A(1, 0) = -q * sp - r * cp;
+
+    return A;
+}
+
+Eigen::MatrixXf estimator_continuous_discrete::attitude_input_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& inputs)
+{
+  float cp = cosf(state(0)); // cos(phi)
+  float sp = sinf(state(0)); // sin(phi)
+  float tt = tanf(state(1)); // tan(theta)
+
+  Eigen::Matrix<float, 2, 3> G;
+  G << 1, sp * tt, cp * tt, 0.0, cp, -sp;
+
+  return G;
+}
+
+Eigen::VectorXf estimator_continuous_discrete::attitude_measurement_prediction(const Eigen::VectorXf& state, const Eigen::VectorXf& inputs)
+{
+  double gravity = params.get_double("gravity");
+  float cp = cosf(state(0)); // cos(phi)
+  float sp = sinf(state(0)); // sin(phi)
+  float st = sinf(state(1)); // sin(theta)
+  float ct = cosf(state(1)); // cos(theta)
+  
+  float p = inputs(0);
+  float q = inputs(1);
+  float r = inputs(2);
+  float va = inputs(3);
+
+  Eigen::Vector3f h;
+  h = Eigen::Vector3f::Zero(3);
+  h(0) = q * va * st + gravity * st;
+  h(1) = r * va * ct - p * va * st - gravity * ct * sp;
+  h(2) = -q * va * ct - gravity * ct * cp;
+
+  return h;
+}
+
+Eigen::MatrixXf estimator_continuous_discrete::attitude_measurement_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& inputs)
+{
+  double gravity = params.get_double("gravity");
+  float cp = cosf(state(0));
+  float sp = sinf(state(0));
+  float ct = cosf(state(1));
+  float st = sinf(state(1));
+  
+  float p = inputs(0);
+  float q = inputs(1);
+  float r = inputs(2);
+  float va = inputs(3);
+
+  Eigen::Matrix<float, 3, 2> C;
+
+  C << 0.0, q * va * ct + gravity * ct, -gravity * cp * ct,
+    -r * va * st - p * va * ct + gravity * sp * st, gravity * sp * ct,
+    (q * va + gravity * cp) * st;
+
+  return C;
 }
 
 void estimator_continuous_discrete::check_xhat_a()
