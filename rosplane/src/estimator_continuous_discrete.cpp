@@ -18,7 +18,7 @@ double wrap_within_180(double fixed_heading, double wrapped_heading)
 
 estimator_continuous_discrete::estimator_continuous_discrete()
     : estimator_ekf()
-    , attitude_dynamics_model(std::bind(&estimator_continuous_discrete::attitude_dynamics, this, std::placeholders::_1, std::placeholders::_2))
+    , attitude_dynamics_model(std::bind(&estimator_continuous_discrete::attitude_dynamics, this, std::placeholders::_1, std::placeholders::_2)) // HACK: These binds don't look the best, split off into seperate funciton?
     , attitude_jacobian_model(std::bind(&estimator_continuous_discrete::attitude_jacobian, this, std::placeholders::_1, std::placeholders::_2))
     , attitude_input_jacobian_model(std::bind(&estimator_continuous_discrete::attitude_input_jacobian, this, std::placeholders::_1, std::placeholders::_2))
     , attitude_measurement_model(std::bind(&estimator_continuous_discrete::attitude_measurement_prediction, this, std::placeholders::_1, std::placeholders::_2))
@@ -208,25 +208,22 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
   Eigen::Vector3f y;
   y << lpf_accel_x_, lpf_accel_y_, lpf_accel_z_;
 
-  // implement continuous-discrete EKF to estimate roll and pitch angles
-  // prediction step
+  // ATTITUDE (ROLL AND PITCH) ESTIMATION
+  // Prediction step
   std::tie(P_a_, xhat_a_) = propagate_model(xhat_a_, attitude_dynamics_model, attitude_jacobian_model, angular_rates,
                                             attitude_input_jacobian_model, P_a_, Q_a_, Q_g_, Ts);
-
-  std::tie(P_a_, xhat_a_) = measurement_update(xhat_a_,
-                                               inputs,
-                                               attitude_measurement_model,
-                                               y,
-                                               attitude_measurement_jacobian_model,
-                                               R_accel_,
-                                               P_a_);
-
+  // Measurement update
+  std::tie(P_a_, xhat_a_) = measurement_update(xhat_a_, inputs, attitude_measurement_model, y, attitude_measurement_jacobian_model,
+                                               R_accel_,P_a_);
+  
+  // Check the estimate for errors
   check_xhat_a();
 
+  // Store esimate for later use.
   phihat_ = xhat_a_(0);
   thetahat_ = xhat_a_(1);
 
-  // implement continous-discrete EKF to estimate pn, pe, chi, Vg
+  // Implement continous-discrete EKF to estimate pn, pe, chi, Vg
   // prediction step
   float psidot, tmp, Vgdot;
   if (fabsf(xhat_p_(2)) < 0.01f) {
@@ -235,24 +232,11 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
 
   for (int i = 0; i < N_; i++) {
 
-    float Vg = xhat_p_(2);
-    float chi = xhat_p_(3);
-    float wn = xhat_p_(4);
-    float we = xhat_p_(5);
-    float psi = xhat_p_(6);
+    Eigen::Vector<float, 6> measurements;
 
-    psidot = (qhat * sinf(phihat_) + rhat * cosf(phihat_)) / cosf(thetahat_);
+    measurements << angular_rates, xhat_a_(0), xhat_a_(1), vahat;
 
-    tmp = -psidot * vahat * (xhat_p_(4) * cosf(xhat_p_(6)) + xhat_p_(5) * sinf(xhat_p_(6)))
-      / xhat_p_(2);
-    Vgdot = vahat / Vg * psidot * (we * cosf(psi) - wn * sinf(psi));
-
-    f_p_ = Eigen::VectorXf::Zero(7);
-    f_p_(0) = xhat_p_(2) * cosf(xhat_p_(3));
-    f_p_(1) = xhat_p_(2) * sinf(xhat_p_(3));
-    f_p_(2) = Vgdot;
-    f_p_(3) = gravity / xhat_p_(2) * tanf(phihat_) * cosf(chi - psi);
-    f_p_(6) = psidot;
+    f_p_ = position_dynamics(xhat_p_, measurements);
 
     xhat_p_ += f_p_ * (Ts / N_);
 
@@ -431,38 +415,74 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
 
 Eigen::VectorXf estimator_continuous_discrete::attitude_dynamics(const Eigen::VectorXf& state, const Eigen::VectorXf& anglular_rates)
 {
-    float cp = cosf(state(0)); // cos(phi)
-    float sp = sinf(state(0)); // sin(phi)
-    float tt = tanf(state(1)); // tan(theta)
-    
-    float p = anglular_rates(0);
-    float q = anglular_rates(1);
-    float r = anglular_rates(2);
-    
-    Eigen::Vector2f f;
+  float cp = cosf(state(0)); // cos(phi)
+  float sp = sinf(state(0)); // sin(phi)
+  float tt = tanf(state(1)); // tan(theta)
+  
+  float p = anglular_rates(0);
+  float q = anglular_rates(1);
+  float r = anglular_rates(2);
+  
+  Eigen::Vector2f f;
 
-    f(0) = p + (q * sp + r * cp) * tt;
-    f(1) = q * cp - r * sp;
+  f(0) = p + (q * sp + r * cp) * tt;
+  f(1) = q * cp - r * sp;
 
-    return f;
+  return f;
+}
+
+Eigen::VectorXf estimator_continuous_discrete::position_dynamics(const Eigen::VectorXf& state, const Eigen::VectorXf& measurements)
+{
+
+  double gravity = params.get_double("gravity");
+
+  float Vg = state(2);
+  float chi = state(3);
+  float wn = state(4);
+  float we = state(5);
+  float psi = state(6);
+
+  float p = measurements(0);
+  float q = measurements(1);
+  float r = measurements(2);
+  float phi = measurements(3);
+  float theta = measurements(4);
+  float va = measurements(5);
+
+  float psidot = (q * sinf(phi) + r * cosf(phi)) / cosf(theta);
+
+  float tmp = -psidot * va * (xhat_p_(4) * cosf(xhat_p_(6)) + xhat_p_(5) * sinf(xhat_p_(6)))
+    / xhat_p_(2);
+  float Vgdot = va / Vg * psidot * (we * cosf(psi) - wn * sinf(psi));
+  
+  Eigen::VectorXf f;
+  f = Eigen::VectorXf::Zero(7);
+
+  f(0) = xhat_p_(2) * cosf(xhat_p_(3));
+  f(1) = xhat_p_(2) * sinf(xhat_p_(3));
+  f(2) = Vgdot;
+  f(3) = gravity / xhat_p_(2) * tanf(phihat_) * cosf(chi - psi);
+  f(6) = psidot;
+
+  return f;
 }
 
 Eigen::MatrixXf estimator_continuous_discrete::attitude_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& anglular_rates)
 {
-    float cp = cosf(state(0)); // cos(phi)
-    float sp = sinf(state(0)); // sin(phi)
-    float tt = tanf(state(1)); // tan(theta)
-    float ct = cosf(state(1)); // cos(theta)
-    
-    float q = anglular_rates(1);
-    float r = anglular_rates(2);
+  float cp = cosf(state(0)); // cos(phi)
+  float sp = sinf(state(0)); // sin(phi)
+  float tt = tanf(state(1)); // tan(theta)
+  float ct = cosf(state(1)); // cos(theta)
+  
+  float q = anglular_rates(1);
+  float r = anglular_rates(2);
 
   Eigen::Matrix2f A = Eigen::Matrix2f::Zero();
-    A(0, 0) = (q * cp - r * sp) * tt;
-    A(0, 1) = (q * sp + r * cp) / ct / ct;
-    A(1, 0) = -q * sp - r * cp;
+  A(0, 0) = (q * cp - r * sp) * tt;
+  A(0, 1) = (q * sp + r * cp) / ct / ct;
+  A(1, 0) = -q * sp - r * cp;
 
-    return A;
+  return A;
 }
 
 Eigen::MatrixXf estimator_continuous_discrete::attitude_input_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& inputs)
