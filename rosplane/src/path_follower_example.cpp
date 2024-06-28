@@ -9,20 +9,20 @@ double wrap_within_180(double fixed_heading, double wrapped_heading)
   return wrapped_heading - floor((wrapped_heading - fixed_heading) / (2 * M_PI) + 0.5) * 2 * M_PI;
 }
 
-path_follower_example::path_follower_example() {}
+PathFollowerExample::PathFollowerExample() {}
 
-void path_follower_example::follow(const input_s & input,
-                                   output_s & output)
+void PathFollowerExample::follow(const Input & input,
+                                   Output & output)
 {
   // For readability, declare parameters that will be used in the function here
-  double k_path = params.get_double("k_path");
-  double k_orbit = params.get_double("k_orbit");
-  double chi_infty = params.get_double("chi_infty");
-  double gravity = params.get_double("gravity");
+  double k_path = params_.get_double("k_path");
+  double k_orbit = params_.get_double("k_orbit");
+  double chi_infty = params_.get_double("chi_infty");
+  double gravity = params_.get_double("gravity");
 
   // If path_type is a line, follow straight line path specified by r and q
   // Otherwise, follow an orbit path specified by c_orbit, rho_orbit, and lam_orbit
-  if (input.p_type == path_type::Line) {
+  if (input.p_type == PathType::LINE) {
     // compute wrapped version of the path angle
     float chi_q = atan2f(input.q_path[1], input.q_path[0]);
 

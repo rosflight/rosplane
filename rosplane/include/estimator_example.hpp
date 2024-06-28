@@ -10,14 +10,14 @@
 namespace rosplane
 {
 
-class estimator_example : public estimator_base
+class EstimatorExample : public EstimatorBase
 {
 public:
-  estimator_example();
-  estimator_example(bool use_params);
+  EstimatorExample();
+  EstimatorExample(bool use_params);
 
 private:
-  virtual void estimate(const input_s & input, output_s & output);
+  virtual void estimate(const Input & input, Output & output);
 
   //    float gps_n_old_;
   //    float gps_e_old_;

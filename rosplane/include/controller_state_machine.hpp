@@ -6,49 +6,49 @@
 namespace rosplane
 {
 
-class controller_state_machine : public controller_base
+class ControllerStateMachine : public ControllerBase
 {
 
 public:
-  controller_state_machine();
+  ControllerStateMachine();
 
   /**
  * The state machine for the control algorithm for the autopilot.
  * @param input The command inputs to the controller such as course and airspeed.
  * @param output The control efforts calculated and selected intermediate values.
  */
-  virtual void control(const struct input_s & input,
-                       struct output_s & output);
+  virtual void control(const struct Input & input,
+                       struct Output & output);
 
 protected:
   /**
    * The current zone of the control algorithm based on altitude.
    */
-  alt_zones current_zone;
+  AltZones current_zone_;
 
   /**
    * This function continually loops while the aircraft is in the take-off zone. It is implemented by the child.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void take_off(const struct input_s & input,
-                        struct output_s & output) = 0;
+  virtual void take_off(const struct Input & input,
+                        struct Output & output) = 0;
 
   /**
    * This function continually loops while the aircraft is in the climb zone. It is implemented by the child.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void climb(const struct input_s & input,
-                     struct output_s & output) = 0;
+  virtual void climb(const struct Input & input,
+                     struct Output & output) = 0;
 
   /**
    * This function continually loops while the aircraft is in the altitude hold zone. It is implemented by the child.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void altitude_hold(const struct input_s & input,
-                             struct output_s & output) = 0;
+  virtual void altitude_hold(const struct Input & input,
+                             struct Output & output) = 0;
 
   /**
    * This function runs when the aircraft exits the take-off zone this is often used to reset integrator values. It is

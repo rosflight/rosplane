@@ -13,22 +13,22 @@ using std::placeholders::_1;
 namespace rosplane
 {
 
-enum class path_type
+enum class PathType
 {
-  Orbit,
-  Line
+  ORBIT,
+  LINE
 };
 
-class path_follower_base : public rclcpp::Node
+class PathFollowerBase : public rclcpp::Node
 {
 public:
-  path_follower_base();
+  PathFollowerBase();
   float spin();
 
 protected:
-  struct input_s
+  struct Input
   {
-    enum path_type p_type;
+    enum PathType p_type;
     float va_d;
     float r_path[3];
     float q_path[3];
@@ -43,7 +43,7 @@ protected:
     float psi; /** heading angle */
   };
 
-  struct output_s
+  struct Output
   {
     double va_c;   /** commanded airspeed (m/s) */
     double h_c;    /** commanded altitude (m) */
@@ -51,10 +51,10 @@ protected:
     double phi_ff; /** feed forward term for orbits (rad) */
   };
 
-  virtual void follow(const struct input_s & input,
-                      struct output_s & output) = 0;
+  virtual void follow(const struct Input & input,
+                      struct Output & output) = 0;
 
-  param_manager params;
+  ParamManager params_;
 
 private:
   /**
@@ -81,7 +81,7 @@ private:
 
   OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
   rosplane_msgs::msg::ControllerCommands controller_commands_;
-  struct input_s input_;
+  struct Input input_;
 
   /**
    * @brief Sets the timer with the timer period as specified by the ROS2 parameters

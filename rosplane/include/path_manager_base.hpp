@@ -27,14 +27,14 @@ using namespace std::chrono_literals;
 
 namespace rosplane
 {
-class path_manager_base : public rclcpp::Node
+class PathManagerBase : public rclcpp::Node
 {
 public:
-  path_manager_base();
+  PathManagerBase();
 
 protected:
 
-  struct waypoint_s
+  struct Waypoint
   {
     float w[3];
     float chi_d;
@@ -42,14 +42,14 @@ protected:
     float va_d;
   };
 
-  std::vector<waypoint_s> waypoints_; /** Vector of waypoints maintained by path_manager */
+  std::vector<Waypoint> waypoints_; /** Vector of waypoints maintained by path_manager */
   int num_waypoints_;
   int idx_a_; /** index to the waypoint that was most recently achieved */
 
   bool temp_waypoint_ = false;
-  int orbit_dir = 0;
+  int orbit_dir_ = 0;
 
-  struct input_s
+  struct Input
   {
     float pn;  /** position north */
     float pe;  /** position east */
@@ -57,7 +57,7 @@ protected:
     float chi; /** course angle */
   };
 
-  struct output_s
+  struct Output
   {
     bool flag;    /** Inicates strait line or orbital path (true is line, false is orbit) */
     float va_d;   /** Desired airspeed (m/s) */
@@ -68,16 +68,16 @@ protected:
     int8_t lamda; /** Direction of orbital path (cw is 1, ccw is -1) */
   };
 
-  param_manager params_;   /** Holds the parameters for the path_manager and children */
+  ParamManager params_;   /** Holds the parameters for the path_manager and children */
 
   /**
    * @brief Manages the current path based on the stored waypoint list
    * 
-   * @param input: input_s object that contains information about the waypoint
-   * @param output: output_s object that contains the parameters for the desired type of line, based on the current and next waypoints
+   * @param input: Input object that contains information about the waypoint
+   * @param output: Output object that contains the parameters for the desired type of line, based on the current and next waypoints
    */
-  virtual void manage(const struct input_s & input,
-                      struct output_s & output) = 0;
+  virtual void manage(const struct Input & input,
+                      struct Output & output) = 0;
 
 private:
   rclcpp::Subscription<rosplane_msgs::msg::State>::SharedPtr

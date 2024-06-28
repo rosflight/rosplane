@@ -4,31 +4,31 @@
 namespace rosplane
 {
 
-controller_state_machine::controller_state_machine()
-    : controller_base()
+ControllerStateMachine::ControllerStateMachine()
+    : ControllerBase()
 {
 
   // Initialize controller in take_off zone.
-  current_zone = alt_zones::TAKE_OFF;
+  current_zone_ = AltZones::TAKE_OFF;
 
   // Declare parameters associated with this controller, controller_state_machine
   declare_parameters();
 
   // Set parameters according to the parameters in the launch file, otherwise use the default values
-  params.set_parameters();
+  params_.set_parameters();
 }
 
-void controller_state_machine::control(const input_s & input,
-                                       output_s & output)
+void ControllerStateMachine::control(const Input & input,
+                                       Output & output)
 {
   
   // For readability, declare parameters that will be used in this controller
-  double alt_toz = params.get_double("alt_toz");
-  double alt_hz = params.get_double("alt_hz");
+  double alt_toz = params_.get_double("alt_toz");
+  double alt_hz = params_.get_double("alt_hz");
 
   // This state machine changes the controls used based on the zone of flight path the aircraft is currently on.
-  switch (current_zone) {
-    case alt_zones::TAKE_OFF:
+  switch (current_zone_) {
+    case AltZones::TAKE_OFF:
 
       // Run take-off controls.
       take_off(input, output);
@@ -41,10 +41,10 @@ void controller_state_machine::control(const input_s & input,
 
         // Set zone to climb.
         RCLCPP_INFO(this->get_logger(), "climb");
-        current_zone = alt_zones::CLIMB;
+        current_zone_ = AltZones::CLIMB;
       }
       break;
-    case alt_zones::CLIMB:
+    case AltZones::CLIMB:
 
       // Run climb controls.
       climb(input, output);
@@ -57,7 +57,7 @@ void controller_state_machine::control(const input_s & input,
 
         // Set the zone to altitude hold if we have enough altitude and reset errors, integrators and derivatives.
         RCLCPP_INFO(this->get_logger(), "hold");
-        current_zone = alt_zones::ALTITUDE_HOLD;
+        current_zone_ = AltZones::ALTITUDE_HOLD;
 
       } else if (input.h <= alt_toz) {
 
@@ -66,10 +66,10 @@ void controller_state_machine::control(const input_s & input,
 
         // Set to take off if too close to the ground.
         RCLCPP_INFO(this->get_logger(), "takeoff");
-        current_zone = alt_zones::TAKE_OFF;
+        current_zone_ = AltZones::TAKE_OFF;
       }
       break;
-    case alt_zones::ALTITUDE_HOLD:
+    case AltZones::ALTITUDE_HOLD:
 
       // Run altitude hold controls.
       altitude_hold(input, output);
@@ -82,7 +82,7 @@ void controller_state_machine::control(const input_s & input,
 
         // Set the control zone back to take off to regain altitude. and reset integral for course.
         RCLCPP_INFO(this->get_logger(), "take off");
-        current_zone = alt_zones::TAKE_OFF;
+        current_zone_ = AltZones::TAKE_OFF;
       }
       break;
     default:
@@ -90,14 +90,14 @@ void controller_state_machine::control(const input_s & input,
   }
 
   // Record current zone, to publish to controller internals.
-  output.current_zone = current_zone;
+  output.current_zone = current_zone_;
 }
 
-void controller_state_machine::declare_parameters()
+void ControllerStateMachine::declare_parameters()
 {
   // Declare param with ROS2 and set the default value.
-  params.declare_double("alt_toz", 5.0);
-  params.declare_double("alt_hz", 10.0);
+  params_.declare_double("alt_toz", 5.0);
+  params_.declare_double("alt_hz", 10.0);
 }
 
 } // namespace rosplane

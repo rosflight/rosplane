@@ -6,14 +6,14 @@
 namespace rosplane
 {
 
-class path_follower_example : public path_follower_base
+class PathFollowerExample : public PathFollowerBase
 {
 public:
-  path_follower_example();
+  PathFollowerExample();
 
 private:
-  virtual void follow(const struct input_s & input,
-                      struct output_s & output);
+  virtual void follow(const struct Input & input,
+                      struct Output & output);
 };
 
 } // namespace rosplane

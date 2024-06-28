@@ -32,13 +32,13 @@ using namespace std::chrono_literals;
 namespace rosplane
 {
 
-class estimator_base : public rclcpp::Node
+class EstimatorBase : public rclcpp::Node
 {
 public:
-  estimator_base();
+  EstimatorBase();
 
 protected:
-  struct input_s
+  struct Input
   {
     float gyro_x;
     float gyro_y;
@@ -58,7 +58,7 @@ protected:
     bool armed_init;
   };
 
-  struct output_s
+  struct Output
   {
     float pn;
     float pe;
@@ -80,11 +80,11 @@ protected:
 
   bool baro_init_; /**< Initial barometric pressure */
 
-  virtual void estimate(const struct input_s & input,
-                        struct output_s & output) = 0;
+  virtual void estimate(const struct Input & input,
+                        struct Output & output) = 0;
 
 protected:
-  param_manager params;
+  ParamManager params_;
   bool gps_init_;
   double init_lat_ = 0.0;                 /**< Initial latitude in degrees */
   double init_lon_ = 0.0;                 /**< Initial longitude in degrees */
@@ -158,7 +158,7 @@ private:
   rcl_interfaces::msg::SetParametersResult
   parametersCallback(const std::vector<rclcpp::Parameter> & parameters);
 
-  struct input_s input_;
+  struct Input input_;
 };
 
 } // namespace rosplane

@@ -15,7 +15,7 @@
 namespace rosplane
 {
     
-class param_manager
+class ParamManager
 {
 public:
   /**
@@ -23,7 +23,7 @@ public:
    * 
    * @param node: the ROS2 node that has this parameter object. Used to poll the ROS2 parameters
   */
-  param_manager(rclcpp::Node * node);
+  ParamManager(rclcpp::Node * node);
 
   /**
    * Helper function to access parameter values of type double stored in param_manager object

@@ -17,13 +17,13 @@
 namespace rosplane
 {
 
-class path_planner : public rclcpp::Node
+class PathPlanner : public rclcpp::Node
 {
 public:
-  path_planner();
-  ~path_planner();
+  PathPlanner();
+  ~PathPlanner();
 
-  param_manager params;   /** Holds the parameters for the path_planner*/
+  ParamManager params_;   /** Holds the parameters for the path_planner*/
 
 private:
   /**
@@ -174,3 +174,4 @@ private:
    */
   std::vector<rosplane_msgs::msg::Waypoint> wps;
 };
+}   // namespace rosplane
