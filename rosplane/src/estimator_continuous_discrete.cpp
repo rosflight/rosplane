@@ -225,7 +225,6 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
 
   // Implement continous-discrete EKF to estimate pn, pe, chi, Vg
   // prediction step
-  float psidot, tmp, Vgdot;
   if (fabsf(xhat_p_(2)) < 0.01f) {
     xhat_p_(2) = 0.01; // prevent divide by zero
   }
@@ -239,17 +238,8 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
     f_p_ = position_dynamics(xhat_p_, measurements);
 
     xhat_p_ += f_p_ * (Ts / N_);
-
-    A_p_ = Eigen::MatrixXf::Zero(7, 7);
-    A_p_(0, 2) = cos(xhat_p_(3));
-    A_p_(0, 3) = -xhat_p_(2) * sinf(xhat_p_(3));
-    A_p_(1, 2) = sin(xhat_p_(3));
-    A_p_(1, 3) = xhat_p_(2) * cosf(xhat_p_(3));
-    A_p_(2, 2) = -Vgdot / xhat_p_(2);
-    A_p_(2, 4) = -psidot * vahat * sinf(xhat_p_(6)) / xhat_p_(2);
-    A_p_(2, 5) = psidot * vahat * cosf(xhat_p_(6)) / xhat_p_(2);
-    A_p_(2, 6) = tmp;
-    A_p_(3, 2) = -gravity / powf(xhat_p_(2), 2) * tanf(phihat_);
+    
+    A_p_ = position_jacobian(xhat_p_, measurements);
 
     Eigen::MatrixXf A_d_ = Eigen::MatrixXf::Identity(7, 7) + Ts / N_ * A_p_
       + A_p_ * A_p_ * pow(Ts / N_, 2) / 2.0;
@@ -413,15 +403,15 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
   output.psi = psihat;
 }
 
-Eigen::VectorXf estimator_continuous_discrete::attitude_dynamics(const Eigen::VectorXf& state, const Eigen::VectorXf& anglular_rates)
+Eigen::VectorXf estimator_continuous_discrete::attitude_dynamics(const Eigen::VectorXf& state, const Eigen::VectorXf& angular_rates)
 {
   float cp = cosf(state(0)); // cos(phi)
   float sp = sinf(state(0)); // sin(phi)
   float tt = tanf(state(1)); // tan(theta)
   
-  float p = anglular_rates(0);
-  float q = anglular_rates(1);
-  float r = anglular_rates(2);
+  float p = angular_rates(0);
+  float q = angular_rates(1);
+  float r = angular_rates(2);
   
   Eigen::Vector2f f;
 
@@ -451,36 +441,72 @@ Eigen::VectorXf estimator_continuous_discrete::position_dynamics(const Eigen::Ve
 
   float psidot = (q * sinf(phi) + r * cosf(phi)) / cosf(theta);
 
-  float tmp = -psidot * va * (xhat_p_(4) * cosf(xhat_p_(6)) + xhat_p_(5) * sinf(xhat_p_(6)))
-    / xhat_p_(2);
   float Vgdot = va / Vg * psidot * (we * cosf(psi) - wn * sinf(psi));
   
   Eigen::VectorXf f;
   f = Eigen::VectorXf::Zero(7);
 
-  f(0) = xhat_p_(2) * cosf(xhat_p_(3));
-  f(1) = xhat_p_(2) * sinf(xhat_p_(3));
+  f(0) = state(2) * cosf(state(3));
+  f(1) = state(2) * sinf(state(3));
   f(2) = Vgdot;
-  f(3) = gravity / xhat_p_(2) * tanf(phihat_) * cosf(chi - psi);
+  f(3) = gravity / state(2) * tanf(phi) * cosf(chi - psi);
   f(6) = psidot;
 
   return f;
 }
 
-Eigen::MatrixXf estimator_continuous_discrete::attitude_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& anglular_rates)
+Eigen::MatrixXf estimator_continuous_discrete::attitude_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& angular_rates)
 {
   float cp = cosf(state(0)); // cos(phi)
   float sp = sinf(state(0)); // sin(phi)
   float tt = tanf(state(1)); // tan(theta)
   float ct = cosf(state(1)); // cos(theta)
   
-  float q = anglular_rates(1);
-  float r = anglular_rates(2);
+  float q = angular_rates(1);
+  float r = angular_rates(2);
 
   Eigen::Matrix2f A = Eigen::Matrix2f::Zero();
   A(0, 0) = (q * cp - r * sp) * tt;
   A(0, 1) = (q * sp + r * cp) / ct / ct;
   A(1, 0) = -q * sp - r * cp;
+
+  return A;
+}
+
+Eigen::MatrixXf estimator_continuous_discrete::position_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& measurements)
+{
+  double gravity = params.get_double("gravity");
+
+  float p = measurements(0);
+  float q = measurements(1);
+  float r = measurements(2);
+  float phi = measurements(3);
+  float theta = measurements(4);
+  float va = measurements(5);
+  
+  float Vg = state(2);
+  float chi = state(3);
+  float wn = state(4);
+  float we = state(5);
+  float psi = state(6);
+  
+  float psidot = (q * sinf(phi) + r * cosf(phi)) / cosf(theta);
+  
+  float tmp = -psidot * va * (state(4) * cosf(state(6)) + state(5) * sinf(state(6))) / state(2);
+
+  float Vgdot = va / Vg * psidot * (we * cosf(psi) - wn * sinf(psi));
+
+  Eigen::MatrixXf A;
+  A = Eigen::MatrixXf::Zero(7, 7);
+  A(0, 2) = cos(state(3));
+  A(0, 3) = -state(2) * sinf(state(3));
+  A(1, 2) = sin(state(3));
+  A(1, 3) = state(2) * cosf(state(3));
+  A(2, 2) = -Vgdot / state(2);
+  A(2, 4) = -psidot * va * sinf(state(6)) / state(2);
+  A(2, 5) = psidot * va * cosf(state(6)) / state(2);
+  A(2, 6) = tmp;
+  A(3, 2) = -gravity / powf(state(2), 2) * tanf(phihat_);
 
   return A;
 }
