@@ -1,15 +1,13 @@
-#include "rclcpp/rclcpp.hpp"
-#include "rosplane_msgs/msg/waypoint.hpp"
-#include "rclcpp/logging.hpp"
-#include "visualization_msgs/msg/marker.hpp"
-#include "rosplane_msgs/msg/waypoint.hpp"
-#include "rosplane_msgs/msg/state.hpp"
-// #include "geometry_msgs/msg/point.hpp"
-// #include "std_msgs/msg/header.hpp"
-#include "tf2_ros/transform_broadcaster.h"
-#include "tf2/LinearMath/Quaternion.h"
-#include "geometry_msgs/msg/transform_stamped.hpp"
 #include <ament_index_cpp/get_package_share_directory.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <rclcpp/logging.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <visualization_msgs/msg/marker.hpp>
+
+#include "rosplane_msgs/msg/state.hpp"
+#include "rosplane_msgs/msg/waypoint.hpp"
 
 #define SCALE 5.0
 #define TEXT_SCALE 15.0
