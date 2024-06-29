@@ -109,7 +109,7 @@ protected:
    * @param input Inputs to the control algorithm.
    * @param output Outputs of the controller, including selected intermediate values and final control efforts.
    */
-  virtual void control(const struct Input & input, struct Output & output) = 0;
+  virtual void control(const Input & input, Output & output) = 0;
 
 private:
   /**
@@ -165,7 +165,7 @@ private:
   /**
    * Convert from deflection angle in radians to pwm.
    */
-  void convert_to_pwm(struct Output & output);
+  void convert_to_pwm(Output & output);
 
   /**
    * Calls the control function and publishes outputs and intermediate values to the command and controller internals

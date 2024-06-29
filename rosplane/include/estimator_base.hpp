@@ -79,8 +79,8 @@ protected:
 
   bool baro_init_; /**< Initial barometric pressure */
 
-  virtual void estimate(const struct Input & input,
-                        struct Output & output) = 0;
+  virtual void estimate(const Input & input,
+                        Output & output) = 0;
 
 protected:
   ParamManager params_;
@@ -157,7 +157,7 @@ private:
   rcl_interfaces::msg::SetParametersResult
   parametersCallback(const std::vector<rclcpp::Parameter> & parameters);
 
-  struct Input input_;
+  Input input_;
 };
 
 } // namespace rosplane

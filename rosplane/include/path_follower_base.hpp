@@ -52,8 +52,8 @@ protected:
     double phi_ff; /** feed forward term for orbits (rad) */
   };
 
-  virtual void follow(const struct Input & input,
-                      struct Output & output) = 0;
+  virtual void follow(const Input & input,
+                      Output & output) = 0;
 
   ParamManager params_;
 
@@ -82,7 +82,7 @@ private:
 
   OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
   rosplane_msgs::msg::ControllerCommands controller_commands_;
-  struct Input input_;
+  Input input_;
 
   /**
    * @brief Sets the timer with the timer period as specified by the ROS2 parameters

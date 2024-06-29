@@ -72,8 +72,8 @@ protected:
    * @param input: Input object that contains information about the waypoint
    * @param output: Output object that contains the parameters for the desired type of line, based on the current and next waypoints
    */
-  virtual void manage(const struct Input & input,
-                      struct Output & output) = 0;
+  virtual void manage(const Input & input,
+                      Output & output) = 0;
 
 private:
   rclcpp::Subscription<rosplane_msgs::msg::State>::SharedPtr

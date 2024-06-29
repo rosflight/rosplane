@@ -73,7 +73,7 @@ void ControllerBase::actuator_controls_publish()
 {
 
   // Assemble inputs for the control algorithm.
-  struct Input input;
+  Input input;
   input.h = -vehicle_state_.position[2];
   input.va = vehicle_state_.va;
   input.phi = vehicle_state_.phi;
@@ -87,7 +87,7 @@ void ControllerBase::actuator_controls_publish()
   input.chi_c = controller_commands_.chi_c;
   input.phi_ff = controller_commands_.phi_ff;
 
-  struct Output output;
+  Output output;
 
   // If a command was received, begin control.
   if (command_recieved_ == true) {

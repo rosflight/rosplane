@@ -20,23 +20,23 @@ protected:
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void take_off_longitudinal_control(const struct Input & input,
-                                             struct Output & output);
+  virtual void take_off_longitudinal_control(const Input & input,
+                                             Output & output);
 
   /**
    * This function overrides the longitudinal control loops for the climb zone.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void climb_longitudinal_control(const struct Input & input, struct Output & output);
+  virtual void climb_longitudinal_control(const Input & input, Output & output);
 
   /**
    * This function overrides the longitudinal control loops for the altitude hold zone.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void alt_hold_longitudinal_control(const struct Input & input,
-                                             struct Output & output);
+  virtual void alt_hold_longitudinal_control(const Input & input,
+                                             Output & output);
 
   /**
    * This function overrides when the aircraft exits the take-off zone. Any changes to the controller that need to happen

@@ -29,7 +29,7 @@ ControllerSucessiveLoop::ControllerSucessiveLoop()
   params_.set_parameters();
 }
 
-void ControllerSucessiveLoop::take_off(const struct Input & input, struct Output & output)
+void ControllerSucessiveLoop::take_off(const Input & input, Output & output)
 {
   // Run lateral and longitudinal controls.
   take_off_lateral_control(input, output);
@@ -41,8 +41,8 @@ void ControllerSucessiveLoop::take_off_exit()
   // Put any code that should run as the airplane exits take off mode.
 }
 
-void ControllerSucessiveLoop::climb(const struct Input & input,
-                                       struct Output & output)
+void ControllerSucessiveLoop::climb(const Input & input,
+                                       Output & output)
 {
   // Run lateral and longitudinal controls.
   climb_lateral_control(input, output);
@@ -60,8 +60,8 @@ void ControllerSucessiveLoop::climb_exit()
   a_differentiator_ = 0;
 }
 
-void ControllerSucessiveLoop::altitude_hold(const struct Input & input,
-                                               struct Output & output)
+void ControllerSucessiveLoop::altitude_hold(const Input & input,
+                                               Output & output)
 {
   // Run lateral and longitudinal controls.
   alt_hold_lateral_control(input, output);
@@ -74,8 +74,8 @@ void ControllerSucessiveLoop::altitude_hold_exit()
   c_integrator_ = 0;
 }
 
-void ControllerSucessiveLoop::alt_hold_lateral_control(const struct Input & input,
-                                                          struct Output & output)
+void ControllerSucessiveLoop::alt_hold_lateral_control(const Input & input,
+                                                          Output & output)
 {
   // For readability, declare parameters here that will be used in this function
   bool roll_override = params_.get_bool("roll_command_override");   // Declared in controller_base
@@ -91,8 +91,8 @@ void ControllerSucessiveLoop::alt_hold_lateral_control(const struct Input & inpu
   output.delta_a = roll_hold(output.phi_c, input.phi, input.p);
 }
 
-void ControllerSucessiveLoop::alt_hold_longitudinal_control(const struct Input & input,
-                                                               struct Output & output)
+void ControllerSucessiveLoop::alt_hold_longitudinal_control(const Input & input,
+                                                               Output & output)
 {
   // For readability, declare parameters here that will be used in this function
   double alt_hz = params_.get_double("alt_hz");   // Declared in controller_state_machine
@@ -110,8 +110,8 @@ void ControllerSucessiveLoop::alt_hold_longitudinal_control(const struct Input &
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q);
 }
 
-void ControllerSucessiveLoop::climb_lateral_control(const struct Input & input,
-                                                       struct Output & output)
+void ControllerSucessiveLoop::climb_lateral_control(const Input & input,
+                                                       Output & output)
 {
   // Maintain straight flight while gaining altitude.
   output.phi_c = 0;
@@ -119,8 +119,8 @@ void ControllerSucessiveLoop::climb_lateral_control(const struct Input & input,
   output.delta_r = yaw_damper(input.r);
 }
 
-void ControllerSucessiveLoop::climb_longitudinal_control(const struct Input & input,
-                                                            struct Output & output)
+void ControllerSucessiveLoop::climb_longitudinal_control(const Input & input,
+                                                            Output & output)
 {
   // For readability, declare parameters here that will be used in this function
   double alt_hz = params_.get_double("alt_hz");   // Declared in controller_state_machine
@@ -134,8 +134,8 @@ void ControllerSucessiveLoop::climb_longitudinal_control(const struct Input & in
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q);
 }
 
-void ControllerSucessiveLoop::take_off_lateral_control(const struct Input & input,
-                                                          struct Output & output)
+void ControllerSucessiveLoop::take_off_lateral_control(const Input & input,
+                                                          Output & output)
 {
   // In the take-off zone maintain level straight flight by commanding a roll angle of 0 and rudder of 0.
   output.delta_r = 0.0;
@@ -143,8 +143,8 @@ void ControllerSucessiveLoop::take_off_lateral_control(const struct Input & inpu
   output.delta_a = roll_hold(output.phi_c, input.phi, input.p);
 }
 
-void ControllerSucessiveLoop::take_off_longitudinal_control(const struct Input & input,
-                                                               struct Output & output)
+void ControllerSucessiveLoop::take_off_longitudinal_control(const Input & input,
+                                                               Output & output)
 {
   // For readability, declare parameters here that will be used in this function
   double max_takeoff_throttle = params_.get_double("max_takeoff_throttle");

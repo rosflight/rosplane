@@ -18,8 +18,8 @@ ControllerTotalEnergy::ControllerTotalEnergy()
   params_.set_parameters();
 }
 
-void ControllerTotalEnergy::take_off_longitudinal_control(const struct Input & input,
-                                                            struct Output & output)
+void ControllerTotalEnergy::take_off_longitudinal_control(const Input & input,
+                                                            Output & output)
 {
   // For readability, declare parameters here that will be used in this function
   double max_takeoff_throttle = params_.get_double("max_takeoff_throttle");
@@ -45,8 +45,8 @@ void ControllerTotalEnergy::take_off_exit()
   // Place any controller code that should run as you exit the take-off regime here.
 }
 
-void ControllerTotalEnergy::climb_longitudinal_control(const struct Input & input,
-                                                         struct Output & output)
+void ControllerTotalEnergy::climb_longitudinal_control(const Input & input,
+                                                         Output & output)
 {
   // For readability, declare parameters here that will be used in this function
   double alt_hz = params_.get_double("alt_hz");
@@ -69,8 +69,8 @@ void ControllerTotalEnergy::climb_exit()
   // Place any controller code that should run as you exit the climb regime here.
 }
 
-void ControllerTotalEnergy::alt_hold_longitudinal_control(const struct Input & input,
-                                                            struct Output & output)
+void ControllerTotalEnergy::alt_hold_longitudinal_control(const Input & input,
+                                                            Output & output)
 {
   // For readability, declare parameters here that will be used in this function
   double alt_hz = params_.get_double("alt_hz");

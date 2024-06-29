@@ -594,7 +594,7 @@ int PathManagerExample::orbit_direction(float pn, float pe, float chi, float c_n
   return -1;
 }
 
-void PathManagerExample::increment_indices(int & idx_a, int & idx_b, int & idx_c, const struct Input & input, struct Output & output)
+void PathManagerExample::increment_indices(int & idx_a, int & idx_b, int & idx_c, const Input & input, Output & output)
 {
 
   bool orbit_last = params_.get_bool("orbit_last");

@@ -51,7 +51,7 @@ void PathFollowerBase::set_timer() {
 void PathFollowerBase::update()
 {
 
-  struct Output output;
+  Output output;
 
   if (state_init_ == true && current_path_init_ == true) {
     follow(input_, output);

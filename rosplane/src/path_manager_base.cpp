@@ -153,13 +153,13 @@ void PathManagerBase::new_waypoint_callback(const rosplane_msgs::msg::Waypoint &
 void PathManagerBase::current_path_publish()
 {
 
-  struct Input input;
+  Input input;
   input.pn = vehicle_state_.position[0]; // position north
   input.pe = vehicle_state_.position[1]; // position east
   input.h = -vehicle_state_.position[2]; // altitude
   input.chi = vehicle_state_.chi;
 
-  struct Output output;
+  Output output;
 
   if (state_init_ == true) {
     manage(input, output);

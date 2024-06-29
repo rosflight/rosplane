@@ -111,7 +111,7 @@ EstimatorBase::parametersCallback(const std::vector<rclcpp::Parameter> & paramet
 
 void EstimatorBase::update()
 {
-  struct Output output;
+  Output output;
 
   if (armed_first_time_) {
     estimate(input_, output);

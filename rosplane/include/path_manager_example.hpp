@@ -40,8 +40,8 @@ private:
   /**
    * @brief Determines the line type and calculates the line parameters to publish to path_follower
    */
-  virtual void manage(const struct Input & input,
-                      struct Output & output);
+  virtual void manage(const Input & input,
+                      Output & output);
 
   /**
    * @brief Calculates the most convenient orbit direction based on the orientation of the vehicle relative to the orbit center
@@ -64,7 +64,7 @@ private:
    * @param input: Struct containing the state of the vehicle
    * @param output: Struct that will contain all of the information about the desired line to pass to the path follower
    */
-  void increment_indices(int & idx_a, int & idx_b, int & idx_c, const struct Input & input, struct Output & output);
+  void increment_indices(int & idx_a, int & idx_b, int & idx_c, const Input & input, Output & output);
 
   /**
    * @brief Manages a straight line segment. Calculates the appropriate line parameters to send to the path follower
@@ -72,8 +72,8 @@ private:
    * @param input: Input struct that contains some of the state of the vehicle
    * @param output: Output struct containing the information about the desired line
    */
-  void manage_line(const struct Input & input,
-                   struct Output & output);
+  void manage_line(const Input & input,
+                   Output & output);
 
   /**
    * @brief Manages a fillet line segment. Calculates the appropriate line parameters to send to the path follower
@@ -81,8 +81,8 @@ private:
    * @param input: Input struct that contains some of the state of the vehicle
    * @param output: Output struct containing the information about the desired line
    */
-  void manage_fillet(const struct Input & input,
-                     struct Output & output);
+  void manage_fillet(const Input & input,
+                     Output & output);
 
   /**
    * @brief Manages a Dubins path segment. Calculates the appropriate line parameters to send to the path follower
@@ -90,8 +90,8 @@ private:
    * @param input: Input struct that contains some of the state of the vehicle
    * @param output: Output struct containing the information about the desired line
    */
-  void manage_dubins(const struct Input & input,
-                     struct Output & output);
+  void manage_dubins(const Input & input,
+                     Output & output);
 
   DubinState dub_state_;
 
