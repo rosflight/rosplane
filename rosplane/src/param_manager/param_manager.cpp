@@ -1,12 +1,13 @@
-#include "param_manager.hpp"
 #include <variant>
+
+#include "param_manager.hpp"
 
 namespace rosplane
 {
 
-param_manager::param_manager(rclcpp::Node * node) : container_node_{node} {}
+ParamManager::ParamManager(rclcpp::Node * node) : container_node_{node} {}
 
-void param_manager::declare_double(std::string param_name, double value)
+void ParamManager::declare_double(std::string param_name, double value)
 {
   // Insert the parameter into the parameter struct
   params_[param_name] = value;
@@ -14,7 +15,7 @@ void param_manager::declare_double(std::string param_name, double value)
   container_node_->declare_parameter(param_name, value);
 }
 
-void param_manager::declare_bool(std::string param_name, bool value)
+void ParamManager::declare_bool(std::string param_name, bool value)
 {
   // Insert the parameter into the parameter struct
   params_[param_name] = value;
@@ -22,7 +23,7 @@ void param_manager::declare_bool(std::string param_name, bool value)
   container_node_->declare_parameter(param_name, value);
 }
 
-void param_manager::declare_int(std::string param_name, int64_t value)
+void ParamManager::declare_int(std::string param_name, int64_t value)
 {
   // Insert the parameter into the parameter struct
   params_[param_name] = value;
@@ -30,7 +31,7 @@ void param_manager::declare_int(std::string param_name, int64_t value)
   container_node_->declare_parameter(param_name, value);
 }
 
-void param_manager::declare_string(std::string param_name, std::string value)
+void ParamManager::declare_string(std::string param_name, std::string value)
 {
   // Insert the parameter into the parameter struct
   params_[param_name] = value;
@@ -38,7 +39,7 @@ void param_manager::declare_string(std::string param_name, std::string value)
   container_node_->declare_parameter(param_name, value);
 }
 
-void param_manager::set_double(std::string param_name, double value)
+void ParamManager::set_double(std::string param_name, double value)
 {
   // Check that the parameter is in the parameter struct
   if (params_.find(param_name) == params_.end())
@@ -53,7 +54,7 @@ void param_manager::set_double(std::string param_name, double value)
   container_node_->set_parameter(rclcpp::Parameter(param_name, value));
 }
 
-void param_manager::set_bool(std::string param_name, bool value)
+void ParamManager::set_bool(std::string param_name, bool value)
 {
   // Check that the parameter is in the parameter struct
   if (params_.find(param_name) == params_.end())
@@ -68,7 +69,7 @@ void param_manager::set_bool(std::string param_name, bool value)
   container_node_->set_parameter(rclcpp::Parameter(param_name, value));
 }
 
-void param_manager::set_int(std::string param_name, int64_t value)
+void ParamManager::set_int(std::string param_name, int64_t value)
 {
   // Check that the parameter is in the parameter struct
   if (params_.find(param_name) == params_.end())
@@ -83,7 +84,7 @@ void param_manager::set_int(std::string param_name, int64_t value)
   container_node_->set_parameter(rclcpp::Parameter(param_name, value));
 }
 
-void param_manager::set_string(std::string param_name, std::string value)
+void ParamManager::set_string(std::string param_name, std::string value)
 {
   // Check that the parameter is in the parameter struct
   if (params_.find(param_name) == params_.end())
@@ -98,7 +99,7 @@ void param_manager::set_string(std::string param_name, std::string value)
   container_node_->set_parameter(rclcpp::Parameter(param_name, value));
 }
 
-double param_manager::get_double(std::string param_name)
+double ParamManager::get_double(std::string param_name)
 {
     try
     {
@@ -111,7 +112,7 @@ double param_manager::get_double(std::string param_name)
     }
 } 
 
-bool param_manager::get_bool(std::string param_name)
+bool ParamManager::get_bool(std::string param_name)
 {
     try
     {
@@ -124,7 +125,7 @@ bool param_manager::get_bool(std::string param_name)
     }
 } 
 
-int64_t param_manager::get_int(std::string param_name)
+int64_t ParamManager::get_int(std::string param_name)
 {
     try
     {
@@ -137,7 +138,7 @@ int64_t param_manager::get_int(std::string param_name)
     }
 } 
 
-std::string param_manager::get_string(std::string param_name)
+std::string ParamManager::get_string(std::string param_name)
 {
     try
     {
@@ -150,7 +151,7 @@ std::string param_manager::get_string(std::string param_name)
     }
 } 
 
-void param_manager::set_parameters()
+void ParamManager::set_parameters()
 {
 
   // Get the parameters from the launch file, if given.
@@ -171,7 +172,7 @@ void param_manager::set_parameters()
   }
 }
 
-bool param_manager::set_parameters_callback(const std::vector<rclcpp::Parameter> & parameters)
+bool ParamManager::set_parameters_callback(const std::vector<rclcpp::Parameter> & parameters)
 {
   // Check each parameter in the incoming vector of parameters to change, and change the appropriate parameter.
   for (const auto & param : parameters) {

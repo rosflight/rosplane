@@ -1,15 +1,13 @@
-#include "rclcpp/rclcpp.hpp"
-#include "rosplane_msgs/msg/waypoint.hpp"
-#include "rclcpp/logging.hpp"
-#include "visualization_msgs/msg/marker.hpp"
-#include "rosplane_msgs/msg/waypoint.hpp"
-#include "rosplane_msgs/msg/state.hpp"
-// #include "geometry_msgs/msg/point.hpp"
-// #include "std_msgs/msg/header.hpp"
-#include "tf2_ros/transform_broadcaster.h"
-#include "tf2/LinearMath/Quaternion.h"
-#include "geometry_msgs/msg/transform_stamped.hpp"
 #include <ament_index_cpp/get_package_share_directory.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <rclcpp/logging.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <visualization_msgs/msg/marker.hpp>
+
+#include "rosplane_msgs/msg/state.hpp"
+#include "rosplane_msgs/msg/waypoint.hpp"
 
 #define SCALE 5.0
 #define TEXT_SCALE 15.0
@@ -20,11 +18,11 @@ using std::placeholders::_1;
 namespace rosplane_gcs
 {
 
-class rviz_waypoint_publisher : public rclcpp::Node
+class RvizWaypointPublisher : public rclcpp::Node
 {
 public:
-    rviz_waypoint_publisher();
-    ~rviz_waypoint_publisher();
+    RvizWaypointPublisher();
+    ~RvizWaypointPublisher();
 
 private:
     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr rviz_wp_pub_;
@@ -51,10 +49,10 @@ private:
     std::vector<geometry_msgs::msg::Point> aircraft_history_points_;
 
     int num_wps_;
-    int i;
+    int i_;
 };
 
-rviz_waypoint_publisher::rviz_waypoint_publisher()
+RvizWaypointPublisher::RvizWaypointPublisher()
     : Node("rviz_waypoint_publisher") {
     
     rclcpp::QoS qos_transient_local_20_(20);
@@ -63,9 +61,9 @@ rviz_waypoint_publisher::rviz_waypoint_publisher()
     rviz_mesh_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("rviz/mesh", 5);
     rviz_aircraft_path_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("rviz/mesh_path", 5);
     waypoint_sub_ = this->create_subscription<rosplane_msgs::msg::Waypoint>("waypoint_path", qos_transient_local_20_,
-            std::bind(&rviz_waypoint_publisher::new_wp_callback, this, _1));
+            std::bind(&RvizWaypointPublisher::new_wp_callback, this, _1));
     vehicle_state_sub_ = this->create_subscription<rosplane_msgs::msg::State>("estimated_state", 10,
-            std::bind(&rviz_waypoint_publisher::state_update_callback, this, _1));
+            std::bind(&RvizWaypointPublisher::state_update_callback, this, _1));
     
     aircraft_tf2_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
     
@@ -93,12 +91,12 @@ rviz_waypoint_publisher::rviz_waypoint_publisher()
     aircraft_.color.a = 1.0;
 
     num_wps_ = 0;
-    i = 0;
+    i_ = 0;
 }
 
-rviz_waypoint_publisher::~rviz_waypoint_publisher() {}
+RvizWaypointPublisher::~RvizWaypointPublisher() {}
 
-void rviz_waypoint_publisher::new_wp_callback(const rosplane_msgs::msg::Waypoint & wp) {
+void RvizWaypointPublisher::new_wp_callback(const rosplane_msgs::msg::Waypoint & wp) {
     visualization_msgs::msg::Marker new_marker;
 
     RCLCPP_INFO_STREAM(this->get_logger(), wp.lla);
@@ -176,7 +174,7 @@ void rviz_waypoint_publisher::new_wp_callback(const rosplane_msgs::msg::Waypoint
     ++num_wps_;
 }
 
-void rviz_waypoint_publisher::update_list() {
+void RvizWaypointPublisher::update_list() {
     rclcpp::Time now = this->get_clock()->now();
     line_list_.header.stamp = now;
     line_list_.header.frame_id = "NED";
@@ -192,7 +190,7 @@ void rviz_waypoint_publisher::update_list() {
     line_list_.points = line_points_;
 }
 
-void rviz_waypoint_publisher::update_aircraft_history() {
+void RvizWaypointPublisher::update_aircraft_history() {
     rclcpp::Time now = this->get_clock()->now();
     aircraft_history_.header.stamp = now;
     aircraft_history_.header.frame_id = "NED";
@@ -215,7 +213,7 @@ void rviz_waypoint_publisher::update_aircraft_history() {
     }
 }
 
-void rviz_waypoint_publisher::update_mesh() {
+void RvizWaypointPublisher::update_mesh() {
     rclcpp::Time now = this->get_clock()->now();
     aircraft_.header.stamp = now;
 
@@ -235,7 +233,7 @@ void rviz_waypoint_publisher::update_mesh() {
     t.transform.rotation.w = q.w(); //1.0; //vehicle_state_.quat[3];
 
     // Update aircraft history
-    if (i % PATH_PUBLISH_MOD == 0) {
+    if (i_ % PATH_PUBLISH_MOD == 0) {
         geometry_msgs::msg::Point new_p;
         new_p.x = vehicle_state_.position[0];
         new_p.y = vehicle_state_.position[1];
@@ -250,7 +248,7 @@ void rviz_waypoint_publisher::update_mesh() {
     rviz_mesh_pub_->publish(aircraft_);
 }
 
-void rviz_waypoint_publisher::state_update_callback(const rosplane_msgs::msg::State & msg) {
+void RvizWaypointPublisher::state_update_callback(const rosplane_msgs::msg::State & msg) {
     vehicle_state_ = msg;
     update_mesh();
 }
@@ -260,7 +258,7 @@ void rviz_waypoint_publisher::state_update_callback(const rosplane_msgs::msg::St
 int main(int argc, char ** argv) {
     rclcpp::init(argc, argv);
 
-    auto node = std::make_shared<rosplane_gcs::rviz_waypoint_publisher>();
+    auto node = std::make_shared<rosplane_gcs::RvizWaypointPublisher>();
 
     rclcpp::spin(node);
 

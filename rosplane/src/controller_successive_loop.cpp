@@ -1,7 +1,7 @@
-#include "controller_successive_loop.hpp"
-
-#include "iostream"
 #include <cmath>
+#include <iostream>
+
+#include "controller_successive_loop.hpp"
 
 namespace rosplane
 {
@@ -12,8 +12,7 @@ double wrap_within_180(double fixed_heading, double wrapped_heading)
   return wrapped_heading - floor((wrapped_heading - fixed_heading) / (2 * M_PI) + 0.5) * 2 * M_PI;
 }
 
-controller_successive_loop::controller_successive_loop()
-    : controller_state_machine()
+ControllerSucessiveLoop::ControllerSucessiveLoop()
 {
   // Initialize course hold, roll hold and pitch hold errors and integrators to zero.
   c_error_ = 0;
@@ -26,30 +25,30 @@ controller_successive_loop::controller_successive_loop()
   // Declare parameters associated with this controller, controller_state_machine
   declare_parameters();
   // Set parameters according to the parameters in the launch file, otherwise use the default values
-  params.set_parameters();
+  params_.set_parameters();
 }
 
-void controller_successive_loop::take_off(const struct input_s & input, struct output_s & output)
+void ControllerSucessiveLoop::take_off(const Input & input, Output & output)
 {
   // Run lateral and longitudinal controls.
   take_off_lateral_control(input, output);
   take_off_longitudinal_control(input, output);
 }
 
-void controller_successive_loop::take_off_exit()
+void ControllerSucessiveLoop::take_off_exit()
 {
   // Put any code that should run as the airplane exits take off mode.
 }
 
-void controller_successive_loop::climb(const struct input_s & input,
-                                       struct output_s & output)
+void ControllerSucessiveLoop::climb(const Input & input,
+                                       Output & output)
 {
   // Run lateral and longitudinal controls.
   climb_lateral_control(input, output);
   climb_longitudinal_control(input, output);
 }
 
-void controller_successive_loop::climb_exit()
+void ControllerSucessiveLoop::climb_exit()
 {
   // Reset differentiators, integrators and errors.
   at_error_ = 0;
@@ -60,25 +59,25 @@ void controller_successive_loop::climb_exit()
   a_differentiator_ = 0;
 }
 
-void controller_successive_loop::altitude_hold(const struct input_s & input,
-                                               struct output_s & output)
+void ControllerSucessiveLoop::altitude_hold(const Input & input,
+                                               Output & output)
 {
   // Run lateral and longitudinal controls.
   alt_hold_lateral_control(input, output);
   alt_hold_longitudinal_control(input, output);
 }
 
-void controller_successive_loop::altitude_hold_exit()
+void ControllerSucessiveLoop::altitude_hold_exit()
 {
   // Reset integrators.
   c_integrator_ = 0;
 }
 
-void controller_successive_loop::alt_hold_lateral_control(const struct input_s & input,
-                                                          struct output_s & output)
+void ControllerSucessiveLoop::alt_hold_lateral_control(const Input & input,
+                                                          Output & output)
 {
   // For readability, declare parameters here that will be used in this function
-  bool roll_override = params.get_bool("roll_command_override");   // Declared in controller_base
+  bool roll_override = params_.get_bool("roll_command_override");   // Declared in controller_base
 
   // Set rudder command to zero, can use coordinated_turn_hold if implemented.
   // Find commanded roll angle in order to achieve commanded course.
@@ -91,12 +90,12 @@ void controller_successive_loop::alt_hold_lateral_control(const struct input_s &
   output.delta_a = roll_hold(output.phi_c, input.phi, input.p);
 }
 
-void controller_successive_loop::alt_hold_longitudinal_control(const struct input_s & input,
-                                                               struct output_s & output)
+void ControllerSucessiveLoop::alt_hold_longitudinal_control(const Input & input,
+                                                               Output & output)
 {
   // For readability, declare parameters here that will be used in this function
-  double alt_hz = params.get_double("alt_hz");   // Declared in controller_state_machine
-  bool pitch_override = params.get_bool("pitch_command_override");   // Declared in controller_base
+  double alt_hz = params_.get_double("alt_hz");   // Declared in controller_state_machine
+  bool pitch_override = params_.get_bool("pitch_command_override");   // Declared in controller_base
 
   // Saturate the altitude command.
   double adjusted_hc = adjust_h_c(input.h_c, input.h, alt_hz);
@@ -110,8 +109,8 @@ void controller_successive_loop::alt_hold_longitudinal_control(const struct inpu
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q);
 }
 
-void controller_successive_loop::climb_lateral_control(const struct input_s & input,
-                                                       struct output_s & output)
+void ControllerSucessiveLoop::climb_lateral_control(const Input & input,
+                                                       Output & output)
 {
   // Maintain straight flight while gaining altitude.
   output.phi_c = 0;
@@ -119,11 +118,11 @@ void controller_successive_loop::climb_lateral_control(const struct input_s & in
   output.delta_r = yaw_damper(input.r);
 }
 
-void controller_successive_loop::climb_longitudinal_control(const struct input_s & input,
-                                                            struct output_s & output)
+void ControllerSucessiveLoop::climb_longitudinal_control(const Input & input,
+                                                            Output & output)
 {
   // For readability, declare parameters here that will be used in this function
-  double alt_hz = params.get_double("alt_hz");   // Declared in controller_state_machine
+  double alt_hz = params_.get_double("alt_hz");   // Declared in controller_state_machine
 
   // Saturate the altitude command.
   double adjusted_hc = adjust_h_c(input.h_c, input.h, alt_hz);
@@ -134,8 +133,8 @@ void controller_successive_loop::climb_longitudinal_control(const struct input_s
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q);
 }
 
-void controller_successive_loop::take_off_lateral_control(const struct input_s & input,
-                                                          struct output_s & output)
+void ControllerSucessiveLoop::take_off_lateral_control(const Input & input,
+                                                          Output & output)
 {
   // In the take-off zone maintain level straight flight by commanding a roll angle of 0 and rudder of 0.
   output.delta_r = 0.0;
@@ -143,12 +142,12 @@ void controller_successive_loop::take_off_lateral_control(const struct input_s &
   output.delta_a = roll_hold(output.phi_c, input.phi, input.p);
 }
 
-void controller_successive_loop::take_off_longitudinal_control(const struct input_s & input,
-                                                               struct output_s & output)
+void ControllerSucessiveLoop::take_off_longitudinal_control(const Input & input,
+                                                               Output & output)
 {
   // For readability, declare parameters here that will be used in this function
-  double max_takeoff_throttle = params.get_double("max_takeoff_throttle");
-  double cmd_takeoff_pitch = params.get_double("cmd_takeoff_pitch");
+  double max_takeoff_throttle = params_.get_double("max_takeoff_throttle");
+  double cmd_takeoff_pitch = params_.get_double("cmd_takeoff_pitch");
   
   // Set throttle to not overshoot altitude.
   output.delta_t =
@@ -200,14 +199,14 @@ void controller_successive_loop::take_off_longitudinal_control(const struct inpu
     }
 */
 
-float controller_successive_loop::course_hold(float chi_c, float chi, float phi_ff, float r)
+float ControllerSucessiveLoop::course_hold(float chi_c, float chi, float phi_ff, float r)
 {
   // For readability, declare parameters here that will be used in this function
-  double frequency = params.get_double("controller_output_frequency");   // Declared in controller_base
-  double c_kp = params.get_double("c_kp");
-  double c_ki = params.get_double("c_ki");
-  double c_kd = params.get_double("c_kd");
-  double max_roll = params.get_double("max_roll");
+  double frequency = params_.get_double("controller_output_frequency");   // Declared in controller_base
+  double c_kp = params_.get_double("c_kp");
+  double c_ki = params_.get_double("c_ki");
+  double c_kd = params_.get_double("c_kd");
+  double max_roll = params_.get_double("max_roll");
 
   double wrapped_chi_c = wrap_within_180(chi, chi_c);
 
@@ -234,16 +233,16 @@ float controller_successive_loop::course_hold(float chi_c, float chi, float phi_
   return phi_c;
 }
 
-float controller_successive_loop::roll_hold(float phi_c, float phi, float p)
+float ControllerSucessiveLoop::roll_hold(float phi_c, float phi, float p)
 {
   // For readability, declare parameters here that will be used in this function
-  double frequency = params.get_double("controller_output_frequency");   // Declared in controller_base
-  double r_kp = params.get_double("r_kp");
-  double r_ki = params.get_double("r_ki");
-  double r_kd = params.get_double("r_kd");
-  double max_a = params.get_double("max_a");
-  double trim_a = params.get_double("trim_a");
-  double pwm_rad_a = params.get_double("pwm_rad_a");  // Declared in controller base
+  double frequency = params_.get_double("controller_output_frequency");   // Declared in controller_base
+  double r_kp = params_.get_double("r_kp");
+  double r_ki = params_.get_double("r_ki");
+  double r_kd = params_.get_double("r_kd");
+  double max_a = params_.get_double("max_a");
+  double trim_a = params_.get_double("trim_a");
+  double pwm_rad_a = params_.get_double("pwm_rad_a");  // Declared in controller base
 
   float error = phi_c - phi;
 
@@ -267,16 +266,16 @@ float controller_successive_loop::roll_hold(float phi_c, float phi, float p)
   return delta_a;
 }
 
-float controller_successive_loop::pitch_hold(float theta_c, float theta, float q)
+float ControllerSucessiveLoop::pitch_hold(float theta_c, float theta, float q)
 {
   // For readability, declare parameters here that will be used in this function
-  double frequency = params.get_double("controller_output_frequency");   // Declared in controller_base
-  double p_kp = params.get_double("p_kp");
-  double p_ki = params.get_double("p_ki");
-  double p_kd = params.get_double("p_kd");
-  double max_e = params.get_double("max_e");
-  double trim_e = params.get_double("trim_e");
-  double pwm_rad_e = params.get_double("pwm_rad_e");   // Declared in controller_base
+  double frequency = params_.get_double("controller_output_frequency");   // Declared in controller_base
+  double p_kp = params_.get_double("p_kp");
+  double p_ki = params_.get_double("p_ki");
+  double p_kd = params_.get_double("p_kd");
+  double max_e = params_.get_double("max_e");
+  double trim_e = params_.get_double("trim_e");
+  double pwm_rad_e = params_.get_double("pwm_rad_e");   // Declared in controller_base
 
   float error = theta_c - theta;
 
@@ -300,16 +299,16 @@ float controller_successive_loop::pitch_hold(float theta_c, float theta, float q
   return -delta_e; // TODO explain subtraction.
 }
 
-float controller_successive_loop::airspeed_with_throttle_hold(float va_c, float va)
+float ControllerSucessiveLoop::airspeed_with_throttle_hold(float va_c, float va)
 {
   // For readability, declare parameters here that will be used in this function
-  double frequency = params.get_double("controller_output_frequency");   // Declared in controller_base
-  double tau = params.get_double("tau");
-  double a_t_kp = params.get_double("a_t_kp");
-  double a_t_ki = params.get_double("a_t_ki");
-  double a_t_kd = params.get_double("a_t_kd");
-  double max_t = params.get_double("max_t");
-  double trim_t = params.get_double("trim_t");
+  double frequency = params_.get_double("controller_output_frequency");   // Declared in controller_base
+  double tau = params_.get_double("tau");
+  double a_t_kp = params_.get_double("a_t_kp");
+  double a_t_ki = params_.get_double("a_t_ki");
+  double a_t_kd = params_.get_double("a_t_kd");
+  double max_t = params_.get_double("max_t");
+  double trim_t = params_.get_double("trim_t");
 
   float error = va_c - va;
 
@@ -336,16 +335,16 @@ float controller_successive_loop::airspeed_with_throttle_hold(float va_c, float 
   return delta_t;
 }
 
-float controller_successive_loop::altitude_hold_control(float h_c, float h)
+float ControllerSucessiveLoop::altitude_hold_control(float h_c, float h)
 {
   // For readability, declare parameters here that will be used in this function
-  double frequency = params.get_double("controller_output_frequency");   // Declared in controller_base
-  double alt_hz = params.get_double("alt_hz");
-  double tau = params.get_double("tau");
-  double a_kp = params.get_double("a_kp");
-  double a_ki = params.get_double("a_ki");
-  double a_kd = params.get_double("a_kd");
-  double max_pitch = params.get_double("max_pitch");
+  double frequency = params_.get_double("controller_output_frequency");   // Declared in controller_base
+  double alt_hz = params_.get_double("alt_hz");
+  double tau = params_.get_double("tau");
+  double a_kp = params_.get_double("a_kp");
+  double a_ki = params_.get_double("a_ki");
+  double a_kd = params_.get_double("a_kd");
+  double max_pitch = params_.get_double("max_pitch");
 
   float error = h_c - h;
 
@@ -375,12 +374,12 @@ float controller_successive_loop::altitude_hold_control(float h_c, float h)
   return theta_c;
 }
 
-float controller_successive_loop::yaw_damper(float r)
+float ControllerSucessiveLoop::yaw_damper(float r)
 {
-  double frequency = params.get_double("controller_output_frequency");   // Declared in controller_base
-  float y_pwo = params.get_double("y_pwo");
-  float y_kr = params.get_double("y_kr");
-  float max_r = params.get_double("max_r");
+  double frequency = params_.get_double("controller_output_frequency");   // Declared in controller_base
+  float y_pwo = params_.get_double("y_pwo");
+  float y_kr = params_.get_double("y_kr");
+  float max_r = params_.get_double("max_r");
 
   float Ts = 1.0/frequency;
 
@@ -393,10 +392,10 @@ float controller_successive_loop::yaw_damper(float r)
   float b1 = y_kr * (2.0 * n1 + Ts * n0) / (2.0 * d1 + Ts * d0);
   float a0 = y_kr * (2.0 * d1 - Ts * d0) / (2.0 * d1 + Ts * d0);
 
-  float delta_r = -sat(a0 * delta_r_delay + b1 * r + b0 * r_delay, max_r, -max_r);
+  float delta_r = -sat(a0 * delta_r_delay_ + b1 * r + b0 * r_delay_, max_r, -max_r);
 
-  r_delay = r;
-  delta_r_delay = delta_r;
+  r_delay_ = r;
+  delta_r_delay_ = delta_r;
 
   return delta_r;
 }
@@ -408,7 +407,7 @@ float controller_successive_loop::yaw_damper(float r)
 //}
 
 // TODO: Add some error handling here.
-float controller_successive_loop::sat(float value, float up_limit, float low_limit)
+float ControllerSucessiveLoop::sat(float value, float up_limit, float low_limit)
 {
   // Set to upper limit if larger than that limit.
   // Set to lower limit if smaller than that limit.
@@ -430,7 +429,7 @@ float controller_successive_loop::sat(float value, float up_limit, float low_lim
   return rVal;
 }
 
-float controller_successive_loop::adjust_h_c(float h_c, float h, float max_diff)
+float ControllerSucessiveLoop::adjust_h_c(float h_c, float h, float max_diff)
 {
   double adjusted_h_c;
 
@@ -445,46 +444,46 @@ float controller_successive_loop::adjust_h_c(float h_c, float h, float max_diff)
   return adjusted_h_c;
 }
 
-void controller_successive_loop::declare_parameters()
+void ControllerSucessiveLoop::declare_parameters()
 {
   // Declare param with ROS2 and set the default value.
-  params.declare_bool("roll_command_override", false);
-  params.declare_bool("pitch_command_override", false);
+  params_.declare_bool("roll_command_override", false);
+  params_.declare_bool("pitch_command_override", false);
 
-  params.declare_double("max_takeoff_throttle", 0.55);
-  params.declare_double("c_kp", 2.37);
-  params.declare_double("c_ki", .4);
-  params.declare_double("c_kd", .0);
-  params.declare_double("max_roll", 25.0);
-  params.declare_double("cmd_takeoff_pitch", 5.0);
+  params_.declare_double("max_takeoff_throttle", 0.55);
+  params_.declare_double("c_kp", 2.37);
+  params_.declare_double("c_ki", .4);
+  params_.declare_double("c_kd", .0);
+  params_.declare_double("max_roll", 25.0);
+  params_.declare_double("cmd_takeoff_pitch", 5.0);
 
-  params.declare_double("r_kp", .06);
-  params.declare_double("r_ki", .0);
-  params.declare_double("r_kd", .04);
-  params.declare_double("max_a", .15);
-  params.declare_double("max_r", 1.0);
-  params.declare_double("trim_a", 0.0);
+  params_.declare_double("r_kp", .06);
+  params_.declare_double("r_ki", .0);
+  params_.declare_double("r_kd", .04);
+  params_.declare_double("max_a", .15);
+  params_.declare_double("max_r", 1.0);
+  params_.declare_double("trim_a", 0.0);
 
-  params.declare_double("p_kp", -.15);
-  params.declare_double("p_ki", .0);
-  params.declare_double("p_kd", -.05);
-  params.declare_double("max_e", .15);
-  params.declare_double("max_pitch", 20.0);
-  params.declare_double("trim_e", 0.02);
+  params_.declare_double("p_kp", -.15);
+  params_.declare_double("p_ki", .0);
+  params_.declare_double("p_kd", -.05);
+  params_.declare_double("max_e", .15);
+  params_.declare_double("max_pitch", 20.0);
+  params_.declare_double("trim_e", 0.02);
 
-  params.declare_double("tau", 50.0);
-  params.declare_double("a_t_kp", .05);
-  params.declare_double("a_t_ki", .005);
-  params.declare_double("a_t_kd", 0.0);
-  params.declare_double("max_t", 1.0);
-  params.declare_double("trim_t", 0.5);
+  params_.declare_double("tau", 50.0);
+  params_.declare_double("a_t_kp", .05);
+  params_.declare_double("a_t_ki", .005);
+  params_.declare_double("a_t_kd", 0.0);
+  params_.declare_double("max_t", 1.0);
+  params_.declare_double("trim_t", 0.5);
 
-  params.declare_double("a_kp", 0.015);
-  params.declare_double("a_ki", 0.003);
-  params.declare_double("a_kd", 0.0);
+  params_.declare_double("a_kp", 0.015);
+  params_.declare_double("a_ki", 0.003);
+  params_.declare_double("a_kd", 0.0);
 
-  params.declare_double("y_pwo", .6349);
-  params.declare_double("y_kr", .85137);
+  params_.declare_double("y_pwo", .6349);
+  params_.declare_double("y_kr", .85137);
 }
 
 } // namespace rosplane
