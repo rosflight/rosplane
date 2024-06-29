@@ -1,7 +1,6 @@
 #include <iostream>
 #include <limits>
 
-#include <Eigen/src/Core/Matrix.h>
 #include <rclcpp/logging.hpp>
 #include <rclcpp/rclcpp.hpp>
 

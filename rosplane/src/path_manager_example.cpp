@@ -2,7 +2,6 @@
 #include <cmath>
 #include <string>
 
-#include <Eigen/src/Core/Matrix.h>
 #include <rclcpp/logging.hpp>
 #include <rclcpp/rclcpp.hpp>
 
