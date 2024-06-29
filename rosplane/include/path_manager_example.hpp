@@ -1,8 +1,9 @@
 #ifndef PATH_MANAGER_EXAMPLE_H
 #define PATH_MANAGER_EXAMPLE_H
 
-#include "path_manager_base.hpp"
 #include <Eigen/Eigen>
+
+#include "path_manager_base.hpp"
 
 #define M_PI_F 3.14159265358979323846f
 #define M_PI_2_F 1.57079632679489661923f

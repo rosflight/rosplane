@@ -1,11 +1,11 @@
 #ifndef ESTIMATOR_EXAMPLE_H
 #define ESTIMATOR_EXAMPLE_H
 
-#include "estimator_base.hpp"
-
 #include <Eigen/Geometry>
 #include <math.h>
 #include <yaml-cpp/yaml.h>
+
+#include "estimator_base.hpp"
 
 namespace rosplane
 {

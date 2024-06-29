@@ -1,4 +1,3 @@
-
 #include "controller_state_machine.hpp"
 
 namespace rosplane

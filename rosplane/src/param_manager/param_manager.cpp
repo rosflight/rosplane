@@ -1,5 +1,6 @@
-#include "param_manager.hpp"
 #include <variant>
+
+#include "param_manager.hpp"
 
 namespace rosplane
 {

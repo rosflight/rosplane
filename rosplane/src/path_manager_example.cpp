@@ -1,12 +1,12 @@
-//#include "path_manager_example.h"
-//#include "ros/ros.h"
-#include "path_manager_example.hpp"
-#include "Eigen/src/Core/Matrix.h"
-#include "rclcpp/rclcpp.hpp"
-#include <cmath>
-#include <rclcpp/logging.hpp>
-#include <string>
 #include <chrono>
+#include <cmath>
+#include <string>
+
+#include <Eigen/src/Core/Matrix.h>
+#include <rclcpp/logging.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include "path_manager_example.hpp"
 
 namespace rosplane
 {

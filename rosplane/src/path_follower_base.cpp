@@ -1,6 +1,8 @@
-#include "path_follower_base.hpp"
-#include "path_follower_example.hpp"
 #include <rclcpp/logging.hpp>
+
+#include "path_follower_example.hpp"
+
+#include "path_follower_base.hpp"
 
 namespace rosplane
 {

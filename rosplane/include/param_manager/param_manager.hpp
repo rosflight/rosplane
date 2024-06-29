@@ -9,8 +9,9 @@
 #ifndef PARAM_MANAGER_H
 #define PARAM_MANAGER_H
 
-#include <rclcpp/rclcpp.hpp>
 #include <variant>
+
+#include <rclcpp/rclcpp.hpp>
 
 namespace rosplane
 {

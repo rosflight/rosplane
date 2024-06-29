@@ -1,7 +1,7 @@
-#include "controller_successive_loop.hpp"
-
-#include "iostream"
 #include <cmath>
+#include <iostream>
+
+#include "controller_successive_loop.hpp"
 
 namespace rosplane
 {

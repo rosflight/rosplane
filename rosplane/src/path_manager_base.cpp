@@ -1,10 +1,13 @@
-#include "path_manager_base.hpp"
-#include "Eigen/src/Core/Matrix.h"
-#include "iostream"
-#include "path_manager_example.hpp"
-#include "rclcpp/rclcpp.hpp"
+#include <iostream>
 #include <limits>
+
+#include <Eigen/src/Core/Matrix.h>
 #include <rclcpp/logging.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include "path_manager_example.hpp"
+
+#include "path_manager_base.hpp"
 
 namespace rosplane
 {

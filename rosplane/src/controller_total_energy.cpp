@@ -1,5 +1,6 @@
-#include "controller_total_energy.hpp"
 #include <cmath>
+
+#include "controller_total_energy.hpp"
 
 namespace rosplane
 {

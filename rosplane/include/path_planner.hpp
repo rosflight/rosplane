@@ -1,16 +1,18 @@
-#include "rclcpp/rclcpp.hpp"
-#include "rosplane_msgs/msg/waypoint.hpp"
-#include "rosplane_msgs/msg/state.hpp"
-#include "rosplane_msgs/srv/add_waypoint.hpp"
-#include "rosflight_msgs/srv/param_file.hpp"
+#include <cmath>
+
 #include <rclcpp/executors.hpp>
 #include <rclcpp/logging.hpp>
+#include <rclcpp/rclcpp.hpp>
 #include <rclcpp/service.hpp>
 #include <rclcpp/utilities.hpp>
+#include <rosflight_msgs/srv/param_file.hpp>
 #include <std_srvs/srv/trigger.hpp>
-#include <param_manager.hpp>
 #include <yaml-cpp/yaml.h>
-#include <cmath>
+
+#include "param_manager.hpp"
+#include "rosplane_msgs/srv/add_waypoint.hpp"
+#include "rosplane_msgs/msg/state.hpp"
+#include "rosplane_msgs/msg/waypoint.hpp"
 
 #define EARTH_RADIUS 6378145.0f
 

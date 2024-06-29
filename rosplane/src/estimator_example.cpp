@@ -1,5 +1,6 @@
-#include "estimator_example.hpp"
 #include "estimator_base.hpp"
+
+#include "estimator_example.hpp"
 
 namespace rosplane
 {
