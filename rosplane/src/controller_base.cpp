@@ -182,7 +182,7 @@ void ControllerBase::set_timer()
                                              this));
 }
 
-void ControllerBase::convert_to_pwm(ControllerBase::Output & output)
+void ControllerBase::convert_to_pwm(Output & output)
 {
 
   // Assign parameters from parameters object

@@ -14,8 +14,7 @@ double wrap_within_180(double fixed_heading, double wrapped_heading)
 }
 
 EstimatorExample::EstimatorExample()
-    : EstimatorBase()
-    , xhat_a_(Eigen::Vector2f::Zero())
+    : xhat_a_(Eigen::Vector2f::Zero())
     , P_a_(Eigen::Matrix2f::Identity())
     , xhat_p_(Eigen::VectorXf::Zero(7))
     , P_p_(Eigen::MatrixXf::Identity(7, 7))

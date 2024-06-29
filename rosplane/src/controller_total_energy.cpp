@@ -6,7 +6,6 @@ namespace rosplane
 {
 
 ControllerTotalEnergy::ControllerTotalEnergy()
-    : ControllerSucessiveLoop()
 {
   // Initialize course hold, roll hold and pitch hold errors and integrators to zero.
   L_integrator_ = 0;

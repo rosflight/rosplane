@@ -11,7 +11,6 @@ namespace rosplane
 {
 
 PathManagerExample::PathManagerExample()
-    : PathManagerBase()
 {
   fil_state_ = FilletState::STRAIGHT;
   dub_state_ = DubinState::FIRST;

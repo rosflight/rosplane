@@ -29,7 +29,7 @@ public:
 protected:
   struct Input
   {
-    enum PathType p_type;
+    PathType p_type;
     float va_d;
     float r_path[3];
     float q_path[3];

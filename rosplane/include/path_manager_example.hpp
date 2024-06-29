@@ -114,7 +114,7 @@ private:
     Eigen::Vector3f w3; /** vector defining half plane H3 */
     Eigen::Vector3f q3; /** unit vector defining direction of half plane H3 */
   };
-  struct DubinsPath dubins_path_;
+  DubinsPath dubins_path_;
 
   /**
    * @brief Calculates the parameters of a Dubins path
@@ -123,7 +123,7 @@ private:
    * @param end_node: Ending waypoint of the Dubins path
    * @param R: Minimum turning radius R
    */
-  void dubins_parameters(const struct Waypoint start_node, const struct Waypoint end_node,
+  void dubins_parameters(const Waypoint start_node, const Waypoint end_node,
                          float R);
 
   /**

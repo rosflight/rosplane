@@ -13,7 +13,6 @@ double wrap_within_180(double fixed_heading, double wrapped_heading)
 }
 
 ControllerSucessiveLoop::ControllerSucessiveLoop()
-    : ControllerStateMachine()
 {
   // Initialize course hold, roll hold and pitch hold errors and integrators to zero.
   c_error_ = 0;

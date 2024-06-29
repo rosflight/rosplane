@@ -4,7 +4,6 @@ namespace rosplane
 {
 
 ControllerStateMachine::ControllerStateMachine()
-    : ControllerBase()
 {
 
   // Initialize controller in take_off zone.
