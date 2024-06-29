@@ -1,13 +1,7 @@
-#include <cmath>
-
 #include <rclcpp/executors.hpp>
-#include <rclcpp/logging.hpp>
-#include <rclcpp/rclcpp.hpp>
 #include <rclcpp/service.hpp>
-#include <rclcpp/utilities.hpp>
 #include <rosflight_msgs/srv/param_file.hpp>
 #include <std_srvs/srv/trigger.hpp>
-#include <yaml-cpp/yaml.h>
 
 #include "param_manager.hpp"
 #include "rosplane_msgs/srv/add_waypoint.hpp"

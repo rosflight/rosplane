@@ -10,13 +10,8 @@
 #ifndef PATH_MANAGER_BASE_H
 #define PATH_MANAGER_BASE_H
 
-#include <Eigen/Eigen>
-#include <math.h>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/fluid_pressure.hpp>
-#include <sensor_msgs/msg/imu.hpp>
-#include <std_msgs/msg/float32.hpp>
-#include <std_msgs/msg/float32_multi_array.hpp>
 
 #include "param_manager.hpp"
 #include "rosplane_msgs/msg/current_path.hpp"

@@ -2,8 +2,6 @@
 #define ESTIMATOR_EXAMPLE_H
 
 #include <Eigen/Geometry>
-#include <math.h>
-#include <yaml-cpp/yaml.h>
 
 #include "estimator_base.hpp"
 
