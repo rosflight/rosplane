@@ -1,135 +1,82 @@
+#include <rclcpp/executors.hpp>
+#include <rclcpp/logging.hpp>
+#include <rclcpp/service.hpp>
+#include <rclcpp/utilities.hpp>
+#include <std_srvs/srv/trigger.hpp>
+#include <param_manager.hpp>
+#include <yaml-cpp/yaml.h>
+#include <cmath>
 #include "rclcpp/rclcpp.hpp"
 #include "rosplane_msgs/msg/waypoint.hpp"
 #include "rosplane_msgs/msg/state.hpp"
 #include "rosplane_msgs/srv/add_waypoint.hpp"
 #include "rosflight_msgs/srv/param_file.hpp"
-#include <rclcpp/executors.hpp>
-#include <rclcpp/logging.hpp>
-#include <rclcpp/service.hpp>
-#include <rclcpp/utilities.hpp>
-// #include <rosplane_msgs/msg/detail/waypoint__struct.hpp>
-#include <std_srvs/srv/trigger.hpp>
-#include <param_manager.hpp>
-#include <yaml-cpp/yaml.h>
-#include <cmath>
-
-#define EARTH_RADIUS 6378145.0f
+#include "path_planner.hpp"
 
 using std::placeholders::_1;
 using std::placeholders::_2;
-using namespace std::chrono_literals;
-
-namespace rosplane
-{
-
-class path_planner : public rclcpp::Node
-{
-public:
-  path_planner();
-  ~path_planner();
-
-  param_manager params;   /** Holds the parameters for the path_planner*/
-
-private:
-  rclcpp::Publisher<rosplane_msgs::msg::Waypoint>::SharedPtr waypoint_publisher;
-  rclcpp::Subscription<rosplane_msgs::msg::State>::SharedPtr state_subscription;
-  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr next_waypoint_service;
-  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr clear_waypoint_service;
-  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr print_waypoint_service;
-  rclcpp::Service<rosplane_msgs::srv::AddWaypoint>::SharedPtr add_waypoint_service;
-  rclcpp::Service<rosflight_msgs::srv::ParamFile>::SharedPtr load_mission_service;
-  rclcpp::TimerBase::SharedPtr timer_;
-
-  bool publish_next_waypoint(const std_srvs::srv::Trigger::Request::SharedPtr & req,
-                             const std_srvs::srv::Trigger::Response::SharedPtr & res);
-  bool update_path(const rosplane_msgs::srv::AddWaypoint::Request::SharedPtr & req,
-                   const rosplane_msgs::srv::AddWaypoint::Response::SharedPtr & res);
-  bool clear_path_callback(const std_srvs::srv::Trigger::Request::SharedPtr & req,
-                  const std_srvs::srv::Trigger::Response::SharedPtr & res); void clear_path();
-  bool print_path(const std_srvs::srv::Trigger::Request::SharedPtr & req,
-                  const std_srvs::srv::Trigger::Response::SharedPtr & res);
-  bool load_mission(const rosflight_msgs::srv::ParamFile::Request::SharedPtr & req,
-                    const rosflight_msgs::srv::ParamFile::Response::SharedPtr & res);
-  bool load_mission_from_file(const std::string& filename);
-  void state_callback(const rosplane_msgs::msg::State & msg);
-  void waypoint_publish();
-  void timer_callback();
-  std::array<double, 3> lla2ned(std::array<float, 3> lla);
-
-  /**
-   * This declares each parameter as a parameter so that the ROS2 parameter system can recognize each parameter.
-   * It also sets the default parameter, which will then be overridden by a launch script.
-   */
-  void declare_parameters();
-
-  OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
-  rcl_interfaces::msg::SetParametersResult
-  parametersCallback(const std::vector<rclcpp::Parameter> & parameters);
-
-  int num_waypoints_published;
-  double initial_lat_;
-  double initial_lon_;
-  double initial_alt_;
-
-  std::vector<rosplane_msgs::msg::Waypoint> wps;
-};
 
 path_planner::path_planner()
     : Node("path_planner"), params(this)
 {
 
+  // Make this publisher transient_local so that it publishes the last 10 waypoints to late subscribers
   rclcpp::QoS qos_transient_local_10_(10);
   qos_transient_local_10_.transient_local();
-  waypoint_publisher = this->create_publisher<rosplane_msgs::msg::Waypoint>("waypoint_path", qos_transient_local_10_);
+  waypoint_publisher_ = this->create_publisher<rosplane_msgs::msg::Waypoint>("waypoint_path", qos_transient_local_10_);
 
-  next_waypoint_service = this->create_service<std_srvs::srv::Trigger>(
+  next_waypoint_service_ = this->create_service<std_srvs::srv::Trigger>(
     "publish_next_waypoint", std::bind(&path_planner::publish_next_waypoint, this, _1, _2));
   
-  add_waypoint_service = this->create_service<rosplane_msgs::srv::AddWaypoint>(
+  add_waypoint_service_ = this->create_service<rosplane_msgs::srv::AddWaypoint>(
     "add_waypoint", std::bind(&path_planner::update_path, this, _1, _2));
   
-  clear_waypoint_service = this->create_service<std_srvs::srv::Trigger>(
+  clear_waypoint_service_ = this->create_service<std_srvs::srv::Trigger>(
     "clear_waypoints", std::bind(&path_planner::clear_path_callback, this, _1, _2));
 
-  print_waypoint_service = this->create_service<std_srvs::srv::Trigger>(
+  print_waypoint_service_ = this->create_service<std_srvs::srv::Trigger>(
     "print_waypoints", std::bind(&path_planner::print_path, this, _1, _2));
 
-  load_mission_service = this->create_service<rosflight_msgs::srv::ParamFile>(
+  load_mission_service_ = this->create_service<rosflight_msgs::srv::ParamFile>(
     "load_mission_from_file", std::bind(&path_planner::load_mission, this, _1, _2));
   
-  state_subscription = this->create_subscription<rosplane_msgs::msg::State>("estimated_state", 10,
+  state_subscription_ = this->create_subscription<rosplane_msgs::msg::State>("estimated_state", 10,
     std::bind(&path_planner::state_callback, this, _1));
 
   // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
     std::bind(&path_planner::parametersCallback, this, std::placeholders::_1));
+
+  // Declare parameters with ROS2 and save them to the param_manager object
   declare_parameters();
   params.set_parameters();
 
-  timer_ = this->create_wall_timer(1000ms, std::bind(&path_planner::timer_callback, this));
-
-  num_waypoints_published = 0;
+  num_waypoints_published_ = 0;
 
   // Initialize by publishing a clear path command.
-  // This makes sure rviz doesn't show stale waypoints if rosplane is restarted.
+  // This makes sure rviz or other vizualization tools don't show stale waypoints if ROSplane is restarted.
   clear_path();
 
-  // Print out helpful information
-  RCLCPP_INFO_STREAM(this->get_logger(), "Path Planner will publish the first {" << this->get_parameter("num_waypoints_to_publish_at_start").as_int() << "} available waypoints!");
+  // Publishes the initial waypoints
+  publish_initial_waypoints();
 }
 
 path_planner::~path_planner() {}
 
-void path_planner::timer_callback() {
+void path_planner::publish_initial_waypoints() {
   int num_waypoints_to_publish_at_start = this->get_parameter("num_waypoints_to_publish_at_start").as_int();
 
-  if (num_waypoints_published < num_waypoints_to_publish_at_start && num_waypoints_published < (int) wps.size()) {
+  RCLCPP_INFO_STREAM_ONCE(this->get_logger(), "Path Planner will publish the first {" << num_waypoints_to_publish_at_start << "} available waypoints!");
+
+  // Publish the first waypoints as defined by the num_waypoints_to_publish_at_start parameter
+  while (num_waypoints_published_ < num_waypoints_to_publish_at_start && num_waypoints_published_ < (int) wps.size()) {
     waypoint_publish();
   }
 }
 
 void path_planner::state_callback(const rosplane_msgs::msg::State & msg) {
-  // Make sure initial LLA is not zero
+  // Make sure initial LLA is not zero before updating to avoid initialization errors
+  // TODO: What if we want to initialize it at (0,0,0)?
   if (fabs(msg.initial_lat) > 0.0 || fabs(msg.initial_lon) > 0.0 || fabs(msg.initial_alt) > 0.0) {
     initial_lat_ = msg.initial_lat;
     initial_lon_ = msg.initial_lon;
@@ -140,11 +87,11 @@ void path_planner::state_callback(const rosplane_msgs::msg::State & msg) {
 bool path_planner::publish_next_waypoint(const std_srvs::srv::Trigger::Request::SharedPtr & req,
                                          const std_srvs::srv::Trigger::Response::SharedPtr & res)
 {
-
-  if (num_waypoints_published < (int) wps.size()) {
+  // Publish the next waypoint, if available
+  if (num_waypoints_published_ < (int) wps.size()) {
     RCLCPP_INFO_STREAM(
       this->get_logger(),
-      "Publishing next waypoint, num_waypoints_published: " << num_waypoints_published + 1);
+      "Publishing next waypoint, num_waypoints_published: " << num_waypoints_published_ + 1);
 
     waypoint_publish();
 
@@ -160,13 +107,12 @@ bool path_planner::publish_next_waypoint(const std_srvs::srv::Trigger::Request::
 
 void path_planner::waypoint_publish()
 {
+  // Publish the next waypoint off the list
+  rosplane_msgs::msg::Waypoint new_waypoint = wps[num_waypoints_published_];
 
-  rosplane_msgs::msg::Waypoint new_waypoint = wps[num_waypoints_published];
-  new_waypoint.clear_wp_list = false;
+  waypoint_publisher_->publish(new_waypoint);
 
-  waypoint_publisher->publish(new_waypoint);
-
-  num_waypoints_published++;
+  num_waypoints_published_++;
 }
 
 bool path_planner::update_path(const rosplane_msgs::srv::AddWaypoint::Request::SharedPtr & req,
@@ -178,11 +124,12 @@ bool path_planner::update_path(const rosplane_msgs::srv::AddWaypoint::Request::S
 
   new_waypoint.header.stamp = now;
   
-  // Convert to NED if given in LLA
+  // Create a string flag for the debug message (defaults to "LLA")
   std::string lla_or_ned = "LLA";
+
+  // Convert to NED if given in LLA
   if (req->lla) {
     std::array<double, 3> ned = lla2ned(req->w);
-
     new_waypoint.w[0] = ned[0];
     new_waypoint.w[1] = ned[1];
     new_waypoint.w[2] = ned[2];
@@ -191,6 +138,8 @@ bool path_planner::update_path(const rosplane_msgs::srv::AddWaypoint::Request::S
     new_waypoint.w = req->w;
     lla_or_ned = "NED";
   }
+
+  // Fill in the Waypoint object with the information from the service request object
   new_waypoint.chi_d = req->chi_d;
   new_waypoint.lla = req->lla;
   new_waypoint.use_chi = req->use_chi;
@@ -198,7 +147,8 @@ bool path_planner::update_path(const rosplane_msgs::srv::AddWaypoint::Request::S
   new_waypoint.set_current = req->set_current;
 
   if (req->publish_now) {
-    wps.insert(wps.begin() + num_waypoints_published, new_waypoint);
+    // Insert the waypoint in the correct location in the list and publish it
+    wps.insert(wps.begin() + num_waypoints_published_, new_waypoint);
     waypoint_publish();
     res->message = "Adding " + lla_or_ned + " waypoint was successful! Waypoint published.";
   }
@@ -206,6 +156,8 @@ bool path_planner::update_path(const rosplane_msgs::srv::AddWaypoint::Request::S
     wps.push_back(new_waypoint);
     res->message = "Adding " + lla_or_ned + " waypoint was successful!";
   }
+
+  publish_initial_waypoints();
 
   res->success = true;
   return true;
@@ -222,12 +174,13 @@ bool path_planner::clear_path_callback(const std_srvs::srv::Trigger::Request::Sh
 void path_planner::clear_path() {
   wps.clear();
 
+  // Publish a waypoint with "clear_wp_list" set to true to let downstream subscribers know they need to clear their waypoints
   rosplane_msgs::msg::Waypoint new_waypoint;
   new_waypoint.clear_wp_list = true;
 
-  waypoint_publisher->publish(new_waypoint);
+  waypoint_publisher_->publish(new_waypoint);
 
-  num_waypoints_published = 0;
+  num_waypoints_published_ = 0;
 }
 
 bool path_planner::print_path(const std_srvs::srv::Trigger::Request::SharedPtr & req,
@@ -263,6 +216,7 @@ bool path_planner::load_mission(const rosflight_msgs::srv::ParamFile::Request::S
                                 const rosflight_msgs::srv::ParamFile::Response::SharedPtr & res) {
   clear_path();
   res->success = load_mission_from_file(req->filename);
+  publish_initial_waypoints();
   return true;
 }
 
@@ -315,6 +269,8 @@ std::array<double, 3> path_planner::lla2ned(std::array<float, 3> lla) {
   double e = EARTH_RADIUS * cos(lat0 * M_PI / 180.0) * (lon1 - lon0) * M_PI / 180.0;
   double d = -(alt1 - alt0);
 
+  // Usually will not be flying exactly at these locations.
+  // If the GPS reports (0,0,0), it most likely means there is an error with the GPS
   if (fabs(initial_lat_) == 0.0 || fabs(initial_lon_) == 0.0 || fabs(initial_alt_) == 0.0) {
     RCLCPP_WARN_STREAM(this->get_logger(), "NED position set to [" << n << "," << e << "," << d << "]! Waypoints may be incorrect. Check GPS health");
   }
@@ -327,8 +283,9 @@ path_planner::parametersCallback(const std::vector<rclcpp::Parameter> & paramete
 {
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = false;
-  result.reason = "One of the parameters given does not is not a parameter of the controller node.";
+  result.reason = "One of the parameters given is not a parameter of the controller node.";
 
+  // Set parameters in the param_manager object
   bool success = params.set_parameters_callback(parameters);
   if (success)
   {

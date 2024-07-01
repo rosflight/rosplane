@@ -1,7 +1,7 @@
 /**
  * @file param_manager.hpp
  * 
- * Manager for the parameters in ROSplane. Includes helper functions to call parameters
+ * Manager for the parameters in ROSplane. Includes helper functions to set and get parameters
  * 
  * @author Jacob Moore <jacobmoor2@gmail.com>
 */
@@ -26,29 +26,57 @@ public:
   param_manager(rclcpp::Node * node);
 
   /**
-   * Helper functions to access parameter values stored in param_manager object
-   * Returns a std::variant that holds the value of the given parameter
+   * Helper function to access parameter values of type double stored in param_manager object
+   * @return Double value of the parameter
   */
   double get_double(std::string param_name);
+
+  /**
+   * Helper function to access parameter values of type bool stored in param_manager object
+   * @return Bool value of the parameter
+  */
   bool get_bool(std::string param_name);
+
+  /**
+   * Helper function to access parameter values of type integer stored in param_manager object
+   * @return Integer value of the parameter
+  */
   int64_t get_int(std::string param_name);
+
+  /**
+   * Helper function to access parameter values of type string stored in param_manager object
+   * @return String value of the parameter
+  */
   std::string get_string(std::string param_name);
 
   /**
-   * Helper functions to declare parameters in the param_manager object
+   * Helper function to declare parameters in the param_manager object
    * Inserts a parameter into the parameter object and declares it with the ROS system
   */
   void declare_double(std::string param_name, double value);
+
+  /**
+   * Helper function to declare parameters in the param_manager object
+   * Inserts a parameter into the parameter object and declares it with the ROS system
+  */
   void declare_bool(std::string param_name, bool value);
+
+  /**
+   * Helper function to declare parameters in the param_manager object
+   * Inserts a parameter into the parameter object and declares it with the ROS system
+  */
   void declare_int(std::string param_name, int64_t value);  
+
+  /**
+   * Helper function to declare parameters in the param_manager object
+   * Inserts a parameter into the parameter object and declares it with the ROS system
+  */
   void declare_string(std::string param_name, std::string value);
 
   /**
    * This sets the parameters with the values in the params_ object from the supplied parameter file, or sets them to
    * the default if no value is given for a parameter.
    */
-  // TODO: Check to make sure that setting a parameter before declaring it won't give an error.
-  // Hypothesis is that it will break, but is that not desired behavior?
   void set_parameters();
 
   /**
@@ -56,8 +84,23 @@ public:
    * and the ROS system.
    */
   void set_double(std::string param_name, double value);
+
+  /**
+   * This function sets a previously declared parameter to a new value in both the parameter object
+   * and the ROS system.
+   */
   void set_bool(std::string param_name, bool value);
+
+  /**
+   * This function sets a previously declared parameter to a new value in both the parameter object
+   * and the ROS system.
+   */
   void set_int(std::string param_name, int64_t value);
+
+  /**
+   * This function sets a previously declared parameter to a new value in both the parameter object
+   * and the ROS system.
+   */
   void set_string(std::string param_name, std::string value);
   
   /**
@@ -76,7 +119,6 @@ private:
   std::map<std::string, std::variant<double, bool, int64_t, std::string>> params_;
   rclcpp::Node * container_node_;
 };
-
 
 }   // namespace rosplane
 #endif // PARAM_MANAGER_H

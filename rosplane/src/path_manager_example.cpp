@@ -19,18 +19,17 @@ path_manager_example::path_manager_example()
 
   // Declare the parameters used in this class with the ROS2 system
   declare_parameters();
-  params.set_parameters();
+  params_.set_parameters();
 
   start_time = std::chrono::system_clock::now();
-
 }
 
 void path_manager_example::manage(const input_s & input, output_s & output)
 {
   // For readability, declare the parameters that will be used in the function here
-  double R_min = params.get_double("R_min");
-  double default_altitude = params.get_double("default_altitude"); // This is the true altitude not the down position (no need for a negative)
-  double default_airspeed = params.get_double("default_airspeed");
+  double R_min = params_.get_double("R_min");
+  double default_altitude = params_.get_double("default_altitude"); // This is the true altitude not the down position (no need for a negative)
+  double default_airspeed = params_.get_double("default_airspeed");
 
   if (num_waypoints_ == 0) 
   {
@@ -41,6 +40,12 @@ void path_manager_example::manage(const input_s & input, output_s & output)
       RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "No waypoints received, orbiting origin at " << default_altitude << " meters.");
       output.flag = false; // Indicate that the path is an orbit.
       output.va_d = default_airspeed; // Set to the default_airspeed.
+      output.q[0] = 0.0f; // initialize the parameters to have a value.
+      output.q[1] = 0.0f;
+      output.q[2] = 0.0f;
+      output.r[0] = 0.0f; // initialize the parameters to have a value.
+      output.r[1] = 0.0f;
+      output.r[2] = 0.0f;
       output.c[0] = 0.0f; // Direcct the center of the orbit to the origin at the default default_altitude.
       output.c[1] = 0.0f;
       output.c[2] = -default_altitude;
@@ -53,6 +58,12 @@ void path_manager_example::manage(const input_s & input, output_s & output)
     // If only a single waypoint is given, orbit it.
     output.flag = false;
     output.va_d = waypoints_[0].va_d;
+    output.q[0] = 0.0f; // initialize the parameters to have a value.
+    output.q[1] = 0.0f;
+    output.q[2] = 0.0f;
+    output.r[0] = 0.0f; // initialize the parameters to have a value.
+    output.r[1] = 0.0f;
+    output.r[2] = 0.0f;
     output.c[0] = waypoints_[0].w[0];
     output.c[1] = waypoints_[0].w[1];
     output.c[2] = waypoints_[0].w[2];
@@ -74,7 +85,7 @@ void path_manager_example::manage_line(const input_s & input,
                                        output_s & output)
 {
   // For readability, declare the parameters that will be used in the function here
-  bool orbit_last = params.get_bool("orbit_last");
+  bool orbit_last = params_.get_bool("orbit_last");
 
   Eigen::Vector3f p;
   p << input.pn, input.pe, -input.h;
@@ -112,7 +123,7 @@ void path_manager_example::manage_line(const input_s & input,
     n_i = q_im1;
   }
 
-  // If the aircraft passes through the plane that bisects the angle between the waypoint lines transition.
+  // If the aircraft passes through the plane that bisects the angle between the waypoint lines, transition.
   if ((p - w_i).dot(n_i) > 0.0f) {
     if (idx_a_ == num_waypoints_ - 1) {
       idx_a_ = 0;
@@ -126,8 +137,8 @@ void path_manager_example::manage_fillet(const input_s & input,
                                          output_s & output)
 {
   // For readability, declare the parameters that will be used in the function here
-  bool orbit_last = params.get_bool("orbit_last");
-  double R_min = params.get_double("R_min");
+  bool orbit_last = params_.get_bool("orbit_last");
+  double R_min = params_.get_double("R_min");
 
   if (num_waypoints_ < 3) // Do not attempt to fillet between only 2 points.
   {
@@ -146,6 +157,7 @@ void path_manager_example::manage_fillet(const input_s & input,
 
   if (orbit_last && idx_a_ == num_waypoints_ - 1)
   {
+    // TODO: check to see if this is the correct behavior.
     return;
   }
 
@@ -268,7 +280,7 @@ void path_manager_example::manage_dubins(const input_s & input,
                                          output_s & output)
 {
   // For readability, declare the parameters that will be used in the function here
-  double R_min = params.get_double("R_min");
+  double R_min = params_.get_double("R_min");
 
   Eigen::Vector3f p;
   p << input.pn, input.pe, -input.h;
@@ -421,7 +433,6 @@ void path_manager_example::dubinsParameters(const waypoint_s start_node, const w
   float ell = sqrtf((start_node.w[0] - end_node.w[0]) * (start_node.w[0] - end_node.w[0])
                     + (start_node.w[1] - end_node.w[1]) * (start_node.w[1] - end_node.w[1]));
   if (ell < 2.0 * R) {
-    //ROS_ERROR("The distance between nodes must be larger than 2R.");
     RCLCPP_ERROR(this->get_logger(), "The distance between nodes must be larger than 2R.");
 
   } else {
@@ -564,9 +575,7 @@ void path_manager_example::dubinsParameters(const waypoint_s start_node, const w
 
 void path_manager_example::declare_parameters()
 {
-  params.declare_bool("orbit_last", false);
-  params.declare_double("default_altitude", 50.0);
-  params.declare_double("default_airspeed", 15.0);
+  params_.declare_bool("orbit_last", false);
 }
 
 int path_manager_example::orbit_direction(float pn, float pe, float chi, float c_n, float c_e)
@@ -600,8 +609,8 @@ int path_manager_example::orbit_direction(float pn, float pe, float chi, float c
 void path_manager_example::increment_indices(int & idx_a, int & idx_b, int & idx_c, const struct input_s & input, struct output_s & output)
 {
 
-  bool orbit_last = params.get_bool("orbit_last");
-  double R_min = params.get_double("R_min");
+  bool orbit_last = params_.get_bool("orbit_last");
+  double R_min = params_.get_double("R_min");
 
   if (temp_waypoint_ && idx_a_ == 1)
   {

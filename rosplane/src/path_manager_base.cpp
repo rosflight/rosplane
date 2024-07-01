@@ -10,7 +10,7 @@ namespace rosplane
 {
 
 path_manager_base::path_manager_base()
-    : Node("rosplane_path_manager"), params(this), params_initialized_(false)
+    : Node("rosplane_path_manager"), params_(this), params_initialized_(false)
 {
   vehicle_state_sub_ = this->create_subscription<rosplane_msgs::msg::State>(
     "estimated_state", 10, std::bind(&path_manager_base::vehicle_state_callback, this, _1));
@@ -22,8 +22,9 @@ path_manager_base::path_manager_base()
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
     std::bind(&path_manager_base::parametersCallback, this, std::placeholders::_1));
 
+  // Declare parameters maintained by this node with ROS2. Required for all ROS2 parameters associated with this node
   declare_parameters();
-  params.set_parameters();
+  params_.set_parameters();
 
   params_initialized_ = true;
 
@@ -36,13 +37,17 @@ path_manager_base::path_manager_base()
 }
 
 void path_manager_base::declare_parameters() {
-  params.declare_double("R_min", 50.0);
-  params.declare_double("current_path_pub_frequency", 100.0);
+  params_.declare_double("R_min", 50.0);
+  params_.declare_double("current_path_pub_frequency", 100.0);
+  params_.declare_double("default_altitude", 50.0);
+  params_.declare_double("default_airspeed", 15.0);
 }
 
 void path_manager_base::set_timer() {
-  double frequency = params.get_double("current_path_pub_frequency");
+  // Calculate the period in milliseconds from the frequency
+  double frequency = params_.get_double("current_path_pub_frequency");
   timer_period_ = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1e6));
+
   update_timer_ =
     this->create_wall_timer(timer_period_, std::bind(&path_manager_base::current_path_publish, this));
 }
@@ -52,17 +57,19 @@ path_manager_base::parametersCallback(const std::vector<rclcpp::Parameter> & par
 {
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = false;
-  result.reason = "One of the parameters given does not is not a parameter of the controller node.";
+  result.reason = "One of the parameters given is not a parameter of the controller node.";
 
-  bool success = params.set_parameters_callback(parameters);
+  // Update the changed parameters in the param_manager object
+  bool success = params_.set_parameters_callback(parameters);
   if (success)
   {
     result.successful = true;
     result.reason = "success";
   }
 
+  // If the frequency parameter was changed, restart the timer.
   if (params_initialized_ && success) {
-    double frequency = params.get_double("current_path_pub_frequency");
+    double frequency = params_.get_double("current_path_pub_frequency");
     std::chrono::microseconds curr_period = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1e6));
     if (timer_period_ != curr_period) {
       update_timer_->cancel();
@@ -83,9 +90,11 @@ void path_manager_base::vehicle_state_callback(const rosplane_msgs::msg::State &
 
 void path_manager_base::new_waypoint_callback(const rosplane_msgs::msg::Waypoint & msg)
 {
-  double R_min = params.get_double("R_min");
+  double R_min = params_.get_double("R_min");
+  double default_altitude = params_.get_double("default_altitude");
   orbit_dir = 0;
 
+  // If the message contains "clear_wp_list", then clear all waypoints and do nothing else
   if (msg.clear_wp_list == true) {
     waypoints_.clear();
     num_waypoints_ = 0;
@@ -93,13 +102,22 @@ void path_manager_base::new_waypoint_callback(const rosplane_msgs::msg::Waypoint
     return;
   }
 
+  // If there are currently no waypoints in the list, then add a temporary waypoint as
+  // the current state of the aircraft. This is necessary to define a line for line following.
   if (waypoints_.size() == 0)
   {
     waypoint_s temp_waypoint;
 
     temp_waypoint.w[0] = vehicle_state_.position[0];
     temp_waypoint.w[1] = vehicle_state_.position[1];
-    temp_waypoint.w[2] = vehicle_state_.position[2];
+    
+    if (vehicle_state_.position[2] < -default_altitude) {
+      
+      temp_waypoint.w[2] = vehicle_state_.position[2];
+    }
+    else {
+      temp_waypoint.w[2] = -default_altitude;
+    }
 
     temp_waypoint.chi_d = 0.0; // Doesn't matter, it is never used.
     temp_waypoint.use_chi = false;
@@ -121,6 +139,7 @@ void path_manager_base::new_waypoint_callback(const rosplane_msgs::msg::Waypoint
   nextwp.chi_d = msg.chi_d;
   nextwp.use_chi = msg.use_chi;
   nextwp.va_d = msg.va_d;
+
   // Save the last waypoint for comparison.
   if (waypoints_.size() > 0)
   {
@@ -139,7 +158,7 @@ void path_manager_base::new_waypoint_callback(const rosplane_msgs::msg::Waypoint
   }
 }
 
-void path_manager_base::current_path_publish() //const rclcpp::TimerEvent &
+void path_manager_base::current_path_publish()
 {
 
   struct input_s input;
@@ -150,17 +169,22 @@ void path_manager_base::current_path_publish() //const rclcpp::TimerEvent &
 
   struct output_s output;
 
-  if (state_init_ == true) { manage(input, output); }
+  if (state_init_ == true) {
+    manage(input, output);
+  }
 
   rosplane_msgs::msg::CurrentPath current_path;
 
   rclcpp::Time now = this->get_clock()->now();
 
+  // Populate current_path message
   current_path.header.stamp = now;
-
-  if (output.flag) current_path.path_type = current_path.LINE_PATH;
-  else
+  if (output.flag) {
+    current_path.path_type = current_path.LINE_PATH;
+  }
+  else {
     current_path.path_type = current_path.ORBIT_PATH;
+  }
   current_path.va_d = output.va_d;
   for (int i = 0; i < 3; i++) {
     current_path.r[i] = output.r[i];

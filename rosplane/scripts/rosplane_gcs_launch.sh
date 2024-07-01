@@ -180,9 +180,9 @@ if $bag; then
   fi
 
   if [ ! -z $bag_name ]; then
-    tmux send-keys -t rosplane_sim_session:0.3 "ros2 bag record -a -o $bag_name" C-m
+    tmux send-keys -t rosplane_sim_session:0.3 "ros2 bag record -a -o $bag_name -e \'|\' -x \'(/rviz|/tf)\'" C-m
   else
-    tmux send-keys -t rosplane_sim_session:0.3 "ros2 bag record -a" C-m
+    tmux send-keys -t rosplane_sim_session:0.3 "ros2 bag record -a -e \'|\' -x \'(/rviz|/tf)\'" C-m
   fi
 fi
 

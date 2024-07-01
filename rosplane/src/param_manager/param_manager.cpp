@@ -1,4 +1,5 @@
 #include "param_manager.hpp"
+#include <variant>
 
 namespace rosplane
 {
@@ -153,7 +154,7 @@ void param_manager::set_parameters()
 {
 
   // Get the parameters from the launch file, if given.
-  // If not, use the default value defined in the header file.
+  // If not, use the default value defined at declaration
   for (const auto& [key, value] : params_)
   {
     auto type = container_node_->get_parameter(key).get_type();
@@ -177,7 +178,7 @@ bool param_manager::set_parameters_callback(const std::vector<rclcpp::Parameter>
     
     // Check if the parameter is in the params object or return an error
     if (params_.find(param.get_name()) == params_.end()) {
-      RCLCPP_ERROR_STREAM(container_node_->get_logger(), "One of the parameters given does not is not a parameter of the controller node. Parameter: " + param.get_name());
+      RCLCPP_ERROR_STREAM(container_node_->get_logger(), "One of the parameters given is not a parameter of the controller node. Parameter: " + param.get_name());
       return false;
     }
 

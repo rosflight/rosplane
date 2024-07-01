@@ -25,7 +25,6 @@ find_package(sensor_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 set(msg_files
-  "msg/Command.msg"
   "msg/ControllerCommands.msg"
   "msg/ControllerInternals.msg"
   "msg/CurrentPath.msg"
