@@ -57,29 +57,6 @@ install(TARGETS
 
 #### END OF EXECUTABLES ###
 
-#### RQT ####
-
-ament_python_install_package(rqt_tuning_gui
-  PACKAGE_DIR src/rqt_tuning_gui
-)
-
-install(FILES
-  plugin.xml
-  DESTINATION share/${PROJECT_NAME}
-)
-
-install(DIRECTORY
-  resource
-  DESTINATION share/${PROJECT_NAME}
-)
-
-install(PROGRAMS
-  scripts/rqt_tuning_gui
-  DESTINATION lib/${PROJECT_NAME}
-)
-
-#### END OF RQT ####
-
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
