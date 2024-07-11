@@ -18,16 +18,6 @@ double wrap_within_180(double fixed_heading, double wrapped_heading)
 
 estimator_continuous_discrete::estimator_continuous_discrete()
     : estimator_ekf()
-    , attitude_dynamics_model(std::bind(&estimator_continuous_discrete::attitude_dynamics, this, std::placeholders::_1, std::placeholders::_2)) // HACK: These binds don't look the best, split off into seperate funciton?
-    , attitude_jacobian_model(std::bind(&estimator_continuous_discrete::attitude_jacobian, this, std::placeholders::_1, std::placeholders::_2))
-    , attitude_input_jacobian_model(std::bind(&estimator_continuous_discrete::attitude_input_jacobian, this, std::placeholders::_1, std::placeholders::_2))
-    , attitude_measurement_model(std::bind(&estimator_continuous_discrete::attitude_measurement_prediction, this, std::placeholders::_1, std::placeholders::_2))
-    , attitude_measurement_jacobian_model(std::bind(&estimator_continuous_discrete::attitude_measurement_jacobian, this, std::placeholders::_1, std::placeholders::_2))
-    , position_dynamics_model(std::bind(&estimator_continuous_discrete::position_dynamics, this, std::placeholders::_1, std::placeholders::_2))
-    , position_jacobian_model(std::bind(&estimator_continuous_discrete::position_jacobian, this, std::placeholders::_1, std::placeholders::_2))
-    , position_input_jacobian_model(std::bind(&estimator_continuous_discrete::position_input_jacobian, this, std::placeholders::_1, std::placeholders::_2))
-    , position_measurement_model(std::bind(&estimator_continuous_discrete::position_measurement_prediction, this, std::placeholders::_1, std::placeholders::_2))
-    , position_measurement_jacobian_model(std::bind(&estimator_continuous_discrete::position_measurement_jacobian, this, std::placeholders::_1, std::placeholders::_2))
     , xhat_a_(Eigen::Vector2f::Zero())
     , P_a_(Eigen::Matrix2f::Identity())
     , xhat_p_(Eigen::VectorXf::Zero(7))
@@ -42,6 +32,9 @@ estimator_continuous_discrete::estimator_continuous_discrete()
     , C_p_(7)
     , L_p_(7)
 {
+
+  bind_functions(); // TODO: Document what the _models are.
+
   phat_ = 0;
   qhat_ = 0;
   rhat_ = 0;
@@ -65,7 +58,8 @@ estimator_continuous_discrete::estimator_continuous_discrete()
   // Inits R matrix and alpha values with ROS2 parameters
   update_measurement_model_parameters();
 
-  N_ = params.get_int("num_propagation_steps");}
+  N_ = params.get_int("num_propagation_steps");
+}
 
 estimator_continuous_discrete::estimator_continuous_discrete(bool use_params) : estimator_continuous_discrete()
 {
@@ -179,7 +173,8 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
   float phat = lpf_gyro_x_;
   float qhat = lpf_gyro_y_;
   float rhat = lpf_gyro_z_;
-
+  
+  // These states will allow us to propagate our state model for pitch and roll.
   Eigen::Vector3f angular_rates;
   angular_rates << phat, qhat, rhat;
 
@@ -207,9 +202,11 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
   lpf_accel_y_ = alpha_ * lpf_accel_y_ + (1 - alpha_) * input.accel_y;
   lpf_accel_z_ = alpha_ * lpf_accel_z_ + (1 - alpha_) * input.accel_z;
   
-  Eigen::Vector4f inputs;
-  inputs << angular_rates, vahat;
+  // These are the current states that will allow us to predict our measurement.
+  Eigen::Vector4f att_curr_state_info;
+  att_curr_state_info << angular_rates, vahat;
   
+  // The sensor measurements that we can compare to our preditions.
   Eigen::Vector3f y_att;
   y_att << lpf_accel_x_, lpf_accel_y_, lpf_accel_z_;
 
@@ -217,8 +214,9 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
   // Prediction step
   std::tie(P_a_, xhat_a_) = propagate_model(xhat_a_, attitude_dynamics_model, attitude_jacobian_model, angular_rates,
                                             attitude_input_jacobian_model, P_a_, Q_a_, Q_g_, Ts);
+
   // Measurement update
-  std::tie(P_a_, xhat_a_) = measurement_update(xhat_a_, inputs, attitude_measurement_model, y_att, attitude_measurement_jacobian_model, // TODO: change these std::ties to just pass by reference.
+  std::tie(P_a_, xhat_a_) = measurement_update(xhat_a_, att_curr_state_info, attitude_measurement_model, y_att, attitude_measurement_jacobian_model, // TODO: change these std::ties to just pass by reference.
                                                R_accel_,P_a_);
   
   // Check the estimate for errors
@@ -228,18 +226,22 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
   phihat_ = xhat_a_(0);
   thetahat_ = xhat_a_(1);
 
-  // Implement continous-discrete EKF to estimate pn, pe, chi, Vg
+  // Implement continous-discrete EKF to estimate pn, pe, chi, Vg, wn, we
   // Prediction step
+  
   if (fabsf(xhat_p_(2)) < 0.01f) {
     xhat_p_(2) = 0.01; // prevent divide by zero
   }
-
-  Eigen::Vector<float, 6> measurements;
-
-  measurements << angular_rates, xhat_a_(0), xhat_a_(1), vahat;
-
-  std::tie(P_p_, xhat_p_) = propagate_model(xhat_p_, position_dynamics_model, position_jacobian_model, measurements, position_input_jacobian_model, P_p_, Q_p_, Eigen::MatrixXf::Zero(7, 7), Ts);
-
+  
+  // These are the state that will allow us to propagate our state model for the position state.
+  Eigen::Vector<float, 6> attitude_states;
+  attitude_states << angular_rates, xhat_a_(0), xhat_a_(1), vahat;
+  
+  // POSITION AND COURSE ESTIMATION
+  // Prediction step
+  std::tie(P_p_, xhat_p_) = propagate_model(xhat_p_, position_dynamics_model, position_jacobian_model, attitude_states, position_input_jacobian_model, P_p_, Q_p_, Eigen::MatrixXf::Zero(7, 7), Ts);
+  
+    // Check wrapping of the heading and course.
   xhat_p_(3) = wrap_within_180(0.0, xhat_p_(3));
   xhat_p_(6) = wrap_within_180(0.0, xhat_p_(6));
   if (xhat_p_(3) > radians(180.0f) || xhat_p_(3) < radians(-180.0f)) {
@@ -251,24 +253,22 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
     xhat_p_(6) = 0;
   }
 
-  Eigen::VectorXf airspeed(1);
-  airspeed << vahat;
-
-  Eigen::MatrixXf C = position_measurement_jacobian(xhat_p_, airspeed);
-  Eigen::MatrixXf h = position_measurement_prediction(xhat_p_, airspeed);
-
-  // measurement updates
-  // These calculate the Kalman gain and applies them to each state individually.
+  // Measurement updates.
+  // Only update if new GPS information is available.
   if (input.gps_new) {
+    Eigen::VectorXf pos_curr_state_info(1);
+    pos_curr_state_info << vahat;
+
     //wrap course measurement
     float gps_course = fmodf(input.gps_course, radians(360.0f));
-
     gps_course = wrap_within_180(xhat_p_(3), gps_course);
-
+    
+    // Measurements for the postional states.
     Eigen::Vector<float, 6> y_pos;
     y_pos << input.gps_n, input.gps_e, input.gps_Vg, gps_course, 0.0, 0.0;
-
-    std::tie(P_p_, xhat_p_) = measurement_update(xhat_p_, airspeed, position_measurement_model, y_pos, position_measurement_jacobian_model, R_p_, P_p_);
+    
+    // Update the state and covariance with based on the predicted and actual measurements.
+    std::tie(P_p_, xhat_p_) = measurement_update(xhat_p_, pos_curr_state_info, position_measurement_model, y_pos, position_measurement_jacobian_model, R_p_, P_p_);
 
     if (xhat_p_(0) > gps_n_lim || xhat_p_(0) < -gps_n_lim) {
       RCLCPP_WARN(this->get_logger(), "gps n limit reached");
@@ -316,7 +316,6 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
                 prob_index);
   }
   if (xhat_p_(6) - xhat_p_(3) > radians(360.0f) || xhat_p_(6) - xhat_p_(3) < radians(-360.0f)) {
-    //xhat_p(3) = fmodf(xhat_p(3),2.0*M_PI);
     xhat_p_(6) = fmodf(xhat_p_(6), 2.0 * M_PI);
   }
 
@@ -520,39 +519,43 @@ Eigen::VectorXf estimator_continuous_discrete::position_measurement_prediction(c
   
   // Pseudo Measurement east
   h(5) = va * sinf(state(6)) + state(5) - state(2) * sinf(state(3));
+
+  // To add a new measurement, simply use the state and any input you need as another entry to h. Be sure to update the measurement jacobian C.
    
   return h;
 }
 
 Eigen::MatrixXf estimator_continuous_discrete::position_measurement_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& input)
 {
-    float va = input(0);
+  float va = input(0);
 
-    Eigen::MatrixXf C = Eigen::MatrixXf::Zero(6,7);
-    
-    // GPS north
-    C(0,0) = 1;
+  Eigen::MatrixXf C = Eigen::MatrixXf::Zero(6,7);
+  
+  // GPS north
+  C(0,0) = 1;
 
-    // GPS east
-    C(1,1) = 1;
-    
-    // GPS ground speed
-    C(2,2) = 1;
+  // GPS east
+  C(1,1) = 1;
+  
+  // GPS ground speed
+  C(2,2) = 1;
 
-    // GPS course
-    C(3,3) = 1;
-    
-    // Pseudo Measurement north
-    C(4,2) = -cos(state(3));
-    C(4,3) = state(2) * sinf(state(3));
-    C(4,4) = 1;
-    C(4,6) = -va * sinf(state(6));
+  // GPS course
+  C(3,3) = 1;
+  
+  // Pseudo Measurement north
+  C(4,2) = -cos(state(3));
+  C(4,3) = state(2) * sinf(state(3));
+  C(4,4) = 1;
+  C(4,6) = -va * sinf(state(6));
 
-    // Pseudo Measurement east
-    C(5, 2) = -sin(state(3));
-    C(5, 3) = -state(2) * cosf(state(3));
-    C(5, 5) = 1;
-    C(5, 6) = va * cosf(state(6));
+  // Pseudo Measurement east
+  C(5, 2) = -sin(state(3));
+  C(5, 3) = -state(2) * cosf(state(3));
+  C(5, 5) = 1;
+  C(5, 6) = va * cosf(state(6));
+
+  // To add a new measurement use the inputs and the state to add another row to the matrix C. Be sure to update the measurment prediction vector h.
 
   return C;
 }
@@ -649,6 +652,24 @@ void estimator_continuous_discrete::declare_parameters()
   params.declare_double("max_estimated_phi", 85.0); // Deg
   params.declare_double("max_estimated_theta", 80.0); // Deg
   params.declare_double("estimator_max_buffer", 3.0);   // Deg
+}
+
+void estimator_continuous_discrete::bind_functions()
+{
+  // This creates references to the functions that are necessary estimate. This means we can pass them to the EKF class's functions.
+  // std::bind creates a forwarding reference to a function. So when we pass the binding object to another method, that method can call the
+  // original function.
+  attitude_dynamics_model = std::bind(&estimator_continuous_discrete::attitude_dynamics, this, std::placeholders::_1, std::placeholders::_2);
+  attitude_jacobian_model = std::bind(&estimator_continuous_discrete::attitude_jacobian, this, std::placeholders::_1, std::placeholders::_2);
+  attitude_input_jacobian_model = std::bind(&estimator_continuous_discrete::attitude_input_jacobian, this, std::placeholders::_1, std::placeholders::_2);
+  attitude_measurement_model = std::bind(&estimator_continuous_discrete::attitude_measurement_prediction, this, std::placeholders::_1, std::placeholders::_2);
+  attitude_measurement_jacobian_model = std::bind(&estimator_continuous_discrete::attitude_measurement_jacobian, this, std::placeholders::_1, std::placeholders::_2);
+  position_dynamics_model = std::bind(&estimator_continuous_discrete::position_dynamics, this, std::placeholders::_1, std::placeholders::_2);
+  position_jacobian_model = std::bind(&estimator_continuous_discrete::position_jacobian, this, std::placeholders::_1, std::placeholders::_2);
+  position_input_jacobian_model = std::bind(&estimator_continuous_discrete::position_input_jacobian, this, std::placeholders::_1, std::placeholders::_2);
+  position_measurement_model = std::bind(&estimator_continuous_discrete::position_measurement_prediction, this, std::placeholders::_1, std::placeholders::_2);
+  position_measurement_jacobian_model = std::bind(&estimator_continuous_discrete::position_measurement_jacobian, this, std::placeholders::_1, std::placeholders::_2);
+
 }
 
 } // namespace rosplane
