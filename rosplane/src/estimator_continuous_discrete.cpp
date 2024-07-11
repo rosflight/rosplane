@@ -278,10 +278,10 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
     std::tie(P_p_, xhat_p_) = single_measurement_update(gps_course, xhat_p_(3), R_p_(3,3), C.row(3), xhat_p_, P_p_);
 
     // pseudo measurement #1 y_1 = va*cos(psi)+wn-Vg*cos(chi)
-    std::tie(P_p_, xhat_p_) = single_measurement_update(h(4), 0.0, R_p_(4,4), C.row(4), xhat_p_, P_p_);
+    std::tie(P_p_, xhat_p_) = single_measurement_update(0.0, h(4), R_p_(4,4), C.row(4), xhat_p_, P_p_);
 
     // pseudo measurement #2 y_2 = va*sin(psi) + we - Vg*sin(chi)
-    std::tie(P_p_, xhat_p_) = single_measurement_update(h(5), 0.0, R_p_(5,5), C.row(5), xhat_p_, P_p_);
+    std::tie(P_p_, xhat_p_) = single_measurement_update(0.0, h(5), R_p_(5,5), C.row(5), xhat_p_, P_p_);
 
     if (xhat_p_(0) > gps_n_lim || xhat_p_(0) < -gps_n_lim) {
       RCLCPP_WARN(this->get_logger(), "gps n limit reached");
