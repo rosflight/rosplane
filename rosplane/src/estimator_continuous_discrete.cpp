@@ -275,7 +275,7 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
     std::tie(P_p_, xhat_p_) = single_measurement_update(input.gps_Vg, h(2), R_p_(2,2), C.row(2), xhat_p_, P_p_);
 
     // gps course
-    std::tie(P_p_, xhat_p_) = single_measurement_update(gps_course, xhat_p_(3), R_p_(3,3), C.row(3), xhat_p_, P_p_);
+    std::tie(P_p_, xhat_p_) = single_measurement_update(gps_course, h(3), R_p_(3,3), C.row(3), xhat_p_, P_p_);
 
     // pseudo measurement #1 y_1 = va*cos(psi)+wn-Vg*cos(chi)
     std::tie(P_p_, xhat_p_) = single_measurement_update(0.0, h(4), R_p_(4,4), C.row(4), xhat_p_, P_p_);
@@ -516,12 +516,23 @@ Eigen::VectorXf estimator_continuous_discrete::position_measurement_prediction(c
     
     Eigen::VectorXf h = Eigen::VectorXf::Zero(7);
 
+    // GPS north
     h(0) = state(0);
+
+    // GPS east
     h(1) = state(1);
+
+    // GPS ground speed
     h(2) = state(2);
+    
+    // GPS course
     h(3) = state(3);
-    h(4) = va * cosf(state(6)) + state(4) - state(2) * cosf(state(3)); // pseudo measurement 1
-    h(5) = va * sinf(state(6)) + state(5) - state(2) * sinf(state(3)); // pseudo measurement 2
+    
+    // Pseudo Measurement north
+    h(4) = va * cosf(state(6)) + state(4) - state(2) * cosf(state(3));
+    
+    // Pseudo Measurement east
+    h(5) = va * sinf(state(6)) + state(5) - state(2) * sinf(state(3));
      
   return h;
 }
@@ -531,16 +542,26 @@ Eigen::MatrixXf estimator_continuous_discrete::position_measurement_jacobian(con
     float va = input(0);
 
     Eigen::MatrixXf C = Eigen::MatrixXf::Zero(6,7);
+    
+    // GPS north
     C(0,0) = 1;
+
+    // GPS east
     C(1,1) = 1;
+    
+    // GPS ground speed
     C(2,2) = 1;
+
+    // GPS course
     C(3,3) = 1;
     
+    // Pseudo Measurement north
     C(4,2) = -cos(state(3));
     C(4,3) = state(2) * sinf(state(3));
     C(4,4) = 1;
     C(4,6) = -va * sinf(state(6));
 
+    // Pseudo Measurement east
     C(5, 2) = -sin(state(3));
     C(5, 3) = -state(2) * cosf(state(3));
     C(5, 5) = 1;
