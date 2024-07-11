@@ -275,7 +275,7 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
     std::tie(P_p_, xhat_p_) = single_measurement_update(input.gps_Vg, h(2), R_p_(2,2), C.row(2), xhat_p_, P_p_);
 
     // gps course
-    std::tie(P_p_, xhat_p_) = single_measurement_update(gps_course, h(3), R_p_(3,3), C.row(3), xhat_p_, P_p_);
+    std::tie(P_p_, xhat_p_) = single_measurement_update(gps_course, xhat_p_(3), R_p_(3,3), C.row(3), xhat_p_, P_p_);
 
     // pseudo measurement #1 y_1 = va*cos(psi)+wn-Vg*cos(chi)
     std::tie(P_p_, xhat_p_) = single_measurement_update(0.0, h(4), R_p_(4,4), C.row(4), xhat_p_, P_p_);
