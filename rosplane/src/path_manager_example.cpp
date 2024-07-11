@@ -38,6 +38,12 @@ void PathManagerExample::manage(const Input & input, Output & output)
       RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "No waypoints received, orbiting origin at " << default_altitude << " meters.");
       output.flag = false; // Indicate that the path is an orbit.
       output.va_d = default_airspeed; // Set to the default_airspeed.
+      output.q[0] = 0.0f; // initialize the parameters to have a value.
+      output.q[1] = 0.0f;
+      output.q[2] = 0.0f;
+      output.r[0] = 0.0f; // initialize the parameters to have a value.
+      output.r[1] = 0.0f;
+      output.r[2] = 0.0f;
       output.c[0] = 0.0f; // Direcct the center of the orbit to the origin at the default default_altitude.
       output.c[1] = 0.0f;
       output.c[2] = -default_altitude;
@@ -50,6 +56,12 @@ void PathManagerExample::manage(const Input & input, Output & output)
     // If only a single waypoint is given, orbit it.
     output.flag = false;
     output.va_d = waypoints_[0].va_d;
+    output.q[0] = 0.0f; // initialize the parameters to have a value.
+    output.q[1] = 0.0f;
+    output.q[2] = 0.0f;
+    output.r[0] = 0.0f; // initialize the parameters to have a value.
+    output.r[1] = 0.0f;
+    output.r[2] = 0.0f;
     output.c[0] = waypoints_[0].w[0];
     output.c[1] = waypoints_[0].w[1];
     output.c[2] = waypoints_[0].w[2];
@@ -143,6 +155,7 @@ void PathManagerExample::manage_fillet(const Input & input,
 
   if (orbit_last && idx_a_ == num_waypoints_ - 1)
   {
+    // TODO: check to see if this is the correct behavior.
     return;
   }
 
@@ -561,8 +574,6 @@ void PathManagerExample::dubins_parameters(const Waypoint start_node, const Wayp
 void PathManagerExample::declare_parameters()
 {
   params_.declare_bool("orbit_last", false);
-  params_.declare_double("default_altitude", 50.0);
-  params_.declare_double("default_airspeed", 15.0);
 }
 
 int PathManagerExample::orbit_direction(float pn, float pe, float chi, float c_n, float c_e)

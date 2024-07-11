@@ -41,6 +41,8 @@ PathManagerBase::PathManagerBase()
 void PathManagerBase::declare_parameters() {
   params_.declare_double("R_min", 50.0);
   params_.declare_double("current_path_pub_frequency", 100.0);
+  params_.declare_double("default_altitude", 50.0);
+  params_.declare_double("default_airspeed", 15.0);
 }
 
 void PathManagerBase::set_timer() {
@@ -91,6 +93,7 @@ void PathManagerBase::vehicle_state_callback(const rosplane_msgs::msg::State & m
 void PathManagerBase::new_waypoint_callback(const rosplane_msgs::msg::Waypoint & msg)
 {
   double R_min = params_.get_double("R_min");
+  double default_altitude = params_.get_double("default_altitude");
   orbit_dir_ = 0;
 
   // If the message contains "clear_wp_list", then clear all waypoints and do nothing else
@@ -109,7 +112,14 @@ void PathManagerBase::new_waypoint_callback(const rosplane_msgs::msg::Waypoint &
 
     temp_waypoint.w[0] = vehicle_state_.position[0];
     temp_waypoint.w[1] = vehicle_state_.position[1];
-    temp_waypoint.w[2] = vehicle_state_.position[2];
+    
+    if (vehicle_state_.position[2] < -default_altitude) {
+      
+      temp_waypoint.w[2] = vehicle_state_.position[2];
+    }
+    else {
+      temp_waypoint.w[2] = -default_altitude;
+    }
 
     temp_waypoint.chi_d = 0.0; // Doesn't matter, it is never used.
     temp_waypoint.use_chi = false;
