@@ -1,6 +1,7 @@
 #include "estimator_ekf.hpp"
 #include "estimator_ros.hpp"
 #include <functional>
+#include <rclcpp/logging.hpp>
 #include <tuple>
 
 namespace rosplane
@@ -26,7 +27,7 @@ std::tuple<Eigen::MatrixXf, Eigen::VectorXf> estimator_ekf::measurement_update(E
   // Find the Kalman gain.
   Eigen::MatrixXf L = P * C.transpose() * S_inv;
   // Use a temp to increase readablility.
-  Eigen::MatrixXf temp = Eigen::MatrixXf::Identity(2, 2) - L * C;
+  Eigen::MatrixXf temp = Eigen::MatrixXf::Identity(x.size(), x.size()) - L * C;
   
   // Adjust the covariance with new information.
   P = temp * P * temp.transpose() + L * R * L.transpose();

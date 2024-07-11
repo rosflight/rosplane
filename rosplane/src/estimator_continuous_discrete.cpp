@@ -265,23 +265,10 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
 
     gps_course = wrap_within_180(xhat_p_(3), gps_course);
 
-    // gps North position
-    std::tie(P_p_, xhat_p_) = single_measurement_update(input.gps_n, h(0), R_p_(0,0), C.row(0), xhat_p_, P_p_);
+    Eigen::Vector<float, 6> y_pos;
+    y_pos << input.gps_n, input.gps_e, input.gps_Vg, gps_course, 0.0, 0.0;
 
-    // gps East position
-    std::tie(P_p_, xhat_p_) = single_measurement_update(input.gps_e, h(1), R_p_(1,1), C.row(1), xhat_p_, P_p_);
-
-    // gps ground speed
-    std::tie(P_p_, xhat_p_) = single_measurement_update(input.gps_Vg, h(2), R_p_(2,2), C.row(2), xhat_p_, P_p_);
-
-    // gps course
-    std::tie(P_p_, xhat_p_) = single_measurement_update(gps_course, xhat_p_(3), R_p_(3,3), C.row(3), xhat_p_, P_p_);
-
-    // pseudo measurement #1 y_1 = va*cos(psi)+wn-Vg*cos(chi)
-    std::tie(P_p_, xhat_p_) = single_measurement_update(0.0, h(4), R_p_(4,4), C.row(4), xhat_p_, P_p_);
-
-    // pseudo measurement #2 y_2 = va*sin(psi) + we - Vg*sin(chi)
-    std::tie(P_p_, xhat_p_) = single_measurement_update(0.0, h(5), R_p_(5,5), C.row(5), xhat_p_, P_p_);
+    std::tie(P_p_, xhat_p_) = measurement_update(xhat_p_, airspeed, position_measurement_model, y_pos, position_measurement_jacobian_model, R_p_, P_p_);
 
     if (xhat_p_(0) > gps_n_lim || xhat_p_(0) < -gps_n_lim) {
       RCLCPP_WARN(this->get_logger(), "gps n limit reached");
@@ -512,28 +499,28 @@ Eigen::VectorXf estimator_continuous_discrete::attitude_measurement_prediction(c
 
 Eigen::VectorXf estimator_continuous_discrete::position_measurement_prediction(const Eigen::VectorXf& state, const Eigen::VectorXf& input)
 {
-    float va = input(0);
-    
-    Eigen::VectorXf h = Eigen::VectorXf::Zero(7);
+  float va = input(0);
+  
+  Eigen::VectorXf h = Eigen::VectorXf::Zero(6);
 
-    // GPS north
-    h(0) = state(0);
+  // GPS north
+  h(0) = state(0);
 
-    // GPS east
-    h(1) = state(1);
+  // GPS east
+  h(1) = state(1);
 
-    // GPS ground speed
-    h(2) = state(2);
-    
-    // GPS course
-    h(3) = state(3);
-    
-    // Pseudo Measurement north
-    h(4) = va * cosf(state(6)) + state(4) - state(2) * cosf(state(3));
-    
-    // Pseudo Measurement east
-    h(5) = va * sinf(state(6)) + state(5) - state(2) * sinf(state(3));
-     
+  // GPS ground speed
+  h(2) = state(2);
+  
+  // GPS course
+  h(3) = state(3);
+  
+  // Pseudo Measurement north
+  h(4) = va * cosf(state(6)) + state(4) - state(2) * cosf(state(3));
+  
+  // Pseudo Measurement east
+  h(5) = va * sinf(state(6)) + state(5) - state(2) * sinf(state(3));
+   
   return h;
 }
 
