@@ -2,20 +2,21 @@
 #define INPUT_MAPPER_HPP
 
 #include <rclcpp/rclcpp.hpp>
-#include <rosflight_msgs/msg/rc_raw.hpp>
 #include <rosflight_msgs/msg/command.hpp>
-#include <rosplane_msgs/msg/controller_commands.hpp>
-#include <rosplane_msgs/msg/state.hpp>
+#include <rosflight_msgs/msg/rc_raw.hpp>
 #include <std_srvs/srv/trigger.hpp>
-#include <param_manager/param_manager.hpp>
+
+#include "param_manager/param_manager.hpp"
+#include "rosplane_msgs/msg/controller_commands.hpp"
+#include "rosplane_msgs/msg/state.hpp"
 
 namespace rosplane
 {
-class input_mapper : public rclcpp::Node
+class InputMapper : public rclcpp::Node
 {
 public:
   /**
-   * @class input_mapper
+   * @class InputMapper
    * @brief Class for input mixing.
    *
    * The input_mapper class is responsible for mixing various input commands, such as controller
@@ -52,7 +53,7 @@ public:
    * - `rc_airspeed_rate`: The max rate in meters per second at which the RC controller can adjust
    *   the airspeed command.
    */
-  input_mapper();
+  InputMapper();
 
 private:
   /**
@@ -241,7 +242,7 @@ private:
   /**
    * Param manager object, for getting parameters from ROS.
    */
-  param_manager params_;
+  ParamManager params_;
 
   /**
    * ROS2 parameter system interface. This connects ROS2 parameters with the defined update callback,

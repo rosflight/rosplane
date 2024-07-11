@@ -1,26 +1,28 @@
-#include "path_manager_base.hpp"
-#include "Eigen/src/Core/Matrix.h"
-#include "iostream"
-#include "path_manager_example.hpp"
-#include "rclcpp/rclcpp.hpp"
+#include <iostream>
 #include <limits>
+
 #include <rclcpp/logging.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include "path_manager_example.hpp"
+
+#include "path_manager_base.hpp"
 
 namespace rosplane
 {
 
-path_manager_base::path_manager_base()
+PathManagerBase::PathManagerBase()
     : Node("rosplane_path_manager"), params_(this), params_initialized_(false)
 {
   vehicle_state_sub_ = this->create_subscription<rosplane_msgs::msg::State>(
-    "estimated_state", 10, std::bind(&path_manager_base::vehicle_state_callback, this, _1));
+    "estimated_state", 10, std::bind(&PathManagerBase::vehicle_state_callback, this, _1));
   new_waypoint_sub_ = this->create_subscription<rosplane_msgs::msg::Waypoint>(
-    "waypoint_path", 10, std::bind(&path_manager_base::new_waypoint_callback, this, _1));
+    "waypoint_path", 10, std::bind(&PathManagerBase::new_waypoint_callback, this, _1));
   current_path_pub_ = this->create_publisher<rosplane_msgs::msg::CurrentPath>("current_path", 10);
 
   // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
-    std::bind(&path_manager_base::parametersCallback, this, std::placeholders::_1));
+    std::bind(&PathManagerBase::parametersCallback, this, std::placeholders::_1));
 
   // Declare parameters maintained by this node with ROS2. Required for all ROS2 parameters associated with this node
   declare_parameters();
@@ -36,24 +38,24 @@ path_manager_base::path_manager_base()
   state_init_ = false;
 }
 
-void path_manager_base::declare_parameters() {
+void PathManagerBase::declare_parameters() {
   params_.declare_double("R_min", 50.0);
   params_.declare_double("current_path_pub_frequency", 100.0);
   params_.declare_double("default_altitude", 50.0);
   params_.declare_double("default_airspeed", 15.0);
 }
 
-void path_manager_base::set_timer() {
+void PathManagerBase::set_timer() {
   // Calculate the period in milliseconds from the frequency
   double frequency = params_.get_double("current_path_pub_frequency");
   timer_period_ = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1e6));
 
   update_timer_ =
-    this->create_wall_timer(timer_period_, std::bind(&path_manager_base::current_path_publish, this));
+    this->create_wall_timer(timer_period_, std::bind(&PathManagerBase::current_path_publish, this));
 }
 
 rcl_interfaces::msg::SetParametersResult
-path_manager_base::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
+PathManagerBase::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = false;
@@ -80,7 +82,7 @@ path_manager_base::parametersCallback(const std::vector<rclcpp::Parameter> & par
   return result;
 }
 
-void path_manager_base::vehicle_state_callback(const rosplane_msgs::msg::State & msg)
+void PathManagerBase::vehicle_state_callback(const rosplane_msgs::msg::State & msg)
 {
 
   vehicle_state_ = msg;
@@ -88,11 +90,11 @@ void path_manager_base::vehicle_state_callback(const rosplane_msgs::msg::State &
   state_init_ = true;
 }
 
-void path_manager_base::new_waypoint_callback(const rosplane_msgs::msg::Waypoint & msg)
+void PathManagerBase::new_waypoint_callback(const rosplane_msgs::msg::Waypoint & msg)
 {
   double R_min = params_.get_double("R_min");
   double default_altitude = params_.get_double("default_altitude");
-  orbit_dir = 0;
+  orbit_dir_ = 0;
 
   // If the message contains "clear_wp_list", then clear all waypoints and do nothing else
   if (msg.clear_wp_list == true) {
@@ -106,7 +108,7 @@ void path_manager_base::new_waypoint_callback(const rosplane_msgs::msg::Waypoint
   // the current state of the aircraft. This is necessary to define a line for line following.
   if (waypoints_.size() == 0)
   {
-    waypoint_s temp_waypoint;
+    Waypoint temp_waypoint;
 
     temp_waypoint.w[0] = vehicle_state_.position[0];
     temp_waypoint.w[1] = vehicle_state_.position[1];
@@ -129,7 +131,7 @@ void path_manager_base::new_waypoint_callback(const rosplane_msgs::msg::Waypoint
   }
   
   // Add a default comparison for the last waypoint for feasiblity check.
-  waypoint_s nextwp;
+  Waypoint nextwp;
   Eigen::Vector3f w_existing(std::numeric_limits<double>::infinity(),
                              std::numeric_limits<double>::infinity(),
                              std::numeric_limits<double>::infinity());
@@ -143,7 +145,7 @@ void path_manager_base::new_waypoint_callback(const rosplane_msgs::msg::Waypoint
   // Save the last waypoint for comparison.
   if (waypoints_.size() > 0)
   {
-    waypoint_s waypoint = waypoints_.back();
+    Waypoint waypoint = waypoints_.back();
     w_existing << waypoint.w[0], waypoint.w[1], waypoint.w[2];
   }
   waypoints_.push_back(nextwp);
@@ -158,16 +160,16 @@ void path_manager_base::new_waypoint_callback(const rosplane_msgs::msg::Waypoint
   }
 }
 
-void path_manager_base::current_path_publish()
+void PathManagerBase::current_path_publish()
 {
 
-  struct input_s input;
+  Input input;
   input.pn = vehicle_state_.position[0]; // position north
   input.pe = vehicle_state_.position[1]; // position east
   input.h = -vehicle_state_.position[2]; // altitude
   input.chi = vehicle_state_.chi;
 
-  struct output_s output;
+  Output output;
 
   if (state_init_ == true) {
     manage(input, output);
@@ -203,7 +205,7 @@ int main(int argc, char ** argv)
 {
 
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<rosplane::path_manager_example>());
+  rclcpp::spin(std::make_shared<rosplane::PathManagerExample>());
 
   return 0;
 }

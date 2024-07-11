@@ -1,14 +1,17 @@
-#include "controller_base.hpp"
+#include <functional>
+
+#include <rclcpp/logging.hpp>
+
 #include "controller_successive_loop.hpp"
 #include "controller_total_energy.hpp"
-#include <functional>
-#include <rclcpp/logging.hpp>
+
+#include "controller_base.hpp"
 
 namespace rosplane
 {
 
-controller_base::controller_base()
-    : Node("controller_base"), params(this), params_initialized_(false)
+ControllerBase::ControllerBase()
+    : Node("controller_base"), params_(this), params_initialized_(false)
 {
 
   // Advertise published topics.
@@ -18,37 +21,37 @@ controller_base::controller_base()
 
   // Advertise subscribed topics and set bound callbacks.
   controller_commands_sub_ = this->create_subscription<rosplane_msgs::msg::ControllerCommands>(
-    "controller_command", 10, std::bind(&controller_base::controller_commands_callback, this, _1));
+    "controller_command", 10, std::bind(&ControllerBase::controller_commands_callback, this, _1));
   vehicle_state_sub_ = this->create_subscription<rosplane_msgs::msg::State>(
-    "estimated_state", 10, std::bind(&controller_base::vehicle_state_callback, this, _1));
+    "estimated_state", 10, std::bind(&ControllerBase::vehicle_state_callback, this, _1));
 
   // This flag indicates whether the first set of commands have been received.
   command_recieved_ = false;
 
   // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
-    std::bind(&controller_base::parametersCallback, this, std::placeholders::_1));
+    std::bind(&ControllerBase::parametersCallback, this, std::placeholders::_1));
 
   // Declare the parameters for ROS2 param system.
   declare_parameters();
   // Set the values for the parameters, from the param file or use the deafault value.
-  params.set_parameters();
+  params_.set_parameters();
 
   params_initialized_ = true;
 
   set_timer();
 }
 
-void controller_base::declare_parameters()
+void ControllerBase::declare_parameters()
 {
   // Declare default parameters associated with this controller, controller_base
-  params.declare_double("pwm_rad_e", 1.0);
-  params.declare_double("pwm_rad_a", 1.0);
-  params.declare_double("pwm_rad_r", 1.0);
-  params.declare_double("controller_output_frequency", 100.0);
+  params_.declare_double("pwm_rad_e", 1.0);
+  params_.declare_double("pwm_rad_a", 1.0);
+  params_.declare_double("pwm_rad_r", 1.0);
+  params_.declare_double("controller_output_frequency", 100.0);
 }
 
-void controller_base::controller_commands_callback(
+void ControllerBase::controller_commands_callback(
   const rosplane_msgs::msg::ControllerCommands::SharedPtr msg)
 {
 
@@ -59,18 +62,18 @@ void controller_base::controller_commands_callback(
   controller_commands_ = *msg;
 }
 
-void controller_base::vehicle_state_callback(const rosplane_msgs::msg::State::SharedPtr msg)
+void ControllerBase::vehicle_state_callback(const rosplane_msgs::msg::State::SharedPtr msg)
 {
 
   // Save the message to use in calculations.
   vehicle_state_ = *msg;
 }
 
-void controller_base::actuator_controls_publish()
+void ControllerBase::actuator_controls_publish()
 {
 
   // Assemble inputs for the control algorithm.
-  struct input_s input;
+  Input input;
   input.h = -vehicle_state_.position[2];
   input.va = vehicle_state_.va;
   input.phi = vehicle_state_.phi;
@@ -84,7 +87,7 @@ void controller_base::actuator_controls_publish()
   input.chi_c = controller_commands_.chi_c;
   input.phi_ff = controller_commands_.phi_ff;
 
-  struct output_s output;
+  Output output;
 
   // If a command was received, begin control.
   if (command_recieved_ == true) {
@@ -124,13 +127,13 @@ void controller_base::actuator_controls_publish()
     controller_internals.phi_c = output.phi_c;
     controller_internals.theta_c = output.theta_c;
     switch (output.current_zone) {
-      case alt_zones::TAKE_OFF:
+      case AltZones::TAKE_OFF:
         controller_internals.alt_zone = controller_internals.ZONE_TAKE_OFF;
         break;
-      case alt_zones::CLIMB:
+      case AltZones::CLIMB:
         controller_internals.alt_zone = controller_internals.ZONE_CLIMB;
         break;
-      case alt_zones::ALTITUDE_HOLD:
+      case AltZones::ALTITUDE_HOLD:
         controller_internals.alt_zone = controller_internals.ZONE_ALTITUDE_HOLD;
         break;
       default:
@@ -141,14 +144,14 @@ void controller_base::actuator_controls_publish()
 }
 
 rcl_interfaces::msg::SetParametersResult
-controller_base::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
+ControllerBase::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = false;
   result.reason =
     "One of the parameters given does not is not a parameter of the controller node.";
 
-  bool success = params.set_parameters_callback(parameters);
+  bool success = params_.set_parameters_callback(parameters);
   if (success)
   {
     result.successful = true;
@@ -156,7 +159,7 @@ controller_base::parametersCallback(const std::vector<rclcpp::Parameter> & param
   }
 
   if (params_initialized_ && success) {
-    std::chrono::microseconds curr_period = std::chrono::microseconds(static_cast<long long>(1.0 / params.get_double("controller_output_frequency") * 1'000'000));
+    std::chrono::microseconds curr_period = std::chrono::microseconds(static_cast<long long>(1.0 / params_.get_double("controller_output_frequency") * 1'000'000));
     if (timer_period_ != curr_period) {
       timer_->cancel();
       set_timer();
@@ -166,26 +169,26 @@ controller_base::parametersCallback(const std::vector<rclcpp::Parameter> & param
   return result;
 }
 
-void controller_base::set_timer()
+void ControllerBase::set_timer()
 {
 
-  double frequency = params.get_double("controller_output_frequency");
+  double frequency = params_.get_double("controller_output_frequency");
   timer_period_ =
     std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1'000'000));
 
   // Set timer to trigger bound callback (actuator_controls_publish) at the given periodicity.
   timer_ = this->create_wall_timer(timer_period_,
-                                   std::bind(&controller_base::actuator_controls_publish,
+                                   std::bind(&ControllerBase::actuator_controls_publish,
                                              this));
 }
 
-void controller_base::convert_to_pwm(controller_base::output_s & output)
+void ControllerBase::convert_to_pwm(Output & output)
 {
 
   // Assign parameters from parameters object
-  double pwm_rad_e = params.get_double("pwm_rad_e");
-  double pwm_rad_a = params.get_double("pwm_rad_a");
-  double pwm_rad_r = params.get_double("pwm_rad_r");
+  double pwm_rad_e = params_.get_double("pwm_rad_e");
+  double pwm_rad_a = params_.get_double("pwm_rad_a");
+  double pwm_rad_r = params_.get_double("pwm_rad_r");
 
   // Multiply each control effort (in radians) by a scaling factor to a pwm.
   // TODO investigate why this is named "pwm". The actual scaling to pwm happens in rosflight_io.
@@ -203,15 +206,15 @@ int main(int argc, char * argv[])
   rclcpp::init(argc, argv);
 
   if (strcmp(argv[1], "total_energy") == 0) {
-    auto node = std::make_shared<rosplane::controller_total_energy>();
+    auto node = std::make_shared<rosplane::ControllerTotalEnergy>();
     RCLCPP_INFO_STREAM(node->get_logger(), "Using total energy control.");
     rclcpp::spin(node);
   } else if (strcmp(argv[1], "default") == 0) {
-    auto node = std::make_shared<rosplane::controller_successive_loop>();
+    auto node = std::make_shared<rosplane::ControllerSucessiveLoop>();
     RCLCPP_INFO_STREAM(node->get_logger(), "Using default control.");
     rclcpp::spin(node);
   } else {
-    auto node = std::make_shared<rosplane::controller_successive_loop>();
+    auto node = std::make_shared<rosplane::ControllerSucessiveLoop>();
     RCLCPP_INFO_STREAM(node->get_logger(), "Invalid control type, using default control.");
     rclcpp::spin(node);
   }

@@ -1,25 +1,25 @@
+#include <chrono>
 #include <memory>
 
-#include "Eigen/Geometry"
-#include "geometry_msgs/msg/vector3_stamped.hpp"
-#include "nav_msgs/msg/odometry.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "rosplane_msgs/msg/state.hpp"
+#include <Eigen/Geometry>
+#include <geometry_msgs/msg/vector3_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <rclcpp/rclcpp.hpp>
 
-#include "chrono"
+#include "rosplane_msgs/msg/state.hpp"
 
 using namespace std::chrono_literals;
 using rosplane_msgs::msg::State;
 using std::placeholders::_1;
 
-class gazebo_transcription : public rclcpp::Node
+class GazeboTranscription : public rclcpp::Node
 {
 public:
-  gazebo_transcription()
+  GazeboTranscription()
       : Node("gazebo_state")
   {
     odom_subscription_ = this->create_subscription<nav_msgs::msg::Odometry>(
-      "/fixedwing/truth/NED", 10, std::bind(&gazebo_transcription::publish_truth, this, _1));
+      "/fixedwing/truth/NED", 10, std::bind(&GazeboTranscription::publish_truth, this, _1));
 
     publisher_ = this->create_publisher<rosplane_msgs::msg::State>("state", 10);
   }
@@ -32,9 +32,9 @@ private:
   rclcpp::Publisher<State>::SharedPtr publisher_;
 
   //TODO insert wind callback.
-  double wn = 0.0;
-  double we = 0.0;
-  double wd = 0.0;
+  double wn_ = 0.0;
+  double we_ = 0.0;
+  double wd_ = 0.0;
 
   void publish_truth(const nav_msgs::msg::Odometry & msg)
   {
@@ -83,12 +83,12 @@ private:
     state.q = msg.twist.twist.angular.y;
     state.r = msg.twist.twist.angular.z;
 
-    state.wn = wn;
-    state.we = we;
+    state.wn = wn_;
+    state.we = we_;
 
-    double ur = u - wn;
-    double vr = v - we;
-    double wr = w - wd;
+    double ur = u - wn_;
+    double vr = v - we_;
+    double wr = w - wd_;
 
     state.va = std::sqrt(pow(ur, 2) + pow(vr, 2) + pow(wr, 2));
 
@@ -112,7 +112,7 @@ private:
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<gazebo_transcription>());
+  rclcpp::spin(std::make_shared<GazeboTranscription>());
   rclcpp::shutdown();
   return 0;
 }

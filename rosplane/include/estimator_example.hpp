@@ -1,23 +1,21 @@
 #ifndef ESTIMATOR_EXAMPLE_H
 #define ESTIMATOR_EXAMPLE_H
 
-#include "estimator_base.hpp"
-
 #include <Eigen/Geometry>
-#include <math.h>
-#include <yaml-cpp/yaml.h>
+
+#include "estimator_base.hpp"
 
 namespace rosplane
 {
 
-class estimator_example : public estimator_base
+class EstimatorExample : public EstimatorBase
 {
 public:
-  estimator_example();
-  estimator_example(bool use_params);
+  EstimatorExample();
+  EstimatorExample(bool use_params);
 
 private:
-  virtual void estimate(const input_s & input, output_s & output);
+  virtual void estimate(const Input & input, Output & output);
 
   //    float gps_n_old_;
   //    float gps_e_old_;

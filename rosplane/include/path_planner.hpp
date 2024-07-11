@@ -1,29 +1,25 @@
-#include "rclcpp/rclcpp.hpp"
-#include "rosplane_msgs/msg/waypoint.hpp"
-#include "rosplane_msgs/msg/state.hpp"
-#include "rosplane_msgs/srv/add_waypoint.hpp"
-#include "rosflight_msgs/srv/param_file.hpp"
 #include <rclcpp/executors.hpp>
-#include <rclcpp/logging.hpp>
 #include <rclcpp/service.hpp>
-#include <rclcpp/utilities.hpp>
+#include <rosflight_msgs/srv/param_file.hpp>
 #include <std_srvs/srv/trigger.hpp>
-#include <param_manager.hpp>
-#include <yaml-cpp/yaml.h>
-#include <cmath>
+
+#include "param_manager.hpp"
+#include "rosplane_msgs/srv/add_waypoint.hpp"
+#include "rosplane_msgs/msg/state.hpp"
+#include "rosplane_msgs/msg/waypoint.hpp"
 
 #define EARTH_RADIUS 6378145.0f
 
 namespace rosplane
 {
 
-class path_planner : public rclcpp::Node
+class PathPlanner : public rclcpp::Node
 {
 public:
-  path_planner();
-  ~path_planner();
+  PathPlanner();
+  ~PathPlanner();
 
-  param_manager params;   /** Holds the parameters for the path_planner*/
+  ParamManager params_;   /** Holds the parameters for the path_planner*/
 
 private:
   /**
@@ -174,3 +170,4 @@ private:
    */
   std::vector<rosplane_msgs::msg::Waypoint> wps;
 };
+}   // namespace rosplane
