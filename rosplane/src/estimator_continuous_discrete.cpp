@@ -23,6 +23,11 @@ estimator_continuous_discrete::estimator_continuous_discrete()
     , attitude_input_jacobian_model(std::bind(&estimator_continuous_discrete::attitude_input_jacobian, this, std::placeholders::_1, std::placeholders::_2))
     , attitude_measurement_model(std::bind(&estimator_continuous_discrete::attitude_measurement_prediction, this, std::placeholders::_1, std::placeholders::_2))
     , attitude_measurement_jacobian_model(std::bind(&estimator_continuous_discrete::attitude_measurement_jacobian, this, std::placeholders::_1, std::placeholders::_2))
+    , position_dynamics_model(std::bind(&estimator_continuous_discrete::position_dynamics, this, std::placeholders::_1, std::placeholders::_2))
+    , position_jacobian_model(std::bind(&estimator_continuous_discrete::position_jacobian, this, std::placeholders::_1, std::placeholders::_2))
+    , position_input_jacobian_model(std::bind(&estimator_continuous_discrete::position_input_jacobian, this, std::placeholders::_1, std::placeholders::_2))
+    , position_measurement_model(std::bind(&estimator_continuous_discrete::position_measurement_prediction, this, std::placeholders::_1, std::placeholders::_2))
+    , position_measurement_jacobian_model(std::bind(&estimator_continuous_discrete::position_measurement_jacobian, this, std::placeholders::_1, std::placeholders::_2))
     , xhat_a_(Eigen::Vector2f::Zero())
     , P_a_(Eigen::Matrix2f::Identity())
     , xhat_p_(Eigen::VectorXf::Zero(7))
@@ -205,15 +210,15 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
   Eigen::Vector4f inputs;
   inputs << angular_rates, vahat;
   
-  Eigen::Vector3f y;
-  y << lpf_accel_x_, lpf_accel_y_, lpf_accel_z_;
+  Eigen::Vector3f y_att;
+  y_att << lpf_accel_x_, lpf_accel_y_, lpf_accel_z_;
 
   // ATTITUDE (ROLL AND PITCH) ESTIMATION
   // Prediction step
   std::tie(P_a_, xhat_a_) = propagate_model(xhat_a_, attitude_dynamics_model, attitude_jacobian_model, angular_rates,
                                             attitude_input_jacobian_model, P_a_, Q_a_, Q_g_, Ts);
   // Measurement update
-  std::tie(P_a_, xhat_a_) = measurement_update(xhat_a_, inputs, attitude_measurement_model, y, attitude_measurement_jacobian_model,
+  std::tie(P_a_, xhat_a_) = measurement_update(xhat_a_, inputs, attitude_measurement_model, y_att, attitude_measurement_jacobian_model, // TODO: change these std::ties to just pass by reference.
                                                R_accel_,P_a_);
   
   // Check the estimate for errors
@@ -224,108 +229,59 @@ void estimator_continuous_discrete::estimate(const input_s & input, output_s & o
   thetahat_ = xhat_a_(1);
 
   // Implement continous-discrete EKF to estimate pn, pe, chi, Vg
-  // prediction step
+  // Prediction step
   if (fabsf(xhat_p_(2)) < 0.01f) {
     xhat_p_(2) = 0.01; // prevent divide by zero
   }
 
-  for (int i = 0; i < N_; i++) {
+  Eigen::Vector<float, 6> measurements;
 
-    Eigen::Vector<float, 6> measurements;
+  measurements << angular_rates, xhat_a_(0), xhat_a_(1), vahat;
 
-    measurements << angular_rates, xhat_a_(0), xhat_a_(1), vahat;
-
-    f_p_ = position_dynamics(xhat_p_, measurements);
-
-    xhat_p_ += f_p_ * (Ts / N_);
-    
-    A_p_ = position_jacobian(xhat_p_, measurements);
-
-    Eigen::MatrixXf A_d_ = Eigen::MatrixXf::Identity(7, 7) + Ts / N_ * A_p_
-      + A_p_ * A_p_ * pow(Ts / N_, 2) / 2.0;
-
-    P_p_ = (A_d_ * P_p_ * A_d_.transpose() + Q_p_ * pow(Ts / N_, 2));
-  }
+  std::tie(P_p_, xhat_p_) = propagate_model(xhat_p_, position_dynamics_model, position_jacobian_model, measurements, position_input_jacobian_model, P_p_, Q_p_, Eigen::MatrixXf::Zero(7, 7), Ts);
 
   xhat_p_(3) = wrap_within_180(0.0, xhat_p_(3));
+  xhat_p_(6) = wrap_within_180(0.0, xhat_p_(6));
   if (xhat_p_(3) > radians(180.0f) || xhat_p_(3) < radians(-180.0f)) {
     RCLCPP_WARN(this->get_logger(), "Course estimate not wrapped from -pi to pi");
     xhat_p_(3) = 0;
   }
-
-  xhat_p_(6) = wrap_within_180(0.0, xhat_p_(6));
   if (xhat_p_(6) > radians(180.0f) || xhat_p_(6) < radians(-180.0f)) {
     RCLCPP_WARN(this->get_logger(), "Psi estimate not wrapped from -pi to pi");
     xhat_p_(6) = 0;
   }
 
+  Eigen::VectorXf airspeed(1);
+  airspeed << vahat;
+
+  Eigen::MatrixXf C = position_measurement_jacobian(xhat_p_, airspeed);
+  Eigen::MatrixXf h = position_measurement_prediction(xhat_p_, airspeed);
+
   // measurement updates
   // These calculate the Kalman gain and applies them to each state individually.
   if (input.gps_new) {
-
-    Eigen::MatrixXf I_p(7, 7);
-    I_p = Eigen::MatrixXf::Identity(7, 7);
-
-    // gps North position
-    h_p_ = xhat_p_(0);
-    C_p_ = Eigen::VectorXf::Zero(7);
-    C_p_(0) = 1;
-    L_p_ = (P_p_ * C_p_) / (R_p_(0, 0) + (C_p_.transpose() * P_p_ * C_p_));
-    P_p_ = (I_p - L_p_ * C_p_.transpose()) * P_p_;
-    xhat_p_ = xhat_p_ + L_p_ * (input.gps_n - h_p_);
-
-    // gps East position
-    h_p_ = xhat_p_(1);
-    C_p_ = Eigen::VectorXf::Zero(7);
-    C_p_(1) = 1;
-    L_p_ = (P_p_ * C_p_) / (R_p_(1, 1) + (C_p_.transpose() * P_p_ * C_p_));
-    P_p_ = (I_p - L_p_ * C_p_.transpose()) * P_p_;
-    xhat_p_ = xhat_p_ + L_p_ * (input.gps_e - h_p_);
-
-    // gps ground speed
-    h_p_ = xhat_p_(2);
-    C_p_ = Eigen::VectorXf::Zero(7);
-    C_p_(2) = 1;
-    L_p_ = (P_p_ * C_p_) / (R_p_(2, 2) + (C_p_.transpose() * P_p_ * C_p_));
-    P_p_ = (I_p - L_p_ * C_p_.transpose()) * P_p_;
-    xhat_p_ = xhat_p_ + L_p_ * (input.gps_Vg - h_p_);
-
-    // gps course
     //wrap course measurement
     float gps_course = fmodf(input.gps_course, radians(360.0f));
 
     gps_course = wrap_within_180(xhat_p_(3), gps_course);
-    h_p_ = xhat_p_(3);
 
-    C_p_ = Eigen::VectorXf::Zero(7);
-    C_p_(3) = 1;
-    L_p_ = (P_p_ * C_p_) / (R_p_(3, 3) + (C_p_.transpose() * P_p_ * C_p_));
-    P_p_ = (I_p - L_p_ * C_p_.transpose()) * P_p_;
-    xhat_p_ = xhat_p_ + L_p_ * (gps_course - h_p_);
+    // gps North position
+    std::tie(P_p_, xhat_p_) = single_measurement_update(input.gps_n, h(0), R_p_(0,0), C.row(0), xhat_p_, P_p_);
+
+    // gps East position
+    std::tie(P_p_, xhat_p_) = single_measurement_update(input.gps_e, h(1), R_p_(1,1), C.row(1), xhat_p_, P_p_);
+
+    // gps ground speed
+    std::tie(P_p_, xhat_p_) = single_measurement_update(input.gps_Vg, h(2), R_p_(2,2), C.row(2), xhat_p_, P_p_);
+
+    // gps course
+    std::tie(P_p_, xhat_p_) = single_measurement_update(gps_course, xhat_p_(3), R_p_(3,3), C.row(3), xhat_p_, P_p_);
 
     // pseudo measurement #1 y_1 = va*cos(psi)+wn-Vg*cos(chi)
-    h_p_ =
-      vahat * cosf(xhat_p_(6)) + xhat_p_(4) - xhat_p_(2) * cosf(xhat_p_(3)); // pseudo measurement
-    C_p_ = Eigen::VectorXf::Zero(7);
-    C_p_(2) = -cos(xhat_p_(3));
-    C_p_(3) = xhat_p_(2) * sinf(xhat_p_(3));
-    C_p_(4) = 1;
-    C_p_(6) = -vahat * sinf(xhat_p_(6));
-    L_p_ = (P_p_ * C_p_) / (R_p_(4, 4) + (C_p_.transpose() * P_p_ * C_p_));
-    P_p_ = (I_p - L_p_ * C_p_.transpose()) * P_p_;
-    xhat_p_ = xhat_p_ + L_p_ * (0 - h_p_);
+    std::tie(P_p_, xhat_p_) = single_measurement_update(h(4), 0.0, R_p_(4,4), C.row(4), xhat_p_, P_p_);
 
     // pseudo measurement #2 y_2 = va*sin(psi) + we - Vg*sin(chi)
-    h_p_ =
-      vahat * sinf(xhat_p_(6)) + xhat_p_(5) - xhat_p_(2) * sinf(xhat_p_(3)); // pseudo measurement
-    C_p_ = Eigen::VectorXf::Zero(7);
-    C_p_(2) = -sin(xhat_p_(3));
-    C_p_(3) = -xhat_p_(2) * cosf(xhat_p_(3));
-    C_p_(5) = 1;
-    C_p_(6) = vahat * cosf(xhat_p_(6));
-    L_p_ = (P_p_ * C_p_) / (R_p_(5, 5) + (C_p_.transpose() * P_p_ * C_p_));
-    P_p_ = (I_p - L_p_ * C_p_.transpose()) * P_p_;
-    xhat_p_ = xhat_p_ + L_p_ * (0 - h_p_);
+    std::tie(P_p_, xhat_p_) = single_measurement_update(h(5), 0.0, R_p_(5,5), C.row(5), xhat_p_, P_p_);
 
     if (xhat_p_(0) > gps_n_lim || xhat_p_(0) < -gps_n_lim) {
       RCLCPP_WARN(this->get_logger(), "gps n limit reached");
@@ -494,7 +450,7 @@ Eigen::MatrixXf estimator_continuous_discrete::position_jacobian(const Eigen::Ve
   
   float tmp = -psidot * va * (state(4) * cosf(state(6)) + state(5) * sinf(state(6))) / state(2);
 
-  float Vgdot = va / Vg * psidot * (we * cosf(psi) - wn * sinf(psi));
+  float Vgdot = va / Vg * psidot * (wn * cosf(psi) - we * sinf(psi));
 
   Eigen::MatrixXf A;
   A = Eigen::MatrixXf::Zero(7, 7);
@@ -523,6 +479,15 @@ Eigen::MatrixXf estimator_continuous_discrete::attitude_input_jacobian(const Eig
   return G;
 }
 
+Eigen::MatrixXf estimator_continuous_discrete::position_input_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& inputs)
+{
+  
+  Eigen::MatrixXf G;
+  G = Eigen::MatrixXf::Zero(7, 7);
+
+  return G;
+}
+
 Eigen::VectorXf estimator_continuous_discrete::attitude_measurement_prediction(const Eigen::VectorXf& state, const Eigen::VectorXf& inputs)
 {
   double gravity = params.get_double("gravity");
@@ -543,6 +508,45 @@ Eigen::VectorXf estimator_continuous_discrete::attitude_measurement_prediction(c
   h(2) = -q * va * ct - gravity * ct * cp;
 
   return h;
+}
+
+Eigen::VectorXf estimator_continuous_discrete::position_measurement_prediction(const Eigen::VectorXf& state, const Eigen::VectorXf& input)
+{
+    float va = input(0);
+    
+    Eigen::VectorXf h = Eigen::VectorXf::Zero(7);
+
+    h(0) = state(0);
+    h(1) = state(1);
+    h(2) = state(2);
+    h(3) = state(3);
+    h(4) = va * cosf(state(6)) + state(4) - state(2) * cosf(state(3)); // pseudo measurement 1
+    h(5) = va * sinf(state(6)) + state(5) - state(2) * sinf(state(3)); // pseudo measurement 2
+     
+  return h;
+}
+
+Eigen::MatrixXf estimator_continuous_discrete::position_measurement_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& input)
+{
+    float va = input(0);
+
+    Eigen::MatrixXf C = Eigen::MatrixXf::Zero(6,7);
+    C(0,0) = 1;
+    C(1,1) = 1;
+    C(2,2) = 1;
+    C(3,3) = 1;
+    
+    C(4,2) = -cos(state(3));
+    C(4,3) = state(2) * sinf(state(3));
+    C(4,4) = 1;
+    C(4,6) = -va * sinf(state(6));
+
+    C(5, 2) = -sin(state(3));
+    C(5, 3) = -state(2) * cosf(state(3));
+    C(5, 5) = 1;
+    C(5, 6) = va * cosf(state(6));
+
+  return C;
 }
 
 Eigen::MatrixXf estimator_continuous_discrete::attitude_measurement_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& inputs)

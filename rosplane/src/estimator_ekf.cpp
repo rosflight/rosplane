@@ -1,5 +1,4 @@
 #include "estimator_ekf.hpp"
-#include "Eigen/src/Core/Matrix.h"
 #include "estimator_ros.hpp"
 #include <functional>
 #include <tuple>
@@ -50,7 +49,7 @@ std::tuple<Eigen::MatrixXf, Eigen::VectorXf> estimator_ekf::propagate_model(Eige
                                                              float Ts)
 {
 
-  int N = params.get_int("num_propagation_steps");
+  int N = params.get_int("num_propagation_steps"); // TODO: Declare this parameter in the ekf class.
 
   for (int _ = 0; _ < N; _++)
   {
@@ -74,6 +73,18 @@ std::tuple<Eigen::MatrixXf, Eigen::VectorXf> estimator_ekf::propagate_model(Eige
 
   std::tuple<Eigen::MatrixXf, Eigen::VectorXf> result(P, x);
   
+  return result;
+}
+
+std::tuple<Eigen::MatrixXf, Eigen::VectorXf> estimator_ekf::single_measurement_update(float measurement, float measurement_prediction, float measurement_variance, Eigen::VectorXf measurement_jacobian, Eigen::VectorXf x, Eigen::MatrixXf P)
+{
+  Eigen::MatrixXf I(7,7);
+  I = Eigen::MatrixXf::Identity(x.size(), x.size());
+  Eigen::VectorXf L = (P * measurement_jacobian) / (measurement_variance + (measurement_jacobian.transpose() * P * measurement_jacobian));
+  P = (I - L * measurement_jacobian.transpose()) * P;
+  x = x + L * (measurement - measurement_prediction);
+
+  std::tuple<Eigen::MatrixXf, Eigen::VectorXf> result(P,x);
   return result;
 }
 
