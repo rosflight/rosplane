@@ -6,13 +6,13 @@
 namespace rosplane
 {
 
-class controller_total_energy : public controller_successive_loop
+class ControllerTotalEnergy : public ControllerSucessiveLoop
 {
 public:
   /**
    * Constructor to initialize node.
    */
-  controller_total_energy();
+  ControllerTotalEnergy();
 
 protected:
   /**
@@ -20,23 +20,23 @@ protected:
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void take_off_longitudinal_control(const struct input_s & input,
-                                             struct output_s & output);
+  virtual void take_off_longitudinal_control(const Input & input,
+                                             Output & output);
 
   /**
    * This function overrides the longitudinal control loops for the climb zone.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void climb_longitudinal_control(const struct input_s & input, struct output_s & output);
+  virtual void climb_longitudinal_control(const Input & input, Output & output);
 
   /**
    * This function overrides the longitudinal control loops for the altitude hold zone.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void alt_hold_longitudinal_control(const struct input_s & input,
-                                             struct output_s & output);
+  virtual void alt_hold_longitudinal_control(const Input & input,
+                                             Output & output);
 
   /**
    * This function overrides when the aircraft exits the take-off zone. Any changes to the controller that need to happen
@@ -101,17 +101,17 @@ protected:
   /**
    * This is the current reference (desired) kinetic energy.
    */
-  float K_ref;
+  float K_ref_;
 
   /**
    * This is the current error in the kinetic energy.
    */
-  float K_error;
+  float K_error_;
 
   /**
    * This is the current error in the potential energy.
    */
-  float U_error;
+  float U_error_;
 
   /**
    * The previous error in the energy balance.

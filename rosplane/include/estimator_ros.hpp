@@ -11,20 +11,19 @@
 #ifndef ESTIMATOR_ROS_H
 #define ESTIMATOR_ROS_H
 
-#include <Eigen/Eigen>
 #include <chrono>
-#include <geometry_msgs/msg/twist_stamped.hpp>
-#include <math.h>
 #include <yaml-cpp/yaml.h>
-#include <ament_index_cpp/get_package_share_directory.hpp>
+
+#include <geometry_msgs/msg/twist_stamped.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rosflight_msgs/msg/airspeed.hpp>
 #include <rosflight_msgs/msg/barometer.hpp>
 #include <rosflight_msgs/msg/status.hpp>
-#include <rosplane_msgs/msg/state.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
-#include <param_manager.hpp>
+
+#include "param_manager.hpp"
+#include "rosplane_msgs/msg/state.hpp"
 
 #define EARTH_RADIUS 6378145.0f
 
@@ -34,13 +33,13 @@ using namespace std::chrono_literals;
 namespace rosplane
 {
 
-class estimator_ros : public rclcpp::Node
+class EstimatorROS : public rclcpp::Node
 {
 public:
-  estimator_ros();
+  EstimatorROS();
 
 protected:
-  struct input_s
+  struct Input
   {
     float gyro_x;
     float gyro_y;
@@ -60,7 +59,7 @@ protected:
     bool armed_init;
   };
 
-  struct output_s
+  struct Output
   {
     float pn;
     float pe;
@@ -82,10 +81,10 @@ protected:
 
   bool baro_init_; /**< Initial barometric pressure */
 
-  virtual void estimate(const struct input_s & input,
-                        struct output_s & output) = 0;
+  virtual void estimate(const Input & input,
+                        Output & output) = 0;
 
-  param_manager params;
+  ParamManager params_;
   bool gps_init_;
   double init_lat_ = 0.0;                 /**< Initial latitude in degrees */
   double init_lon_ = 0.0;                 /**< Initial longitude in degrees */
@@ -159,7 +158,7 @@ private:
   rcl_interfaces::msg::SetParametersResult
   parametersCallback(const std::vector<rclcpp::Parameter> & parameters);
 
-  struct input_s input_;
+  Input input_;
 };
 
 } // namespace rosplane

@@ -6,7 +6,7 @@ using std::placeholders::_2;
 namespace rosplane
 {
 
-input_mapper::input_mapper() :
+InputMapper::InputMapper() :
   Node("input_mapper"),
   roll_override_(false),
   pitch_override_(false),
@@ -20,32 +20,32 @@ input_mapper::input_mapper() :
 
   controller_commands_sub_ = this->create_subscription<rosplane_msgs::msg::ControllerCommands>(
     "input_controller_command", 10,
-    std::bind(&input_mapper::controller_commands_callback, this, _1));
+    std::bind(&InputMapper::controller_commands_callback, this, _1));
   command_sub_ = this->create_subscription<rosflight_msgs::msg::Command>(
     "input_command", 10,
-    std::bind(&input_mapper::command_callback, this, _1));
+    std::bind(&InputMapper::command_callback, this, _1));
   rc_raw_sub_ = this->create_subscription<rosflight_msgs::msg::RCRaw>(
       "rc_raw", 10,
-      std::bind(&input_mapper::rc_raw_callback, this, _1));
+      std::bind(&InputMapper::rc_raw_callback, this, _1));
   state_sub_ = this->create_subscription<rosplane_msgs::msg::State>(
       "estimated_state", 10,
-      std::bind(&input_mapper::state_callback, this, _1));
+      std::bind(&InputMapper::state_callback, this, _1));
 
   set_param_client_ = this->create_client<rcl_interfaces::srv::SetParameters>(
     "/autopilot/set_parameters", rmw_qos_profile_services_default);
   set_param_timer_ = this->create_wall_timer(
-    std::chrono::milliseconds(100), std::bind(&input_mapper::set_param_timer_callback, this));
+    std::chrono::milliseconds(100), std::bind(&InputMapper::set_param_timer_callback, this));
   set_param_timer_->cancel();
 
   path_follower_mode_service_ = this->create_service<std_srvs::srv::Trigger>(
-    "/input_mapper/set_path_follower_mode", std::bind(&input_mapper::path_follower_mode_callback, this, _1, _2));
+    "/input_mapper/set_path_follower_mode", std::bind(&InputMapper::path_follower_mode_callback, this, _1, _2));
   altitude_course_airspeed_control_mode_service_ = this->create_service<std_srvs::srv::Trigger>(
     "/input_mapper/set_altitude_course_airspeed_control_mode",
-    std::bind(&input_mapper::altitude_course_airspeed_control_mode_callback, this, _1, _2));
+    std::bind(&InputMapper::altitude_course_airspeed_control_mode_callback, this, _1, _2));
   angle_control_mode_service_ = this->create_service<std_srvs::srv::Trigger>(
-    "/input_mapper/set_angle_control_mode", std::bind(&input_mapper::angle_control_mode_callback, this, _1, _2));
+    "/input_mapper/set_angle_control_mode", std::bind(&InputMapper::angle_control_mode_callback, this, _1, _2));
   rc_passthrough_mode_service_ = this->create_service<std_srvs::srv::Trigger>(
-    "/input_mapper/set_rc_passthrough_mode", std::bind(&input_mapper::rc_passthrough_mode_callback, this, _1, _2));
+    "/input_mapper/set_rc_passthrough_mode", std::bind(&InputMapper::rc_passthrough_mode_callback, this, _1, _2));
 
   last_command_time_ = this->now();
   mapped_controller_commands_msg_ = std::make_shared<rosplane_msgs::msg::ControllerCommands>();
@@ -66,10 +66,10 @@ input_mapper::input_mapper() :
 
   // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
-    std::bind(&input_mapper::parametersCallback, this, _1));
+    std::bind(&InputMapper::parametersCallback, this, _1));
 }
 
-void input_mapper::set_param_timer_callback()
+void InputMapper::set_param_timer_callback()
 {
   // Check that the service is ready
   if (!set_param_client_->service_is_ready()) {
@@ -100,7 +100,7 @@ void input_mapper::set_param_timer_callback()
   param_change_pending_ = false;
 }
 
-void input_mapper::set_roll_override(bool roll_override)
+void InputMapper::set_roll_override(bool roll_override)
 {
   // Value hasn't changed, return
   if (roll_override == roll_override_) {
@@ -123,7 +123,7 @@ void input_mapper::set_roll_override(bool roll_override)
   param_change_pending_ = true;
 }
 
-void input_mapper::set_pitch_override(bool pitch_override)
+void InputMapper::set_pitch_override(bool pitch_override)
 {
   // Value hasn't changed, return
   if (pitch_override == pitch_override_) {
@@ -146,7 +146,7 @@ void input_mapper::set_pitch_override(bool pitch_override)
   param_change_pending_ = true;
 }
 
-void input_mapper::controller_commands_callback(const rosplane_msgs::msg::ControllerCommands::SharedPtr msg)
+void InputMapper::controller_commands_callback(const rosplane_msgs::msg::ControllerCommands::SharedPtr msg)
 {
   std::string aileron_input = params_.get_string("aileron_input");
   std::string elevator_input = params_.get_string("elevator_input");
@@ -242,7 +242,7 @@ void input_mapper::controller_commands_callback(const rosplane_msgs::msg::Contro
   mapped_controller_commands_pub_->publish(*mapped_controller_commands_msg_);
 }
 
-void input_mapper::command_callback(const rosflight_msgs::msg::Command::SharedPtr msg)
+void InputMapper::command_callback(const rosflight_msgs::msg::Command::SharedPtr msg)
 {
   u_int8_t ignore = rosflight_msgs::msg::Command::IGNORE_NONE;
   if (params_.get_string("aileron_input") == "rc_aileron") {
@@ -261,17 +261,17 @@ void input_mapper::command_callback(const rosflight_msgs::msg::Command::SharedPt
   mapped_command_pub_->publish(*msg);
 }
 
-void input_mapper::rc_raw_callback(const rosflight_msgs::msg::RCRaw::SharedPtr msg)
+void InputMapper::rc_raw_callback(const rosflight_msgs::msg::RCRaw::SharedPtr msg)
 {
   rc_raw_msg_ = msg;
 }
 
-void input_mapper::state_callback(const rosplane_msgs::msg::State::SharedPtr msg)
+void InputMapper::state_callback(const rosplane_msgs::msg::State::SharedPtr msg)
 {
   state_msg_ = msg;
 }
 
-void input_mapper::path_follower_mode_callback(
+void InputMapper::path_follower_mode_callback(
   const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
   std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
@@ -282,7 +282,7 @@ void input_mapper::path_follower_mode_callback(
   response->success = true;
 }
 
-void input_mapper::altitude_course_airspeed_control_mode_callback(
+void InputMapper::altitude_course_airspeed_control_mode_callback(
   const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
   std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
@@ -293,7 +293,7 @@ void input_mapper::altitude_course_airspeed_control_mode_callback(
   response->success = true;
 }
 
-void input_mapper::angle_control_mode_callback(
+void InputMapper::angle_control_mode_callback(
   const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
   std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
@@ -304,7 +304,7 @@ void input_mapper::angle_control_mode_callback(
   response->success = true;
 }
 
-void input_mapper::rc_passthrough_mode_callback(
+void InputMapper::rc_passthrough_mode_callback(
   const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
   std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
@@ -316,7 +316,7 @@ void input_mapper::rc_passthrough_mode_callback(
 }
 
 rcl_interfaces::msg::SetParametersResult
-input_mapper::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
+InputMapper::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
@@ -337,7 +337,7 @@ input_mapper::parametersCallback(const std::vector<rclcpp::Parameter> & paramete
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<rosplane::input_mapper>();
+  auto node = std::make_shared<rosplane::InputMapper>();
   rclcpp::spin(node);
   return 0;
 }

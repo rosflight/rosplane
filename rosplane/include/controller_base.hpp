@@ -11,14 +11,14 @@
 #define CONTROLLER_BASE_H
 
 #include <chrono>
-#include <cstring>
-#include <ament_index_cpp/get_package_share_directory.hpp>
+
 #include <rclcpp/rclcpp.hpp>
 #include <rosflight_msgs/msg/command.hpp>
-#include <rosplane_msgs/msg/controller_commands.hpp>
-#include <rosplane_msgs/msg/controller_internals.hpp>
-#include <rosplane_msgs/msg/state.hpp>
-#include <param_manager.hpp>
+
+#include "param_manager.hpp"
+#include "rosplane_msgs/msg/controller_commands.hpp"
+#include "rosplane_msgs/msg/controller_internals.hpp"
+#include "rosplane_msgs/msg/state.hpp"
 
 using std::placeholders::_1;
 using namespace std::chrono_literals;
@@ -28,7 +28,7 @@ namespace rosplane
 /**
  * This defines the different portions of the control algorithm.
  */
-enum class alt_zones
+enum class AltZones
 {
   TAKE_OFF, /**< In the take off zone where the aircraft gains speed and altitude */
   CLIMB, /**< In the climb zone the aircraft proceeds to commanded altitude without course change. */
@@ -39,13 +39,13 @@ enum class alt_zones
  * This class implements all of the basic functionality of a controller interfacing with ROS2.
  */
 
-class controller_base : public rclcpp::Node
+class ControllerBase : public rclcpp::Node
 {
 public:
   /**
    * Constructor for ROS2 setup and parameter initialization.
    */
-  controller_base();
+  ControllerBase();
 
   /**
    * Gets the current phi_c value from the current private command message.
@@ -68,7 +68,7 @@ protected:
   /**
    * This struct holds all of the inputs to the control algorithm.
    */
-  struct input_s
+  struct Input
   {
     float Ts;     /**< time step */
     float h;      /**< altitude */
@@ -88,7 +88,7 @@ protected:
   /**
    * This struct holds all of the outputs of the control algorithm.
    */
-  struct output_s
+  struct Output
   {
     float theta_c;          /**< The commanded pitch angle from the altitude control loop */
     float phi_c;            /**< The commanded roll angle from the course control loop */
@@ -96,20 +96,20 @@ protected:
     float delta_a;          /**< The commanded aileron deflection */
     float delta_r;          /**< The commanded rudder deflection */
     float delta_t;          /**< The commanded throttle deflection */
-    alt_zones current_zone; /**< The current altitude zone for the control */
+    AltZones current_zone; /**< The current altitude zone for the control */
   };
 
   /**
    * Parameter manager object. Contains helper functions to interface parameters with ROS.
   */
-  param_manager params;
+  ParamManager params_;
 
   /**
    * Interface for control algorithm.
    * @param input Inputs to the control algorithm.
    * @param output Outputs of the controller, including selected intermediate values and final control efforts.
    */
-  virtual void control(const struct input_s & input, struct output_s & output) = 0;
+  virtual void control(const Input & input, Output & output) = 0;
 
 private:
   /**
@@ -165,7 +165,7 @@ private:
   /**
    * Convert from deflection angle in radians to pwm.
    */
-  void convert_to_pwm(struct output_s & output);
+  void convert_to_pwm(Output & output);
 
   /**
    * Calls the control function and publishes outputs and intermediate values to the command and controller internals
