@@ -1,8 +1,10 @@
+#include <functional>
+#include <tuple>
+
+#include <rclcpp/logging.hpp>
+
 #include "estimator_ekf.hpp"
 #include "estimator_ros.hpp"
-#include <functional>
-#include <rclcpp/logging.hpp>
-#include <tuple>
 
 namespace rosplane
 {

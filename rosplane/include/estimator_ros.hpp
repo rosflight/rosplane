@@ -12,7 +12,7 @@
 #define ESTIMATOR_ROS_H
 
 #include <chrono>
-#include <yaml-cpp/yaml.h>
+
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -21,6 +21,7 @@
 #include <rosflight_msgs/msg/status.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
+#include <yaml-cpp/yaml.h>
 
 #include "param_manager.hpp"
 #include "rosplane_msgs/msg/state.hpp"

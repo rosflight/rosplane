@@ -1,12 +1,13 @@
 #ifndef ESTIMATOR_CONTINUOUS_DISCRETE_H
 #define ESTIMATOR_CONTINUOUS_DISCRETE_H
 
-#include "estimator_ekf.hpp"
-#include "estimator_ros.hpp"
+#include <math.h>
 
 #include <Eigen/Geometry>
-#include <math.h>
 #include <yaml-cpp/yaml.h>
+
+#include "estimator_ekf.hpp"
+#include "estimator_ros.hpp"
 
 namespace rosplane
 {

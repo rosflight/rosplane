@@ -1,12 +1,14 @@
 #ifndef ESTIMATOR_EKF_H
 #define ESTIMATOR_EKF_H
 
-#include "estimator_ros.hpp"
-#include <Eigen/Geometry>
+#include <cassert>
 #include <math.h>
 #include <tuple>
-#include <cassert>
+
+#include <Eigen/Geometry>
 #include <yaml-cpp/yaml.h>
+
+#include "estimator_ros.hpp"
 
 namespace rosplane
 {
