@@ -7,10 +7,10 @@
 namespace rosplane
 {
 
-estimator_ekf::estimator_ekf() : estimator_ros()
+EstimatorEKF::EstimatorEKF() : EstimatorROS()
 {}
   
-std::tuple<Eigen::MatrixXf, Eigen::VectorXf> estimator_ekf::measurement_update(Eigen::VectorXf x,
+std::tuple<Eigen::MatrixXf, Eigen::VectorXf> EstimatorEKF::measurement_update(Eigen::VectorXf x,
                                                                 Eigen::VectorXf inputs,
                                                                 std::function<Eigen::VectorXf(const Eigen::VectorXf, const Eigen::VectorXf)> measurement_model,
                                                                 Eigen::VectorXf y,
@@ -39,7 +39,7 @@ std::tuple<Eigen::MatrixXf, Eigen::VectorXf> estimator_ekf::measurement_update(E
   return result;
 }
 
-std::tuple<Eigen::MatrixXf, Eigen::VectorXf> estimator_ekf::propagate_model(Eigen::VectorXf x,
+std::tuple<Eigen::MatrixXf, Eigen::VectorXf> EstimatorEKF::propagate_model(Eigen::VectorXf x,
                                                              std::function<Eigen::VectorXf(const Eigen::VectorXf&, const Eigen::VectorXf&)> dynamic_model,
                                                              std::function<Eigen::MatrixXf(const Eigen::VectorXf&, const Eigen::VectorXf&)> jacobian,
                                                              Eigen::VectorXf inputs,
@@ -50,7 +50,7 @@ std::tuple<Eigen::MatrixXf, Eigen::VectorXf> estimator_ekf::propagate_model(Eige
                                                              float Ts)
 {
 
-  int N = params.get_int("num_propagation_steps"); // TODO: Declare this parameter in the ekf class.
+  int N = params_.get_int("num_propagation_steps"); // TODO: Declare this parameter in the ekf class.
 
   for (int _ = 0; _ < N; _++)
   {
@@ -77,7 +77,7 @@ std::tuple<Eigen::MatrixXf, Eigen::VectorXf> estimator_ekf::propagate_model(Eige
   return result;
 }
 
-std::tuple<Eigen::MatrixXf, Eigen::VectorXf> estimator_ekf::single_measurement_update(float measurement, float measurement_prediction, float measurement_variance, Eigen::VectorXf measurement_jacobian, Eigen::VectorXf x, Eigen::MatrixXf P)
+std::tuple<Eigen::MatrixXf, Eigen::VectorXf> EstimatorEKF::single_measurement_update(float measurement, float measurement_prediction, float measurement_variance, Eigen::VectorXf measurement_jacobian, Eigen::VectorXf x, Eigen::MatrixXf P)
 {
   Eigen::MatrixXf I(7,7);
   I = Eigen::MatrixXf::Identity(x.size(), x.size());

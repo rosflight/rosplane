@@ -326,7 +326,7 @@ int main(int argc, char ** argv)
   
   rclcpp::init(argc, argv);
 
-  char* use_params = "false"; // HACK: Fix in a more permanant way.
+  char* use_params; // HACK: Fix in a more permanant way.
   if (argc >= 1) {
     use_params = argv[1];
   }

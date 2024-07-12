@@ -149,7 +149,7 @@ void EstimatorContinuousDiscrete::update_measurement_model_parameters()
   alpha1_ = exp(-lpf_a1 * Ts);
 }
 
-void EstimatorContinuousDiscrete::estimate(const input_s & input, output_s & output)
+void EstimatorContinuousDiscrete::estimate(const Input & input, Output & output)
 {
   // For readability, declare the parameters here
   double rho = params_.get_double("rho");
@@ -342,7 +342,6 @@ void EstimatorContinuousDiscrete::estimate(const input_s & input, output_s & out
   output.psi = psihat;
 }
 
-<<<<<<< HEAD:rosplane/src/estimator_continuous_discrete.cpp
 Eigen::VectorXf EstimatorContinuousDiscrete::attitude_dynamics(const Eigen::VectorXf& state, const Eigen::VectorXf& angular_rates)
 {
   float cp = cosf(state(0)); // cos(phi)
