@@ -2,35 +2,30 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 
-#include <ament_index_cpp/get_package_share_directory.hpp>
-#include <rclcpp/logging.hpp>
-
-#include "estimator_example.hpp"
-
-#include "estimator_base.hpp"
+#include "estimator_ros.hpp"
+#include "estimator_continuous_discrete.hpp"
 
 namespace rosplane
 {
 
-EstimatorBase::EstimatorBase()
-    : Node("estimator_base"), params_(this), params_initialized_(false)
+EstimatorROS::EstimatorROS()
+    : Node("estimator_ros"), params_(this), params_initialized_(false)
 {
   vehicle_state_pub_ = this->create_publisher<rosplane_msgs::msg::State>("estimated_state", 10);
 
   gnss_fix_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
-    gnss_fix_topic_, 10, std::bind(&EstimatorBase::gnssFixCallback, this, std::placeholders::_1));
+    gnss_fix_topic_, 10, std::bind(&EstimatorROS::gnssFixCallback, this, std::placeholders::_1));
   gnss_vel_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
-    gnss_vel_topic_, 10, std::bind(&EstimatorBase::gnssVelCallback, this, std::placeholders::_1));
+    gnss_vel_topic_, 10, std::bind(&EstimatorROS::gnssVelCallback, this, std::placeholders::_1));
   imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(
-    imu_topic_, 10, std::bind(&EstimatorBase::imuCallback, this, std::placeholders::_1));
+    imu_topic_, 10, std::bind(&EstimatorROS::imuCallback, this, std::placeholders::_1));
   baro_sub_ = this->create_subscription<rosflight_msgs::msg::Barometer>(
-    baro_topic_, 10, std::bind(&EstimatorBase::baroAltCallback, this, std::placeholders::_1));
+    baro_topic_, 10, std::bind(&EstimatorROS::baroAltCallback, this, std::placeholders::_1));
   airspeed_sub_ = this->create_subscription<rosflight_msgs::msg::Airspeed>(
-    airspeed_topic_, 10, std::bind(&EstimatorBase::airspeedCallback, this, std::placeholders::_1));
+    airspeed_topic_, 10, std::bind(&EstimatorROS::airspeedCallback, this, std::placeholders::_1));
   status_sub_ = this->create_subscription<rosflight_msgs::msg::Status>(
-    status_topic_, 10, std::bind(&EstimatorBase::statusCallback, this, std::placeholders::_1));
+    status_topic_, 10, std::bind(&EstimatorROS::statusCallback, this, std::placeholders::_1));
 
   init_static_ = 0;
   baro_count_ = 0;
@@ -40,7 +35,7 @@ EstimatorBase::EstimatorBase()
 
   // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
-    std::bind(&EstimatorBase::parametersCallback, this, std::placeholders::_1));
+    std::bind(&EstimatorROS::parametersCallback, this, std::placeholders::_1));
 
   // Declare and set parameters with the ROS2 system
   declare_parameters();
@@ -59,7 +54,7 @@ EstimatorBase::EstimatorBase()
   set_timer();
 }
 
-void EstimatorBase::declare_parameters()
+void EstimatorROS::declare_parameters()
 {
   params_.declare_double("estimator_update_frequency", 100.0);
   params_.declare_double("rho", 1.225);
@@ -74,15 +69,15 @@ void EstimatorBase::declare_parameters()
   params_.declare_double("init_alt", 0.0);
 }
 
-void EstimatorBase::set_timer() {
+void EstimatorROS::set_timer() {
   double frequency = params_.get_double("estimator_update_frequency");
 
   update_period_ = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1'000'000));
-  update_timer_ = this->create_wall_timer(update_period_, std::bind(&EstimatorBase::update, this));
+  update_timer_ = this->create_wall_timer(update_period_, std::bind(&EstimatorROS::update, this));
 }
 
 rcl_interfaces::msg::SetParametersResult 
-EstimatorBase::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
+EstimatorROS::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
@@ -109,7 +104,7 @@ EstimatorBase::parametersCallback(const std::vector<rclcpp::Parameter> & paramet
   return result;
 }
 
-void EstimatorBase::update()
+void EstimatorROS::update()
 {
   Output output;
 
@@ -177,7 +172,7 @@ void EstimatorBase::update()
   vehicle_state_pub_->publish(msg);
 }
 
-void EstimatorBase::gnssFixCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg)
+void EstimatorROS::gnssFixCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg)
 {
   bool has_fix = msg->status.status
     >= sensor_msgs::msg::NavSatStatus::STATUS_FIX; // Higher values refer to augmented fixes
@@ -202,7 +197,7 @@ void EstimatorBase::gnssFixCallback(const sensor_msgs::msg::NavSatFix::SharedPtr
   }
 }
 
-void EstimatorBase::gnssVelCallback(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
+void EstimatorROS::gnssVelCallback(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
 {
   // Rename parameter here for clarity
   double ground_speed_threshold = params_.get_double("gps_ground_speed_threshold");
@@ -218,7 +213,7 @@ void EstimatorBase::gnssVelCallback(const geometry_msgs::msg::TwistStamped::Shar
     input_.gps_course = course;
 }
 
-void EstimatorBase::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
+void EstimatorROS::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
 {
   input_.accel_x = msg->linear_acceleration.x;
   input_.accel_y = msg->linear_acceleration.y;
@@ -229,7 +224,7 @@ void EstimatorBase::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
   input_.gyro_z = msg->angular_velocity.z;
 }
 
-void EstimatorBase::baroAltCallback(const rosflight_msgs::msg::Barometer::SharedPtr msg)
+void EstimatorROS::baroAltCallback(const rosflight_msgs::msg::Barometer::SharedPtr msg)
 {
   // For readability, declare the parameters here
   double rho = params_.get_double("rho");
@@ -285,7 +280,7 @@ void EstimatorBase::baroAltCallback(const rosflight_msgs::msg::Barometer::Shared
   }
 }
 
-void EstimatorBase::airspeedCallback(const rosflight_msgs::msg::Airspeed::SharedPtr msg)
+void EstimatorROS::airspeedCallback(const rosflight_msgs::msg::Airspeed::SharedPtr msg)
 {
   // For readability, declare the parameters here
   double rho = params_.get_double("rho");
@@ -302,12 +297,12 @@ void EstimatorBase::airspeedCallback(const rosflight_msgs::msg::Airspeed::Shared
   }
 }
 
-void EstimatorBase::statusCallback(const rosflight_msgs::msg::Status::SharedPtr msg)
+void EstimatorROS::statusCallback(const rosflight_msgs::msg::Status::SharedPtr msg)
 {
   if (!armed_first_time_ && msg->armed) armed_first_time_ = true;
 }
 
-void EstimatorBase::saveParameter(std::string param_name, double param_val)
+void EstimatorROS::saveParameter(std::string param_name, double param_val)
 {
 
   YAML::Node param_yaml_file = YAML::LoadFile(param_filepath_);
@@ -332,21 +327,25 @@ int main(int argc, char ** argv)
   
   rclcpp::init(argc, argv);
 
-  char* use_params = argv[1];
+  char* use_params; // HACK: Fix in a more permanant way.
+  if (argc >= 1) {
+    use_params = argv[1];
+  }
+
 
   if (!strcmp(use_params, "true"))
   {
-    rclcpp::spin(std::make_shared<rosplane::EstimatorExample>(use_params));
+    rclcpp::spin(std::make_shared<rosplane::EstimatorContinuousDiscrete>(use_params));
   }
   else if(strcmp(use_params, "false")) // If the string is not true or false print error.
   {
-    auto estimator_node = std::make_shared<rosplane::EstimatorExample>();
+    auto estimator_node = std::make_shared<rosplane::EstimatorContinuousDiscrete>();
     RCLCPP_WARN(estimator_node->get_logger(), "Invalid option for seeding estimator, defaulting to unseeded.");
     rclcpp::spin(estimator_node);
   }
   else 
   {
-    rclcpp::spin(std::make_shared<rosplane::EstimatorExample>());
+    rclcpp::spin(std::make_shared<rosplane::EstimatorContinuousDiscrete>());
   }
 
 

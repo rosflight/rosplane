@@ -111,8 +111,9 @@ install(TARGETS
 
 # Estimator
 add_executable(rosplane_estimator_node
-  src/estimator_base.cpp
-  src/estimator_example.cpp)
+              src/estimator_ros.cpp
+              src/estimator_ekf.cpp
+              src/estimator_continuous_discrete.cpp)
 target_link_libraries(rosplane_estimator_node
   ${YAML_CPP_LIBRARIES}
 )

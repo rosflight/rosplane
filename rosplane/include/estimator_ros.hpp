@@ -1,17 +1,19 @@
 /**
- * @file estimator_base.h
+ * @file estimator_ros.h
  *
- * Base class definition for autopilot estimator in chapter 8 of UAVbook, see http://uavbook.byu.edu/doku.php
+ * ROS-interface class definition for autopilot estimator in chapter 8 of UAVbook, see http://uavbook.byu.edu/doku.php
  *
- * @author Gary Ellingson <gary.ellingson@byu.edu>
+ * Based on orignal work by Gary Ellingson.
+ *
+ * @author Ian Reid <ian.reid@byu.edu>
  */
 
-#ifndef ESTIMATOR_BASE_H
-#define ESTIMATOR_BASE_H
+#ifndef ESTIMATOR_ROS_H
+#define ESTIMATOR_ROS_H
 
 #include <chrono>
-#include <yaml-cpp/yaml.h>
 
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rosflight_msgs/msg/airspeed.hpp>
@@ -19,6 +21,7 @@
 #include <rosflight_msgs/msg/status.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
+#include <yaml-cpp/yaml.h>
 
 #include "param_manager.hpp"
 #include "rosplane_msgs/msg/state.hpp"
@@ -31,10 +34,10 @@ using namespace std::chrono_literals;
 namespace rosplane
 {
 
-class EstimatorBase : public rclcpp::Node
+class EstimatorROS : public rclcpp::Node
 {
 public:
-  EstimatorBase();
+  EstimatorROS();
 
 protected:
   struct Input
@@ -82,7 +85,6 @@ protected:
   virtual void estimate(const Input & input,
                         Output & output) = 0;
 
-protected:
   ParamManager params_;
   bool gps_init_;
   double init_lat_ = 0.0;                 /**< Initial latitude in degrees */
@@ -139,7 +141,7 @@ private:
   void declare_parameters();
 
   /**
-   * @brief Determines the period of a timer based on the ROS2 parameter and starts it 
+   * @brief Determines the period of a timer rosd on the ROS2 parameter and starts it 
    */
   void set_timer();
 
@@ -162,4 +164,4 @@ private:
 
 } // namespace rosplane
 
-#endif // ESTIMATOR_BASE_H
+#endif // ESTIMATOR_ROS_H
