@@ -11,10 +11,10 @@
 namespace rosplane
 {
 
-class estimator_ekf : public estimator_ros
+class EstimatorEKF : public EstimatorROS
 {
 public:
-  estimator_ekf();
+  EstimatorEKF();
 
 protected:
   std::tuple<Eigen::MatrixXf, Eigen::VectorXf> measurement_update(Eigen::VectorXf x,
@@ -43,7 +43,7 @@ protected:
                                                                          Eigen::MatrixXf P);
 
 private:
-  virtual void estimate(const input_s & input, output_s & output) override = 0;
+  virtual void estimate(const Input & input, Output & output) override = 0;
 }; 
 
 } // namespace rosplane

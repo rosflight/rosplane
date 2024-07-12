@@ -11,14 +11,14 @@
 namespace rosplane
 {
 
-class estimator_continuous_discrete : public estimator_ekf
+class EstimatorContinuousDiscrete : public EstimatorEKF
 {
 public:
-  estimator_continuous_discrete();
-  estimator_continuous_discrete(bool use_params);
+  EstimatorContinuousDiscrete();
+  EstimatorContinuousDiscrete(bool use_params);
 
 private:
-  virtual void estimate(const input_s & input, output_s & output);
+  virtual void estimate(const Input & input, Output & output);
 
   double lpf_a_;
   float alpha_;
