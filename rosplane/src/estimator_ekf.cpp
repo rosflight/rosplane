@@ -81,7 +81,7 @@ std::tuple<Eigen::MatrixXf, Eigen::VectorXf> EstimatorEKF::propagate_model(Eigen
 
 std::tuple<Eigen::MatrixXf, Eigen::VectorXf> EstimatorEKF::single_measurement_update(float measurement, float measurement_prediction, float measurement_variance, Eigen::VectorXf measurement_jacobian, Eigen::VectorXf x, Eigen::MatrixXf P)
 {
-  Eigen::MatrixXf I(7,7);
+  Eigen::MatrixXf I(x.size(),x.size());
   I = Eigen::MatrixXf::Identity(x.size(), x.size());
   Eigen::VectorXf L = (P * measurement_jacobian) / (measurement_variance + (measurement_jacobian.transpose() * P * measurement_jacobian));
   P = (I - L * measurement_jacobian.transpose()) * P;
