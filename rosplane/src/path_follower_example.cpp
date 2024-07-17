@@ -12,8 +12,7 @@ double wrap_within_180(double fixed_heading, double wrapped_heading)
 
 PathFollowerExample::PathFollowerExample() {}
 
-void PathFollowerExample::follow(const Input & input,
-                                   Output & output)
+void PathFollowerExample::follow(const Input & input, Output & output)
 {
   // For readability, declare parameters that will be used in the function here
   double k_path = params_.get_double("k_path");
@@ -46,8 +45,7 @@ void PathFollowerExample::follow(const Input & input,
     // commanded altitude is desired altitude
     output.h_c = h_d;
     output.phi_ff = 0.0;
-  } 
-  else {
+  } else {
     float d = sqrtf(powf((input.pn - input.c_orbit[0]), 2)
                     + powf((input.pe - input.c_orbit[1]),
                            2)); // distance from orbit center
@@ -59,8 +57,7 @@ void PathFollowerExample::follow(const Input & input,
 
     //compute orbit error
     float norm_orbit_error = (d - input.rho_orbit) / input.rho_orbit;
-    output.chi_c =
-      varphi + input.lam_orbit * (M_PI / 2.0 + atanf(k_orbit * norm_orbit_error));
+    output.chi_c = varphi + input.lam_orbit * (M_PI / 2.0 + atanf(k_orbit * norm_orbit_error));
 
     // commanded altitude is the height of the orbit
     float h_d = -input.c_orbit[2];

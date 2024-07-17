@@ -4,9 +4,9 @@
 #include <std_srvs/srv/trigger.hpp>
 
 #include "param_manager.hpp"
-#include "rosplane_msgs/srv/add_waypoint.hpp"
 #include "rosplane_msgs/msg/state.hpp"
 #include "rosplane_msgs/msg/waypoint.hpp"
+#include "rosplane_msgs/srv/add_waypoint.hpp"
 
 #define EARTH_RADIUS 6378145.0f
 
@@ -19,7 +19,7 @@ public:
   PathPlanner();
   ~PathPlanner();
 
-  ParamManager params_;   /** Holds the parameters for the path_planner*/
+  ParamManager params_; /** Holds the parameters for the path_planner*/
 
 private:
   /**
@@ -88,7 +88,8 @@ private:
    * @return True
    */
   bool clear_path_callback(const std_srvs::srv::Trigger::Request::SharedPtr & req,
-                  const std_srvs::srv::Trigger::Response::SharedPtr & res); void clear_path();
+                           const std_srvs::srv::Trigger::Response::SharedPtr & res);
+  void clear_path();
 
   /**
    * @brief "print_path" service callback. Prints waypoints to the terminal
@@ -119,7 +120,7 @@ private:
    * 
    * @return True if loading waypoints was successful, false otherwise
    */
-  bool load_mission_from_file(const std::string& filename);
+  bool load_mission_from_file(const std::string & filename);
 
   /**
    * @brief Callback for the rosplane_msgs::msg::State publisher. Saves the initial GNSS coordinates
@@ -170,4 +171,4 @@ private:
    */
   std::vector<rosplane_msgs::msg::Waypoint> wps;
 };
-}   // namespace rosplane
+} // namespace rosplane

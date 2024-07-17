@@ -21,8 +21,7 @@ protected:
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void take_off(const Input & input,
-                        Output & output);
+  virtual void take_off(const Input & input, Output & output);
 
   /**
    * This function continually loops while the aircraft is in the climb zone. The lateral and longitudinal control
@@ -30,8 +29,7 @@ protected:
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void climb(const Input & input,
-                     Output & output);
+  virtual void climb(const Input & input, Output & output);
 
   /**
    * This function continually loops while the aircraft is in the altitude hold zone. The lateral and longitudinal 
@@ -39,8 +37,7 @@ protected:
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void altitude_hold(const Input & input,
-                             Output & output);
+  virtual void altitude_hold(const Input & input, Output & output);
 
   /**
    * This function runs when the aircraft exits the take-off zone. Any changes to the controller that need to happen
@@ -73,16 +70,14 @@ protected:
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void alt_hold_longitudinal_control(const Input & input,
-                                             Output & output);
+  virtual void alt_hold_longitudinal_control(const Input & input, Output & output);
 
   /**
    * This function runs the lateral control loops for the climb zone.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void climb_lateral_control(const Input & input,
-                                     Output & output);
+  virtual void climb_lateral_control(const Input & input, Output & output);
 
   /**
    * This function runs the longitudinal control loops for the climb zone.
@@ -103,8 +98,7 @@ protected:
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void take_off_longitudinal_control(const Input & input,
-                                             Output & output);
+  virtual void take_off_longitudinal_control(const Input & input, Output & output);
 
   /**
    * The control loop for moving to and holding a commanded course.
@@ -219,7 +213,7 @@ protected:
   float delta_r_delay_;
   float r_delay_;
 
- /**
+  /**
  * Saturate a given value to a maximum or minimum of the limits.
  * @param value The value to saturate.
  * @param up_limit The maximum the value can take on.

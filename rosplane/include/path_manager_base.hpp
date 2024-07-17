@@ -29,7 +29,6 @@ public:
   PathManagerBase();
 
 protected:
-
   struct Waypoint
   {
     float w[3];
@@ -64,7 +63,7 @@ protected:
     int8_t lamda; /** Direction of orbital path (cw is 1, ccw is -1) */
   };
 
-  ParamManager params_;   /** Holds the parameters for the path_manager and children */
+  ParamManager params_; /** Holds the parameters for the path_manager and children */
 
   /**
    * @brief Manages the current path based on the stored waypoint list
@@ -72,8 +71,7 @@ protected:
    * @param input: Input object that contains information about the waypoint
    * @param output: Output object that contains the parameters for the desired type of line, based on the current and next waypoints
    */
-  virtual void manage(const Input & input,
-                      Output & output) = 0;
+  virtual void manage(const Input & input, Output & output) = 0;
 
 private:
   rclcpp::Subscription<rosplane_msgs::msg::State>::SharedPtr
@@ -91,10 +89,11 @@ private:
   rclcpp::TimerBase::SharedPtr update_timer_;
   OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
 
-  void vehicle_state_callback(const rosplane_msgs::msg::State & msg);   /** subscribes to the estimated state from the estimator */
-  void new_waypoint_callback(const rosplane_msgs::msg::Waypoint & msg); /** subscribes to waypoint messages from the path_planner */
-  void current_path_publish();  /** Publishes the current path to the path follower */
-
+  void vehicle_state_callback(const rosplane_msgs::msg::State &
+                                msg); /** subscribes to the estimated state from the estimator */
+  void new_waypoint_callback(const rosplane_msgs::msg::Waypoint &
+                               msg); /** subscribes to waypoint messages from the path_planner */
+  void current_path_publish();       /** Publishes the current path to the path follower */
 
   /**
    * @brief Callback that gets triggered when a ROS2 parameter is changed

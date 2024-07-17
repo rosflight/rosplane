@@ -69,7 +69,7 @@ private:
    */
   bool param_change_pending_;
 
- /**
+  /**
   * Keeps track of previous time of the last controller command sent for rate control.
   */
   rclcpp::Time last_command_time_;
@@ -78,7 +78,7 @@ private:
    * This publisher publishes the mapped controller commands for the autopilot.
    */
   rclcpp::Publisher<rosplane_msgs::msg::ControllerCommands>::SharedPtr
-      mapped_controller_commands_pub_;
+    mapped_controller_commands_pub_;
   /**
    * This publisher publishes the mapped command for the firmware.
    */
@@ -203,9 +203,8 @@ private:
    * @param request The request object for the service.
    * @param response The response object for the service.
    */
-  void path_follower_mode_callback(
-      const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
-      std::shared_ptr<std_srvs::srv::Trigger::Response> response);
+  void path_follower_mode_callback(const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+                                   std::shared_ptr<std_srvs::srv::Trigger::Response> response);
   /**
    * This function is called when the altitude course airspeed control mode service is called,
    * setting the input modes to altitude, course, and airspeed rate control.
@@ -214,8 +213,8 @@ private:
    * @param response The response object for the service.
    */
   void altitude_course_airspeed_control_mode_callback(
-      const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
-      std::shared_ptr<std_srvs::srv::Trigger::Response> response);
+    const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+    std::shared_ptr<std_srvs::srv::Trigger::Response> response);
   /**
    * This function is called when the angle control mode service is called, setting the input
    * modes to angle control mode.
@@ -223,9 +222,8 @@ private:
    * @param request The request object for the service.
    * @param response The response object for the service.
    */
-  void angle_control_mode_callback(
-        const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
-        std::shared_ptr<std_srvs::srv::Trigger::Response> response);
+  void angle_control_mode_callback(const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+                                   std::shared_ptr<std_srvs::srv::Trigger::Response> response);
   /**
    * This function is called when the RC passthrough mode service is called, setting the input
    * modes to RC passthrough.
@@ -233,9 +231,8 @@ private:
    * @param request The request object for the service.
    * @param response The response object for the service.
    */
-  void rc_passthrough_mode_callback(
-        const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
-        std::shared_ptr<std_srvs::srv::Trigger::Response> response);
+  void rc_passthrough_mode_callback(const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+                                    std::shared_ptr<std_srvs::srv::Trigger::Response> response);
 
   /// Parameters stuff
 
@@ -258,8 +255,7 @@ private:
    */
   rcl_interfaces::msg::SetParametersResult
   parametersCallback(const std::vector<rclcpp::Parameter> & parameters);
-
 };
-}
+} // namespace rosplane
 
 #endif //INPUT_MAPPER_HPP

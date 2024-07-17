@@ -12,8 +12,7 @@ public:
   PathFollowerExample();
 
 private:
-  virtual void follow(const Input & input,
-                      Output & output);
+  virtual void follow(const Input & input, Output & output);
 };
 
 } // namespace rosplane

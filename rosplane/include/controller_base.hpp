@@ -64,7 +64,6 @@ public:
   float get_theta_c() { return controller_commands_.theta_c; };
 
 protected:
-
   /**
    * This struct holds all of the inputs to the control algorithm.
    */
@@ -90,12 +89,12 @@ protected:
    */
   struct Output
   {
-    float theta_c;          /**< The commanded pitch angle from the altitude control loop */
-    float phi_c;            /**< The commanded roll angle from the course control loop */
-    float delta_e;          /**< The commanded elevator deflection */
-    float delta_a;          /**< The commanded aileron deflection */
-    float delta_r;          /**< The commanded rudder deflection */
-    float delta_t;          /**< The commanded throttle deflection */
+    float theta_c;         /**< The commanded pitch angle from the altitude control loop */
+    float phi_c;           /**< The commanded roll angle from the course control loop */
+    float delta_e;         /**< The commanded elevator deflection */
+    float delta_a;         /**< The commanded aileron deflection */
+    float delta_r;         /**< The commanded rudder deflection */
+    float delta_t;         /**< The commanded throttle deflection */
     AltZones current_zone; /**< The current altitude zone for the control */
   };
 
@@ -136,7 +135,7 @@ private:
    * This timer controls how often commands are published by the autopilot.
    */
   rclcpp::TimerBase::SharedPtr timer_;
-  
+
   /**
    * Period of the timer that controlls how often commands are published.
    */

@@ -17,8 +17,7 @@ public:
  * @param input The command inputs to the controller such as course and airspeed.
  * @param output The control efforts calculated and selected intermediate values.
  */
-  virtual void control(const Input & input,
-                       Output & output);
+  virtual void control(const Input & input, Output & output);
 
 protected:
   /**
@@ -31,24 +30,21 @@ protected:
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void take_off(const Input & input,
-                        Output & output) = 0;
+  virtual void take_off(const Input & input, Output & output) = 0;
 
   /**
    * This function continually loops while the aircraft is in the climb zone. It is implemented by the child.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void climb(const Input & input,
-                     Output & output) = 0;
+  virtual void climb(const Input & input, Output & output) = 0;
 
   /**
    * This function continually loops while the aircraft is in the altitude hold zone. It is implemented by the child.
    * @param input The command inputs to the controller such as course and airspeed.
    * @param output The control efforts calculated and selected intermediate values.
    */
-  virtual void altitude_hold(const Input & input,
-                             Output & output) = 0;
+  virtual void altitude_hold(const Input & input, Output & output) = 0;
 
   /**
    * This function runs when the aircraft exits the take-off zone this is often used to reset integrator values. It is

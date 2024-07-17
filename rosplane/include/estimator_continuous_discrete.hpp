@@ -41,38 +41,57 @@ private:
   float Vwhat_;
   float phihat_;
   float thetahat_;
-  float psihat_;     // TODO: link to an inital condiditons param
-  
+  float psihat_; // TODO: link to an inital condiditons param
 
-  Eigen::VectorXf attitude_dynamics(const Eigen::VectorXf& state, const Eigen::VectorXf& measurements);
-  std::function<Eigen::VectorXf(const Eigen::VectorXf, const Eigen::VectorXf)> attitude_dynamics_model;
+  Eigen::VectorXf attitude_dynamics(const Eigen::VectorXf & state,
+                                    const Eigen::VectorXf & measurements);
+  std::function<Eigen::VectorXf(const Eigen::VectorXf, const Eigen::VectorXf)>
+    attitude_dynamics_model;
 
-  Eigen::MatrixXf attitude_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& angular_rates);
-  std::function<Eigen::MatrixXf(const Eigen::VectorXf&, const Eigen::VectorXf&)> attitude_jacobian_model;
+  Eigen::MatrixXf attitude_jacobian(const Eigen::VectorXf & state,
+                                    const Eigen::VectorXf & angular_rates);
+  std::function<Eigen::MatrixXf(const Eigen::VectorXf &, const Eigen::VectorXf &)>
+    attitude_jacobian_model;
 
-  Eigen::MatrixXf attitude_input_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& angular_rates);
-  std::function<Eigen::MatrixXf(const Eigen::VectorXf&, const Eigen::VectorXf&)> attitude_input_jacobian_model;
-  
-  Eigen::VectorXf attitude_measurement_prediction(const Eigen::VectorXf& state, const Eigen::VectorXf& inputs);
-  std::function<Eigen::VectorXf(const Eigen::VectorXf, const Eigen::VectorXf)> attitude_measurement_model;
+  Eigen::MatrixXf attitude_input_jacobian(const Eigen::VectorXf & state,
+                                          const Eigen::VectorXf & angular_rates);
+  std::function<Eigen::MatrixXf(const Eigen::VectorXf &, const Eigen::VectorXf &)>
+    attitude_input_jacobian_model;
 
-  Eigen::MatrixXf attitude_measurement_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& inputs);
-  std::function<Eigen::MatrixXf(const Eigen::VectorXf, const Eigen::VectorXf)> attitude_measurement_jacobian_model;
-  
-  Eigen::VectorXf position_dynamics(const Eigen::VectorXf& state, const Eigen::VectorXf& measurements);
-  std::function<Eigen::VectorXf(const Eigen::VectorXf, const Eigen::VectorXf)> position_dynamics_model;
+  Eigen::VectorXf attitude_measurement_prediction(const Eigen::VectorXf & state,
+                                                  const Eigen::VectorXf & inputs);
+  std::function<Eigen::VectorXf(const Eigen::VectorXf, const Eigen::VectorXf)>
+    attitude_measurement_model;
 
-  Eigen::MatrixXf position_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& measurements);
-  std::function<Eigen::MatrixXf(const Eigen::VectorXf&, const Eigen::VectorXf&)> position_jacobian_model;
+  Eigen::MatrixXf attitude_measurement_jacobian(const Eigen::VectorXf & state,
+                                                const Eigen::VectorXf & inputs);
+  std::function<Eigen::MatrixXf(const Eigen::VectorXf, const Eigen::VectorXf)>
+    attitude_measurement_jacobian_model;
 
-  Eigen::MatrixXf position_input_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& inputs);
-  std::function<Eigen::MatrixXf(const Eigen::VectorXf&, const Eigen::VectorXf&)> position_input_jacobian_model;
+  Eigen::VectorXf position_dynamics(const Eigen::VectorXf & state,
+                                    const Eigen::VectorXf & measurements);
+  std::function<Eigen::VectorXf(const Eigen::VectorXf, const Eigen::VectorXf)>
+    position_dynamics_model;
 
-  Eigen::VectorXf position_measurement_prediction(const Eigen::VectorXf& state, const Eigen::VectorXf& input);
-  std::function<Eigen::VectorXf(const Eigen::VectorXf, const Eigen::VectorXf)> position_measurement_model;
+  Eigen::MatrixXf position_jacobian(const Eigen::VectorXf & state,
+                                    const Eigen::VectorXf & measurements);
+  std::function<Eigen::MatrixXf(const Eigen::VectorXf &, const Eigen::VectorXf &)>
+    position_jacobian_model;
 
-  Eigen::MatrixXf position_measurement_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& input);
-  std::function<Eigen::MatrixXf(const Eigen::VectorXf, const Eigen::VectorXf)> position_measurement_jacobian_model;
+  Eigen::MatrixXf position_input_jacobian(const Eigen::VectorXf & state,
+                                          const Eigen::VectorXf & inputs);
+  std::function<Eigen::MatrixXf(const Eigen::VectorXf &, const Eigen::VectorXf &)>
+    position_input_jacobian_model;
+
+  Eigen::VectorXf position_measurement_prediction(const Eigen::VectorXf & state,
+                                                  const Eigen::VectorXf & input);
+  std::function<Eigen::VectorXf(const Eigen::VectorXf, const Eigen::VectorXf)>
+    position_measurement_model;
+
+  Eigen::MatrixXf position_measurement_jacobian(const Eigen::VectorXf & state,
+                                                const Eigen::VectorXf & input);
+  std::function<Eigen::MatrixXf(const Eigen::VectorXf, const Eigen::VectorXf)>
+    position_measurement_jacobian_model;
 
   Eigen::Vector2f xhat_a_; // 2
   Eigen::Matrix2f P_a_;    // 2x2
@@ -119,7 +138,7 @@ private:
    * @brief Initializes the state covariance matrix with the ROS2 parameters
    */
   void initialize_state_covariances();
-}; 
+};
 
 } // namespace rosplane
 

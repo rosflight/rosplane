@@ -40,8 +40,7 @@ void ControllerSucessiveLoop::take_off_exit()
   // Put any code that should run as the airplane exits take off mode.
 }
 
-void ControllerSucessiveLoop::climb(const Input & input,
-                                       Output & output)
+void ControllerSucessiveLoop::climb(const Input & input, Output & output)
 {
   // Run lateral and longitudinal controls.
   climb_lateral_control(input, output);
@@ -59,8 +58,7 @@ void ControllerSucessiveLoop::climb_exit()
   a_differentiator_ = 0;
 }
 
-void ControllerSucessiveLoop::altitude_hold(const Input & input,
-                                               Output & output)
+void ControllerSucessiveLoop::altitude_hold(const Input & input, Output & output)
 {
   // Run lateral and longitudinal controls.
   alt_hold_lateral_control(input, output);
@@ -73,11 +71,10 @@ void ControllerSucessiveLoop::altitude_hold_exit()
   c_integrator_ = 0;
 }
 
-void ControllerSucessiveLoop::alt_hold_lateral_control(const Input & input,
-                                                          Output & output)
+void ControllerSucessiveLoop::alt_hold_lateral_control(const Input & input, Output & output)
 {
   // For readability, declare parameters here that will be used in this function
-  bool roll_override = params_.get_bool("roll_command_override");   // Declared in controller_base
+  bool roll_override = params_.get_bool("roll_command_override"); // Declared in controller_base
 
   // Set rudder command to zero, can use coordinated_turn_hold if implemented.
   // Find commanded roll angle in order to achieve commanded course.
@@ -85,17 +82,18 @@ void ControllerSucessiveLoop::alt_hold_lateral_control(const Input & input,
   output.delta_r = yaw_damper(input.r); //coordinated_turn_hold(input.beta, params)
   output.phi_c = course_hold(input.chi_c, input.chi, input.phi_ff, input.r);
 
-  if (roll_override) { output.phi_c = get_phi_c(); }
+  if (roll_override) {
+    output.phi_c = get_phi_c();
+  }
 
   output.delta_a = roll_hold(output.phi_c, input.phi, input.p);
 }
 
-void ControllerSucessiveLoop::alt_hold_longitudinal_control(const Input & input,
-                                                               Output & output)
+void ControllerSucessiveLoop::alt_hold_longitudinal_control(const Input & input, Output & output)
 {
   // For readability, declare parameters here that will be used in this function
-  double alt_hz = params_.get_double("alt_hz");   // Declared in controller_state_machine
-  bool pitch_override = params_.get_bool("pitch_command_override");   // Declared in controller_base
+  double alt_hz = params_.get_double("alt_hz"); // Declared in controller_state_machine
+  bool pitch_override = params_.get_bool("pitch_command_override"); // Declared in controller_base
 
   // Saturate the altitude command.
   double adjusted_hc = adjust_h_c(input.h_c, input.h, alt_hz);
@@ -104,13 +102,14 @@ void ControllerSucessiveLoop::alt_hold_longitudinal_control(const Input & input,
   output.delta_t = airspeed_with_throttle_hold(input.va_c, input.va);
   output.theta_c = altitude_hold_control(adjusted_hc, input.h);
 
-  if (pitch_override) { output.theta_c = get_theta_c(); }
+  if (pitch_override) {
+    output.theta_c = get_theta_c();
+  }
 
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q);
 }
 
-void ControllerSucessiveLoop::climb_lateral_control(const Input & input,
-                                                       Output & output)
+void ControllerSucessiveLoop::climb_lateral_control(const Input & input, Output & output)
 {
   // Maintain straight flight while gaining altitude.
   output.phi_c = 0;
@@ -118,11 +117,10 @@ void ControllerSucessiveLoop::climb_lateral_control(const Input & input,
   output.delta_r = yaw_damper(input.r);
 }
 
-void ControllerSucessiveLoop::climb_longitudinal_control(const Input & input,
-                                                            Output & output)
+void ControllerSucessiveLoop::climb_longitudinal_control(const Input & input, Output & output)
 {
   // For readability, declare parameters here that will be used in this function
-  double alt_hz = params_.get_double("alt_hz");   // Declared in controller_state_machine
+  double alt_hz = params_.get_double("alt_hz"); // Declared in controller_state_machine
 
   // Saturate the altitude command.
   double adjusted_hc = adjust_h_c(input.h_c, input.h, alt_hz);
@@ -133,8 +131,7 @@ void ControllerSucessiveLoop::climb_longitudinal_control(const Input & input,
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q);
 }
 
-void ControllerSucessiveLoop::take_off_lateral_control(const Input & input,
-                                                          Output & output)
+void ControllerSucessiveLoop::take_off_lateral_control(const Input & input, Output & output)
 {
   // In the take-off zone maintain level straight flight by commanding a roll angle of 0 and rudder of 0.
   output.delta_r = 0.0;
@@ -142,19 +139,17 @@ void ControllerSucessiveLoop::take_off_lateral_control(const Input & input,
   output.delta_a = roll_hold(output.phi_c, input.phi, input.p);
 }
 
-void ControllerSucessiveLoop::take_off_longitudinal_control(const Input & input,
-                                                               Output & output)
+void ControllerSucessiveLoop::take_off_longitudinal_control(const Input & input, Output & output)
 {
   // For readability, declare parameters here that will be used in this function
   double max_takeoff_throttle = params_.get_double("max_takeoff_throttle");
   double cmd_takeoff_pitch = params_.get_double("cmd_takeoff_pitch");
-  
+
   // Set throttle to not overshoot altitude.
-  output.delta_t =
-    sat(airspeed_with_throttle_hold(input.va_c, input.va), max_takeoff_throttle, 0);
+  output.delta_t = sat(airspeed_with_throttle_hold(input.va_c, input.va), max_takeoff_throttle, 0);
 
   // Command a shallow pitch angle to gain altitude.
-  output.theta_c = cmd_takeoff_pitch * M_PI / 180.0; 
+  output.theta_c = cmd_takeoff_pitch * M_PI / 180.0;
   output.delta_e = pitch_hold(output.theta_c, input.theta, input.q);
 }
 
@@ -202,7 +197,8 @@ void ControllerSucessiveLoop::take_off_longitudinal_control(const Input & input,
 float ControllerSucessiveLoop::course_hold(float chi_c, float chi, float phi_ff, float r)
 {
   // For readability, declare parameters here that will be used in this function
-  double frequency = params_.get_double("controller_output_frequency");   // Declared in controller_base
+  double frequency =
+    params_.get_double("controller_output_frequency"); // Declared in controller_base
   double c_kp = params_.get_double("c_kp");
   double c_ki = params_.get_double("c_ki");
   double c_kd = params_.get_double("c_kd");
@@ -221,8 +217,7 @@ float ControllerSucessiveLoop::course_hold(float chi_c, float chi, float phi_ff,
   float ui = c_ki * c_integrator_;
   float ud = c_kd * r;
 
-  float phi_c =
-    sat(up + ui + ud + phi_ff, max_roll * M_PI / 180.0, -max_roll * M_PI / 180.0);
+  float phi_c = sat(up + ui + ud + phi_ff, max_roll * M_PI / 180.0, -max_roll * M_PI / 180.0);
   float phi_c_unsat = up + ui + ud + phi_ff;
 
   if (fabs(phi_c - phi_c_unsat) > 0.0001) { // If the controller is saturating don't integrate.
@@ -236,13 +231,14 @@ float ControllerSucessiveLoop::course_hold(float chi_c, float chi, float phi_ff,
 float ControllerSucessiveLoop::roll_hold(float phi_c, float phi, float p)
 {
   // For readability, declare parameters here that will be used in this function
-  double frequency = params_.get_double("controller_output_frequency");   // Declared in controller_base
+  double frequency =
+    params_.get_double("controller_output_frequency"); // Declared in controller_base
   double r_kp = params_.get_double("r_kp");
   double r_ki = params_.get_double("r_ki");
   double r_kd = params_.get_double("r_kd");
   double max_a = params_.get_double("max_a");
   double trim_a = params_.get_double("trim_a");
-  double pwm_rad_a = params_.get_double("pwm_rad_a");  // Declared in controller base
+  double pwm_rad_a = params_.get_double("pwm_rad_a"); // Declared in controller base
 
   float error = phi_c - phi;
 
@@ -269,13 +265,14 @@ float ControllerSucessiveLoop::roll_hold(float phi_c, float phi, float p)
 float ControllerSucessiveLoop::pitch_hold(float theta_c, float theta, float q)
 {
   // For readability, declare parameters here that will be used in this function
-  double frequency = params_.get_double("controller_output_frequency");   // Declared in controller_base
+  double frequency =
+    params_.get_double("controller_output_frequency"); // Declared in controller_base
   double p_kp = params_.get_double("p_kp");
   double p_ki = params_.get_double("p_ki");
   double p_kd = params_.get_double("p_kd");
   double max_e = params_.get_double("max_e");
   double trim_e = params_.get_double("trim_e");
-  double pwm_rad_e = params_.get_double("pwm_rad_e");   // Declared in controller_base
+  double pwm_rad_e = params_.get_double("pwm_rad_e"); // Declared in controller_base
 
   float error = theta_c - theta;
 
@@ -302,7 +299,8 @@ float ControllerSucessiveLoop::pitch_hold(float theta_c, float theta, float q)
 float ControllerSucessiveLoop::airspeed_with_throttle_hold(float va_c, float va)
 {
   // For readability, declare parameters here that will be used in this function
-  double frequency = params_.get_double("controller_output_frequency");   // Declared in controller_base
+  double frequency =
+    params_.get_double("controller_output_frequency"); // Declared in controller_base
   double tau = params_.get_double("tau");
   double a_t_kp = params_.get_double("a_t_kp");
   double a_t_ki = params_.get_double("a_t_ki");
@@ -338,7 +336,8 @@ float ControllerSucessiveLoop::airspeed_with_throttle_hold(float va_c, float va)
 float ControllerSucessiveLoop::altitude_hold_control(float h_c, float h)
 {
   // For readability, declare parameters here that will be used in this function
-  double frequency = params_.get_double("controller_output_frequency");   // Declared in controller_base
+  double frequency =
+    params_.get_double("controller_output_frequency"); // Declared in controller_base
   double alt_hz = params_.get_double("alt_hz");
   double tau = params_.get_double("tau");
   double a_kp = params_.get_double("a_kp");
@@ -376,12 +375,13 @@ float ControllerSucessiveLoop::altitude_hold_control(float h_c, float h)
 
 float ControllerSucessiveLoop::yaw_damper(float r)
 {
-  double frequency = params_.get_double("controller_output_frequency");   // Declared in controller_base
+  double frequency =
+    params_.get_double("controller_output_frequency"); // Declared in controller_base
   float y_pwo = params_.get_double("y_pwo");
   float y_kr = params_.get_double("y_kr");
   float max_r = params_.get_double("max_r");
 
-  float Ts = 1.0/frequency;
+  float Ts = 1.0 / frequency;
 
   float n0 = 0.0;
   float n1 = 1.0;
@@ -412,14 +412,15 @@ float ControllerSucessiveLoop::sat(float value, float up_limit, float low_limit)
   // Set to upper limit if larger than that limit.
   // Set to lower limit if smaller than that limit.
   // Otherwise, do not change the value.
-  
-  if (up_limit < 0.0) 
-  {
-    RCLCPP_WARN_ONCE(this->get_logger(), "WARNING: Upper limit in saturation function is negative.");
+
+  if (up_limit < 0.0) {
+    RCLCPP_WARN_ONCE(this->get_logger(),
+                     "WARNING: Upper limit in saturation function is negative.");
   }
 
   float rVal;
-  if (value > up_limit) rVal = up_limit;
+  if (value > up_limit)
+    rVal = up_limit;
   else if (value < low_limit)
     rVal = low_limit;
   else

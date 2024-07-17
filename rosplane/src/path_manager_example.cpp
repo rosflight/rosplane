@@ -26,33 +26,35 @@ void PathManagerExample::manage(const Input & input, Output & output)
 {
   // For readability, declare the parameters that will be used in the function here
   double R_min = params_.get_double("R_min");
-  double default_altitude = params_.get_double("default_altitude"); // This is the true altitude not the down position (no need for a negative)
+  double default_altitude = params_.get_double(
+    "default_altitude"); // This is the true altitude not the down position (no need for a negative)
   double default_airspeed = params_.get_double("default_airspeed");
 
-  if (num_waypoints_ == 0) 
-  {
+  if (num_waypoints_ == 0) {
     auto now = std::chrono::system_clock::now();
-    if (float(std::chrono::system_clock::to_time_t(now) - std::chrono::system_clock::to_time_t(start_time_)) >= 10.0) 
-    { 
+    if (float(std::chrono::system_clock::to_time_t(now)
+              - std::chrono::system_clock::to_time_t(start_time_))
+        >= 10.0) {
       // TODO: Add check to see if the aircraft has been armed. If not just send the warning once before flight then on the throttle after.
-      RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "No waypoints received, orbiting origin at " << default_altitude << " meters.");
-      output.flag = false; // Indicate that the path is an orbit.
+      RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 5000,
+                                  "No waypoints received, orbiting origin at " << default_altitude
+                                                                               << " meters.");
+      output.flag = false;            // Indicate that the path is an orbit.
       output.va_d = default_airspeed; // Set to the default_airspeed.
-      output.q[0] = 0.0f; // initialize the parameters to have a value.
+      output.q[0] = 0.0f;             // initialize the parameters to have a value.
       output.q[1] = 0.0f;
       output.q[2] = 0.0f;
       output.r[0] = 0.0f; // initialize the parameters to have a value.
       output.r[1] = 0.0f;
       output.r[2] = 0.0f;
-      output.c[0] = 0.0f; // Direcct the center of the orbit to the origin at the default default_altitude.
+      output.c[0] =
+        0.0f; // Direcct the center of the orbit to the origin at the default default_altitude.
       output.c[1] = 0.0f;
       output.c[2] = -default_altitude;
       output.rho = R_min; // Make the orbit at the minimum turn radius.
-      output.lamda = 1; // Orbit in a clockwise manner.
+      output.lamda = 1;   // Orbit in a clockwise manner.
     }
-  }
-  else if (num_waypoints_ == 1) 
-  {
+  } else if (num_waypoints_ == 1) {
     // If only a single waypoint is given, orbit it.
     output.flag = false;
     output.va_d = waypoints_[0].va_d;
@@ -66,9 +68,10 @@ void PathManagerExample::manage(const Input & input, Output & output)
     output.c[1] = waypoints_[0].w[1];
     output.c[2] = waypoints_[0].w[2];
     output.rho = R_min;
-    output.lamda = orbit_direction(input.pn, input.pe, input.chi, output.c[0], output.c[1]); // Calculate the most conveinent orbit direction of that point.
-  }
-  else {
+    output.lamda =
+      orbit_direction(input.pn, input.pe, input.chi, output.c[0],
+                      output.c[1]); // Calculate the most conveinent orbit direction of that point.
+  } else {
     if (waypoints_[idx_a_].use_chi) {
       manage_dubins(input, output);
     } else { // If the heading through the point does not matter use the default path following.
@@ -79,8 +82,7 @@ void PathManagerExample::manage(const Input & input, Output & output)
   }
 }
 
-void PathManagerExample::manage_line(const Input & input,
-                                       Output & output)
+void PathManagerExample::manage_line(const Input & input, Output & output)
 {
   // For readability, declare the parameters that will be used in the function here
   bool orbit_last = params_.get_bool("orbit_last");
@@ -93,15 +95,14 @@ void PathManagerExample::manage_line(const Input & input,
 
   increment_indices(idx_a_, idx_b, idx_c, input, output);
 
-  if (orbit_last && (idx_a_ == num_waypoints_ - 1 || idx_a_ == num_waypoints_ -2))
-  {
+  if (orbit_last && (idx_a_ == num_waypoints_ - 1 || idx_a_ == num_waypoints_ - 2)) {
     return;
   }
 
   Eigen::Vector3f w_im1(waypoints_[idx_a_].w);
   Eigen::Vector3f w_i(waypoints_[idx_b].w);
   Eigen::Vector3f w_ip1(waypoints_[idx_c].w);
-  
+
   // Fill out data for straight line to the next point.
   output.flag = true;
   output.va_d = waypoints_[idx_a_].va_d;
@@ -117,7 +118,7 @@ void PathManagerExample::manage_line(const Input & input,
   Eigen::Vector3f n_i = (q_im1 + q_i).normalized();
 
   // Check if the planes were aligned and then handle the normal vector correctly.
-  if (n_i.isZero()){ 
+  if (n_i.isZero()) {
     n_i = q_im1;
   }
 
@@ -131,8 +132,7 @@ void PathManagerExample::manage_line(const Input & input,
   }
 }
 
-void PathManagerExample::manage_fillet(const Input & input,
-                                         Output & output)
+void PathManagerExample::manage_fillet(const Input & input, Output & output)
 {
   // For readability, declare the parameters that will be used in the function here
   bool orbit_last = params_.get_bool("orbit_last");
@@ -146,61 +146,61 @@ void PathManagerExample::manage_fillet(const Input & input,
 
   Eigen::Vector3f p;
   p << input.pn, input.pe, -input.h;
-  
+
   // idx_a is the waypoint you are coming from.
   int idx_b; // Next waypoint.
   int idx_c; // Waypoint after next.
-  
+
   increment_indices(idx_a_, idx_b, idx_c, input, output);
 
-  if (orbit_last && idx_a_ == num_waypoints_ - 1)
-  {
+  if (orbit_last && idx_a_ == num_waypoints_ - 1) {
     // TODO: check to see if this is the correct behavior.
     return;
   }
 
   Eigen::Vector3f w_im1(waypoints_[idx_a_].w); // Previous waypoint NED im1 means i-1
-  Eigen::Vector3f w_i(waypoints_[idx_b].w); // Waypoint the aircraft is headed towards.
-  Eigen::Vector3f w_ip1(waypoints_[idx_c].w); // Waypoint after leaving waypoint idx_b.
+  Eigen::Vector3f w_i(waypoints_[idx_b].w);    // Waypoint the aircraft is headed towards.
+  Eigen::Vector3f w_ip1(waypoints_[idx_c].w);  // Waypoint after leaving waypoint idx_b.
 
   output.va_d = waypoints_[idx_a_].va_d; // Desired airspeed of this leg of the waypoints.
-  output.r[0] = w_im1(0); // See chapter 11 of the UAV book for more information.
+  output.r[0] = w_im1(0);                // See chapter 11 of the UAV book for more information.
   output.r[1] = w_im1(1); // This is the point that is a point along the commanded path.
   output.r[2] = w_im1(2);
   // The vector pointing into the turn (vector pointing from previous waypoint to the next).
-  Eigen::Vector3f q_im1 = (w_i - w_im1); 
+  Eigen::Vector3f q_im1 = (w_i - w_im1);
   float dist_w_im1 = q_im1.norm();
   q_im1 = q_im1.normalized();
 
   // The vector pointing out of the turn (vector points from next waypoint to the next next waypoint).
-  Eigen::Vector3f q_i = (w_ip1 - w_i); 
+  Eigen::Vector3f q_i = (w_ip1 - w_i);
   float dist_w_ip1 = q_i.norm();
   q_i = q_i.normalized();
 
   float varrho = acosf(-q_im1.dot(q_i)); // Angle of the turn.
-  
+
   // Check to see if filleting is possible for given waypoints.
   // Find closest dist to w_i
   float min_dist = std::min(dist_w_ip1, dist_w_im1);
 
   // Use varrho to find the distance to bisector from closest waypoint.
-  float max_r = min_dist * sinf(varrho/2.0);
+  float max_r = min_dist * sinf(varrho / 2.0);
 
   // If max_r (maximum radius possible for angle) is smaller than R_min, do line management.
-  if (R_min > max_r)
-  {
+  if (R_min > max_r) {
     // While in the too acute region, publish notice every 10 seconds.
-    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Too acute an angle, using line management. Values, max_r: " << max_r << " R_min: " << R_min);
+    RCLCPP_WARN_STREAM_THROTTLE(
+      this->get_logger(), *this->get_clock(), 5000,
+      "Too acute an angle, using line management. Values, max_r: " << max_r << " R_min: " << R_min);
     manage_line(input, output);
     return;
   }
 
   Eigen::Vector3f z;
   switch (fil_state_) {
-    case FilletState::STRAIGHT:
-    {
+    case FilletState::STRAIGHT: {
       output.flag = true; // Indicate flying a straight path.
-      output.q[0] = q_im1(0); // Fly along vector into the turn the origin of the vector is r (set as previous waypoint above).
+      output.q[0] = q_im1(
+        0); // Fly along vector into the turn the origin of the vector is r (set as previous waypoint above).
       output.q[1] = q_im1(1);
       output.q[2] = q_im1(2);
       output.c[0] = 1; // Fill rest of the data though it is not used.
@@ -208,14 +208,18 @@ void PathManagerExample::manage_fillet(const Input & input,
       output.c[2] = 1;
       output.rho = 1;
       output.lamda = 1;
-      z = w_i - q_im1 * (R_min / tanf(varrho / 2.0)); // Point in plane where after passing through the aircraft should begin the turn.
+      z = w_i
+        - q_im1
+          * (R_min
+             / tanf(
+               varrho
+               / 2.0)); // Point in plane where after passing through the aircraft should begin the turn.
 
-
-      if ((p - z).dot(q_im1) > 0)
-      {
+      if ((p - z).dot(q_im1) > 0) {
         if (q_i == q_im1) // Check to see if the waypoint is directly between the next two.
         {
-          if (idx_a_ == num_waypoints_ - 1) idx_a_ = 0;
+          if (idx_a_ == num_waypoints_ - 1)
+            idx_a_ = 0;
           else
             idx_a_++;
           break;
@@ -224,22 +228,30 @@ void PathManagerExample::manage_fillet(const Input & input,
       }
       break;
     }
-    case FilletState::TRANSITION:
-    {
+    case FilletState::TRANSITION: {
       output.flag = false; // Indicate that aircraft is following an orbit.
-      output.q[0] = q_i(0); // Load the message with the vector that will be follwed after the orbit.
+      output.q[0] =
+        q_i(0); // Load the message with the vector that will be follwed after the orbit.
       output.q[1] = q_i(1);
       output.q[2] = q_i(2);
-      Eigen::Vector3f c = w_i - (q_im1 - q_i).normalized() * (R_min / sinf(varrho / 2.0)); // Calculate the center of the orbit.
-      output.c[0] = c(0); // Load message with the center of the orbit.
+      Eigen::Vector3f c = w_i
+        - (q_im1 - q_i).normalized()
+          * (R_min / sinf(varrho / 2.0)); // Calculate the center of the orbit.
+      output.c[0] = c(0);                 // Load message with the center of the orbit.
       output.c[1] = c(1);
       output.c[2] = c(2);
       output.rho = R_min; // Command the orbit radius to be the minimum acheivable.
-      output.lamda = ((q_im1(0) * q_i(1) - q_im1(1) * q_i(0)) > 0 ? 1 : -1); // Find the direction to orbit the point.
-      z = w_i + q_i * (R_min / tanf(varrho / 2.0)); // Find the point in the plane that once you pass through you should increment the indexes and follow a straight line.
+      output.lamda = ((q_im1(0) * q_i(1) - q_im1(1) * q_i(0)) > 0
+                        ? 1
+                        : -1); // Find the direction to orbit the point.
+      z = w_i
+        + q_i
+          * (R_min
+             / tanf(
+               varrho
+               / 2.0)); // Find the point in the plane that once you pass through you should increment the indexes and follow a straight line.
 
-      if (orbit_last && idx_a_ == num_waypoints_ - 2)
-      {
+      if (orbit_last && idx_a_ == num_waypoints_ - 2) {
         idx_a_++;
         fil_state_ = FilletState::STRAIGHT;
         break;
@@ -250,21 +262,32 @@ void PathManagerExample::manage_fillet(const Input & input,
       }
       break;
     }
-    case FilletState::ORBIT:
-    {
+    case FilletState::ORBIT: {
       output.flag = false; // Indicate that aircraft is following an orbit.
-      output.q[0] = q_i(0); // Load the message with the vector that will be follwed after the orbit.
+      output.q[0] =
+        q_i(0); // Load the message with the vector that will be follwed after the orbit.
       output.q[1] = q_i(1);
       output.q[2] = q_i(2);
-      Eigen::Vector3f c = w_i - (q_im1 - q_i).normalized() * (R_min / sinf(varrho / 2.0)); // Calculate the center of the orbit.
-      output.c[0] = c(0); // Load message with the center of the orbit.
+      Eigen::Vector3f c = w_i
+        - (q_im1 - q_i).normalized()
+          * (R_min / sinf(varrho / 2.0)); // Calculate the center of the orbit.
+      output.c[0] = c(0);                 // Load message with the center of the orbit.
       output.c[1] = c(1);
       output.c[2] = c(2);
       output.rho = R_min; // Command the orbit radius to be the minimum acheivable.
-      output.lamda = ((q_im1(0) * q_i(1) - q_im1(1) * q_i(0)) > 0 ? 1 : -1); // Find the direction to orbit the point. TODO change this to the orbit_direction.
-      z = w_i + q_i * (R_min / tanf(varrho / 2.0)); // Find the point in the plane that once you pass through you should increment the indexes and follow a straight line.
+      output.lamda =
+        ((q_im1(0) * q_i(1) - q_im1(1) * q_i(0)) > 0
+           ? 1
+           : -1); // Find the direction to orbit the point. TODO change this to the orbit_direction.
+      z = w_i
+        + q_i
+          * (R_min
+             / tanf(
+               varrho
+               / 2.0)); // Find the point in the plane that once you pass through you should increment the indexes and follow a straight line.
       if ((p - z).dot(q_i) > 0) { // Check to see if passed through plane.
-        if (idx_a_ == num_waypoints_ - 1) idx_a_ = 0;
+        if (idx_a_ == num_waypoints_ - 1)
+          idx_a_ = 0;
         else
           idx_a_++;
         fil_state_ = FilletState::STRAIGHT;
@@ -274,8 +297,7 @@ void PathManagerExample::manage_fillet(const Input & input,
   }
 }
 
-void PathManagerExample::manage_dubins(const Input & input,
-                                         Output & output)
+void PathManagerExample::manage_dubins(const Input & input, Output & output)
 {
   // For readability, declare the parameters that will be used in the function here
   double R_min = params_.get_double("R_min");
@@ -417,7 +439,8 @@ Eigen::Matrix3f PathManagerExample::rotz(float theta)
 float PathManagerExample::mo(float in)
 {
   float val;
-  if (in > 0) val = fmod(in, 2.0 * M_PI_F);
+  if (in > 0)
+    val = fmod(in, 2.0 * M_PI_F);
   else {
     float n = floorf(in / 2.0 / M_PI_F);
     val = in - n * 2.0 * M_PI_F;
@@ -426,7 +449,7 @@ float PathManagerExample::mo(float in)
 }
 
 void PathManagerExample::dubins_parameters(const Waypoint start_node, const Waypoint end_node,
-                                            float R)
+                                           float R)
 {
   float ell = sqrtf((start_node.w[0] - end_node.w[0]) * (start_node.w[0] - end_node.w[0])
                     + (start_node.w[1] - end_node.w[1]) * (start_node.w[1] - end_node.w[1]));
@@ -475,7 +498,8 @@ void PathManagerExample::dubins_parameters(const Waypoint start_node, const Wayp
     ell = (cle - crs).norm();
     theta = atan2f(cle(1) - crs(1), cle(0) - crs(0));
     float L2;
-    if (2.0 * R > ell) L2 = 9999.0f;
+    if (2.0 * R > ell)
+      L2 = 9999.0f;
     else {
       theta2 = theta - M_PI_2_F + asinf(2.0 * R / ell);
       L2 = sqrtf(ell * ell - 4.0 * R * R)
@@ -487,7 +511,8 @@ void PathManagerExample::dubins_parameters(const Waypoint start_node, const Wayp
     ell = (cre - cls).norm();
     theta = atan2f(cre(1) - cls(1), cre(0) - cls(0));
     float L3;
-    if (2.0 * R > ell) L3 = 9999.0f;
+    if (2.0 * R > ell)
+      L3 = 9999.0f;
     else {
       theta2 = acosf(2.0 * R / ell);
       L3 = sqrtf(ell * ell - 4 * R * R)
@@ -512,7 +537,8 @@ void PathManagerExample::dubins_parameters(const Waypoint start_node, const Wayp
       dubins_path_.L = L3;
       idx = 3;
     }
-    if (L4 < dubins_path_.L) { dubins_path_.L = L4;
+    if (L4 < dubins_path_.L) {
+      dubins_path_.L = L4;
       idx = 4;
     }
 
@@ -571,15 +597,11 @@ void PathManagerExample::dubins_parameters(const Waypoint start_node, const Wayp
   }
 }
 
-void PathManagerExample::declare_parameters()
-{
-  params_.declare_bool("orbit_last", false);
-}
+void PathManagerExample::declare_parameters() { params_.declare_bool("orbit_last", false); }
 
 int PathManagerExample::orbit_direction(float pn, float pe, float chi, float c_n, float c_e)
 {
-  if (orbit_dir_ != 0)
-  {
+  if (orbit_dir_ != 0) {
     return orbit_dir_;
   }
 
@@ -594,24 +616,23 @@ int PathManagerExample::orbit_direction(float pn, float pe, float chi, float c_n
   Eigen::Vector3f course;
   course << sinf(chi), cosf(chi), 0.0;
 
-  if (d.cross(course)(2) >= 0 ) 
-  {
+  if (d.cross(course)(2) >= 0) {
     orbit_dir_ = 1;
     return 1;
   }
-  
+
   orbit_dir_ = -1;
   return -1;
 }
 
-void PathManagerExample::increment_indices(int & idx_a, int & idx_b, int & idx_c, const Input & input, Output & output)
+void PathManagerExample::increment_indices(int & idx_a, int & idx_b, int & idx_c,
+                                           const Input & input, Output & output)
 {
 
   bool orbit_last = params_.get_bool("orbit_last");
   double R_min = params_.get_double("R_min");
 
-  if (temp_waypoint_ && idx_a_ == 1)
-  {
+  if (temp_waypoint_ && idx_a_ == 1) {
     waypoints_.erase(waypoints_.begin());
     num_waypoints_--;
     idx_a_ = 0;
@@ -622,7 +643,7 @@ void PathManagerExample::increment_indices(int & idx_a, int & idx_b, int & idx_c
   }
 
   if (idx_a == num_waypoints_ - 1) { // The logic for if it is the last waypoint.
-     
+
     // If it is the last waypoint, and we orbit the last waypoint, construct the command.
     if (orbit_last) {
       output.flag = false;
@@ -637,15 +658,20 @@ void PathManagerExample::increment_indices(int & idx_a, int & idx_b, int & idx_c
       output.q[1] = 0.0;
       output.q[2] = 0.0;
       output.rho = R_min;
-      output.lamda = orbit_direction(input.pn, input.pe, input.chi, output.c[0], output.c[1]); // Calculate the most conveinent orbit direction of that point.
-      idx_b = 0; // reset the path and loop the waypoints again.
+      output.lamda = orbit_direction(
+        input.pn, input.pe, input.chi, output.c[0],
+        output.c[1]); // Calculate the most conveinent orbit direction of that point.
+      idx_b = 0;      // reset the path and loop the waypoints again.
       idx_c = 1;
       return;
     }
 
     idx_b = 0; // reset the path and loop the waypoints again.
     idx_c = 1;
-  } else if (idx_a == num_waypoints_ - 2) { // If the second to last waypoint, appropriately handle the wrapping of waypoints.
+  } else if (
+    idx_a
+    == num_waypoints_
+      - 2) { // If the second to last waypoint, appropriately handle the wrapping of waypoints.
     idx_b = num_waypoints_ - 1;
     idx_c = 0;
   } else { // Increment the indices of the waypoints.

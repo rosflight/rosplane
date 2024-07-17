@@ -16,10 +16,9 @@ ControllerStateMachine::ControllerStateMachine()
   params_.set_parameters();
 }
 
-void ControllerStateMachine::control(const Input & input,
-                                       Output & output)
+void ControllerStateMachine::control(const Input & input, Output & output)
 {
-  
+
   // For readability, declare parameters that will be used in this controller
   double alt_toz = params_.get_double("alt_toz");
   double alt_hz = params_.get_double("alt_hz");

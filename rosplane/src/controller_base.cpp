@@ -11,13 +11,15 @@ namespace rosplane
 {
 
 ControllerBase::ControllerBase()
-    : Node("controller_base"), params_(this), params_initialized_(false)
+    : Node("controller_base")
+    , params_(this)
+    , params_initialized_(false)
 {
 
   // Advertise published topics.
   actuators_pub_ = this->create_publisher<rosflight_msgs::msg::Command>("command", 10);
-  controller_internals_pub_ = this->create_publisher<rosplane_msgs::msg::ControllerInternals>(
-    "controller_internals", 10);
+  controller_internals_pub_ =
+    this->create_publisher<rosplane_msgs::msg::ControllerInternals>("controller_internals", 10);
 
   // Advertise subscribed topics and set bound callbacks.
   controller_commands_sub_ = this->create_subscription<rosplane_msgs::msg::ControllerCommands>(
@@ -148,18 +150,17 @@ ControllerBase::parametersCallback(const std::vector<rclcpp::Parameter> & parame
 {
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = false;
-  result.reason =
-    "One of the parameters given does not is not a parameter of the controller node.";
+  result.reason = "One of the parameters given does not is not a parameter of the controller node.";
 
   bool success = params_.set_parameters_callback(parameters);
-  if (success)
-  {
+  if (success) {
     result.successful = true;
     result.reason = "success";
   }
 
   if (params_initialized_ && success) {
-    std::chrono::microseconds curr_period = std::chrono::microseconds(static_cast<long long>(1.0 / params_.get_double("controller_output_frequency") * 1'000'000));
+    std::chrono::microseconds curr_period = std::chrono::microseconds(
+      static_cast<long long>(1.0 / params_.get_double("controller_output_frequency") * 1'000'000));
     if (timer_period_ != curr_period) {
       timer_->cancel();
       set_timer();
@@ -173,13 +174,11 @@ void ControllerBase::set_timer()
 {
 
   double frequency = params_.get_double("controller_output_frequency");
-  timer_period_ =
-    std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1'000'000));
+  timer_period_ = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1'000'000));
 
   // Set timer to trigger bound callback (actuator_controls_publish) at the given periodicity.
   timer_ = this->create_wall_timer(timer_period_,
-                                   std::bind(&ControllerBase::actuator_controls_publish,
-                                             this));
+                                   std::bind(&ControllerBase::actuator_controls_publish, this));
 }
 
 void ControllerBase::convert_to_pwm(Output & output)
@@ -192,7 +191,7 @@ void ControllerBase::convert_to_pwm(Output & output)
 
   // Multiply each control effort (in radians) by a scaling factor to a pwm.
   // TODO investigate why this is named "pwm". The actual scaling to pwm happens in rosflight_io.
-  output.delta_e = output.delta_e * pwm_rad_e; 
+  output.delta_e = output.delta_e * pwm_rad_e;
   output.delta_a = output.delta_a * pwm_rad_a;
   output.delta_r = output.delta_r * pwm_rad_r;
 }

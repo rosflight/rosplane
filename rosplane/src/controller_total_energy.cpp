@@ -17,16 +17,16 @@ ControllerTotalEnergy::ControllerTotalEnergy()
   params_.set_parameters();
 }
 
-void ControllerTotalEnergy::take_off_longitudinal_control(const Input & input,
-                                                            Output & output)
+void ControllerTotalEnergy::take_off_longitudinal_control(const Input & input, Output & output)
 {
   // For readability, declare parameters here that will be used in this function
   double max_takeoff_throttle = params_.get_double("max_takeoff_throttle");
-  double cmd_takeoff_pitch = params_.get_double("cmd_takeoff_pitch");   // Declared in controller_successive_loop
+  double cmd_takeoff_pitch =
+    params_.get_double("cmd_takeoff_pitch"); // Declared in controller_successive_loop
 
   // Set throttle to not overshoot altitude.
-  output.delta_t = sat(total_energy_throttle(input.va_c, input.va, input.h_c, input.h),
-                       max_takeoff_throttle, 0);
+  output.delta_t =
+    sat(total_energy_throttle(input.va_c, input.va, input.h_c, input.h), max_takeoff_throttle, 0);
 
   // Command a shallow pitch angle to gain altitude.
   output.theta_c = cmd_takeoff_pitch * M_PI / 180.0;
@@ -44,8 +44,7 @@ void ControllerTotalEnergy::take_off_exit()
   // Place any controller code that should run as you exit the take-off regime here.
 }
 
-void ControllerTotalEnergy::climb_longitudinal_control(const Input & input,
-                                                         Output & output)
+void ControllerTotalEnergy::climb_longitudinal_control(const Input & input, Output & output)
 {
   // For readability, declare parameters here that will be used in this function
   double alt_hz = params_.get_double("alt_hz");
@@ -68,8 +67,7 @@ void ControllerTotalEnergy::climb_exit()
   // Place any controller code that should run as you exit the climb regime here.
 }
 
-void ControllerTotalEnergy::alt_hold_longitudinal_control(const Input & input,
-                                                            Output & output)
+void ControllerTotalEnergy::alt_hold_longitudinal_control(const Input & input, Output & output)
 {
   // For readability, declare parameters here that will be used in this function
   double alt_hz = params_.get_double("alt_hz");
@@ -101,7 +99,7 @@ float ControllerTotalEnergy::total_energy_throttle(float va_c, float va, float h
   double e_ki = params_.get_double("e_ki");
   double e_kd = params_.get_double("e_kd");
   double max_t = params_.get_double("max_t");   // Declared in controller_successive_loop
-  double trim_t = params_.get_double("trim_t");   // Declared in controller_successive_loop
+  double trim_t = params_.get_double("trim_t"); // Declared in controller_successive_loop
 
   // Update energies based off of most recent data.
   update_energies(va_c, va, h_c, h);
@@ -117,11 +115,12 @@ float ControllerTotalEnergy::total_energy_throttle(float va_c, float va, float h
   E_error_prev_ = E_error;
 
   // TODO: Add this to params
-  if (h < .5) { E_integrator_ = 0; }
+  if (h < .5) {
+    E_integrator_ = 0;
+  }
 
   // Return saturated throttle command.
-  return sat(e_kp * E_error + e_ki * E_integrator_, max_t, 0.0)
-    + trim_t;
+  return sat(e_kp * E_error + e_ki * E_integrator_, max_t, 0.0) + trim_t;
 }
 
 float ControllerTotalEnergy::total_energy_pitch(float va_c, float va, float h_c, float h)
@@ -131,7 +130,7 @@ float ControllerTotalEnergy::total_energy_pitch(float va_c, float va, float h_c,
   double l_kp = params_.get_double("l_kp");
   double l_ki = params_.get_double("l_ki");
   double l_kd = params_.get_double("l_kd");
-  double max_roll = params_.get_double("max_roll");   // Declared in controller_successive_loop
+  double max_roll = params_.get_double("max_roll"); // Declared in controller_successive_loop
 
   // Update energies based off of most recent data.
   update_energies(va_c, va, h_c, h);
@@ -149,7 +148,7 @@ float ControllerTotalEnergy::total_energy_pitch(float va_c, float va, float h_c,
 
   // Return saturated pitch command.
   return sat(l_kp * L_error + l_ki * L_integrator_, max_roll * M_PI / 180.0,
-             -max_roll * M_PI / 180.0); 
+             -max_roll * M_PI / 180.0);
 }
 
 void ControllerTotalEnergy::update_energies(float va_c, float va, float h_c, float h)

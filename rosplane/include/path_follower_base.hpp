@@ -52,8 +52,7 @@ protected:
     double phi_ff; /** feed forward term for orbits (rad) */
   };
 
-  virtual void follow(const Input & input,
-                      Output & output) = 0;
+  virtual void follow(const Input & input, Output & output) = 0;
 
   ParamManager params_;
 
@@ -72,7 +71,7 @@ private:
    * Publishes commands to the controller
    */
   rclcpp::Publisher<rosplane_msgs::msg::ControllerCommands>::SharedPtr controller_commands_pub_;
-  
+
   std::chrono::microseconds timer_period_;
   rclcpp::TimerBase::SharedPtr update_timer_;
 

@@ -3,14 +3,16 @@
 #include <filesystem>
 #include <fstream>
 
-#include "estimator_ros.hpp"
 #include "estimator_continuous_discrete.hpp"
+#include "estimator_ros.hpp"
 
 namespace rosplane
 {
 
 EstimatorROS::EstimatorROS()
-    : Node("estimator_ros"), params_(this), params_initialized_(false)
+    : Node("estimator_ros")
+    , params_(this)
+    , params_initialized_(false)
 {
   vehicle_state_pub_ = this->create_publisher<rosplane_msgs::msg::State>("estimated_state", 10);
 
@@ -47,7 +49,7 @@ EstimatorROS::EstimatorROS()
 
   std::filesystem::path params_dir = "params";
   std::filesystem::path params_file = "anaconda_autopilot_params.yaml";
-  std::filesystem::path full_path = rosplane_dir/params_dir/params_file;
+  std::filesystem::path full_path = rosplane_dir / params_dir / params_file;
 
   param_filepath_ = full_path.string();
 
@@ -59,24 +61,29 @@ void EstimatorROS::declare_parameters()
   params_.declare_double("estimator_update_frequency", 100.0);
   params_.declare_double("rho", 1.225);
   params_.declare_double("gravity", 9.8);
-  params_.declare_double("gps_ground_speed_threshold", 0.3);  // TODO: this is a magic number. What is it determined from?
-  params_.declare_double("baro_measurement_gate", 1.35);  // TODO: this is a magic number. What is it determined from?
-  params_.declare_double("airspeed_measurement_gate", 5.0);  // TODO: this is a magic number. What is it determined from?
-  params_.declare_int("baro_calibration_count", 100);  // TODO: this is a magic number. What is it determined from?
+  params_.declare_double("gps_ground_speed_threshold",
+                         0.3); // TODO: this is a magic number. What is it determined from?
+  params_.declare_double("baro_measurement_gate",
+                         1.35); // TODO: this is a magic number. What is it determined from?
+  params_.declare_double("airspeed_measurement_gate",
+                         5.0); // TODO: this is a magic number. What is it determined from?
+  params_.declare_int("baro_calibration_count",
+                      100); // TODO: this is a magic number. What is it determined from?
   params_.declare_double("baro_calibration_val", 0.0);
   params_.declare_double("init_lat", 0.0);
   params_.declare_double("init_lon", 0.0);
   params_.declare_double("init_alt", 0.0);
 }
 
-void EstimatorROS::set_timer() {
+void EstimatorROS::set_timer()
+{
   double frequency = params_.get_double("estimator_update_frequency");
 
   update_period_ = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1'000'000));
   update_timer_ = this->create_wall_timer(update_period_, std::bind(&EstimatorROS::update, this));
 }
 
-rcl_interfaces::msg::SetParametersResult 
+rcl_interfaces::msg::SetParametersResult
 EstimatorROS::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;
@@ -84,21 +91,19 @@ EstimatorROS::parametersCallback(const std::vector<rclcpp::Parameter> & paramete
   result.reason = "success";
 
   bool success = params_.set_parameters_callback(parameters);
-  if (!success)
-  {
+  if (!success) {
     result.successful = false;
-    result.reason =
-      "One of the parameters given is not a parameter of the estimator node.";
+    result.reason = "One of the parameters given is not a parameter of the estimator node.";
   }
 
   // Check to see if the timer period was changed. If it was, recreate the timer with the new period
   if (params_initialized_ && success) {
-    std::chrono::microseconds curr_period = std::chrono::microseconds(static_cast<long long>(1.0 / params_.get_double("estimator_update_frequency") * 1'000'000));
+    std::chrono::microseconds curr_period = std::chrono::microseconds(
+      static_cast<long long>(1.0 / params_.get_double("estimator_update_frequency") * 1'000'000));
     if (update_period_ != curr_period) {
       update_timer_->cancel();
       set_timer();
     }
-
   }
 
   return result;
@@ -122,8 +127,7 @@ void EstimatorROS::update()
 
   rosplane_msgs::msg::State msg;
   msg.header.stamp = this->get_clock()->now();
-  msg.header.frame_id =
-    1; // Denotes global frame
+  msg.header.frame_id = 1; // Denotes global frame
 
   msg.position[0] = output.pn;
   msg.position[1] = output.pe;
@@ -299,7 +303,8 @@ void EstimatorROS::airspeedCallback(const rosflight_msgs::msg::Airspeed::SharedP
 
 void EstimatorROS::statusCallback(const rosflight_msgs::msg::Status::SharedPtr msg)
 {
-  if (!armed_first_time_ && msg->armed) armed_first_time_ = true;
+  if (!armed_first_time_ && msg->armed)
+    armed_first_time_ = true;
 }
 
 void EstimatorROS::saveParameter(std::string param_name, double param_val)
@@ -307,13 +312,11 @@ void EstimatorROS::saveParameter(std::string param_name, double param_val)
 
   YAML::Node param_yaml_file = YAML::LoadFile(param_filepath_);
 
-  if (param_yaml_file["estimator"]["ros__parameters"][param_name])
-  {
+  if (param_yaml_file["estimator"]["ros__parameters"][param_name]) {
     param_yaml_file["estimator"]["ros__parameters"][param_name] = param_val;
-  }
-  else 
-  {
-    RCLCPP_ERROR_STREAM(this->get_logger(), "Parameter [" << param_name << "] is not in parameter file.");
+  } else {
+    RCLCPP_ERROR_STREAM(this->get_logger(),
+                        "Parameter [" << param_name << "] is not in parameter file.");
   }
 
   std::ofstream fout(param_filepath_);
@@ -324,30 +327,25 @@ void EstimatorROS::saveParameter(std::string param_name, double param_val)
 
 int main(int argc, char ** argv)
 {
-  
+
   rclcpp::init(argc, argv);
 
-  char* use_params; // HACK: Fix in a more permanant way.
+  char * use_params; // HACK: Fix in a more permanant way.
   if (argc >= 1) {
     use_params = argv[1];
   }
 
-
-  if (!strcmp(use_params, "true"))
-  {
+  if (!strcmp(use_params, "true")) {
     rclcpp::spin(std::make_shared<rosplane::EstimatorContinuousDiscrete>(use_params));
-  }
-  else if(strcmp(use_params, "false")) // If the string is not true or false print error.
+  } else if (strcmp(use_params, "false")) // If the string is not true or false print error.
   {
     auto estimator_node = std::make_shared<rosplane::EstimatorContinuousDiscrete>();
-    RCLCPP_WARN(estimator_node->get_logger(), "Invalid option for seeding estimator, defaulting to unseeded.");
+    RCLCPP_WARN(estimator_node->get_logger(),
+                "Invalid option for seeding estimator, defaulting to unseeded.");
     rclcpp::spin(estimator_node);
-  }
-  else 
-  {
+  } else {
     rclcpp::spin(std::make_shared<rosplane::EstimatorContinuousDiscrete>());
   }
-
 
   return 0;
 }

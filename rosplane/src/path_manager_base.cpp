@@ -12,7 +12,9 @@ namespace rosplane
 {
 
 PathManagerBase::PathManagerBase()
-    : Node("rosplane_path_manager"), params_(this), params_initialized_(false)
+    : Node("rosplane_path_manager")
+    , params_(this)
+    , params_initialized_(false)
 {
   vehicle_state_sub_ = this->create_subscription<rosplane_msgs::msg::State>(
     "estimated_state", 10, std::bind(&PathManagerBase::vehicle_state_callback, this, _1));
@@ -38,14 +40,16 @@ PathManagerBase::PathManagerBase()
   state_init_ = false;
 }
 
-void PathManagerBase::declare_parameters() {
+void PathManagerBase::declare_parameters()
+{
   params_.declare_double("R_min", 50.0);
   params_.declare_double("current_path_pub_frequency", 100.0);
   params_.declare_double("default_altitude", 50.0);
   params_.declare_double("default_airspeed", 15.0);
 }
 
-void PathManagerBase::set_timer() {
+void PathManagerBase::set_timer()
+{
   // Calculate the period in milliseconds from the frequency
   double frequency = params_.get_double("current_path_pub_frequency");
   timer_period_ = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1e6));
@@ -63,8 +67,7 @@ PathManagerBase::parametersCallback(const std::vector<rclcpp::Parameter> & param
 
   // Update the changed parameters in the param_manager object
   bool success = params_.set_parameters_callback(parameters);
-  if (success)
-  {
+  if (success) {
     result.successful = true;
     result.reason = "success";
   }
@@ -72,7 +75,8 @@ PathManagerBase::parametersCallback(const std::vector<rclcpp::Parameter> & param
   // If the frequency parameter was changed, restart the timer.
   if (params_initialized_ && success) {
     double frequency = params_.get_double("current_path_pub_frequency");
-    std::chrono::microseconds curr_period = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1e6));
+    std::chrono::microseconds curr_period =
+      std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1e6));
     if (timer_period_ != curr_period) {
       update_timer_->cancel();
       set_timer();
@@ -106,18 +110,16 @@ void PathManagerBase::new_waypoint_callback(const rosplane_msgs::msg::Waypoint &
 
   // If there are currently no waypoints in the list, then add a temporary waypoint as
   // the current state of the aircraft. This is necessary to define a line for line following.
-  if (waypoints_.size() == 0)
-  {
+  if (waypoints_.size() == 0) {
     Waypoint temp_waypoint;
 
     temp_waypoint.w[0] = vehicle_state_.position[0];
     temp_waypoint.w[1] = vehicle_state_.position[1];
-    
+
     if (vehicle_state_.position[2] < -default_altitude) {
-      
+
       temp_waypoint.w[2] = vehicle_state_.position[2];
-    }
-    else {
+    } else {
       temp_waypoint.w[2] = -default_altitude;
     }
 
@@ -129,7 +131,7 @@ void PathManagerBase::new_waypoint_callback(const rosplane_msgs::msg::Waypoint &
     num_waypoints_++;
     temp_waypoint_ = true;
   }
-  
+
   // Add a default comparison for the last waypoint for feasiblity check.
   Waypoint nextwp;
   Eigen::Vector3f w_existing(std::numeric_limits<double>::infinity(),
@@ -143,8 +145,7 @@ void PathManagerBase::new_waypoint_callback(const rosplane_msgs::msg::Waypoint &
   nextwp.va_d = msg.va_d;
 
   // Save the last waypoint for comparison.
-  if (waypoints_.size() > 0)
-  {
+  if (waypoints_.size() > 0) {
     Waypoint waypoint = waypoints_.back();
     w_existing << waypoint.w[0], waypoint.w[1], waypoint.w[2];
   }
@@ -154,9 +155,10 @@ void PathManagerBase::new_waypoint_callback(const rosplane_msgs::msg::Waypoint &
   // Warn if too close to the last waypoint.
   Eigen::Vector3f w_new(msg.w[0], msg.w[1], msg.w[2]);
 
-  if ((w_new - w_existing).norm() < R_min)
-  {
-    RCLCPP_WARN_STREAM(this->get_logger(), "A waypoint is too close to the next waypoint. Indices: " << waypoints_.size() - 2 << ", " << waypoints_.size() - 1);
+  if ((w_new - w_existing).norm() < R_min) {
+    RCLCPP_WARN_STREAM(this->get_logger(),
+                       "A waypoint is too close to the next waypoint. Indices: "
+                         << waypoints_.size() - 2 << ", " << waypoints_.size() - 1);
   }
 }
 
@@ -183,8 +185,7 @@ void PathManagerBase::current_path_publish()
   current_path.header.stamp = now;
   if (output.flag) {
     current_path.path_type = current_path.LINE_PATH;
-  }
-  else {
+  } else {
     current_path.path_type = current_path.ORBIT_PATH;
   }
   current_path.va_d = output.va_d;

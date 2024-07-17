@@ -8,14 +8,15 @@ namespace rosplane
 {
 
 PathFollowerBase::PathFollowerBase()
-    : Node("path_follower_base"), params_(this), params_initialized_(false)
+    : Node("path_follower_base")
+    , params_(this)
+    , params_initialized_(false)
 {
   vehicle_state_sub_ = this->create_subscription<rosplane_msgs::msg::State>(
     "estimated_state", 10, std::bind(&PathFollowerBase::vehicle_state_callback, this, _1));
 
   current_path_sub_ = this->create_subscription<rosplane_msgs::msg::CurrentPath>(
-    "current_path", 100,
-    std::bind(&PathFollowerBase::current_path_callback, this, _1));
+    "current_path", 100, std::bind(&PathFollowerBase::current_path_callback, this, _1));
 
   controller_commands_pub_ =
     this->create_publisher<rosplane_msgs::msg::ControllerCommands>("controller_command", 1);
@@ -37,15 +38,14 @@ PathFollowerBase::PathFollowerBase()
   current_path_init_ = false;
 }
 
-void PathFollowerBase::set_timer() {
+void PathFollowerBase::set_timer()
+{
   // Convert the frequency to a period in microseconds
   double frequency = params_.get_double("controller_commands_pub_frequency");
   timer_period_ = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1e6));
 
-  update_timer_ = this->create_wall_timer(
-    timer_period_,
-    std::bind(&PathFollowerBase::update,
-              this));
+  update_timer_ =
+    this->create_wall_timer(timer_period_, std::bind(&PathFollowerBase::update, this));
 }
 
 void PathFollowerBase::update()
@@ -88,8 +88,7 @@ void PathFollowerBase::current_path_callback(const rosplane_msgs::msg::CurrentPa
 {
   if (msg->path_type == msg->LINE_PATH) {
     input_.p_type = PathType::LINE;
-  }
-  else if (msg->path_type == msg->ORBIT_PATH) {
+  } else if (msg->path_type == msg->ORBIT_PATH) {
     input_.p_type = PathType::ORBIT;
   }
 
@@ -114,8 +113,7 @@ PathFollowerBase::parametersCallback(const std::vector<rclcpp::Parameter> & para
 
   // Update the param_manager object with the new parameters
   bool success = params_.set_parameters_callback(parameters);
-  if (success)
-  {
+  if (success) {
     result.successful = true;
     result.reason = "success";
   }
@@ -124,7 +122,8 @@ PathFollowerBase::parametersCallback(const std::vector<rclcpp::Parameter> & para
   if (params_initialized_ && success) {
     double frequency = params_.get_double("controller_commands_pub_frequency");
 
-    std::chrono::microseconds curr_period = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1e6));
+    std::chrono::microseconds curr_period =
+      std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1e6));
     if (timer_period_ != curr_period) {
       update_timer_->cancel();
       set_timer();

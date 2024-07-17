@@ -82,15 +82,14 @@ protected:
 
   bool baro_init_; /**< Initial barometric pressure */
 
-  virtual void estimate(const Input & input,
-                        Output & output) = 0;
+  virtual void estimate(const Input & input, Output & output) = 0;
 
   ParamManager params_;
   bool gps_init_;
-  double init_lat_ = 0.0;                 /**< Initial latitude in degrees */
-  double init_lon_ = 0.0;                 /**< Initial longitude in degrees */
-  float init_alt_ = 0.0;                  /**< Initial altitude in meters above MSL  */
-  float init_static_;                     /**< Initial static pressure (mbar)  */
+  double init_lat_ = 0.0; /**< Initial latitude in degrees */
+  double init_lon_ = 0.0; /**< Initial longitude in degrees */
+  float init_alt_ = 0.0;  /**< Initial altitude in meters above MSL  */
+  float init_static_;     /**< Initial static pressure (mbar)  */
 
 private:
   rclcpp::Publisher<rosplane_msgs::msg::State>::SharedPtr vehicle_state_pub_;

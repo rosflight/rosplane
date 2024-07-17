@@ -117,10 +117,14 @@ void TuningSignalGenerator::publish_timer_callback()
   }
 
   // Check if step toggle needs to be reset
-  if (signal_type_ != SignalType::STEP) { step_toggled_ = false; }
+  if (signal_type_ != SignalType::STEP) {
+    step_toggled_ = false;
+  }
 
   // If paused, negate passing of time but keep publishing
-  if (is_paused_) { paused_time_ += 1 / publish_rate_hz_; }
+  if (is_paused_) {
+    paused_time_ += 1 / publish_rate_hz_;
+  }
 
   // Get value for signal
   double amplitude = signal_magnitude_ / 2;
@@ -196,7 +200,9 @@ rcl_interfaces::msg::SetParametersResult
 TuningSignalGenerator::param_callback(const std::vector<rclcpp::Parameter> & params)
 {
   for (const auto & param : params) {
-    if (param.get_name() == "controller_output" || param.get_name() == "signal_type") { reset(); }
+    if (param.get_name() == "controller_output" || param.get_name() == "signal_type") {
+      reset();
+    }
   }
 
   rcl_interfaces::msg::SetParametersResult result;
