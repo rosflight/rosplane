@@ -23,7 +23,7 @@
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <yaml-cpp/yaml.h>
 
-#include "param_manager.hpp"
+#include "param_manager_ros.hpp"
 #include "rosplane_msgs/msg/state.hpp"
 
 #define EARTH_RADIUS 6378145.0f
@@ -84,7 +84,7 @@ protected:
 
   virtual void estimate(const Input & input, Output & output) = 0;
 
-  ParamManager params_;
+  ParamManagerROS params_;
   bool gps_init_;
   double init_lat_ = 0.0; /**< Initial latitude in degrees */
   double init_lon_ = 0.0; /**< Initial longitude in degrees */

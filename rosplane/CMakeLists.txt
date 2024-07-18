@@ -49,8 +49,9 @@ install(DIRECTORY launch params DESTINATION share/${PROJECT_NAME}/)
 
 # Param Manager
 add_library(param_manager
-  include/param_manager/param_manager.hpp
-  src/param_manager/param_manager.cpp
+  include/param_manager/param_manager_interface.hpp
+  include/param_manager/param_manager_ros.hpp
+  src/param_manager/param_manager_ros.cpp
 )
 ament_target_dependencies(param_manager rclcpp)
 ament_export_targets(param_manager HAS_LIBRARY_TARGET)

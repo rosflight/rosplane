@@ -3,7 +3,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "param_manager.hpp"
+#include "param_manager_ros.hpp"
 #include "rosplane_msgs/msg/controller_commands.hpp"
 #include "rosplane_msgs/msg/current_path.hpp"
 #include "rosplane_msgs/msg/state.hpp"
@@ -54,7 +54,7 @@ protected:
 
   virtual void follow(const Input & input, Output & output) = 0;
 
-  ParamManager params_;
+  ParamManagerROS params_;
 
 private:
   /**

@@ -9,7 +9,7 @@
 #include <std_srvs/srv/trigger.hpp>
 #include <yaml-cpp/yaml.h>
 
-#include "param_manager.hpp"
+#include "param_manager_ros.hpp"
 #include "rosplane_msgs/msg/state.hpp"
 #include "rosplane_msgs/msg/waypoint.hpp"
 #include "rosplane_msgs/srv/add_waypoint.hpp"

@@ -3,7 +3,7 @@
 #include <rosflight_msgs/srv/param_file.hpp>
 #include <std_srvs/srv/trigger.hpp>
 
-#include "param_manager.hpp"
+#include "param_manager_ros.hpp"
 #include "rosplane_msgs/msg/state.hpp"
 #include "rosplane_msgs/msg/waypoint.hpp"
 #include "rosplane_msgs/srv/add_waypoint.hpp"
@@ -19,7 +19,7 @@ public:
   PathPlanner();
   ~PathPlanner();
 
-  ParamManager params_; /** Holds the parameters for the path_planner*/
+  ParamManagerROS params_; /** Holds the parameters for the path_planner*/
 
 private:
   /**
