@@ -64,6 +64,23 @@ install(TARGETS param_manager
   INCLUDES DESTINATION include
 )
 
+# Logger
+add_library(logger
+  include/logger/logger_interface.hpp
+  include/logger/logger_ros.hpp
+  src/logger/logger_ros.cpp
+)
+ament_target_dependencies(logger rclcpp)
+ament_export_targets(logger HAS_LIBRARY_TARGET)
+install(DIRECTORY include/logger DESTINATION include)
+install(TARGETS logger
+  EXPORT logger
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include
+)
+
 ### START OF EXECUTABLES ###
 
 # Controller
