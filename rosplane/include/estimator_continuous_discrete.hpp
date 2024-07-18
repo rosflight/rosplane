@@ -1,13 +1,11 @@
 #ifndef ESTIMATOR_CONTINUOUS_DISCRETE_H
 #define ESTIMATOR_CONTINUOUS_DISCRETE_H
 
-#include <math.h>
-
 #include <Eigen/Geometry>
-#include <yaml-cpp/yaml.h>
 
 #include "estimator_ekf.hpp"
-#include "estimator_ros.hpp"
+#include "param_manager/param_manager_interface.hpp"
+#include "logger/logger_interface.hpp"
 
 namespace rosplane
 {
@@ -15,11 +13,10 @@ namespace rosplane
 class EstimatorContinuousDiscrete : public EstimatorEKF
 {
 public:
-  EstimatorContinuousDiscrete();
-  EstimatorContinuousDiscrete(bool use_params);
+  EstimatorContinuousDiscrete(ParamMangerInterface * params, LoggerInterface * logger);
 
 private:
-  virtual void estimate(const Input & input, Output & output);
+  void estimate(const Input & input, Output & output) override;
 
   double lpf_a_;
   float alpha_;
@@ -138,6 +135,9 @@ private:
    * @brief Initializes the state covariance matrix with the ROS2 parameters
    */
   void initialize_state_covariances();
+
+  ParamMangerInterface * params_;
+  LoggerInterface * logger_;
 };
 
 } // namespace rosplane

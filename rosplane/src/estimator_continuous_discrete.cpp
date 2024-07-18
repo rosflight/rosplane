@@ -15,8 +15,11 @@ double wrap_within_180(double fixed_heading, double wrapped_heading)
   return wrapped_heading - floor((wrapped_heading - fixed_heading) / (2 * M_PI) + 0.5) * 2 * M_PI;
 }
 
-EstimatorContinuousDiscrete::EstimatorContinuousDiscrete()
-    : EstimatorEKF()
+EstimatorContinuousDiscrete::EstimatorContinuousDiscrete(ParamMangerInterface * params,
+  LoggerInterface * logger)
+    : EstimatorEKF(params)
+    , params_(params)
+    , logger_(logger)
     , xhat_a_(Eigen::Vector2f::Zero())
     , P_a_(Eigen::Matrix2f::Identity())
     , xhat_p_(Eigen::VectorXf::Zero(7))
@@ -49,7 +52,7 @@ EstimatorContinuousDiscrete::EstimatorContinuousDiscrete()
 
   // Declare and set parameters with the ROS2 system
   declare_parameters();
-  params_.set_parameters();
+  params_->set_parameters();
 
   // Initialize covariance matrices from ROS2 parameters
   initialize_uncertainties();
@@ -57,41 +60,18 @@ EstimatorContinuousDiscrete::EstimatorContinuousDiscrete()
   // Inits R matrix and alpha values with ROS2 parameters
   update_measurement_model_parameters();
 
-  N_ = params_.get_int("num_propagation_steps");
-}
-
-EstimatorContinuousDiscrete::EstimatorContinuousDiscrete(bool use_params)
-    : EstimatorContinuousDiscrete()
-{
-  double init_lat = params_.get_double("init_lat");
-  double init_long = params_.get_double("init_lon");
-  double init_alt = params_.get_double("init_alt");
-  double init_static = params_.get_double("baro_calibration_val");
-
-  RCLCPP_INFO_STREAM(this->get_logger(), "Using seeded estimator values.");
-  RCLCPP_INFO_STREAM(this->get_logger(), "Seeded initial latitude: " << init_lat);
-  RCLCPP_INFO_STREAM(this->get_logger(), "Seeded initial longitude: " << init_long);
-  RCLCPP_INFO_STREAM(this->get_logger(), "Seeded initial altitude: " << init_alt);
-  RCLCPP_INFO_STREAM(this->get_logger(), "Seeded barometer calibration value: " << init_static);
-
-  gps_init_ = true;
-  init_lat_ = init_lat;
-  init_lon_ = init_long;
-  init_alt_ = init_alt;
-
-  baro_init_ = true;
-  init_static_ = init_static;
+  N_ = params_->get_int("num_propagation_steps");
 }
 
 void EstimatorContinuousDiscrete::initialize_state_covariances()
 {
-  double pos_n_initial_cov = params_.get_double("pos_n_initial_cov");
-  double pos_e_initial_cov = params_.get_double("pos_e_initial_cov");
-  double vg_initial_cov = params_.get_double("vg_initial_cov");
-  double chi_initial_cov = params_.get_double("chi_initial_cov");
-  double wind_n_initial_cov = params_.get_double("wind_n_initial_cov");
-  double wind_e_initial_cov = params_.get_double("wind_e_initial_cov");
-  double psi_initial_cov = params_.get_double("psi_initial_cov");
+  double pos_n_initial_cov = params_->get_double("pos_n_initial_cov");
+  double pos_e_initial_cov = params_->get_double("pos_e_initial_cov");
+  double vg_initial_cov = params_->get_double("vg_initial_cov");
+  double chi_initial_cov = params_->get_double("chi_initial_cov");
+  double wind_n_initial_cov = params_->get_double("wind_n_initial_cov");
+  double wind_e_initial_cov = params_->get_double("wind_e_initial_cov");
+  double psi_initial_cov = params_->get_double("psi_initial_cov");
 
   P_p_ = Eigen::MatrixXf::Identity(7, 7);
   P_p_(0, 0) = pos_n_initial_cov;
@@ -105,11 +85,11 @@ void EstimatorContinuousDiscrete::initialize_state_covariances()
 
 void EstimatorContinuousDiscrete::initialize_uncertainties()
 {
-  double roll_process_noise = params_.get_double("roll_process_noise");
-  double pitch_process_noise = params_.get_double("pitch_process_noise");
-  double gyro_process_noise = params_.get_double("gyro_process_noise");
-  double position_process_noise = params_.get_double("pos_process_noise");
-  double attitude_initial_cov = params_.get_double("attitude_initial_cov");
+  double roll_process_noise = params_->get_double("roll_process_noise");
+  double pitch_process_noise = params_->get_double("pitch_process_noise");
+  double gyro_process_noise = params_->get_double("gyro_process_noise");
+  double position_process_noise = params_->get_double("pos_process_noise");
+  double attitude_initial_cov = params_->get_double("attitude_initial_cov");
 
   P_a_ *= powf(radians(attitude_initial_cov), 2);
 
@@ -126,18 +106,18 @@ void EstimatorContinuousDiscrete::initialize_uncertainties()
 void EstimatorContinuousDiscrete::update_measurement_model_parameters()
 {
   // For readability, declare the parameters used in the function here
-  double sigma_n_gps = params_.get_double("sigma_n_gps");
-  double sigma_e_gps = params_.get_double("sigma_e_gps");
-  double sigma_Vg_gps = params_.get_double("sigma_Vg_gps");
-  double sigma_course_gps = params_.get_double("sigma_course_gps");
-  double sigma_accel = params_.get_double("sigma_accel");
-  double sigma_pseudo_wind_n = params_.get_double("sigma_pseudo_wind_n");
-  double sigma_pseudo_wind_e = params_.get_double("sigma_pseudo_wind_e");
-  double sigma_heading = params_.get_double("sigma_heading");
-  double frequency = params_.get_double("estimator_update_frequency");
+  double sigma_n_gps = params_->get_double("sigma_n_gps");
+  double sigma_e_gps = params_->get_double("sigma_e_gps");
+  double sigma_Vg_gps = params_->get_double("sigma_Vg_gps");
+  double sigma_course_gps = params_->get_double("sigma_course_gps");
+  double sigma_accel = params_->get_double("sigma_accel");
+  double sigma_pseudo_wind_n = params_->get_double("sigma_pseudo_wind_n");
+  double sigma_pseudo_wind_e = params_->get_double("sigma_pseudo_wind_e");
+  double sigma_heading = params_->get_double("sigma_heading");
+  double frequency = params_->get_double("estimator_update_frequency");
   double Ts = 1.0 / frequency;
-  float lpf_a = params_.get_double("lpf_a");
-  float lpf_a1 = params_.get_double("lpf_a1");
+  float lpf_a = params_->get_double("lpf_a");
+  float lpf_a1 = params_->get_double("lpf_a1");
 
   R_accel_ = Eigen::Matrix3f::Identity() * pow(sigma_accel, 2);
 
@@ -156,11 +136,11 @@ void EstimatorContinuousDiscrete::update_measurement_model_parameters()
 void EstimatorContinuousDiscrete::estimate(const Input & input, Output & output)
 {
   // For readability, declare the parameters here
-  double rho = params_.get_double("rho");
-  double gravity = params_.get_double("gravity");
-  double frequency = params_.get_double("estimator_update_frequency");
-  double gps_n_lim = params_.get_double("gps_n_lim");
-  double gps_e_lim = params_.get_double("gps_e_lim");
+  double rho = params_->get_double("rho");
+  double gravity = params_->get_double("gravity");
+  double frequency = params_->get_double("estimator_update_frequency");
+  double gps_n_lim = params_->get_double("gps_n_lim");
+  double gps_e_lim = params_->get_double("gps_e_lim");
   double Ts = 1.0 / frequency;
 
   // Inits R matrix and alpha values with ROS2 parameters
@@ -183,8 +163,7 @@ void EstimatorContinuousDiscrete::estimate(const Input & input, Output & output)
   lpf_static_ = alpha1_ * lpf_static_ + (1 - alpha1_) * input.static_pres;
   float hhat = lpf_static_ / rho / gravity;
 
-  if (input.static_pres == 0.0
-      || baro_init_ == false) { // Catch the edge case for if pressure measured is zero.
+  if (input.static_pres == 0.0) { // Catch the edge case for if pressure measured is zero.
     hhat = 0.0;
   }
 
@@ -252,11 +231,11 @@ void EstimatorContinuousDiscrete::estimate(const Input & input, Output & output)
   xhat_p_(3) = wrap_within_180(0.0, xhat_p_(3));
   xhat_p_(6) = wrap_within_180(0.0, xhat_p_(6));
   if (xhat_p_(3) > radians(180.0f) || xhat_p_(3) < radians(-180.0f)) {
-    RCLCPP_WARN(this->get_logger(), "Course estimate not wrapped from -pi to pi");
+    logger_->warn("Course estimate not wrapped from -pi to pi");
     xhat_p_(3) = 0;
   }
   if (xhat_p_(6) > radians(180.0f) || xhat_p_(6) < radians(-180.0f)) {
-    RCLCPP_WARN(this->get_logger(), "Psi estimate not wrapped from -pi to pi");
+    logger_->warn("Psi estimate not wrapped from -pi to pi");
     xhat_p_(6) = 0;
   }
 
@@ -280,11 +259,11 @@ void EstimatorContinuousDiscrete::estimate(const Input & input, Output & output)
                          position_measurement_jacobian_model, R_p_, P_p_);
 
     if (xhat_p_(0) > gps_n_lim || xhat_p_(0) < -gps_n_lim) {
-      RCLCPP_WARN(this->get_logger(), "gps n limit reached");
+      logger_->warn("gps n limit reached");
       xhat_p_(0) = input.gps_n;
     }
     if (xhat_p_(1) > gps_e_lim || xhat_p_(1) < -gps_e_lim) {
-      RCLCPP_WARN(this->get_logger(), "gps e limit reached");
+      logger_->warn("gps e limit reached");
       xhat_p_(1) = input.gps_e;
     }
   }
@@ -321,8 +300,8 @@ void EstimatorContinuousDiscrete::estimate(const Input & input, Output & output)
     }
   }
   if (problem) {
-    RCLCPP_WARN(this->get_logger(), "position estimator reinitialized due to non-finite state %d",
-                prob_index);
+    logger_->warn("position estimator reinitialized due to non-finite state " +
+      std::to_string(prob_index));
   }
   if (xhat_p_(6) - xhat_p_(3) > radians(360.0f) || xhat_p_(6) - xhat_p_(3) < radians(-360.0f)) {
     xhat_p_(6) = fmodf(xhat_p_(6), 2.0 * M_PI);
@@ -378,7 +357,7 @@ Eigen::VectorXf EstimatorContinuousDiscrete::position_dynamics(const Eigen::Vect
                                                                const Eigen::VectorXf & measurements)
 {
 
-  double gravity = params_.get_double("gravity");
+  double gravity = params_->get_double("gravity");
 
   float Vg = state(2);
   float chi = state(3);
@@ -432,7 +411,7 @@ EstimatorContinuousDiscrete::attitude_jacobian(const Eigen::VectorXf & state,
 Eigen::MatrixXf EstimatorContinuousDiscrete::position_jacobian(const Eigen::VectorXf & state,
                                                                const Eigen::VectorXf & measurements)
 {
-  double gravity = params_.get_double("gravity");
+  double gravity = params_->get_double("gravity");
 
   float p = measurements(0);
   float q = measurements(1);
@@ -495,7 +474,7 @@ Eigen::VectorXf
 EstimatorContinuousDiscrete::attitude_measurement_prediction(const Eigen::VectorXf & state,
                                                              const Eigen::VectorXf & inputs)
 {
-  double gravity = params_.get_double("gravity");
+  double gravity = params_->get_double("gravity");
   float cp = cosf(state(0)); // cos(phi)
   float sp = sinf(state(0)); // sin(phi)
   float st = sinf(state(1)); // sin(theta)
@@ -587,7 +566,7 @@ Eigen::MatrixXf
 EstimatorContinuousDiscrete::attitude_measurement_jacobian(const Eigen::VectorXf & state,
                                                            const Eigen::VectorXf & inputs)
 {
-  double gravity = params_.get_double("gravity");
+  double gravity = params_->get_double("gravity");
   float cp = cosf(state(0));
   float sp = sinf(state(0));
   float ct = cosf(state(1));
@@ -608,9 +587,9 @@ EstimatorContinuousDiscrete::attitude_measurement_jacobian(const Eigen::VectorXf
 
 void EstimatorContinuousDiscrete::check_xhat_a()
 {
-  double max_phi = params_.get_double("max_estimated_phi");
-  double max_theta = params_.get_double("max_estimated_theta");
-  double buff = params_.get_double("estimator_max_buffer");
+  double max_phi = params_->get_double("max_estimated_phi");
+  double max_theta = params_->get_double("max_estimated_theta");
+  double buff = params_->get_double("estimator_max_buffer");
 
   if (xhat_a_(0) > radians(85.0) || xhat_a_(0) < radians(-85.0) || !std::isfinite(xhat_a_(0))) {
 
@@ -618,13 +597,13 @@ void EstimatorContinuousDiscrete::check_xhat_a()
       xhat_a_(0) = 0;
       P_a_ = Eigen::Matrix2f::Identity();
       P_a_ *= powf(radians(20.0f), 2);
-      RCLCPP_WARN(this->get_logger(), "attiude estimator reinitialized due to non-finite roll");
+      logger_->warn("attiude estimator reinitialized due to non-finite roll");
     } else if (xhat_a_(0) > radians(max_phi)) {
       xhat_a_(0) = radians(max_phi - buff);
-      RCLCPP_WARN(this->get_logger(), "max roll angle");
+      logger_->warn("max roll angle");
     } else if (xhat_a_(0) < radians(-max_phi)) {
       xhat_a_(0) = radians(-max_phi + buff);
-      RCLCPP_WARN(this->get_logger(), "min roll angle");
+      logger_->warn("min roll angle");
     }
   }
 
@@ -632,50 +611,50 @@ void EstimatorContinuousDiscrete::check_xhat_a()
     xhat_a_(1) = 0;
     P_a_ = Eigen::Matrix2f::Identity();
     P_a_ *= powf(radians(20.0f), 2);
-    RCLCPP_WARN(this->get_logger(), "attiude estimator reinitialized due to non-finite pitch");
+    logger_->warn("attiude estimator reinitialized due to non-finite pitch");
   } else if (xhat_a_(1) > radians(max_theta)) {
     xhat_a_(1) = radians(max_theta - buff);
-    RCLCPP_WARN(this->get_logger(), "max pitch angle");
+    logger_->warn("max pitch angle");
   } else if (xhat_a_(1) < radians(-max_theta)) {
     xhat_a_(1) = radians(-max_theta + buff);
-    RCLCPP_WARN(this->get_logger(), "min pitch angle");
+    logger_->warn("min pitch angle");
   }
 }
 
 void EstimatorContinuousDiscrete::declare_parameters()
 {
-  params_.declare_double("sigma_n_gps", .01);
-  params_.declare_double("sigma_e_gps", .01);
-  params_.declare_double("sigma_Vg_gps", .005);
-  params_.declare_double("sigma_course_gps", .005 / 20);
-  params_.declare_double("sigma_accel", .0025 * 9.81);
-  params_.declare_double("sigma_pseudo_wind_n", 0.01);
-  params_.declare_double("sigma_pseudo_wind_e", 0.01);
-  params_.declare_double("sigma_heading", 0.01);
-  params_.declare_double("lpf_a", 50.0);
-  params_.declare_double("lpf_a1", 8.0);
-  params_.declare_double("gps_n_lim", 10000.);
-  params_.declare_double("gps_e_lim", 10000.);
+  params_->declare_double("sigma_n_gps", .01);
+  params_->declare_double("sigma_e_gps", .01);
+  params_->declare_double("sigma_Vg_gps", .005);
+  params_->declare_double("sigma_course_gps", .005 / 20);
+  params_->declare_double("sigma_accel", .0025 * 9.81);
+  params_->declare_double("sigma_pseudo_wind_n", 0.01);
+  params_->declare_double("sigma_pseudo_wind_e", 0.01);
+  params_->declare_double("sigma_heading", 0.01);
+  params_->declare_double("lpf_a", 50.0);
+  params_->declare_double("lpf_a1", 8.0);
+  params_->declare_double("gps_n_lim", 10000.);
+  params_->declare_double("gps_e_lim", 10000.);
 
-  params_.declare_double("roll_process_noise", 0.0001);     // Radians?, should be already squared
-  params_.declare_double("pitch_process_noise", 0.0000001); // Radians?, already squared
-  params_.declare_double("gyro_process_noise", 0.13);       // Deg, not squared
-  params_.declare_double("pos_process_noise", 0.1);         // already squared
+  params_->declare_double("roll_process_noise", 0.0001);     // Radians?, should be already squared
+  params_->declare_double("pitch_process_noise", 0.0000001); // Radians?, already squared
+  params_->declare_double("gyro_process_noise", 0.13);       // Deg, not squared
+  params_->declare_double("pos_process_noise", 0.1);         // already squared
 
-  params_.declare_double("attitude_initial_cov", 5.0); // Deg, not squared
-  params_.declare_double("pos_n_initial_cov", 0.03);
-  params_.declare_double("pos_e_initial_cov", 0.03);
-  params_.declare_double("vg_initial_cov", 0.01);
-  params_.declare_double("chi_initial_cov", 5.0); // Deg
-  params_.declare_double("wind_n_initial_cov", 0.04);
-  params_.declare_double("wind_e_initial_cov", 0.04);
-  params_.declare_double("psi_initial_cov", 5.0); // Deg
+  params_->declare_double("attitude_initial_cov", 5.0); // Deg, not squared
+  params_->declare_double("pos_n_initial_cov", 0.03);
+  params_->declare_double("pos_e_initial_cov", 0.03);
+  params_->declare_double("vg_initial_cov", 0.01);
+  params_->declare_double("chi_initial_cov", 5.0); // Deg
+  params_->declare_double("wind_n_initial_cov", 0.04);
+  params_->declare_double("wind_e_initial_cov", 0.04);
+  params_->declare_double("psi_initial_cov", 5.0); // Deg
 
-  params_.declare_int("num_propagation_steps", 10);
+  params_->declare_int("num_propagation_steps", 10);
 
-  params_.declare_double("max_estimated_phi", 85.0);   // Deg
-  params_.declare_double("max_estimated_theta", 80.0); // Deg
-  params_.declare_double("estimator_max_buffer", 3.0); // Deg
+  params_->declare_double("max_estimated_phi", 85.0);   // Deg
+  params_->declare_double("max_estimated_theta", 80.0); // Deg
+  params_->declare_double("estimator_max_buffer", 3.0); // Deg
 }
 
 void EstimatorContinuousDiscrete::bind_functions()

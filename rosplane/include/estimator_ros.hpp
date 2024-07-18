@@ -21,14 +21,13 @@
 #include <rosflight_msgs/msg/status.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
-#include <yaml-cpp/yaml.h>
 
+#include "estimator_interface.hpp"
 #include "param_manager_ros.hpp"
 #include "rosplane_msgs/msg/state.hpp"
 
 #define EARTH_RADIUS 6378145.0f
 
-using std::placeholders::_1;
 using namespace std::chrono_literals;
 
 namespace rosplane
@@ -37,61 +36,19 @@ namespace rosplane
 class EstimatorROS : public rclcpp::Node
 {
 public:
-  EstimatorROS();
-
-protected:
-  struct Input
-  {
-    float gyro_x;
-    float gyro_y;
-    float gyro_z;
-    float accel_x;
-    float accel_y;
-    float accel_z;
-    float static_pres;
-    float diff_pres;
-    bool gps_new;
-    float gps_n;
-    float gps_e;
-    float gps_h;
-    float gps_Vg;
-    float gps_course;
-    bool status_armed;
-    bool armed_init;
-  };
-
-  struct Output
-  {
-    float pn;
-    float pe;
-    float h;
-    float va;
-    float alpha;
-    float beta;
-    float phi;
-    float theta;
-    float psi;
-    float chi;
-    float p;
-    float q;
-    float r;
-    float Vg;
-    float wn;
-    float we;
-  };
-
-  bool baro_init_; /**< Initial barometric pressure */
-
-  virtual void estimate(const Input & input, Output & output) = 0;
-
-  ParamManagerROS params_;
-  bool gps_init_;
-  double init_lat_ = 0.0; /**< Initial latitude in degrees */
-  double init_lon_ = 0.0; /**< Initial longitude in degrees */
-  float init_alt_ = 0.0;  /**< Initial altitude in meters above MSL  */
-  float init_static_;     /**< Initial static pressure (mbar)  */
+  EstimatorROS(bool use_seeding_params);
 
 private:
+  EstimatorInterface * estimator_;
+  ParamManagerROS params_;
+
+  bool baro_init_;
+  bool gps_init_;
+  float init_lat_; /**< Initial latitude in degrees */
+  float init_lon_; /**< Initial longitude in degrees */
+  float init_alt_;  /**< Initial altitude in meters above MSL  */
+  float init_static_;     /**< Initial static pressure (mbar)  */
+
   rclcpp::Publisher<rosplane_msgs::msg::State>::SharedPtr vehicle_state_pub_;
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr gnss_fix_sub_;
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr
@@ -158,7 +115,7 @@ private:
   rcl_interfaces::msg::SetParametersResult
   parametersCallback(const std::vector<rclcpp::Parameter> & parameters);
 
-  Input input_;
+  EstimatorInterface::Input input_;
 };
 
 } // namespace rosplane
