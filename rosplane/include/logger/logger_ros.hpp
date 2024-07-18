@@ -1,7 +1,3 @@
-//
-// Created by brandon on 7/18/24.
-//
-
 #ifndef LOGGER_ROS_HPP
 #define LOGGER_ROS_HPP
 
@@ -16,11 +12,11 @@ class LoggerROS : public LoggerInterface
 public:
   LoggerROS(rclcpp::Node & node);
 
-  void debug(const std::stringstream& message) override;
-  void info(const std::stringstream& message) override;
-  void warn(const std::stringstream& message) override;
-  void error(const std::stringstream& message) override;
-  void fatal(const std::stringstream& message) override;
+  void debug(const std::string& message) override;
+  void info(const std::string& message) override;
+  void warn(const std::string& message) override;
+  void error(const std::string& message) override;
+  void fatal(const std::string& message) override;
 
 private:
   rclcpp::Node & node_;
