@@ -12,7 +12,7 @@ def generate_launch_description():
 
     # Determine the appropriate control scheme.
     control_type = "default"
-    aircraft = "skyhunter" # Default aircraft 
+    aircraft = "anaconda" # Default aircraft
     use_params = 'false'
 
     for arg in sys.argv:
