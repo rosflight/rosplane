@@ -13,7 +13,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/fluid_pressure.hpp>
 
-#include "param_manager.hpp"
+#include "param_manager_ros.hpp"
 #include "rosplane_msgs/msg/current_path.hpp"
 #include "rosplane_msgs/msg/state.hpp"
 #include "rosplane_msgs/msg/waypoint.hpp"
@@ -63,7 +63,7 @@ protected:
     int8_t lamda; /** Direction of orbital path (cw is 1, ccw is -1) */
   };
 
-  ParamManager params_; /** Holds the parameters for the path_manager and children */
+  ParamManagerROS params_; /** Holds the parameters for the path_manager and children */
 
   /**
    * @brief Manages the current path based on the stored waypoint list

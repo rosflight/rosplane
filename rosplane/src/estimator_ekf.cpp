@@ -9,9 +9,7 @@
 namespace rosplane
 {
 
-EstimatorEKF::EstimatorEKF()
-    : EstimatorROS()
-{}
+EstimatorEKF::EstimatorEKF(ParamMangerInterface * params) : params_(params) {}
 
 std::tuple<Eigen::MatrixXf, Eigen::VectorXf> EstimatorEKF::measurement_update(
   Eigen::VectorXf x, Eigen::VectorXf inputs,
@@ -51,7 +49,7 @@ std::tuple<Eigen::MatrixXf, Eigen::VectorXf> EstimatorEKF::propagate_model(
 {
 
   int N =
-    params_.get_int("num_propagation_steps"); // TODO: Declare this parameter in the ekf class.
+    params_->get_int("num_propagation_steps"); // TODO: Declare this parameter in the ekf class.
 
   for (int _ = 0; _ < N; _++) {
 

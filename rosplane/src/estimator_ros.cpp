@@ -5,15 +5,18 @@
 
 #include "estimator_continuous_discrete.hpp"
 #include "estimator_ros.hpp"
+#include "logger/logger_ros.hpp"
 
 namespace rosplane
 {
 
-EstimatorROS::EstimatorROS()
+EstimatorROS::EstimatorROS(bool use_seeding_params)
     : Node("estimator_ros")
     , params_(this)
     , params_initialized_(false)
 {
+  LoggerInterface * logger = new LoggerROS(*this);
+  estimator_ = new EstimatorContinuousDiscrete(&params_, logger);
   vehicle_state_pub_ = this->create_publisher<rosplane_msgs::msg::State>("estimated_state", 10);
 
   gnss_fix_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
@@ -29,11 +32,14 @@ EstimatorROS::EstimatorROS()
   status_sub_ = this->create_subscription<rosflight_msgs::msg::Status>(
     status_topic_, 10, std::bind(&EstimatorROS::statusCallback, this, std::placeholders::_1));
 
+  baro_init_ = false;
+  gps_init_ = false;
+  init_lat_ = 0.0;
+  init_lon_ = 0.0;
+  init_alt_ = 0.0;
   init_static_ = 0;
   baro_count_ = 0;
   armed_first_time_ = false;
-  baro_init_ = false;
-  gps_init_ = false;
 
   // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
@@ -54,6 +60,27 @@ EstimatorROS::EstimatorROS()
   param_filepath_ = full_path.string();
 
   set_timer();
+
+  if (use_seeding_params) {
+    double init_lat = params_.get_double("init_lat");
+    double init_long = params_.get_double("init_lon");
+    double init_alt = params_.get_double("init_alt");
+    double init_static = params_.get_double("baro_calibration_val");
+
+    RCLCPP_INFO_STREAM(this->get_logger(), "Using seeded estimator values.");
+    RCLCPP_INFO_STREAM(this->get_logger(), "Seeded initial latitude: " << init_lat);
+    RCLCPP_INFO_STREAM(this->get_logger(), "Seeded initial longitude: " << init_long);
+    RCLCPP_INFO_STREAM(this->get_logger(), "Seeded initial altitude: " << init_alt);
+    RCLCPP_INFO_STREAM(this->get_logger(), "Seeded barometer calibration value: " << init_static);
+
+    gps_init_ = true;
+    init_lat_ = init_lat;
+    init_lon_ = init_long;
+    init_alt_ = init_alt;
+
+    baro_init_ = true;
+    init_static_ = init_static;
+  }
 }
 
 void EstimatorROS::declare_parameters()
@@ -111,10 +138,10 @@ EstimatorROS::parametersCallback(const std::vector<rclcpp::Parameter> & paramete
 
 void EstimatorROS::update()
 {
-  Output output;
+  EstimatorInterface::Output output;
 
   if (armed_first_time_) {
-    estimate(input_, output);
+    estimator_->estimate(input_, output);
   } else {
     output.pn = output.pe = output.h = 0;
     output.phi = output.theta = output.psi = 0;
@@ -330,21 +357,21 @@ int main(int argc, char ** argv)
 
   rclcpp::init(argc, argv);
 
-  char * use_params; // HACK: Fix in a more permanant way.
+  char * use_seeding_params = new char[0]; // HACK: Fix in a more permanant way.
   if (argc >= 1) {
-    use_params = argv[1];
+    use_seeding_params = argv[1];
   }
 
-  if (!strcmp(use_params, "true")) {
-    rclcpp::spin(std::make_shared<rosplane::EstimatorContinuousDiscrete>(use_params));
-  } else if (strcmp(use_params, "false")) // If the string is not true or false print error.
+  if (!strcmp(use_seeding_params, "true")) {
+    rclcpp::spin(std::make_shared<rosplane::EstimatorROS>(true));
+  } else if (strcmp(use_seeding_params, "false")) // If the string is not true or false print error.
   {
-    auto estimator_node = std::make_shared<rosplane::EstimatorContinuousDiscrete>();
+    auto estimator_node = std::make_shared<rosplane::EstimatorROS>(false);
     RCLCPP_WARN(estimator_node->get_logger(),
                 "Invalid option for seeding estimator, defaulting to unseeded.");
     rclcpp::spin(estimator_node);
   } else {
-    rclcpp::spin(std::make_shared<rosplane::EstimatorContinuousDiscrete>());
+    rclcpp::spin(std::make_shared<rosplane::EstimatorROS>(false));
   }
 
   return 0;

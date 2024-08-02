@@ -49,14 +49,32 @@ install(DIRECTORY launch params DESTINATION share/${PROJECT_NAME}/)
 
 # Param Manager
 add_library(param_manager
-  include/param_manager/param_manager.hpp
-  src/param_manager/param_manager.cpp
+  include/param_manager/param_manager_interface.hpp
+  include/param_manager/param_manager_ros.hpp
+  src/param_manager/param_manager_ros.cpp
 )
 ament_target_dependencies(param_manager rclcpp)
 ament_export_targets(param_manager HAS_LIBRARY_TARGET)
 install(DIRECTORY include/param_manager DESTINATION include)
 install(TARGETS param_manager
   EXPORT param_manager
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include
+)
+
+# Logger
+add_library(logger
+  include/logger/logger_interface.hpp
+  include/logger/logger_ros.hpp
+  src/logger/logger_ros.cpp
+)
+ament_target_dependencies(logger rclcpp)
+ament_export_targets(logger HAS_LIBRARY_TARGET)
+install(DIRECTORY include/logger DESTINATION include)
+install(TARGETS logger
+  EXPORT logger
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
@@ -72,7 +90,7 @@ add_executable(rosplane_controller
   src/controller_successive_loop.cpp
   src/controller_total_energy.cpp)
 ament_target_dependencies(rosplane_controller rosplane_msgs rosflight_msgs rclcpp rclpy Eigen3)
-target_link_libraries(rosplane_controller param_manager)
+target_link_libraries(rosplane_controller param_manager logger)
 install(TARGETS
   rosplane_controller
   DESTINATION lib/${PROJECT_NAME})
@@ -82,7 +100,7 @@ add_executable(rosplane_path_follower
   src/path_follower_example.cpp
   src/path_follower_base.cpp)
 ament_target_dependencies(rosplane_path_follower rosplane_msgs rclcpp rclpy Eigen3)
-target_link_libraries(rosplane_path_follower param_manager)
+target_link_libraries(rosplane_path_follower param_manager logger)
 install(TARGETS
   rosplane_path_follower
   DESTINATION lib/${PROJECT_NAME})
@@ -92,7 +110,7 @@ add_executable(rosplane_path_manager
   src/path_manager_base.cpp
   src/path_manager_example.cpp)
 ament_target_dependencies(rosplane_path_manager rosplane_msgs rclcpp rclpy Eigen3)
-target_link_libraries(rosplane_path_manager param_manager)
+target_link_libraries(rosplane_path_manager param_manager logger)
 install(TARGETS
   rosplane_path_manager
   DESTINATION lib/${PROJECT_NAME})
@@ -102,6 +120,7 @@ add_executable(rosplane_path_planner
   src/path_planner.cpp)
 target_link_libraries(rosplane_path_planner
   param_manager
+  logger
   ${YAML_CPP_LIBRARIES}
 )
 ament_target_dependencies(rosplane_path_planner rosplane_msgs rosflight_msgs std_srvs rclcpp rclpy Eigen3)
@@ -118,7 +137,7 @@ target_link_libraries(rosplane_estimator_node
   ${YAML_CPP_LIBRARIES}
 )
 ament_target_dependencies(rosplane_estimator_node rosplane_msgs rosflight_msgs rclcpp Eigen3)
-target_link_libraries(rosplane_estimator_node param_manager)
+target_link_libraries(rosplane_estimator_node param_manager logger)
 install(TARGETS
   rosplane_estimator_node
   DESTINATION lib/${PROJECT_NAME})

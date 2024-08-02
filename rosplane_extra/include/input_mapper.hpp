@@ -6,7 +6,7 @@
 #include <rosflight_msgs/msg/rc_raw.hpp>
 #include <std_srvs/srv/trigger.hpp>
 
-#include "param_manager/param_manager.hpp"
+#include "param_manager/param_manager_ros.hpp"
 #include "rosplane_msgs/msg/controller_commands.hpp"
 #include "rosplane_msgs/msg/state.hpp"
 
@@ -239,7 +239,7 @@ private:
   /**
    * Param manager object, for getting parameters from ROS.
    */
-  ParamManager params_;
+  ParamManagerROS params_;
 
   /**
    * ROS2 parameter system interface. This connects ROS2 parameters with the defined update callback,

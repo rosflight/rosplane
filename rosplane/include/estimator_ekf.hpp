@@ -8,17 +8,17 @@
 #include <Eigen/Geometry>
 #include <yaml-cpp/yaml.h>
 
-#include "estimator_ros.hpp"
+#include "estimator_interface.hpp"
+#include "param_manager/param_manager_interface.hpp"
 
 namespace rosplane
 {
 
-class EstimatorEKF : public EstimatorROS
+class EstimatorEKF : public EstimatorInterface
 {
 public:
-  EstimatorEKF();
+  EstimatorEKF(ParamMangerInterface * params);
 
-protected:
   std::tuple<Eigen::MatrixXf, Eigen::VectorXf> measurement_update(
     Eigen::VectorXf x, Eigen::VectorXf inputs,
     std::function<Eigen::VectorXf(const Eigen::VectorXf, const Eigen::VectorXf)> measurement_model,
@@ -41,7 +41,8 @@ protected:
                             Eigen::VectorXf x, Eigen::MatrixXf P);
 
 private:
-  virtual void estimate(const Input & input, Output & output) override = 0;
+  ParamMangerInterface * params_;
+
 };
 
 } // namespace rosplane
