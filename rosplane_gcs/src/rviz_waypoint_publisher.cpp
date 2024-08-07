@@ -4,12 +4,14 @@
 #include "visualization_msgs/msg/marker.hpp"
 #include "rosplane_msgs/msg/waypoint.hpp"
 #include "rosplane_msgs/msg/state.hpp"
+#include "rosplane_msgs/msg/current_path.hpp"
 // #include "geometry_msgs/msg/point.hpp"
 // #include "std_msgs/msg/header.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2/LinearMath/Quaternion.h"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include <ament_index_cpp/get_package_share_directory.hpp>
+#include <cmath>
 
 using std::placeholders::_1;
 
@@ -29,10 +31,12 @@ private:
     rclcpp::Subscription<rosplane_msgs::msg::Waypoint>::SharedPtr waypoint_sub_;
     rclcpp::Subscription<rosplane_msgs::msg::State>::SharedPtr vehicle_state_sub_;
     rclcpp::Subscription<rosplane_msgs::msg::Waypoint>::SharedPtr target_wp_sub_;
+    rclcpp::Subscription<rosplane_msgs::msg::CurrentPath>::SharedPtr current_path_sub_;
 
     std::unique_ptr<tf2_ros::TransformBroadcaster> aircraft_tf2_broadcaster_;
 
     void new_wp_callback(const rosplane_msgs::msg::Waypoint & wp);
+    void fillet_callback(const rosplane_msgs::msg::CurrentPath & cp);    // I added this line
     void state_update_callback(const rosplane_msgs::msg::State & state);
     void target_wp_callback(const rosplane_msgs::msg::Waypoint & wp);
     void update_list();
@@ -56,13 +60,15 @@ private:
 
     int num_wps_;
     int i;
+    bool do_pub_fillet;
 };
 
 rviz_waypoint_publisher::rviz_waypoint_publisher()
     : Node("rviz_waypoint_publisher") {
-    
+
     rclcpp::QoS qos_transient_local_20_(20);
     qos_transient_local_20_.transient_local();
+
     // Publishers
     rviz_wp_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("rviz/waypoint", qos_transient_local_20_);
     rviz_mesh_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("rviz/mesh", 5);
@@ -77,10 +83,10 @@ rviz_waypoint_publisher::rviz_waypoint_publisher()
     target_wp_sub_ = this->create_subscription<rosplane_msgs::msg::Waypoint>("target_waypoint", qos_transient_local_20_,
             std::bind(&rviz_waypoint_publisher::target_wp_callback, this, _1));
 
-    // Services
-    // orbit_last_srv_ = this->create_service<std_msgs::srv::Bool>
-    
-    
+    current_path_sub_ = this->create_subscription<rosplane_msgs::msg::CurrentPath>("current_path", 10,
+            std::bind(&rviz_waypoint_publisher::fillet_callback, this, _1));
+
+
     // Initialize aircraft
     aircraft_.header.frame_id = "stl_frame";
     aircraft_.ns = "vehicle";
@@ -108,6 +114,7 @@ rviz_waypoint_publisher::rviz_waypoint_publisher()
     i = 0;
 
     declare_parameters();
+    do_pub_fillet = true;
 }
 
 rviz_waypoint_publisher::~rviz_waypoint_publisher() {}
@@ -122,8 +129,9 @@ void rviz_waypoint_publisher::declare_parameters() {
 }
 
 void rviz_waypoint_publisher::new_wp_callback(const rosplane_msgs::msg::Waypoint & wp) {
+    visualization_msgs::msg::Marker new_marker;
+
     if (wp.clear_wp_list) {
-        visualization_msgs::msg::Marker new_marker;
 
         rclcpp::Time now = this->get_clock()->now();
         // Publish one for each ns
@@ -146,6 +154,27 @@ void rviz_waypoint_publisher::new_wp_callback(const rosplane_msgs::msg::Waypoint
     }
     
     // Add point to line and marker lists
+
+    // Create marker
+    rclcpp::Time now = this->get_clock()->now();
+    new_marker.header.stamp = now;
+    new_marker.header.frame_id = "NED";
+    new_marker.ns = "wp";
+    new_marker.id = num_wps_;
+    new_marker.type = visualization_msgs::msg::Marker::SPHERE;
+    new_marker.action = visualization_msgs::msg::Marker::ADD;
+    new_marker.pose.position.x = wp.w[0];
+    new_marker.pose.position.y = wp.w[1];
+    new_marker.pose.position.z = wp.w[2];
+    new_marker.scale.x = SCALE;
+    new_marker.scale.y = SCALE;
+    new_marker.scale.z = SCALE;
+    new_marker.color.r = 1.0f;
+    new_marker.color.g = 0.0f;
+    new_marker.color.b = 0.0f;
+    new_marker.color.a = 1.0;
+
+    // Add point to line list
     geometry_msgs::msg::Point new_p;
     new_p.x = wp.w[0];
     new_p.y = wp.w[1];
@@ -186,6 +215,102 @@ void rviz_waypoint_publisher::new_wp_callback(const rosplane_msgs::msg::Waypoint
 void rviz_waypoint_publisher::update_list() {
     double line_scale = this->get_parameter("line_scale").as_double();
 
+void rviz_waypoint_publisher::fillet_callback(const rosplane_msgs::msg::CurrentPath & cp) {
+    visualization_msgs::msg::Marker new_marker;
+    visualization_msgs::msg::Marker fillet_line_list;
+    std::vector<geometry_msgs::msg::Point> fillet_line_points;
+
+    static double center_x;
+    static double center_y;
+
+    // Show fillet if path type is orbital
+    if (cp.path_type == 0) {
+        if (do_pub_fillet | (center_x != cp.c[0])) {
+            center_x = cp.c[0];
+            center_y = cp.c[1];
+            double radius = cp.rho;
+            int degrees = 360;
+            double rotation = 2 * M_PI / degrees;
+
+            for(int degree = 0; degree <= degrees; ++degree) {
+                double angle_rotation = degree * rotation;
+                double point_x = center_x + radius * cos(angle_rotation);
+                double point_y = center_y + radius * sin(angle_rotation);
+
+                // Add point to line list
+                geometry_msgs::msg::Point new_p;
+                new_p.x = point_x;
+                new_p.y = point_y;
+                new_p.z = cp.c[2];
+                fillet_line_points.push_back(new_p);
+                }
+            rclcpp::Time now = this->get_clock()->now();
+            fillet_line_list.header.stamp = now;
+            fillet_line_list.header.frame_id = "NED";
+            fillet_line_list.ns = "fillet";
+            fillet_line_list.id = 0;
+            fillet_line_list.type = visualization_msgs::msg::Marker::LINE_STRIP;
+            fillet_line_list.action = visualization_msgs::msg::Marker::ADD;
+            fillet_line_list.scale.x = 3.0;
+            fillet_line_list.color.r = 1.0f;
+            fillet_line_list.color.g = 0.443f;
+            fillet_line_list.color.b = 0.0;
+            fillet_line_list.color.a = 1.0;
+            fillet_line_list.points = fillet_line_points;
+
+            // Add Text label to fillet_line_list marker
+            visualization_msgs::msg::Marker fillet_text;
+            fillet_text.header.stamp = now;
+            fillet_text.header.frame_id = "NED";
+            fillet_text.ns = "fillet";
+            fillet_text.id = 1;
+            fillet_text.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+            fillet_text.action = visualization_msgs::msg::Marker::ADD;
+            fillet_text.pose.position.x = cp.c[0];
+            fillet_text.pose.position.y = cp.c[1];
+            fillet_text.pose.position.z = cp.c[2];
+            fillet_text.scale.z = TEXT_SCALE;
+            fillet_text.color.r = 1.0f;
+            fillet_text.color.g = 0.443f;
+            fillet_text.color.b = 0.0f;
+            fillet_text.color.a = 1.0;
+            fillet_text.text = "Current  Orbit";
+
+            rviz_wp_pub_->publish(fillet_line_list);
+            rviz_wp_pub_->publish(fillet_text);
+            do_pub_fillet = false;
+        }
+    }
+
+    //erase the circle and set do_pub_fillet == true
+    if (cp.path_type == 1) {
+        if (!do_pub_fillet) {
+            rclcpp::Time now = this->get_clock()->now();
+            fillet_line_list.header.stamp = now;
+            fillet_line_list.header.frame_id = "NED";
+            fillet_line_list.ns = "fillet";
+            fillet_line_list.id = 0;
+            fillet_line_list.action = visualization_msgs::msg::Marker::DELETEALL;
+            rviz_wp_pub_->publish(fillet_line_list);
+
+            visualization_msgs::msg::Marker fillet_text;
+            fillet_text.header.stamp = now;
+            fillet_text.header.frame_id = "NED";
+            fillet_text.ns = "fillet";
+            fillet_text.id = 1;
+            fillet_text.action = visualization_msgs::msg::Marker::DELETEALL;
+            rviz_wp_pub_->publish(fillet_text);
+
+            // Clear line list
+            fillet_line_points.clear();
+
+            do_pub_fillet = true;
+            return;
+            }
+    }
+}
+
+void rviz_waypoint_publisher::update_list() {   
     rclcpp::Time now = this->get_clock()->now();
     line_list_.header.stamp = now;
     line_list_.header.frame_id = "NED";
