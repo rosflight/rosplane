@@ -52,6 +52,9 @@ public:
    *   the altitude command.
    * - `rc_airspeed_rate`: The max rate in meters per second at which the RC controller can adjust
    *   the airspeed command.
+   *
+   * There is also a parameter called `deadzone_size` which specifies the size of deviations on the
+   * RC transmitter to ignore, avoiding gradual drift of any rate control mode.
    */
   InputMapper();
 
@@ -164,6 +167,11 @@ private:
    * Helper function for knowing when to call a ROS service to change pitch override.
    */
   void set_pitch_override(bool pitch_override);
+
+  /**
+   * Helper function for applying deadzones to RC input.
+   */
+  double apply_deadzone(double input);
 
   /**
    * Callback for set_param_timer_.
