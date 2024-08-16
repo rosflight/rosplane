@@ -72,7 +72,7 @@ TuningSignalGenerator::TuningSignalGenerator()
   initial_time_ = this->get_clock()->now().seconds();
 
   command_publisher_ =
-    this->create_publisher<rosplane_msgs::msg::ControllerCommands>("/controller_commands", 1);
+    this->create_publisher<rosplane_msgs::msg::ControllerCommands>("/controller_command", 1);
 
   publish_timer_ =
     this->create_wall_timer(std::chrono::milliseconds(static_cast<long>(1000 / publish_rate_hz_)),
