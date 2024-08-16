@@ -43,6 +43,7 @@ include_directories(  #use this if you need .h files for include statements.  Th
 )
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
+install(DIRECTORY resources DESTINATION share/${PROJECT_NAME})
 
 ### START OF EXECUTABLES ###
 
