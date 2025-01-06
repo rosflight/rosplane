@@ -172,6 +172,16 @@ void PathManagerBase::current_path_publish()
   input.chi = vehicle_state_.chi;
 
   Output output;
+  output.va_d = 0;
+  output.r[0] = 0;
+  output.r[1] = 0;
+  output.r[2] = 0;
+  output.q[0] = 0;
+  output.q[1] = 0;
+  output.q[2] = 0;
+  output.c[0] = 0;
+  output.c[1] = 0;
+  output.c[2] = 0;
 
   if (state_init_ == true) {
     manage(input, output);
