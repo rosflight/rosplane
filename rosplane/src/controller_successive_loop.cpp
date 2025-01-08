@@ -250,11 +250,24 @@ float ControllerSucessiveLoop::roll_hold(float phi_c, float phi, float p)
   float up = r_kp * error;
   float ui = r_ki * r_integrator;
   float ud = r_kd * p;
+  
+  if (std::isnan(up)) {
+    up = 0.0;
+  }
+  
+  if (std::isnan(ui)) {
+    r_integrator = 0.0;
+    ui = 0.0;
+  }
+  
+  if (std::isnan(ud)) {
+    ud = 0.0;
+  }
 
   float delta_a = sat(trim_a / pwm_rad_a + up + ui - ud, max_a, -max_a);
   float delta_a_unsat = trim_a / pwm_rad_a + up + ui - ud;
 
-  if (fabs(delta_a - delta_a_unsat) > 0.0001) {
+  if (fabs(delta_a - delta_a_unsat) > 0.0001 && fabs(r_ki) > 0.00001) {
     r_integrator = r_integrator_prev;
   }
 
@@ -284,11 +297,24 @@ float ControllerSucessiveLoop::pitch_hold(float theta_c, float theta, float q)
   float up = p_kp * error;
   float ui = p_ki * p_integrator_;
   float ud = p_kd * q;
+  
+  if (std::isnan(up)) {
+    up = 0.0;
+  }
+
+  if (std::isnan(ui)) {
+    p_integrator_ = 0.0;
+    ui = 0.0;
+  }
+  
+  if (std::isnan(ud)) {
+    ud = 0.0;
+  }
 
   float delta_e = sat(trim_e / pwm_rad_e + up + ui - ud, max_e, -max_e);
   float delta_e_unsat = trim_e / pwm_rad_e + up + ui - ud;
 
-  if (fabs(delta_e - delta_e_unsat) > 0.0001) {
+  if (fabs(delta_e - delta_e_unsat) > 0.0001 && fabs(p_ki) > 0.00001) {
     p_integrator_ = p_integrator_prev;
   }
 
