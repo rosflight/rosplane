@@ -253,15 +253,18 @@ float ControllerSucessiveLoop::roll_hold(float phi_c, float phi, float p)
   
   if (std::isnan(up)) {
     up = 0.0;
+    RCLCPP_WARN(this->get_logger(), "Proportional control on the roll loop is NAN");
   }
   
   if (std::isnan(ui)) {
     r_integrator = 0.0;
     ui = 0.0;
+    RCLCPP_WARN(this->get_logger(), "Integral control on the roll loop is NAN");
   }
   
   if (std::isnan(ud)) {
     ud = 0.0;
+    RCLCPP_WARN(this->get_logger(), "Derivative control on the roll loop is NAN");
   }
 
   float delta_a = sat(trim_a / pwm_rad_a + up + ui - ud, max_a, -max_a);
@@ -300,15 +303,18 @@ float ControllerSucessiveLoop::pitch_hold(float theta_c, float theta, float q)
   
   if (std::isnan(up)) {
     up = 0.0;
+    RCLCPP_WARN(this->get_logger(), "Proportional control on the roll loop is NAN");
   }
 
   if (std::isnan(ui)) {
     p_integrator_ = 0.0;
     ui = 0.0;
+    RCLCPP_WARN(this->get_logger(), "Integral control on the roll loop is NAN");
   }
   
   if (std::isnan(ud)) {
     ud = 0.0;
+    RCLCPP_WARN(this->get_logger(), "Derivative control on the roll loop is NAN");
   }
 
   float delta_e = sat(trim_e / pwm_rad_e + up + ui - ud, max_e, -max_e);
