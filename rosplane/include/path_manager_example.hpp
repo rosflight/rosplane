@@ -37,6 +37,8 @@ private:
   std::chrono::time_point<std::chrono::system_clock> start_time_;
   FilletState fil_state_;
 
+  bool first_;
+
   /**
    * @brief Determines the line type and calculates the line parameters to publish to path_follower
    */

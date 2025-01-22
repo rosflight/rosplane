@@ -53,6 +53,9 @@ EstimatorROS::EstimatorROS()
 
   param_filepath_ = full_path.string();
 
+  input_.diff_pres = 0.0; // Initalize the differential_pressure measurement to zero.
+  input_.static_pres = 0.0; // Initalize the differential_pressure measurement to zero.
+
   set_timer();
 }
 

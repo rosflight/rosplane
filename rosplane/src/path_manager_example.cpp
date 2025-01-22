@@ -20,6 +20,8 @@ PathManagerExample::PathManagerExample()
   params_.set_parameters();
 
   start_time_ = std::chrono::system_clock::now();
+
+  first_ = true;
 }
 
 void PathManagerExample::manage(const Input & input, Output & output)
@@ -154,7 +156,6 @@ void PathManagerExample::manage_fillet(const Input & input, Output & output)
   increment_indices(idx_a_, idx_b, idx_c, input, output);
 
   if (orbit_last && idx_a_ == num_waypoints_ - 1) {
-    // TODO: check to see if this is the correct behavior.
     return;
   }
 
@@ -399,6 +400,14 @@ void PathManagerExample::manage_dubins(const Input & input, Output & output)
         } else {
           idx_a_++;
           idx_b = idx_a_ + 1;
+
+          if (first_) {
+            first_ = false;
+            waypoints_.erase(waypoints_.begin());
+            num_waypoints_--;
+            idx_a_--;
+            idx_b = idx_a_ + 1;
+          }
         }
 
         // plan new Dubin's path to next waypoint configuration
