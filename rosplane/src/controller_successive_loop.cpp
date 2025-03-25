@@ -488,7 +488,7 @@ void ControllerSucessiveLoop::declare_parameters()
   params_.declare_double("c_ki", .4);
   params_.declare_double("c_kd", .0);
   params_.declare_double("max_roll", 25.0);
-  params_.declare_double("cmd_takeoff_pitch", 5.0);
+  params_.declare_double("cmd_takeoff_pitch", 15.0);
 
   params_.declare_double("r_kp", .06);
   params_.declare_double("r_ki", .0);

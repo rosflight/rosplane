@@ -1,24 +1,24 @@
 autopilot:
   ros__parameters:
-    alt_hz: 10.0
+    alt_hz: 20.0
     alt_toz: 5.0
     tau: 50.0
-    c_kp: 3.0
+    c_kp: 2.0
     c_kd: 0.0
-    c_ki: 0.0
-    r_kp: 0.75
-    r_kd: 0.1
+    c_ki: 0.0025
+    r_kp: 0.55
+    r_kd: 0.20
     r_ki: 0.0
-    p_kp: -0.5
-    p_kd: -0.095
+    p_kp: -4.25
+    p_kd: -0.6
     p_ki: 0.0
     p_ff: 0.0
-    a_t_kp: 0.05
+    a_t_kp: 0.1
     a_t_kd: 0.0
-    a_t_ki: 0.005
-    a_kp: 0.1
+    a_t_ki: 0.02
+    a_kp: 0.015
     a_kd: 0.0
-    a_ki: 0.01
+    a_ki: 0.001
     l_kp: .5
     l_kd: 0.0
     l_ki: 0.005
@@ -30,7 +30,7 @@ autopilot:
     trim_r: 0.0
     trim_t: 0.5
     max_e: 0.61
-    max_a: 0.60
+    max_a: 0.8
     max_r: 0.523
     max_t: 1.0
     pwm_rad_e: 1.0
@@ -39,21 +39,21 @@ autopilot:
     max_takeoff_throttle: 1.0
     mass: 4.5
     gravity: 9.8
-    max_roll: 35.0
+    max_roll: 45.0
     controller_output_frequency: 100.0
 path_manager:
   ros__parameters:
-    R_min: 100.0
+    R_min: 50.0
     orbit_last: False
     default_altitude: 50.0
-    default_airspeed: 25.0
+    default_airspeed: 15.0
     current_path_pub_frequency: 100.0
 path_follower:
   ros__parameters:
     controller_commands_pub_frequency: 10.0
-    chi_infty: 0.5
-    k_orbit: 4.0
-    k_path: 0.05
+    chi_infty: 1.2
+    k_orbit: 0.5
+    k_path: 0.0175
     gravity: 9.81
 estimator:
   ros__parameters:
@@ -69,8 +69,7 @@ estimator:
     gps_n_lim: 10000.
     gps_e_lim: 10000.
     frequency: 100
-    # These will be overridden on each boot the workspace is symlink installed.
-    baro_calibration_val: 0.0
-    init_lat: 0.0
-    init_lon: 0.0
-    init_alt: 0.0
+    baro_calibration_val: 85256.09375
+    init_lat: 40.246371499999995
+    init_lon: -111.64741649999999
+    init_alt: 1387.25
