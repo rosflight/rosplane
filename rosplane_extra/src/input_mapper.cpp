@@ -29,7 +29,7 @@ InputMapper::InputMapper()
 
   set_param_client_ = this->create_client<rcl_interfaces::srv::SetParameters>(
     "/autopilot/set_parameters", rmw_qos_profile_services_default);
-  set_param_timer_ = this->create_wall_timer(
+  set_param_timer_ = rclcpp::create_timer(this, this->get_clock(),
     std::chrono::milliseconds(100), std::bind(&InputMapper::set_param_timer_callback, this));
   set_param_timer_->cancel();
 
