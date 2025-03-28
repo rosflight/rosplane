@@ -177,7 +177,7 @@ void ControllerBase::set_timer()
   timer_period_ = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1'000'000));
 
   // Set timer to trigger bound callback (actuator_controls_publish) at the given periodicity.
-  timer_ = this->create_wall_timer(timer_period_,
+  timer_ = rclcpp::create_timer(this, this->get_clock(), timer_period_,
                                    std::bind(&ControllerBase::actuator_controls_publish, this));
 }
 

@@ -55,7 +55,7 @@ void PathManagerBase::set_timer()
   timer_period_ = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1e6));
 
   update_timer_ =
-    this->create_wall_timer(timer_period_, std::bind(&PathManagerBase::current_path_publish, this));
+    rclcpp::create_timer(this, this->get_clock(), timer_period_, std::bind(&PathManagerBase::current_path_publish, this));
 }
 
 rcl_interfaces::msg::SetParametersResult
