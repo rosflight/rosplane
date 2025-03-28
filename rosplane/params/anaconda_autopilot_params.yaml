@@ -37,6 +37,7 @@ autopilot:
     pwm_rad_a: 1.0
     pwm_rad_r: 1.0
     max_takeoff_throttle: 1.0
+    takeoff_airspeed: 25.0
     mass: 4.5
     gravity: 9.8
     max_roll: 45.0
@@ -69,7 +70,7 @@ estimator:
     gps_n_lim: 10000.
     gps_e_lim: 10000.
     frequency: 100
-    baro_calibration_val: 85256.09375
-    init_lat: 40.246371499999995
-    init_lon: -111.64741649999999
-    init_alt: 1387.25
+    baro_calibration_val: 85262.546875
+    init_lat: 40.246375999999998
+    init_lon: -111.6474116
+    init_alt: 1386.990966796875

@@ -144,9 +144,10 @@ void ControllerSucessiveLoop::take_off_longitudinal_control(const Input & input,
   // For readability, declare parameters here that will be used in this function
   double max_takeoff_throttle = params_.get_double("max_takeoff_throttle");
   double cmd_takeoff_pitch = params_.get_double("cmd_takeoff_pitch");
+  double takeoff_airspeed = params_.get_double("takeoff_airspeed");
 
   // Set throttle to not overshoot altitude.
-  output.delta_t = sat(airspeed_with_throttle_hold(input.va_c, input.va), max_takeoff_throttle, 0);
+  output.delta_t = sat(airspeed_with_throttle_hold(takeoff_airspeed, input.va), max_takeoff_throttle, 0);
 
   // Command a shallow pitch angle to gain altitude.
   output.theta_c = cmd_takeoff_pitch * M_PI / 180.0;
@@ -489,6 +490,7 @@ void ControllerSucessiveLoop::declare_parameters()
   params_.declare_double("c_kd", .0);
   params_.declare_double("max_roll", 25.0);
   params_.declare_double("cmd_takeoff_pitch", 15.0);
+  params_.declare_double("takeoff_airspeed", 25.0);
 
   params_.declare_double("r_kp", .06);
   params_.declare_double("r_ki", .0);
