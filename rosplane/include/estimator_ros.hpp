@@ -14,13 +14,12 @@
 #include <chrono>
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
-#include <geometry_msgs/msg/twist_stamped.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rosflight_msgs/msg/airspeed.hpp>
 #include <rosflight_msgs/msg/barometer.hpp>
 #include <rosflight_msgs/msg/status.hpp>
+#include <rosflight_msgs/msg/gnss.hpp>
 #include <sensor_msgs/msg/imu.hpp>
-#include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <yaml-cpp/yaml.h>
 
 #include "param_manager.hpp"
@@ -93,9 +92,7 @@ protected:
 
 private:
   rclcpp::Publisher<rosplane_msgs::msg::State>::SharedPtr vehicle_state_pub_;
-  rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr gnss_fix_sub_;
-  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr
-    gnss_vel_sub_; //used in conjunction with the gnss_fix_sub_
+  rclcpp::Subscription<rosflight_msgs::msg::GNSS>::SharedPtr gnss_sub_;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
   rclcpp::Subscription<rosflight_msgs::msg::Barometer>::SharedPtr baro_sub_;
   rclcpp::Subscription<rosflight_msgs::msg::Airspeed>::SharedPtr airspeed_sub_;
@@ -104,8 +101,7 @@ private:
   std::string param_filepath_ = "estimator_params.yaml";
 
   void update();
-  void gnssFixCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg);
-  void gnssVelCallback(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
+  void gnssCallback(const rosflight_msgs::msg::GNSS::SharedPtr msg);
   void imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg);
   void baroAltCallback(const rosflight_msgs::msg::Barometer::SharedPtr msg);
   /**
@@ -121,8 +117,7 @@ private:
   rclcpp::TimerBase::SharedPtr update_timer_;
   std::chrono::microseconds update_period_;
   bool params_initialized_;
-  std::string gnss_fix_topic_ = "navsat_compat/fix";
-  std::string gnss_vel_topic_ = "navsat_compat/vel";
+  std::string gnss_topic_ = "gnss";
   std::string imu_topic_ = "imu/data";
   std::string baro_topic_ = "baro";
   std::string airspeed_topic_ = "airspeed";

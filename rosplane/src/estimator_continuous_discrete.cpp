@@ -1,4 +1,5 @@
 #include <functional>
+#include <rclcpp/logging.hpp>
 #include <tuple>
 
 #include "estimator_continuous_discrete.hpp"

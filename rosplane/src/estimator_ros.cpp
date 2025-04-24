@@ -16,10 +16,8 @@ EstimatorROS::EstimatorROS()
 {
   vehicle_state_pub_ = this->create_publisher<rosplane_msgs::msg::State>("estimated_state", 10);
 
-  gnss_fix_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
-    gnss_fix_topic_, 10, std::bind(&EstimatorROS::gnssFixCallback, this, std::placeholders::_1));
-  gnss_vel_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
-    gnss_vel_topic_, 10, std::bind(&EstimatorROS::gnssVelCallback, this, std::placeholders::_1));
+  gnss_sub_ = this->create_subscription<rosflight_msgs::msg::GNSS>(
+    gnss_topic_, 10, std::bind(&EstimatorROS::gnssCallback, this, std::placeholders::_1));
   imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(
     imu_topic_, 10, std::bind(&EstimatorROS::imuCallback, this, std::placeholders::_1));
   baro_sub_ = this->create_subscription<rosflight_msgs::msg::Barometer>(
@@ -180,40 +178,41 @@ void EstimatorROS::update()
   vehicle_state_pub_->publish(msg);
 }
 
-void EstimatorROS::gnssFixCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg)
+void EstimatorROS::gnssCallback(const rosflight_msgs::msg::GNSS::SharedPtr msg)
 {
-  bool has_fix = msg->status.status
-    >= sensor_msgs::msg::NavSatStatus::STATUS_FIX; // Higher values refer to augmented fixes
-  if (!has_fix || !std::isfinite(msg->latitude)) {
+  // Rename parameter here for clarity
+  double ground_speed_threshold = params_.get_double("gps_ground_speed_threshold");
+
+  bool has_fix = msg->fix_type
+    >= rosflight_msgs::msg::GNSS::GNSS_FIX_TYPE_3D_FIX; // Higher values refer to augmented fixes
+  if (!has_fix || !std::isfinite(msg->lat)) {
     input_.gps_new = false;
     return;
   }
   if (!gps_init_ && has_fix) {
     gps_init_ = true;
-    init_alt_ = msg->altitude;
-    init_lat_ = msg->latitude;
-    init_lon_ = msg->longitude;
+
+    // Convert from hundreds of nanodegrees.
+    init_alt_ = msg->alt;
+    init_lat_ = msg->lat;
+    init_lon_ = msg->lon;
+
     saveParameter("init_lat", init_lat_);
     saveParameter("init_lon", init_lon_);
     saveParameter("init_alt", init_alt_);
   } else {
-    input_.gps_n = EARTH_RADIUS * (msg->latitude - init_lat_) * M_PI / 180.0;
+    input_.gps_n = EARTH_RADIUS * (msg->lat - init_lat_) * M_PI / 180.0;
     input_.gps_e =
-      EARTH_RADIUS * cos(init_lat_ * M_PI / 180.0) * (msg->longitude - init_lon_) * M_PI / 180.0;
-    input_.gps_h = msg->altitude - init_alt_;
+      EARTH_RADIUS * cos(init_lat_ * M_PI / 180.0) * (msg->lon - init_lon_) * M_PI / 180.0;
+    input_.gps_h = msg->alt - init_alt_;
+
     input_.gps_new = true;
   }
-}
 
-void EstimatorROS::gnssVelCallback(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
-{
-  // Rename parameter here for clarity
-  double ground_speed_threshold = params_.get_double("gps_ground_speed_threshold");
-
-  double v_n = msg->twist.linear.x;
-  double v_e = msg->twist.linear.y;
+  double v_n = msg->vel_n;
+  double v_e = msg->vel_e;
   //  double v_d = msg->twist.linear.z; // This variable was unused.
-  double ground_speed = sqrt(v_n * v_n + v_e * v_e);
+  double ground_speed = sqrt(v_n * v_n + v_e * v_e); // FIXME: Change this to use the vel down too.
   double course =
     atan2(v_e, v_n); //Does this need to be in a specific range? All uses seem to accept anything.
   input_.gps_Vg = ground_speed;
