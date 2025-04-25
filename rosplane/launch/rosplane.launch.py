@@ -33,19 +33,18 @@ def generate_launch_description():
 
     return LaunchDescription([
         launch.actions.DeclareLaunchArgument(
+            "use_sim_time",
+            default_value="false",
+            description="Whether or not to use the /clock topic in simulation to run timers."
+        ),
+        launch.actions.DeclareLaunchArgument(
+            "state_topic_remap",
+            default_value='estimated_state',
+            description="Topic that controller and path planners will listen to for state information. Defaults to the topic that the estimator publishes to"
+        ),
+        launch.actions.DeclareLaunchArgument(
             'command_publisher_remap',
             default_value='/command',
-        ),
-        Node(
-            package='rosplane',
-            executable='rosplane_controller',
-            name='autopilot',
-            parameters=[autopilot_params],
-            output='screen',
-            arguments=[control_type],
-            remappings=[
-                ('/command', launch.substitutions.LaunchConfiguration('command_publisher_remap'))
-            ]
         ),
         launch.actions.DeclareLaunchArgument(
             'controller_command_publisher_remap',
@@ -53,30 +52,64 @@ def generate_launch_description():
         ),
         Node(
             package='rosplane',
+            executable='rosplane_controller',
+            name='autopilot',
+            parameters=[
+                autopilot_params,
+                {'use_sim_time': launch.substitutions.LaunchConfiguration('use_sim_time')},
+            ],
+            output='screen',
+            arguments=[control_type],
+            remappings=[
+                ('/command', launch.substitutions.LaunchConfiguration('command_publisher_remap')),
+                ('/estimated_state', launch.substitutions.LaunchConfiguration('state_topic_remap')),
+            ]
+        ),
+        Node(
+            package='rosplane',
             executable='rosplane_path_follower',
             name='path_follower',
-            parameters=[autopilot_params],
+            parameters=[
+                autopilot_params,
+                {'use_sim_time': launch.substitutions.LaunchConfiguration('use_sim_time')},
+            ],
             remappings=[
-                ('/controller_command', launch.substitutions.LaunchConfiguration('controller_command_publisher_remap'))
+                ('/controller_command', launch.substitutions.LaunchConfiguration('controller_command_publisher_remap')),
+                ('/estimated_state', launch.substitutions.LaunchConfiguration('state_topic_remap')),
             ]
         ),
         Node(
             package='rosplane',
             executable='rosplane_path_manager',
             name='path_manager',
-            parameters=[autopilot_params],
+            parameters=[
+                autopilot_params,
+                {'use_sim_time': launch.substitutions.LaunchConfiguration('use_sim_time')},
+            ],
+            remappings=[
+                ('/estimated_state', launch.substitutions.LaunchConfiguration('state_topic_remap')),
+            ]
         ),
         Node(
             package='rosplane',
             executable='rosplane_path_planner',
             name='path_planner',
+            parameters=[
+                {'use_sim_time': launch.substitutions.LaunchConfiguration('use_sim_time')},
+            ],
+            remappings=[
+                ('/estimated_state', launch.substitutions.LaunchConfiguration('state_topic_remap')),
+            ]
         ),
         Node(
             package='rosplane',
             executable='rosplane_estimator_node',
             name='estimator',
             output='screen',
-            parameters = [autopilot_params],
+            parameters=[
+                autopilot_params,
+                {'use_sim_time': launch.substitutions.LaunchConfiguration('use_sim_time')},
+            ],
             arguments = [use_params]
         )
     ])
