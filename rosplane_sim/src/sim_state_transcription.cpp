@@ -103,7 +103,7 @@ private:
 
     state.va = va.norm();
 
-    Eigen::Vector3f v_i_i = q.inverse() * v_i_b; // rotate body frame velocities into inertial frame
+    Eigen::Vector3f v_i_i = q * v_i_b; // rotate body frame velocities into inertial frame
     state.chi = atan2(v_i_i(1), v_i_i(0));
     state.alpha = atan2(va(2), va(1));
     state.beta = asin(va(1) / state.va);
