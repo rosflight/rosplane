@@ -326,7 +326,7 @@ float ControllerSucessiveLoop::pitch_hold(float theta_c, float theta, float q)
   }
 
   p_error_ = error;
-  return delta_e; // TODO explain subtraction.
+  return delta_e;
 }
 
 float ControllerSucessiveLoop::airspeed_with_throttle_hold(float va_c, float va)
