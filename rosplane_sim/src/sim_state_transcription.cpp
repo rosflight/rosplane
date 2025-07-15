@@ -1,4 +1,3 @@
-#include <chrono>
 #include <memory>
 
 #include <Eigen/Geometry>
@@ -24,7 +23,7 @@ public:
     wind_truth_subscription_ = this->create_subscription<geometry_msgs::msg::Vector3Stamped>(
       "sim/wind_truth", 10, std::bind(&SimStateTranscription::wind_callback, this, _1));
 
-    rosplane_state_publisher_ = this->create_publisher<rosplane_msgs::msg::State>("sim/fixedwing/state", 10);
+    rosplane_state_publisher_ = this->create_publisher<rosplane_msgs::msg::State>("sim/rosplane/state", 10);
   }
 
 private:
