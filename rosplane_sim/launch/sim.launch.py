@@ -21,7 +21,7 @@ def generate_launch_description():
 
     base_launch_include = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-    os.path.join(
+            os.path.join(
                 get_package_share_directory('rosplane'),
                 'launch/rosplane.launch.py'
             )
@@ -32,7 +32,7 @@ def generate_launch_description():
         base_launch_include,
         Node (
             package = 'rosplane_sim',
-            executable='rosplane_gazebo_truth_publisher',
-            name='gazebo_truth'
+            executable='sim_state_transcriber',
+            name='rosplane_truth'
         )
     ])

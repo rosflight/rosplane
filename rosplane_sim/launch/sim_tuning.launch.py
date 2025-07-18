@@ -32,8 +32,8 @@ def generate_launch_description():
         base_launch_include,
         Node (
             package = 'rosplane_sim',
-            executable='rosplane_gazebo_truth_publisher',
-            name='gazebo_truth'
+            executable='sim_state_transcriber',
+            name='rosplane_truth'
         )
     ])
 

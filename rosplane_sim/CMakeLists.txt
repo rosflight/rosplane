@@ -23,7 +23,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(nav_msgs REQUIRED)
+find_package(rosflight_msgs REQUIRED)
 find_package(rosplane_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 
@@ -43,11 +43,11 @@ include_directories(  #use this if you need .h files for include statements.  Th
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
 
 
-add_executable(rosplane_gazebo_truth_publisher
-        src/gazebo_state_transcription.cpp)
-ament_target_dependencies(rosplane_gazebo_truth_publisher rosplane_msgs rclcpp rclpy nav_msgs)
+add_executable(sim_state_transcriber
+        src/sim_state_transcription.cpp)
+ament_target_dependencies(sim_state_transcriber rosplane_msgs rosflight_msgs rclcpp rclpy)
 install(TARGETS
-        rosplane_gazebo_truth_publisher
+        sim_state_transcriber
         DESTINATION lib/${PROJECT_NAME})
 
 
