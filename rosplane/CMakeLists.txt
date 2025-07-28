@@ -66,61 +66,61 @@ install(TARGETS param_manager
 ### START OF EXECUTABLES ###
 
 # Controller
-add_executable(rosplane_controller
-  src/controller/controller_base.cpp
+add_executable(controller
+  src/controller/controller_ros.cpp
   src/controller/controller_state_machine.cpp
   src/controller/controller_successive_loop.cpp
   src/controller/controller_total_energy.cpp)
-ament_target_dependencies(rosplane_controller rosplane_msgs rosflight_msgs rclcpp rclpy Eigen3)
-target_link_libraries(rosplane_controller param_manager)
+ament_target_dependencies(controller rosplane_msgs rosflight_msgs rclcpp rclpy Eigen3)
+target_link_libraries(controller param_manager)
 install(TARGETS
-  rosplane_controller
+  controller
   DESTINATION lib/${PROJECT_NAME})
 
 # Follower
-add_executable(rosplane_path_follower
-  src/path_follower/path_follower_example.cpp
-  src/path_follower/path_follower_base.cpp)
-ament_target_dependencies(rosplane_path_follower rosplane_msgs rclcpp rclpy Eigen3)
-target_link_libraries(rosplane_path_follower param_manager)
+add_executable(path_follower
+  src/path_follower/path_follower_lines_orbits.cpp
+  src/path_follower/path_follower_ros.cpp)
+ament_target_dependencies(path_follower rosplane_msgs rclcpp rclpy Eigen3)
+target_link_libraries(path_follower param_manager)
 install(TARGETS
-  rosplane_path_follower
+  path_follower
   DESTINATION lib/${PROJECT_NAME})
 
 # Manager
-add_executable(rosplane_path_manager
-  src/path_manager/path_manager_base.cpp
-  src/path_manager/path_manager_example.cpp)
-ament_target_dependencies(rosplane_path_manager rosplane_msgs rclcpp rclpy Eigen3)
-target_link_libraries(rosplane_path_manager param_manager)
+add_executable(path_manager
+  src/path_manager/path_manager_ros.cpp
+  src/path_manager/path_manager_dubins_fillets.cpp)
+ament_target_dependencies(path_manager rosplane_msgs rclcpp rclpy Eigen3)
+target_link_libraries(path_manager param_manager)
 install(TARGETS
-  rosplane_path_manager
+  path_manager
   DESTINATION lib/${PROJECT_NAME})
 
 # Planner
-add_executable(rosplane_path_planner
-  src/path_planner/path_planner.cpp)
-target_link_libraries(rosplane_path_planner
+add_executable(path_planner
+  src/path_planner/path_planner_waypoints.cpp)
+target_link_libraries(path_planner
   param_manager
   ${YAML_CPP_LIBRARIES}
 )
-ament_target_dependencies(rosplane_path_planner rosplane_msgs rosflight_msgs std_srvs rclcpp rclpy Eigen3)
+ament_target_dependencies(path_planner rosplane_msgs rosflight_msgs std_srvs rclcpp rclpy Eigen3)
 install(TARGETS
-  rosplane_path_planner
+  path_planner
   DESTINATION lib/${PROJECT_NAME})
 
 # Estimator
-add_executable(rosplane_estimator_node
+add_executable(estimator
               src/ekf/estimator_ros.cpp
               src/ekf/estimator_ekf.cpp
               src/ekf/estimator_continuous_discrete.cpp)
-target_link_libraries(rosplane_estimator_node
+target_link_libraries(estimator
   ${YAML_CPP_LIBRARIES}
 )
-ament_target_dependencies(rosplane_estimator_node rosplane_msgs rosflight_msgs rclcpp Eigen3)
-target_link_libraries(rosplane_estimator_node param_manager)
+ament_target_dependencies(estimator rosplane_msgs rosflight_msgs rclcpp Eigen3)
+target_link_libraries(estimator param_manager)
 install(TARGETS
-  rosplane_estimator_node
+  estimator
   DESTINATION lib/${PROJECT_NAME})
 
 #### END OF EXECUTABLES ###
