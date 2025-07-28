@@ -2,10 +2,10 @@
 
 #include <rclcpp/logging.hpp>
 
-#include "controller_successive_loop.hpp"
-#include "controller_total_energy.hpp"
+#include "controller/controller_successive_loop.hpp"
+#include "controller/controller_total_energy.hpp"
 
-#include "controller_base.hpp"
+#include "controller/controller_base.hpp"
 
 namespace rosplane
 {

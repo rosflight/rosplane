@@ -67,10 +67,10 @@ install(TARGETS param_manager
 
 # Controller
 add_executable(rosplane_controller
-  src/controller_base.cpp
-  src/controller_state_machine.cpp
-  src/controller_successive_loop.cpp
-  src/controller_total_energy.cpp)
+  src/controller/controller_base.cpp
+  src/controller/controller_state_machine.cpp
+  src/controller/controller_successive_loop.cpp
+  src/controller/controller_total_energy.cpp)
 ament_target_dependencies(rosplane_controller rosplane_msgs rosflight_msgs rclcpp rclpy Eigen3)
 target_link_libraries(rosplane_controller param_manager)
 install(TARGETS
@@ -79,8 +79,8 @@ install(TARGETS
 
 # Follower
 add_executable(rosplane_path_follower
-  src/path_follower_example.cpp
-  src/path_follower_base.cpp)
+  src/path_follower/path_follower_example.cpp
+  src/path_follower/path_follower_base.cpp)
 ament_target_dependencies(rosplane_path_follower rosplane_msgs rclcpp rclpy Eigen3)
 target_link_libraries(rosplane_path_follower param_manager)
 install(TARGETS
@@ -89,8 +89,8 @@ install(TARGETS
 
 # Manager
 add_executable(rosplane_path_manager
-  src/path_manager_base.cpp
-  src/path_manager_example.cpp)
+  src/path_manager/path_manager_base.cpp
+  src/path_manager/path_manager_example.cpp)
 ament_target_dependencies(rosplane_path_manager rosplane_msgs rclcpp rclpy Eigen3)
 target_link_libraries(rosplane_path_manager param_manager)
 install(TARGETS
@@ -99,7 +99,7 @@ install(TARGETS
 
 # Planner
 add_executable(rosplane_path_planner
-  src/path_planner.cpp)
+  src/path_planner/path_planner.cpp)
 target_link_libraries(rosplane_path_planner
   param_manager
   ${YAML_CPP_LIBRARIES}
@@ -111,9 +111,9 @@ install(TARGETS
 
 # Estimator
 add_executable(rosplane_estimator_node
-              src/estimator_ros.cpp
-              src/estimator_ekf.cpp
-              src/estimator_continuous_discrete.cpp)
+              src/ekf/estimator_ros.cpp
+              src/ekf/estimator_ekf.cpp
+              src/ekf/estimator_continuous_discrete.cpp)
 target_link_libraries(rosplane_estimator_node
   ${YAML_CPP_LIBRARIES}
 )
