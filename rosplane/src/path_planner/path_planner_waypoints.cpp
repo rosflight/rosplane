@@ -14,7 +14,7 @@
 #include "rosplane_msgs/msg/waypoint.hpp"
 #include "rosplane_msgs/srv/add_waypoint.hpp"
 
-#include "path_planner.hpp"
+#include "path_planner/path_planner.hpp"
 
 using std::placeholders::_1;
 using std::placeholders::_2;

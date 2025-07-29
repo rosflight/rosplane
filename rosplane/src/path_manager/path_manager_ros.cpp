@@ -4,9 +4,9 @@
 #include <rclcpp/logging.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include "path_manager_example.hpp"
+#include "path_manager/path_manager_example.hpp"
 
-#include "path_manager_base.hpp"
+#include "path_manager/path_manager_base.hpp"
 
 namespace rosplane
 {
