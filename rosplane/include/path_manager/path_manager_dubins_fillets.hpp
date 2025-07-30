@@ -55,13 +55,19 @@
 namespace rosplane
 {
 
+/**
+ * @brief The states of a filleted path.
+ */
 enum class FilletState
 {
-  STRAIGHT,
-  TRANSITION,
-  ORBIT
+  STRAIGHT, /**< On the straight portion.*/
+  TRANSITION, /**< Transitioning from orbit to straight or vice versa*/
+  ORBIT /**< On the orbit portion.*/
 };
 
+/**
+ * @brief The states of a Dubins path. See the UAV book for details.
+ */
 enum class DubinState
 {
   FIRST,
@@ -72,15 +78,32 @@ enum class DubinState
   BEFORE_H3_WRONG_SIDE
 };
 
+/**
+ * @brief This class implements the Dubins and fillet following of described in the UAV book.
+ */
 class PathManagerDubinsFillets : public PathManagerROS
 {
 public:
+  /**
+   * @brief The constructor of the path manager.
+   */
   PathManagerDubinsFillets();
 
 private:
+
+  /**
+   * @brief The start time of the node.
+   */
   std::chrono::time_point<std::chrono::system_clock> start_time_;
+
+  /**
+   * @brief The current state of the fillet path. 
+   */
   FilletState fil_state_;
 
+  /**
+   * @brief Indicates if this is the first waypoint.
+   */
   bool first_;
 
   /**
@@ -136,27 +159,37 @@ private:
    */
   void manage_dubins(const Input & input, Output & output);
 
+  /**
+   * @brief The current state of the Dubins path.
+   */
   DubinState dub_state_;
-
+  
+  /**
+   * Describes all of the releveant parameters for a Dubins path.
+   */
   struct DubinsPath
   {
 
-    Eigen::Vector3f ps; /** the start position */
-    float chis;         /** the start course angle */
-    Eigen::Vector3f pe; /** the end position */
-    float chie;         /** the end course angle */
-    float R;            /** turn radius */
-    float L;            /** length of the path */
-    Eigen::Vector3f cs; /** center of the start circle */
-    int lams;           /** direction of the start circle */
-    Eigen::Vector3f ce; /** center of the endcircle */
-    int lame;           /** direction of the end circle */
-    Eigen::Vector3f w1; /** vector defining half plane H1 */
-    Eigen::Vector3f q1; /** unit vector along striaght line path */
-    Eigen::Vector3f w2; /** vector defining half plane H2 */
-    Eigen::Vector3f w3; /** vector defining half plane H3 */
-    Eigen::Vector3f q3; /** unit vector defining direction of half plane H3 */
+    Eigen::Vector3f ps; /** The start position */
+    float chis;         /** The start course angle */
+    Eigen::Vector3f pe; /** The end position */
+    float chie;         /** The end course angle */
+    float R;            /** Turn radius */
+    float L;            /** Length of the path */
+    Eigen::Vector3f cs; /** Center of the start circle */
+    int lams;           /** Direction of the start circle */
+    Eigen::Vector3f ce; /** Center of the endcircle */
+    int lame;           /** Direction of the end circle */
+    Eigen::Vector3f w1; /** Vector defining half plane H1 */
+    Eigen::Vector3f q1; /** Unit vector along striaght line path */
+    Eigen::Vector3f w2; /** Vector defining half plane H2 */
+    Eigen::Vector3f w3; /** Vector defining half plane H3 */
+    Eigen::Vector3f q3; /** Unit vector defining direction of half plane H3 */
   };
+
+  /**
+   * @brief The current Dubins path.
+   */
   DubinsPath dubins_path_;
 
   /**

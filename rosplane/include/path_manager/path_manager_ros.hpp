@@ -61,47 +61,87 @@ using namespace std::chrono_literals;
 
 namespace rosplane
 {
+  
+/**
+ * This class Implements the ROS2 interfaces for managing which section of a 
+ * waypont path is bein followed, for Dubins and filleted waypoints. 
+ */
 class PathManagerROS : public rclcpp::Node
 {
 public:
+
+  /**
+   * @brief The contstructor of the ROS2 Node.
+   */
   PathManagerROS();
 
 protected:
+
+  /**
+   * @brief This contains the necessary info to define a waypoint
+   */
   struct Waypoint
   {
-    float w[3];
-    float chi_d;
-    bool use_chi;
-    float va_d;
+    float w[3]; /**< The NED position of the waypoint. */
+    float chi_d; /**< The desired heading at the waypoint. */
+    bool use_chi; /**< Indicates if the waypoint must acheive the course (is the path a dubins path?) */
+    float va_d; /**< The desired airspeed approaching the waypoint */
   };
-
-  std::vector<Waypoint> waypoints_; /** Vector of waypoints maintained by path_manager */
+ 
+  /**
+   * @brief Vector of waypoints maintained by path_manager
+   */
+  std::vector<Waypoint> waypoints_;
+  
+  /**
+   * @brief Number of waypoints in the list of waypoints to follow.
+   */
   int num_waypoints_;
-  int idx_a_; /** index to the waypoint that was most recently achieved */
 
+ /**
+  * @brief Index to the waypoint that was most recently achieved.
+  */
+  int idx_a_;
+
+ /**
+  * @brief Indicate if the waypoint is a temporary waypoint.
+  */
   bool temp_waypoint_ = false;
+ 
+  /**
+  * @brief Indicates if the orbit dir is CW or CCW.
+  */
   int orbit_dir_ = 0;
 
+  /**
+  * @brief Defines the necessary current states of the aircraft.
+  */
   struct Input
   {
-    float pn;  /** position north */
-    float pe;  /** position east */
-    float h;   /** altitude */
-    float chi; /** course angle */
+    float pn;  /**< Position north of the aircraft. */
+    float pe;  /**< Position east of the aircraft. */
+    float h;   /**< Altitude of the aircraft. */
+    float chi; /**< Course angle of the aircraft. */
   };
 
+  /**
+  * @brief Defines the necessary path parameters for tha path follower, of the current section of path being followed.
+  */
   struct Output
   {
-    bool flag;    /** Inicates strait line or orbital path (true is line, false is orbit) */
-    float va_d;   /** Desired airspeed (m/s) */
-    float r[3];   /** Vector to origin of straight line path (m) */
-    float q[3];   /** Unit vector, desired direction of travel for line path */
-    float c[3];   /** Center of orbital path (m) */
-    float rho;    /** Radius of orbital path (m) */
-    int8_t lamda; /** Direction of orbital path (cw is 1, ccw is -1) */
+    bool flag;    /**< Inicates strait line or orbital path (true is line, false is orbit) */ // TODO: Swap this to an orbit type struct.
+    float va_d;   /**< Desired airspeed (m/s) */
+    float r[3];   /**< Vector to origin of straight line path (m) */
+    float q[3];   /**< Unit vector, desired direction of travel for line path */
+    float c[3];   /**< Center of orbital path (m) */
+    float rho;    /**< Radius of orbital path (m) */
+    int8_t lamda; /**< Direction of orbital path (cw is 1, ccw is -1) */
   };
-
-  ParamManager params_; /** Holds the parameters for the path_manager and children */
+ 
+  /**
+   * @brief Holds the parameters for the path_manager and children 
+   */
+  ParamManager params_;
 
   /**
    * @brief Manages the current path based on the stored waypoint list
@@ -112,26 +152,70 @@ protected:
   virtual void manage(const Input & input, Output & output) = 0;
 
 private:
+  /**
+   * @brief Subscription to the state of the aircraft.
+   */
   rclcpp::Subscription<rosplane_msgs::msg::State>::SharedPtr
-    vehicle_state_sub_; /**< vehicle state subscription */
+    vehicle_state_sub_;
+
+  /** 
+   * @brief Subscription to new waypoints.
+   */
   rclcpp::Subscription<rosplane_msgs::msg::Waypoint>::SharedPtr
-    new_waypoint_sub_; /**< new waypoint subscription */
+    new_waypoint_sub_;
+
+  /**
+   * @brief Publisher of the current path section parameters.
+   */
   rclcpp::Publisher<rosplane_msgs::msg::CurrentPath>::SharedPtr
-    current_path_pub_; /**< controller commands publication */
+    current_path_pub_;
+  
+  /**
+   * @brief The current aircraft state.
+   */
+  rosplane_msgs::msg::State vehicle_state_;
 
-  rosplane_msgs::msg::State vehicle_state_; /**< vehicle state */
-
+  /**
+   * @brief Indicates if the params have been initalized.
+   */
   bool params_initialized_;
+  
+  /**
+   * @brief Indicates if the state has been initalized.
+   */
   bool state_init_;
+
+  /**
+   * @brief The timer period in microseconds.
+   */
   std::chrono::microseconds timer_period_;
+  
+  /**
+   * @brief The timer that indicates when the current path should be published.
+   */
   rclcpp::TimerBase::SharedPtr update_timer_;
+  
+  /**
+   * @brief Propagates the changes in parameters to the appropriate member variables and functions.
+   */
   OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
 
+  /**
+   * @brief Saves the current aircraft state.
+   */
   void vehicle_state_callback(const rosplane_msgs::msg::State &
-                                msg); /** subscribes to the estimated state from the estimator */
+                                msg);
+
+  /**
+   * @brief Saves the newest published waypoint.
+   */
   void new_waypoint_callback(const rosplane_msgs::msg::Waypoint &
-                               msg); /** subscribes to waypoint messages from the path_planner */
-  void current_path_publish();       /** Publishes the current path to the path follower */
+                               msg);
+  
+  /**
+   * @brief Publishes the current path for the path follower.
+   */
+  void current_path_publish();
 
   /**
    * @brief Callback that gets triggered when a ROS2 parameter is changed

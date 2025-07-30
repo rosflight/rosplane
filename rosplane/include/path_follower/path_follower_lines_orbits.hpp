@@ -47,12 +47,25 @@
 namespace rosplane
 {
 
+/**
+ * This class implements path following using vector fields for straight lines and path following
+ * for orbits.
+ */
 class PathFollowerLinesOrbits : public PathFollowerROS
 {
 public:
+
+  /**
+   * The constructor for the path follower.
+   */
   PathFollowerLinesOrbits();
 
 private:
+
+  /**
+  * This implements the following of the path described in the input. The output
+  * is the controller commands needed to follow the given path.
+  */
   virtual void follow(const Input & input, Output & output);
 };
 

@@ -59,6 +59,7 @@ using namespace std::chrono_literals;
 
 namespace rosplane
 {
+
 /**
  * This defines the different portions of the control algorithm.
  */
@@ -76,6 +77,7 @@ enum class AltZones
 class ControllerROS : public rclcpp::Node
 {
 public:
+
   /**
    * Constructor for ROS2 setup and parameter initialization.
    */
@@ -98,6 +100,7 @@ public:
   float get_theta_c() { return controller_commands_.theta_c; };
 
 protected:
+
   /**
    * This struct holds all of the inputs to the control algorithm.
    */

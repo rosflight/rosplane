@@ -245,29 +245,54 @@ protected:
    * The derivative of the error in altitude.
    */
   float a_differentiator_;
-
-  //    float cooridinated_turn_hold(float v, const struct params_s &params, float Ts); // TODO implement if you want...
+  
+  // These are not implemented here, though they are described in the UAV book.
+  //    float cooridinated_turn_hold(float v, const struct params_s &params, float Ts); 
   //    float ct_error_;
   //    float ct_integrator_;
   //    float ct_differentiator_;
+  
+  /**
+   *
+   * This damps the adverse yaw by only allowing low frequency yaw movements.
+   * If a high frequency yaw rate comes through it actively damps the values. 
+   * This is described in the UAV book.
+   * @param r The yaw rate of the aircraft.
+   * @return The commanded ruddeer command.
+   */
   float yaw_damper(float r);
-
+  
+  /**
+   * The previous commanded rudder. This is used in the yaw damper.
+   */
   float delta_r_delay_;
+
+  /**
+   * The previous yaw rate of the aircraft. This is used in the yaw damper
+   */
   float r_delay_;
 
   /**
- * Saturate a given value to a maximum or minimum of the limits.
- * @param value The value to saturate.
- * @param up_limit The maximum the value can take on.
- * @param low_limit The minimum the value can take on.
- * @return The saturated value.
- */
-
+   * Saturate a given value to a maximum or minimum of the limits.
+   * @param value The value to saturate.
+   * @param up_limit The maximum the value can take on.
+   * @param low_limit The minimum the value can take on.
+   * @return The saturated value.
+   */
   float sat(float value, float up_limit, float low_limit);
 
+  /**
+   * If the error in altitude is larger than the max altitude, adjust it to the max with the correct sign.
+   * Otherwise, proceed as normal.
+   * @param h_c The commaned altitiude.
+   * @param h The current altitiude.
+   * @param max_diff The maximum difference in the command and current (the max clamped error).
+   * @return The adjusted altitude command.
+   */
   float adjust_h_c(float h_c, float h, float max_diff);
 
 private:
+
   /**
    * Declares the parameters associated to this controller, controller_successive_loop, so that ROS2 can see them.
    * Also declares default values before they are set to the values set in the launch script.

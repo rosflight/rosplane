@@ -65,10 +65,20 @@ namespace rosplane
 class PathPlannerWaypoints : public rclcpp::Node
 {
 public:
+  /**
+   * The constructor of the waypoint path planner.
+   */
   PathPlannerWaypoints();
+  
+  /**
+   * The destructor of the waypoint path planner.
+   */
   ~PathPlannerWaypoints();
 
-  ParamManager params_; /** Holds the parameters for the path_planner*/
+  /**
+   * Holds the parameters from ROS.
+   */
+  ParamManager params_;
 
 private:
   /**
@@ -138,6 +148,10 @@ private:
    */
   bool clear_path_callback(const std_srvs::srv::Trigger::Request::SharedPtr & req,
                            const std_srvs::srv::Trigger::Response::SharedPtr & res);
+
+  /**
+   * @brief Clears the path of all waypoints and resets.
+   */
   void clear_path();
 
   /**
@@ -201,18 +215,37 @@ private:
    */
   void declare_parameters();
 
-  OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
+
   /**
-   * @brief Parameter change callback
+   * @brief Handle for parameter callback.
+   */
+  OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
+
+  /**
+   * @brief Parameter change callback, propagates parameter changes to where they should be.
    * 
    * @param parameters: Vector of rclcpp::Parameter that have been changed. 
    */
   rcl_interfaces::msg::SetParametersResult
   parametersCallback(const std::vector<rclcpp::Parameter> & parameters);
 
+  /**
+   * @brief The number of waypoints that have been published.
+   */
   int num_waypoints_published_;
+  
+  /**
+   * @brief The initial lat of the aircraft so that GPS waypoints can be sent appropiately.
+   */
   double initial_lat_;
+  
+  /**
+   * @brief The initial lon of the aircraft so that GPS waypoints can be sent appropiately.
+   */
   double initial_lon_;
+  /**
+   * @brief The initial alt of the aircraft so that GPS waypoints can be sent appropiately.
+   */
   double initial_alt_;
 
   /**

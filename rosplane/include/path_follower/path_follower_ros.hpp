@@ -55,46 +55,66 @@ using std::placeholders::_1;
 namespace rosplane
 {
 
+/**
+ * This defines if the given path is an orbit or a line.
+ */
 enum class PathType
 {
   ORBIT,
   LINE
 };
 
+/**
+ * This class implements all of the ROS2 interfaces for path following.
+ */
 class PathFollowerROS : public rclcpp::Node
 {
 public:
+  /**
+   * The constructor of node.
+   */
   PathFollowerROS();
-  float spin();
 
 protected:
+  /**
+   * Defines the path that is currently being followed.
+   */
   struct Input
   {
-    PathType p_type;
-    float va_d;
-    float r_path[3];
-    float q_path[3];
-    float c_orbit[3];
-    float rho_orbit;
-    int lam_orbit;
-    float pn;  /** position north */
-    float pe;  /** position east */
-    float h;   /** altitude */
-    float va;  /** airspeed */
-    float chi; /** course angle */
-    float psi; /** heading angle */
+    PathType p_type;  /**< Type of path (indicates if orbit or straight line related values are valid). */
+    float va_d; /**< Desired airspeed along this section of path. */
+    float r_path[3]; /**< The position of the tail of q (where the straight path starts). */
+    float q_path[3]; /**< Unit vector direction of the straight path. */
+    float c_orbit[3]; /**< Center of the orbit in NED. */
+    float rho_orbit; /**< Radius of the orbit. */
+    int lam_orbit; /**< The direction the orbit will go CW (1) or CCW (-1). */
+    float pn;  /**< Position north  of the aircraft*/
+    float pe;  /**< Position east  of the aircraft*/
+    float h;   /**< Altitude  of the aircraft*/
+    float va;  /**< Airspeed of the aircraft*/
+    float chi; /**< Course angle of the aircraft (rad)*/
+    float psi; /**< Heading angle of the aircraft (rad)*/
   };
 
+  /**
+   * The controller commands needed to acheive the input.
+   */
   struct Output
   {
-    double va_c;   /** commanded airspeed (m/s) */
-    double h_c;    /** commanded altitude (m) */
-    double chi_c;  /** commanded course (rad) */
-    double phi_ff; /** feed forward term for orbits (rad) */
+    double va_c;   /** Commanded airspeed (m/s) */
+    double h_c;    /** Commanded altitude (m) */
+    double chi_c;  /** Commanded course (rad) */
+    double phi_ff; /** Feed forward term for orbits (rad) */
   };
 
+  /**
+   * The path following algorithm the child will implement.
+   */
   virtual void follow(const Input & input, Output & output) = 0;
 
+  /**
+   * The param manager for the ROS parameters.
+   */
   ParamManager params_;
 
 private:
@@ -113,15 +133,45 @@ private:
    */
   rclcpp::Publisher<rosplane_msgs::msg::ControllerCommands>::SharedPtr controller_commands_pub_;
 
+  /**
+   * The period of the timer in microseconds.
+   */
   std::chrono::microseconds timer_period_;
+  
+  /**
+   * The timer that indicates how often the commands should be updated.
+   */
   rclcpp::TimerBase::SharedPtr update_timer_;
 
+  /**
+   * Indicates if the params have been initialized.
+   */
   bool params_initialized_;
+
+  /**
+   * Indicates if the state has been initialized.
+   */
   bool state_init_;
+  
+  /**
+   * Indicates if the current path has been initialized.
+   */
   bool current_path_init_;
 
+  /**
+   * Handle for the function that propagates changes in parameters to the the appropriate 
+   * member variables and functions.
+   */
   OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
+  
+  /**
+   * The controller commands that will be sent to the controller.
+   */
   rosplane_msgs::msg::ControllerCommands controller_commands_;
+  
+  /**
+   * Current input to the follower.
+   */
   Input input_;
 
   /**
