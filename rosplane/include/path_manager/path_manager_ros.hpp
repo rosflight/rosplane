@@ -7,8 +7,8 @@
  * adapted by Judd Mehr and Brian Russel for ROSplane software
  */
 
-#ifndef PATH_MANAGER_BASE_H
-#define PATH_MANAGER_BASE_H
+#ifndef PATH_MANAGER_ROS_H
+#define PATH_MANAGER_ROS_H
 
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/fluid_pressure.hpp>
@@ -23,10 +23,10 @@ using namespace std::chrono_literals;
 
 namespace rosplane
 {
-class PathManagerBase : public rclcpp::Node
+class PathManagerROS : public rclcpp::Node
 {
 public:
-  PathManagerBase();
+  PathManagerROS();
 
 protected:
   struct Waypoint
@@ -116,4 +116,4 @@ private:
   void set_timer();
 };
 } // namespace rosplane
-#endif // PATH_MANAGER_BASE_H
+#endif // PATH_MANAGER_ROS_H

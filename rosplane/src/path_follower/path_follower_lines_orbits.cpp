@@ -1,6 +1,6 @@
 #include <rclcpp/logging.hpp>
 
-#include "path_follower/path_follower_example.hpp"
+#include "path_follower/path_follower_lines_orbits.hpp"
 
 namespace rosplane
 {
@@ -10,9 +10,9 @@ double wrap_within_180(double fixed_heading, double wrapped_heading)
   return wrapped_heading - floor((wrapped_heading - fixed_heading) / (2 * M_PI) + 0.5) * 2 * M_PI;
 }
 
-PathFollowerExample::PathFollowerExample() {}
+PathFollowerLinesOrbits::PathFollowerLinesOrbits() {}
 
-void PathFollowerExample::follow(const Input & input, Output & output)
+void PathFollowerLinesOrbits::follow(const Input & input, Output & output)
 {
   // For readability, declare parameters that will be used in the function here
   double k_path = params_.get_double("k_path");

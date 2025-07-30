@@ -4,27 +4,27 @@
 #include <rclcpp/logging.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include "path_manager/path_manager_example.hpp"
+#include "path_manager/path_manager_dubins_fillets.hpp"
 
-#include "path_manager/path_manager_base.hpp"
+#include "path_manager/path_manager_ros.hpp"
 
 namespace rosplane
 {
 
-PathManagerBase::PathManagerBase()
+PathManagerROS::PathManagerROS()
     : Node("rosplane_path_manager")
     , params_(this)
     , params_initialized_(false)
 {
   vehicle_state_sub_ = this->create_subscription<rosplane_msgs::msg::State>(
-    "estimated_state", 10, std::bind(&PathManagerBase::vehicle_state_callback, this, _1));
+    "estimated_state", 10, std::bind(&PathManagerROS::vehicle_state_callback, this, _1));
   new_waypoint_sub_ = this->create_subscription<rosplane_msgs::msg::Waypoint>(
-    "waypoint_path", 10, std::bind(&PathManagerBase::new_waypoint_callback, this, _1));
+    "waypoint_path", 10, std::bind(&PathManagerROS::new_waypoint_callback, this, _1));
   current_path_pub_ = this->create_publisher<rosplane_msgs::msg::CurrentPath>("current_path", 10);
 
   // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
-    std::bind(&PathManagerBase::parametersCallback, this, std::placeholders::_1));
+    std::bind(&PathManagerROS::parametersCallback, this, std::placeholders::_1));
 
   // Declare parameters maintained by this node with ROS2. Required for all ROS2 parameters associated with this node
   declare_parameters();
@@ -40,7 +40,7 @@ PathManagerBase::PathManagerBase()
   state_init_ = false;
 }
 
-void PathManagerBase::declare_parameters()
+void PathManagerROS::declare_parameters()
 {
   params_.declare_double("R_min", 50.0);
   params_.declare_double("current_path_pub_frequency", 100.0);
@@ -48,18 +48,18 @@ void PathManagerBase::declare_parameters()
   params_.declare_double("default_airspeed", 15.0);
 }
 
-void PathManagerBase::set_timer()
+void PathManagerROS::set_timer()
 {
   // Calculate the period in milliseconds from the frequency
   double frequency = params_.get_double("current_path_pub_frequency");
   timer_period_ = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1e6));
 
   update_timer_ =
-    rclcpp::create_timer(this, this->get_clock(), timer_period_, std::bind(&PathManagerBase::current_path_publish, this));
+    rclcpp::create_timer(this, this->get_clock(), timer_period_, std::bind(&PathManagerROS::current_path_publish, this));
 }
 
 rcl_interfaces::msg::SetParametersResult
-PathManagerBase::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
+PathManagerROS::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = false;
@@ -86,7 +86,7 @@ PathManagerBase::parametersCallback(const std::vector<rclcpp::Parameter> & param
   return result;
 }
 
-void PathManagerBase::vehicle_state_callback(const rosplane_msgs::msg::State & msg)
+void PathManagerROS::vehicle_state_callback(const rosplane_msgs::msg::State & msg)
 {
 
   vehicle_state_ = msg;
@@ -94,7 +94,7 @@ void PathManagerBase::vehicle_state_callback(const rosplane_msgs::msg::State & m
   state_init_ = true;
 }
 
-void PathManagerBase::new_waypoint_callback(const rosplane_msgs::msg::Waypoint & msg)
+void PathManagerROS::new_waypoint_callback(const rosplane_msgs::msg::Waypoint & msg)
 {
   double R_min = params_.get_double("R_min");
   double default_altitude = params_.get_double("default_altitude");
@@ -162,7 +162,7 @@ void PathManagerBase::new_waypoint_callback(const rosplane_msgs::msg::Waypoint &
   }
 }
 
-void PathManagerBase::current_path_publish()
+void PathManagerROS::current_path_publish()
 {
 
   Input input;
@@ -216,7 +216,7 @@ int main(int argc, char ** argv)
 {
 
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<rosplane::PathManagerExample>());
+  rclcpp::spin(std::make_shared<rosplane::PathManagerDubinsFillets>());
 
   return 0;
 }

@@ -5,12 +5,12 @@
 #include "controller/controller_successive_loop.hpp"
 #include "controller/controller_total_energy.hpp"
 
-#include "controller/controller_base.hpp"
+#include "controller/controller_ros.hpp"
 
 namespace rosplane
 {
 
-ControllerBase::ControllerBase()
+ControllerROS::ControllerROS()
     : Node("controller_base")
     , params_(this)
     , params_initialized_(false)
@@ -23,16 +23,16 @@ ControllerBase::ControllerBase()
 
   // Advertise subscribed topics and set bound callbacks.
   controller_commands_sub_ = this->create_subscription<rosplane_msgs::msg::ControllerCommands>(
-    "controller_command", 10, std::bind(&ControllerBase::controller_commands_callback, this, _1));
+    "controller_command", 10, std::bind(&ControllerROS::controller_commands_callback, this, _1));
   vehicle_state_sub_ = this->create_subscription<rosplane_msgs::msg::State>(
-    "estimated_state", 10, std::bind(&ControllerBase::vehicle_state_callback, this, _1));
+    "estimated_state", 10, std::bind(&ControllerROS::vehicle_state_callback, this, _1));
 
   // This flag indicates whether the first set of commands have been received.
   command_recieved_ = false;
 
   // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
-    std::bind(&ControllerBase::parametersCallback, this, std::placeholders::_1));
+    std::bind(&ControllerROS::parametersCallback, this, std::placeholders::_1));
 
   // Declare the parameters for ROS2 param system.
   declare_parameters();
@@ -44,7 +44,7 @@ ControllerBase::ControllerBase()
   set_timer();
 }
 
-void ControllerBase::declare_parameters()
+void ControllerROS::declare_parameters()
 {
   // Declare default parameters associated with this controller, controller_base
   params_.declare_double("pwm_rad_e", 1.0);
@@ -53,7 +53,7 @@ void ControllerBase::declare_parameters()
   params_.declare_double("controller_output_frequency", 100.0);
 }
 
-void ControllerBase::controller_commands_callback(
+void ControllerROS::controller_commands_callback(
   const rosplane_msgs::msg::ControllerCommands::SharedPtr msg)
 {
 
@@ -64,14 +64,14 @@ void ControllerBase::controller_commands_callback(
   controller_commands_ = *msg;
 }
 
-void ControllerBase::vehicle_state_callback(const rosplane_msgs::msg::State::SharedPtr msg)
+void ControllerROS::vehicle_state_callback(const rosplane_msgs::msg::State::SharedPtr msg)
 {
 
   // Save the message to use in calculations.
   vehicle_state_ = *msg;
 }
 
-void ControllerBase::actuator_controls_publish()
+void ControllerROS::actuator_controls_publish()
 {
 
   // Assemble inputs for the control algorithm.
@@ -146,7 +146,7 @@ void ControllerBase::actuator_controls_publish()
 }
 
 rcl_interfaces::msg::SetParametersResult
-ControllerBase::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
+ControllerROS::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = false;
@@ -170,7 +170,7 @@ ControllerBase::parametersCallback(const std::vector<rclcpp::Parameter> & parame
   return result;
 }
 
-void ControllerBase::set_timer()
+void ControllerROS::set_timer()
 {
 
   double frequency = params_.get_double("controller_output_frequency");
@@ -178,10 +178,10 @@ void ControllerBase::set_timer()
 
   // Set timer to trigger bound callback (actuator_controls_publish) at the given periodicity.
   timer_ = rclcpp::create_timer(this, this->get_clock(), timer_period_,
-                                   std::bind(&ControllerBase::actuator_controls_publish, this));
+                                   std::bind(&ControllerROS::actuator_controls_publish, this));
 }
 
-void ControllerBase::convert_to_pwm(Output & output)
+void ControllerROS::convert_to_pwm(Output & output)
 {
 
   // Assign parameters from parameters object

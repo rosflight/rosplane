@@ -1,9 +1,9 @@
-#ifndef PATH_MANAGER_EXAMPLE_H
-#define PATH_MANAGER_EXAMPLE_H
+#ifndef PATH_MANAGER_DUBINS_H
+#define PATH_MANAGER_DUBINS_H
 
 #include <Eigen/Eigen>
 
-#include "path_manager_base.hpp"
+#include "path_manager_ros.hpp"
 
 #define M_PI_F 3.14159265358979323846f
 #define M_PI_2_F 1.57079632679489661923f
@@ -28,10 +28,10 @@ enum class DubinState
   BEFORE_H3_WRONG_SIDE
 };
 
-class PathManagerExample : public PathManagerBase
+class PathManagerDubinsFillets : public PathManagerROS
 {
 public:
-  PathManagerExample();
+  PathManagerDubinsFillets();
 
 private:
   std::chrono::time_point<std::chrono::system_clock> start_time_;
@@ -149,4 +149,4 @@ private:
   void declare_parameters();
 };
 } // namespace rosplane
-#endif // PATH_MANAGER_EXAMPLE_H
+#endif // PATH_MANAGER_DUBINS_H

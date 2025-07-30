@@ -1,5 +1,5 @@
-#ifndef CONTROLLER_EXAMPLE_H
-#define CONTROLLER_EXAMPLE_H
+#ifndef CONTROLLER_SUCCESSIVE_H
+#define CONTROLLER_SUCCESSIVE_H
 
 #include "controller_state_machine.hpp"
 
@@ -234,4 +234,4 @@ private:
 };
 } // namespace rosplane
 
-#endif // CONTROLLER_EXAMPLE_H
+#endif // CONTROLLER_SUCCESSIVE_H

@@ -1,5 +1,5 @@
-#ifndef PATH_FOLLOWER_BASE_H
-#define PATH_FOLLOWER_BASE_H
+#ifndef PATH_FOLLOWER_ROS_H
+#define PATH_FOLLOWER_ROS_H
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -20,10 +20,10 @@ enum class PathType
   LINE
 };
 
-class PathFollowerBase : public rclcpp::Node
+class PathFollowerROS : public rclcpp::Node
 {
 public:
-  PathFollowerBase();
+  PathFollowerROS();
   float spin();
 
 protected:
@@ -121,4 +121,4 @@ private:
 
 } // namespace rosplane
 
-#endif // PATH_FOLLOWER_BASE_H
+#endif // PATH_FOLLOWER_ROS_H

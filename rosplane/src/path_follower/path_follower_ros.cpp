@@ -1,29 +1,29 @@
 #include <rclcpp/logging.hpp>
 
-#include "path_follower/path_follower_example.hpp"
+#include "path_follower/path_follower_lines_orbits.hpp"
 
-#include "path_follower/path_follower_base.hpp"
+#include "path_follower/path_follower_ros.hpp"
 
 namespace rosplane
 {
 
-PathFollowerBase::PathFollowerBase()
+PathFollowerROS::PathFollowerROS()
     : Node("path_follower_base")
     , params_(this)
     , params_initialized_(false)
 {
   vehicle_state_sub_ = this->create_subscription<rosplane_msgs::msg::State>(
-    "estimated_state", 10, std::bind(&PathFollowerBase::vehicle_state_callback, this, _1));
+    "estimated_state", 10, std::bind(&PathFollowerROS::vehicle_state_callback, this, _1));
 
   current_path_sub_ = this->create_subscription<rosplane_msgs::msg::CurrentPath>(
-    "current_path", 100, std::bind(&PathFollowerBase::current_path_callback, this, _1));
+    "current_path", 100, std::bind(&PathFollowerROS::current_path_callback, this, _1));
 
   controller_commands_pub_ =
     this->create_publisher<rosplane_msgs::msg::ControllerCommands>("controller_command", 1);
 
   // Define the callback to handle on_set_parameter_callback events
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
-    std::bind(&PathFollowerBase::parametersCallback, this, std::placeholders::_1));
+    std::bind(&PathFollowerROS::parametersCallback, this, std::placeholders::_1));
 
   // Declare and set parameters with the ROS2 system
   declare_parameters();
@@ -38,17 +38,17 @@ PathFollowerBase::PathFollowerBase()
   current_path_init_ = false;
 }
 
-void PathFollowerBase::set_timer()
+void PathFollowerROS::set_timer()
 {
   // Convert the frequency to a period in microseconds
   double frequency = params_.get_double("controller_commands_pub_frequency");
   timer_period_ = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1e6));
 
   update_timer_ =
-    rclcpp::create_timer(this, this->get_clock(), timer_period_, std::bind(&PathFollowerBase::update, this));
+    rclcpp::create_timer(this, this->get_clock(), timer_period_, std::bind(&PathFollowerROS::update, this));
 }
 
-void PathFollowerBase::update()
+void PathFollowerROS::update()
 {
 
   Output output;
@@ -70,7 +70,7 @@ void PathFollowerBase::update()
   }
 }
 
-void PathFollowerBase::vehicle_state_callback(const rosplane_msgs::msg::State::SharedPtr msg)
+void PathFollowerROS::vehicle_state_callback(const rosplane_msgs::msg::State::SharedPtr msg)
 {
   input_.pn = msg->position[0]; /** position north */
   input_.pe = msg->position[1]; /** position east */
@@ -84,7 +84,7 @@ void PathFollowerBase::vehicle_state_callback(const rosplane_msgs::msg::State::S
   state_init_ = true;
 }
 
-void PathFollowerBase::current_path_callback(const rosplane_msgs::msg::CurrentPath::SharedPtr msg)
+void PathFollowerROS::current_path_callback(const rosplane_msgs::msg::CurrentPath::SharedPtr msg)
 {
   if (msg->path_type == msg->LINE_PATH) {
     input_.p_type = PathType::LINE;
@@ -105,7 +105,7 @@ void PathFollowerBase::current_path_callback(const rosplane_msgs::msg::CurrentPa
 }
 
 rcl_interfaces::msg::SetParametersResult
-PathFollowerBase::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
+PathFollowerROS::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = false;
@@ -133,7 +133,7 @@ PathFollowerBase::parametersCallback(const std::vector<rclcpp::Parameter> & para
   return result;
 }
 
-void PathFollowerBase::declare_parameters()
+void PathFollowerROS::declare_parameters()
 {
   params_.declare_double("controller_commands_pub_frequency", 10.0);
   params_.declare_double("chi_infty", .5);
@@ -149,6 +149,6 @@ int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
 
-  rclcpp::spin(std::make_shared<rosplane::PathFollowerExample>());
+  rclcpp::spin(std::make_shared<rosplane::PathFollowerLinesOrbits>());
   return 0;
 }

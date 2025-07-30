@@ -5,12 +5,12 @@
 #include <rclcpp/logging.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include "path_manager/path_manager_example.hpp"
+#include "path_manager/path_manager_dubins_fillets.hpp"
 
 namespace rosplane
 {
 
-PathManagerExample::PathManagerExample()
+PathManagerDubinsFillets::PathManagerDubinsFillets()
 {
   fil_state_ = FilletState::STRAIGHT;
   dub_state_ = DubinState::FIRST;
@@ -24,7 +24,7 @@ PathManagerExample::PathManagerExample()
   first_ = true;
 }
 
-void PathManagerExample::manage(const Input & input, Output & output)
+void PathManagerDubinsFillets::manage(const Input & input, Output & output)
 {
   // For readability, declare the parameters that will be used in the function here
   double R_min = params_.get_double("R_min");
@@ -84,7 +84,7 @@ void PathManagerExample::manage(const Input & input, Output & output)
   }
 }
 
-void PathManagerExample::manage_line(const Input & input, Output & output)
+void PathManagerDubinsFillets::manage_line(const Input & input, Output & output)
 {
   // For readability, declare the parameters that will be used in the function here
   bool orbit_last = params_.get_bool("orbit_last");
@@ -134,7 +134,7 @@ void PathManagerExample::manage_line(const Input & input, Output & output)
   }
 }
 
-void PathManagerExample::manage_fillet(const Input & input, Output & output)
+void PathManagerDubinsFillets::manage_fillet(const Input & input, Output & output)
 {
   // For readability, declare the parameters that will be used in the function here
   bool orbit_last = params_.get_bool("orbit_last");
@@ -298,7 +298,7 @@ void PathManagerExample::manage_fillet(const Input & input, Output & output)
   }
 }
 
-void PathManagerExample::manage_dubins(const Input & input, Output & output)
+void PathManagerDubinsFillets::manage_dubins(const Input & input, Output & output)
 {
   // For readability, declare the parameters that will be used in the function here
   double R_min = params_.get_double("R_min");
@@ -437,7 +437,7 @@ void PathManagerExample::manage_dubins(const Input & input, Output & output)
   }
 }
 
-Eigen::Matrix3f PathManagerExample::rotz(float theta)
+Eigen::Matrix3f PathManagerDubinsFillets::rotz(float theta)
 {
   Eigen::Matrix3f R;
   R << cosf(theta), -sinf(theta), 0, sinf(theta), cosf(theta), 0, 0, 0, 1;
@@ -445,7 +445,7 @@ Eigen::Matrix3f PathManagerExample::rotz(float theta)
   return R;
 }
 
-float PathManagerExample::mo(float in)
+float PathManagerDubinsFillets::mo(float in)
 {
   float val;
   if (in > 0)
@@ -457,7 +457,7 @@ float PathManagerExample::mo(float in)
   return val;
 }
 
-void PathManagerExample::dubins_parameters(const Waypoint start_node, const Waypoint end_node,
+void PathManagerDubinsFillets::dubins_parameters(const Waypoint start_node, const Waypoint end_node,
                                            float R)
 {
   float ell = sqrtf((start_node.w[0] - end_node.w[0]) * (start_node.w[0] - end_node.w[0])
@@ -606,9 +606,9 @@ void PathManagerExample::dubins_parameters(const Waypoint start_node, const Wayp
   }
 }
 
-void PathManagerExample::declare_parameters() { params_.declare_bool("orbit_last", false); }
+void PathManagerDubinsFillets::declare_parameters() { params_.declare_bool("orbit_last", false); }
 
-int PathManagerExample::orbit_direction(float pn, float pe, float chi, float c_n, float c_e)
+int PathManagerDubinsFillets::orbit_direction(float pn, float pe, float chi, float c_n, float c_e)
 {
   if (orbit_dir_ != 0) {
     return orbit_dir_;
@@ -634,7 +634,7 @@ int PathManagerExample::orbit_direction(float pn, float pe, float chi, float c_n
   return -1;
 }
 
-void PathManagerExample::increment_indices(int & idx_a, int & idx_b, int & idx_c,
+void PathManagerDubinsFillets::increment_indices(int & idx_a, int & idx_b, int & idx_c,
                                            const Input & input, Output & output)
 {
 

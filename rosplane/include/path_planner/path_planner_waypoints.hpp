@@ -13,11 +13,11 @@
 namespace rosplane
 {
 
-class PathPlanner : public rclcpp::Node
+class PathPlannerWaypoints : public rclcpp::Node
 {
 public:
-  PathPlanner();
-  ~PathPlanner();
+  PathPlannerWaypoints();
+  ~PathPlannerWaypoints();
 
   ParamManager params_; /** Holds the parameters for the path_planner*/
 

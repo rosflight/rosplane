@@ -1,12 +1,12 @@
 #ifndef BUILD_CONTROLLER_STATE_MACHINE_H
 #define BUILD_CONTROLLER_STATE_MACHINE_H
 
-#include "controller_base.hpp"
+#include "controller_ros.hpp"
 
 namespace rosplane
 {
 
-class ControllerStateMachine : public ControllerBase
+class ControllerStateMachine : public ControllerROS
 {
 
 public:

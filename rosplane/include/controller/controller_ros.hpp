@@ -7,8 +7,8 @@
  * @author Ian Reid <iyr27@byu.edu>
  */
 
-#ifndef CONTROLLER_BASE_H
-#define CONTROLLER_BASE_H
+#ifndef CONTROLLER_ROS_H
+#define CONTROLLER_ROS_H
 
 #include <chrono>
 
@@ -39,13 +39,13 @@ enum class AltZones
  * This class implements all of the basic functionality of a controller interfacing with ROS2.
  */
 
-class ControllerBase : public rclcpp::Node
+class ControllerROS : public rclcpp::Node
 {
 public:
   /**
    * Constructor for ROS2 setup and parameter initialization.
    */
-  ControllerBase();
+  ControllerROS();
 
   /**
    * Gets the current phi_c value from the current private command message.
@@ -213,4 +213,4 @@ private:
 };
 } // namespace rosplane
 
-#endif // CONTROLLER_BASE_H
+#endif // CONTROLLER_ROS_H
