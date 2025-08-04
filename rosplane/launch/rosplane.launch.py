@@ -52,7 +52,7 @@ def generate_launch_description():
         ),
         Node(
             package='rosplane',
-            executable='rosplane_controller',
+            executable='controller',
             name='autopilot',
             parameters=[
                 autopilot_params,
@@ -67,7 +67,7 @@ def generate_launch_description():
         ),
         Node(
             package='rosplane',
-            executable='rosplane_path_follower',
+            executable='path_follower',
             name='path_follower',
             parameters=[
                 autopilot_params,
@@ -80,7 +80,7 @@ def generate_launch_description():
         ),
         Node(
             package='rosplane',
-            executable='rosplane_path_manager',
+            executable='path_manager',
             name='path_manager',
             parameters=[
                 autopilot_params,
@@ -92,7 +92,7 @@ def generate_launch_description():
         ),
         Node(
             package='rosplane',
-            executable='rosplane_path_planner',
+            executable='path_planner',
             name='path_planner',
             parameters=[
                 {'use_sim_time': launch.substitutions.LaunchConfiguration('use_sim_time')},
@@ -103,7 +103,7 @@ def generate_launch_description():
         ),
         Node(
             package='rosplane',
-            executable='rosplane_estimator_node',
+            executable='estimator',
             name='estimator',
             output='screen',
             parameters=[

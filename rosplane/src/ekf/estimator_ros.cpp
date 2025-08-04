@@ -10,7 +10,7 @@ namespace rosplane
 {
 
 EstimatorROS::EstimatorROS()
-    : Node("estimator_ros")
+    : Node("estimator")
     , params_(this)
     , params_initialized_(false)
 {

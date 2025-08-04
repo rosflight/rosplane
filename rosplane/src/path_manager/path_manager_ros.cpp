@@ -50,7 +50,7 @@ namespace rosplane
 {
 
 PathManagerROS::PathManagerROS()
-    : Node("rosplane_path_manager")
+    : Node("path_manager")
     , params_(this)
     , params_initialized_(false)
 {

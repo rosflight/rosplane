@@ -46,7 +46,7 @@ namespace rosplane
 {
 
 PathFollowerROS::PathFollowerROS()
-    : Node("path_follower_base")
+    : Node("path_follower")
     , params_(this)
     , params_initialized_(false)
 {

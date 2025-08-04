@@ -43,7 +43,7 @@ namespace rosplane
 {
 
 ControllerROS::ControllerROS()
-    : Node("controller_base")
+    : Node("controller")
     , params_(this)
     , params_initialized_(false)
 {
@@ -236,17 +236,19 @@ int main(int argc, char * argv[])
   // Initialize ROS2 and then begin to spin control node.
   rclcpp::init(argc, argv);
 
-  if (strcmp(argv[1], "total_energy") == 0) {
-    auto node = std::make_shared<rosplane::ControllerTotalEnergy>();
-    RCLCPP_INFO_STREAM(node->get_logger(), "Using total energy control.");
-    rclcpp::spin(node);
-  } else if (strcmp(argv[1], "default") == 0) {
-    auto node = std::make_shared<rosplane::ControllerSucessiveLoop>();
-    RCLCPP_INFO_STREAM(node->get_logger(), "Using default control.");
-    rclcpp::spin(node);
+  if (argc > 1) {
+    if (strcmp(argv[1], "total_energy") == 0) {
+      auto node = std::make_shared<rosplane::ControllerTotalEnergy>();
+      RCLCPP_INFO_STREAM(node->get_logger(), "Using total energy control.");
+      rclcpp::spin(node);
+    } else if (strcmp(argv[1], "default") == 0) {
+      auto node = std::make_shared<rosplane::ControllerSucessiveLoop>();
+      RCLCPP_INFO_STREAM(node->get_logger(), "Using default control.");
+      rclcpp::spin(node);
+    }
   } else {
     auto node = std::make_shared<rosplane::ControllerSucessiveLoop>();
-    RCLCPP_INFO_STREAM(node->get_logger(), "Invalid control type, using default control.");
+    RCLCPP_INFO_STREAM(node->get_logger(), "Invalid control type or no type given, using default control.");
     rclcpp::spin(node);
   }
 
