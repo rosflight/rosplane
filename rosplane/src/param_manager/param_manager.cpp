@@ -145,12 +145,9 @@ double ParamManager::get_double(std::string param_name)
   try {
     auto param = params_.at(param_name);
     return std::get<double>(param);
-  } catch (std::bad_variant_access & e) {
+  } catch (std::exception & e) {
     RCLCPP_ERROR_STREAM(container_node_->get_logger(), "ERROR GETTING PARAMETER: " + param_name);
     throw std::runtime_error(e.what());
-  } catch(std::out_of_range& e){
-      RCLCPP_ERROR_STREAM(container_node_->get_logger(), "ERROR GETTING PARAMETER: " + param_name);
-      throw std::runtime_error(e.what());
   }
 }
 
