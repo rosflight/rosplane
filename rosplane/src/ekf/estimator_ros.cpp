@@ -336,19 +336,17 @@ int main(int argc, char ** argv)
   char* use_params;
   if (argc >= 2) {
     use_params = argv[1];
+    if (!strcmp(use_params, "true")) {
+      rclcpp::spin(std::make_shared<rosplane::EstimatorContinuousDiscrete>(use_params));
+    } else if (strcmp(use_params, "false")) // If the string is not true or false print error.
+    {
+      auto estimator_node = std::make_shared<rosplane::EstimatorContinuousDiscrete>();
+      RCLCPP_WARN(estimator_node->get_logger(),
+                  "Invalid option for seeding estimator, defaulting to unseeded.");
+      rclcpp::spin(estimator_node);
+    } else {
+      rclcpp::spin(std::make_shared<rosplane::EstimatorContinuousDiscrete>());
+    }
   }
-
-  if (!strcmp(use_params, "true")) {
-    rclcpp::spin(std::make_shared<rosplane::EstimatorContinuousDiscrete>(use_params));
-  } else if (strcmp(use_params, "false")) // If the string is not true or false print error.
-  {
-    auto estimator_node = std::make_shared<rosplane::EstimatorContinuousDiscrete>();
-    RCLCPP_WARN(estimator_node->get_logger(),
-                "Invalid option for seeding estimator, defaulting to unseeded.");
-    rclcpp::spin(estimator_node);
-  } else {
-    rclcpp::spin(std::make_shared<rosplane::EstimatorContinuousDiscrete>());
-  }
-
   return 0;
 }
