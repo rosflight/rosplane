@@ -1,4 +1,4 @@
-autopilot:
+controller:
   ros__parameters:
     alt_hz: 20.0
     alt_toz: 5.0
