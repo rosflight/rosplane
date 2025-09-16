@@ -117,7 +117,7 @@ add_executable(estimator
 target_link_libraries(estimator
   ${YAML_CPP_LIBRARIES}
 )
-ament_target_dependencies(estimator rosplane_msgs rosflight_msgs rclcpp Eigen3)
+ament_target_dependencies(estimator rosplane_msgs rosflight_msgs rclcpp Eigen3 ament_index_cpp)
 target_link_libraries(estimator param_manager)
 install(TARGETS
   estimator
