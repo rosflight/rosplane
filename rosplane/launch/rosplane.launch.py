@@ -107,9 +107,7 @@ def generate_launch_description():
             name='estimator',
             output='screen',
             parameters=[
-                autopilot_params,
                 {'use_sim_time': launch.substitutions.LaunchConfiguration('use_sim_time')},
             ],
-            arguments = [use_params]
         )
     ])

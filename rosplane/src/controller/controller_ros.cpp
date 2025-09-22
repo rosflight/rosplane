@@ -61,6 +61,7 @@ ControllerROS::ControllerROS()
 
   // This flag indicates whether the first set of commands have been received.
   command_recieved_ = false;
+  state_received_ = true;
 
   // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
@@ -98,7 +99,8 @@ void ControllerROS::controller_commands_callback(
 
 void ControllerROS::vehicle_state_callback(const rosplane_msgs::msg::State::SharedPtr msg)
 {
-
+  // Set the flag that a state has been received.
+  state_received_ = true;
   // Save the message to use in calculations.
   vehicle_state_ = *msg;
 }
@@ -123,8 +125,9 @@ void ControllerROS::actuator_controls_publish()
 
   Output output;
 
-  // If a command was received, begin control.
-  if (command_recieved_ == true) {
+  // If a command was received, and a state received since last loop, begin control.
+  if (command_recieved_ && state_received_) {
+    state_received_ = false;
 
     // Control based off of inputs and parameters.
     control(input, output);
