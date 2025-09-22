@@ -70,7 +70,7 @@ estimator:
     gps_n_lim: 10000.
     gps_e_lim: 10000.
     frequency: 100
-    baro_calibration_val: 85270.5703125
-    init_lat: 40.246471292339898
-    init_lon: -111.6485717798961
-    init_alt: 1386.861328125
+    baro_calibration_val: 85271.15625
+    init_lat: 40.246377290528969
+    init_lon: -111.6474166337984
+    init_alt: 1387.218994140625

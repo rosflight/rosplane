@@ -197,6 +197,11 @@ private:
    * Flag to indicate if the first command has been received.
    */
   bool command_recieved_;
+  
+  /**
+   * Flag to indicate if a state has been received since the last iteration.
+   */
+  bool state_received_;
 
   /**
    * Convert from deflection angle in radians to pwm.
