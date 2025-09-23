@@ -64,7 +64,7 @@ EstimatorROS::EstimatorROS()
 void EstimatorROS::declare_parameters()
 {
   params_.declare_double("estimator_update_frequency", 390.0);
-  params_.declare_double("rho", 1.225);
+  params_.declare_double("rho", NOT_IN_USE); // TODO: UPDATE THE PARAMS FILE TO NOT_IN_USE
   params_.declare_double("gravity", 9.81);
   params_.declare_double("gps_ground_speed_threshold", 0.3);  // TODO: this is a magic number. What is it determined from?
   params_.declare_double("baro_measurement_gate", 1.35);  // TODO: this is a magic number. What is it determined from?
@@ -83,16 +83,18 @@ void EstimatorROS::hotstart()
   in >> init_lon_;
   in >> init_alt_;
   in >> init_static_;
+  in >> rho_;
 }
 
 void EstimatorROS::saveInitConditions()
 {
-  std::ofstream out(hotstart_path_.string()); // NOTE: Saves to the install directory.
+  std::ofstream out(hotstart_path_.string());
 
   out << init_lat_ << " ";
   out << init_lon_ << " ";
   out << init_alt_ << " ";
-  out << init_static_;
+  out << init_static_ << " ";
+  out << rho_;
 }
 
 void EstimatorROS::set_timer() {
@@ -225,6 +227,16 @@ void EstimatorROS::gnssCallback(const rosflight_msgs::msg::GNSS::SharedPtr msg)
       init_alt_ = msg_height;
       init_lat_ = msg_lat;
       init_lon_ = msg_lon;
+
+      // Calculate the air density using the standard atmospheric model.
+      double pressure_at_alt = 101325.0f * (float) pow((1 - 2.25694e-5 * init_alt_), 5.2553);
+      rho_ = 1.225 * pow(pressure_at_alt / 101325.0, 0.809736894596450);
+      
+      // If the parameter is in use override the pressure at altitude calculation.
+      float rho = params_.get_double("rho");
+      if (rho > 0) {
+        rho_ = rho;
+      }
     }
   } else {
     input_.gps_lat = msg_lat;
@@ -273,7 +285,6 @@ void EstimatorROS::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
 void EstimatorROS::baroAltCallback(const rosflight_msgs::msg::Barometer::SharedPtr msg)
 {
   // For readability, declare the parameters here
-  double rho = params_.get_double("rho");
   double gravity = params_.get_double("gravity");
   double gate_gain_constant = params_.get_double("baro_measurement_gate");
 
@@ -286,7 +297,7 @@ void EstimatorROS::baroAltCallback(const rosflight_msgs::msg::Barometer::SharedP
     float static_pres_old = input_.static_pres;
     input_.static_pres = -msg->pressure + init_static_;
 
-    float gate_gain = gate_gain_constant * rho * gravity;
+    float gate_gain = gate_gain_constant * rho_ * gravity;
     if (input_.static_pres < static_pres_old - gate_gain) {
       input_.static_pres = static_pres_old - gate_gain;
     } else if (input_.static_pres > static_pres_old + gate_gain) {
@@ -340,14 +351,12 @@ void EstimatorROS::airspeedCallback(const rosflight_msgs::msg::Airspeed::SharedP
   if (msg->differential_pressure < 0.f) {
     return;
   }
-  // For readability, declare the parameters here
-  double rho = params_.get_double("rho");
   double gate_gain_constant = params_.get_double("airspeed_measurement_gate");
 
   float diff_pres_old = input_.diff_pres;
   input_.diff_pres = msg->differential_pressure;
 
-  float gate_gain = pow(gate_gain_constant, 2) * rho / 2.0;
+  float gate_gain = pow(gate_gain_constant, 2) * rho_ / 2.0;
   if (input_.diff_pres < diff_pres_old - gate_gain) {
     input_.diff_pres = diff_pres_old - gate_gain;
   } else if (input_.diff_pres > diff_pres_old + gate_gain) {

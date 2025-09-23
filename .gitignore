@@ -8,5 +8,6 @@ log/
 
 # IDE files
 .vscode/
+.cache/
 .idea/
 __pycache__/
