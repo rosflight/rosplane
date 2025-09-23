@@ -204,9 +204,7 @@ void EstimatorContinuousDiscrete::diff_measurement_update_step(const Input& inpu
     return;
   }
 
-  float rho = params_.get_double("rho");
-
-  lpf_va_ = alpha_va_ * lpf_va_ + (1 - alpha_va_) * sqrtf(2/rho*input.diff_pres);
+  lpf_va_ = alpha_va_ * lpf_va_ + (1 - alpha_va_) * sqrtf(2/rho_*input.diff_pres);
   
   Eigen::Vector<float, num_baro_measurements> y_diff;
   y_diff << input.diff_pres;
@@ -271,9 +269,16 @@ void EstimatorContinuousDiscrete::baro_measurement_update_step(const Input& inpu
   y_baro << lpf_static_;
 
   Eigen::Vector<float, 1> _;
+  Eigen::Vector<float, num_states> gammas = Eigen::Vector<float, num_states>::Zero();
+  gammas(3) = 1.0;
+  gammas(4) = 1.0;
+  gammas(5) = 1.0;
+  gammas(6) = 1.0;
+  gammas(7) = 1.0;
+  gammas(8) = 1.0;
 
-  std::tie(P_, xhat_) = measurement_update(xhat_, _, baro_measurement_model, y_baro,
-                                             baro_measurement_jacobian_model, baro_measurement_sensor_noise_model, P_);
+  std::tie(P_, xhat_) = partial_measurement_update(xhat_, _, baro_measurement_model, y_baro,
+                                             baro_measurement_jacobian_model, baro_measurement_sensor_noise_model, P_, gammas);
   new_baro_ = false;
 }
 
@@ -285,21 +290,28 @@ void EstimatorContinuousDiscrete::gnss_measurement_update_step(const Input& inpu
 
   // Only update if new GPS information is available.
   if (input.gps_new && gps_init_) {
-    float rho = params_.get_double("rho");
     // Measurements for the positional states.
     Eigen::Vector<float, num_gnss_measurements> y_gps;
-    y_gps << input.gps_n, input.gps_e, -input.gps_h, input.gps_vn, input.gps_ve, input.gps_vd;
+    y_gps << input.gps_n, input.gps_e, input.gps_vn, input.gps_ve, input.gps_vd;
     Eigen::Vector<float, num_pseudo_measurements> y_pseudo;
     y_pseudo << 0.f, 0.f;
 
     Eigen::Vector3f vel_info;
-    vel_info << input.gps_vn, input.gps_ve, sqrtf(2/rho * diff_);
+    vel_info << input.gps_vn, input.gps_ve, sqrtf(2/rho_ * diff_);
   
     std::tie(P_, xhat_) = measurement_update(xhat_, _, gnss_measurement_model, y_gps,
                                              gnss_measurement_jacobian_model, gnss_measurement_sensor_noise_model, P_);
     if (new_diff_) {
-      std::tie(P_, xhat_) = measurement_update(xhat_, vel_info, pseudo_measurement_model, y_pseudo,
-                                               pseudo_measurement_jacobian_model, pseudo_measurement_sensor_noise_model, P_);
+      Eigen::Vector<float, num_states> gammas = Eigen::Vector<float, num_states>::Zero();
+      gammas(3) = 1.0;
+      gammas(4) = 1.0;
+      gammas(5) = 1.0;
+      gammas(6) = 1.0;
+      gammas(7) = 1.0;
+      gammas(8) = 1.0;
+
+      std::tie(P_, xhat_) = partial_measurement_update(xhat_, vel_info, pseudo_measurement_model, y_pseudo,
+                                               pseudo_measurement_jacobian_model, pseudo_measurement_sensor_noise_model, P_, gammas);
       new_diff_ = false;
     }
   }
@@ -465,26 +477,24 @@ Eigen::MatrixXf EstimatorContinuousDiscrete::tilt_mag_measurement_sensor_noise()
 // These are passed by reference to the baro measurement update step.
 Eigen::VectorXf EstimatorContinuousDiscrete::baro_measurement_prediction(const Eigen::VectorXf& state, const Eigen::VectorXf& input)
 {
-  float rho = params_.get_double("rho");
   float gravity = params_.get_double("gravity");
 
   Eigen::Vector<float, num_baro_measurements> h = Eigen::Vector<float, num_baro_measurements>::Zero();
 
   // Predicted static pressure measurement
-  h(0) = -rho*gravity*state(2);
+  h(0) = -rho_*gravity*state(2);
 
   return h;
 }
 
 Eigen::MatrixXf EstimatorContinuousDiscrete::baro_measurement_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& input)
 {
-  float rho = params_.get_double("rho");
   float gravity = params_.get_double("gravity");
 
   Eigen::Matrix<float, num_baro_measurements, num_states> C = Eigen::Matrix<float, num_baro_measurements, num_states>::Zero();
 
   // Static pressure
-  C(0,2) = -rho*gravity;
+  C(0,2) = -rho_*gravity;
 
   return C;
 }
@@ -500,8 +510,6 @@ Eigen::MatrixXf EstimatorContinuousDiscrete::baro_measurement_sensor_noise()
 
 Eigen::VectorXf EstimatorContinuousDiscrete::diff_pressure_measurement_prediction(const Eigen::VectorXf& state, const Eigen::VectorXf& input)
 {
-  float rho = params_.get_double("rho");
-
   Eigen::Vector3f vels = state.block<3,1>(3,0);
   Eigen::Vector3f Theta = state.block<3,1>(6,0);
   Eigen::Vector3f wind;
@@ -514,15 +522,13 @@ Eigen::VectorXf EstimatorContinuousDiscrete::diff_pressure_measurement_predictio
   float v_a_squared = airspeed_vect.norm();
 
   // Predicted pseudo measurement
-  h(0) = 0.5f*rho*v_a_squared;
+  h(0) = 0.5f*rho_*v_a_squared;
 
   return h;
 }
 
 Eigen::MatrixXf EstimatorContinuousDiscrete::diff_pressure_measurement_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& input)
 {
-  float rho = params_.get_double("rho");
-
   Eigen::Vector3f vels = state.block<3,1>(3,0);
   Eigen::Vector3f Theta = state.block<3,1>(6,0);
   Eigen::Vector3f wind;
@@ -535,9 +541,9 @@ Eigen::MatrixXf EstimatorContinuousDiscrete::diff_pressure_measurement_jacobian(
                0.0, 1.0, 0.0;
 
   // Pseudo measurements
-  C.block<1,3>(0,3) = rho*(vels -  R(Theta).transpose()*wind).transpose();
-  C.block<1,3>(0,6) = rho*(del_R_Theta_T_y_mag_del_Theta(Theta, wind).transpose()*(vels - R(Theta).transpose()*wind)).transpose();
-  C.block<1,2>(0,12) = rho*(wind_dist*R(Theta)*(vels - R(Theta).transpose()*wind)).transpose();
+  C.block<1,3>(0,3) = rho_*(vels -  R(Theta).transpose()*wind).transpose();
+  C.block<1,3>(0,6) = rho_*(del_R_Theta_T_y_mag_del_Theta(Theta, wind).transpose()*(vels - R(Theta).transpose()*wind)).transpose();
+  C.block<1,2>(0,12) = rho_*(wind_dist*R(Theta)*(vels - R(Theta).transpose()*wind)).transpose();
 
   return C;
 }
@@ -634,28 +640,19 @@ Eigen::MatrixXf EstimatorContinuousDiscrete::pseudo_measurement_jacobian(const E
 
 Eigen::MatrixXf EstimatorContinuousDiscrete::pseudo_measurement_sensor_noise() // FIXME: This needs the all the inputs from the equation.
 {
-  float rho = params_.get_double("rho");
   float psi = xhat_(8);
 
   float diff = diff_;
 
   Eigen::Matrix<float, num_pseudo_measurements, num_pseudo_measurements> R = Eigen::Matrix<float, num_pseudo_measurements, num_pseudo_measurements>::Zero();
-  Eigen::Matrix<float,  2, 6> G_gnss_ = Eigen::Matrix<float, 2, 6>::Zero(); // Jacobian of the pseudo measurement prediction wrt gnss velocity
+  Eigen::Matrix<float,  2, num_gnss_measurements> G_gnss_ = Eigen::Matrix<float, 2,num_gnss_measurements>::Zero(); // Jacobian of the pseudo measurement prediction wrt gnss velocity
   Eigen::Matrix<float, 2, 1> G_airspeed_ = Eigen::Matrix<float, 2, 1>::Zero();; // Jacobian of the pseudo measurement prediction wrt airspeed measurment
 
   G_gnss_(0,0) = -1;
   G_gnss_(1,1) = -1;
 
-  // 1/2 * rho * v_a^2 = diff --> v_a = sqrt(2*diff/rho)
-  // cosf
-
-  G_airspeed_(0,0) = -sinf(psi) * sqrtf(2*diff/rho) + rho*cosf(psi)*1.f/(sqrt(2*diff*rho));
-  G_airspeed_(1,1) = cosf(psi) * sqrtf(2*diff/rho) + rho*sinf(psi)*1.f/(sqrt(2*diff*rho));
-  
-  /*RCLCPP_INFO_STREAM(this->get_logger(), "Airspeed_noise: " << G_airspeed_*R_diff_*G_airspeed_.transpose());*/
-  /*RCLCPP_INFO_STREAM(this->get_logger(), "R_diff_: " << R_diff_);*/
-  /*RCLCPP_INFO_STREAM(this->get_logger(), "sqrt(2*diff*rho);: " << sqrt(2*diff*rho));*/
-  /*RCLCPP_INFO_STREAM(this->get_logger(), "G_airspeed: " << G_airspeed_);*/
+  G_airspeed_(0,0) = -sinf(psi) * sqrtf(2*diff/rho_) + rho_*cosf(psi)*1.f/(sqrt(2*diff*rho_));
+  G_airspeed_(1,1) = cosf(psi) * sqrtf(2*diff/rho_) + rho_*sinf(psi)*1.f/(sqrt(2*diff*rho_));
 
   R = G_gnss_*R_gnss_*G_gnss_.transpose() + G_airspeed_*R_diff_*G_airspeed_.transpose() + R_pseudo_;
 
@@ -673,9 +670,6 @@ Eigen::VectorXf EstimatorContinuousDiscrete::gnss_measurement_prediction(const E
 
   // East position
   h(1) = state(1);
-  
-  // Down position
-  h(2) = state(2);
 
   // Rotate body vels into the intertial frame.
   
@@ -687,13 +681,13 @@ Eigen::VectorXf EstimatorContinuousDiscrete::gnss_measurement_prediction(const E
   inertial_vels = R(Theta) * vels;
   
   // Vel north
-  h(3) = inertial_vels(0);
+  h(2) = inertial_vels(0);
 
   // Vel east
-  h(4) = inertial_vels(1);
+  h(3) = inertial_vels(1);
   
   // Vel down
-  h(5) = inertial_vels(2);
+  h(4) = inertial_vels(2);
   
   // To add a new measurement, simply use the state and any input you need as another entry to h. Be sure to update the measurement jacobian C.
    
@@ -711,15 +705,12 @@ Eigen::MatrixXf EstimatorContinuousDiscrete::gnss_measurement_jacobian(const Eig
 
   // GPS east
   C(1,1) = 1;
-  
-  // GPS down
-  C(2,2) = 1;
 
   // GPS velocities effect on velocity
-  C.block<3,3>(3,3) = R(Theta);
+  C.block<3,3>(2,3) = R(Theta);
   
   // GPS velocities effect on Theta
-  C.block<3,3>(3,6) = del_R_Theta_v_del_Theta(Theta, vels);
+  C.block<3,3>(2,6) = del_R_Theta_v_del_Theta(Theta, vels);
 
   // To add a new measurement use the inputs and the state to add another row to the matrix C. Be sure to update the measurment prediction vector h.
 
@@ -892,11 +883,6 @@ void EstimatorContinuousDiscrete::calc_mag_field_properties(const Input& input)
   // TODO: Change the gps day to pull out yday instead of the month and day
   float decimal_month = input.gps_month + input.gps_day/31.0;
   float decimal_year = input.gps_year + decimal_month/12.0;
-
-  /*RCLCPP_INFO_STREAM(this->get_logger(), "dec_year: " << decimal_year);*/
-  /*RCLCPP_INFO_STREAM(this->get_logger(), "lat: " << input.gps_lat);*/
-  /*RCLCPP_INFO_STREAM(this->get_logger(), "lon: " << input.gps_lon);*/
-  /*RCLCPP_INFO_STREAM(this->get_logger(), "alt: " << input.gps_alt);*/
   
   int mag_success = geomag_calc(input.gps_alt/1000.0,
                                 input.gps_lat,
@@ -906,8 +892,6 @@ void EstimatorContinuousDiscrete::calc_mag_field_properties(const Input& input)
                                 &inclination_,
                                 &total_intensity,
                                 &grid_variation); 
-  /*RCLCPP_INFO_STREAM(this->get_logger(), "inclination_: " << inclination_);*/
-  /*RCLCPP_INFO_STREAM(this->get_logger(), "declination_: " << declination_);*/
 
   if (mag_success == 1) {
     RCLCPP_ERROR(this->get_logger(), "Something went wrong while calculating inclination and declination.");
@@ -955,10 +939,19 @@ void EstimatorContinuousDiscrete::check_estimate(const Input& input)
       }
       initialize_state_covariances();
     }
-    prob_index++;
     if (prob_index == 6 || prob_index == 7 || prob_index == 8) {
       if (state > M_PI || state < -M_PI) {
-        RCLCPP_WARN(this->get_logger(), "Attitude angles out of range!");
+        switch (prob_index) {
+          case 6:
+            RCLCPP_WARN_STREAM(this->get_logger(), "Roll is out of range! Roll: " << xhat_(6));
+            break;
+          case 7:
+            RCLCPP_WARN_STREAM(this->get_logger(), "Pitch is out of range! Pitch: " << xhat_(7));
+            break;
+          case 8:
+            RCLCPP_WARN_STREAM(this->get_logger(), "Yaw is out of range! Yaw: " << xhat_(8));
+            break;
+          }
       }
     }
     if (problem) {
@@ -966,6 +959,7 @@ void EstimatorContinuousDiscrete::check_estimate(const Input& input)
                   prob_index);
       problem = false;
     }
+    prob_index++;
   }
 
   if (xhat_(0) > gps_n_lim || xhat_(0) < -gps_n_lim) {
@@ -1071,10 +1065,9 @@ void EstimatorContinuousDiscrete::update_measurement_model_parameters() // TODO:
 
   R_gnss_(0, 0) = powf(sigma_n_gps, 2);
   R_gnss_(1, 1) = powf(sigma_e_gps, 2);
-  R_gnss_(2, 2) = powf(sigma_h_gps, 2);
-  R_gnss_(3, 3) = powf(sigma_vn_gps, 2);
-  R_gnss_(4, 4) = powf(sigma_ve_gps, 2);
-  R_gnss_(5, 5) = powf(sigma_vd_gps, 2);
+  R_gnss_(2, 2) = powf(sigma_vn_gps, 2);
+  R_gnss_(3, 3) = powf(sigma_ve_gps, 2);
+  R_gnss_(4, 4) = powf(sigma_vd_gps, 2);
   
   R_baro_(0,0) = powf(sigma_static_press,2);
 
@@ -1104,10 +1097,10 @@ void EstimatorContinuousDiscrete::declare_parameters()
   params_.declare_double("sigma_vn_gps", .01);
   params_.declare_double("sigma_ve_gps", .01);
   params_.declare_double("sigma_vd_gps", .1);
-  params_.declare_double("sigma_static_press", 0.5);
+  params_.declare_double("sigma_static_press", 0.15);
   params_.declare_double("sigma_mag", 0.005);
   params_.declare_double("sigma_accel", .025 * 9.81);
-  params_.declare_double("sigma_pseudo", 0.1);
+  params_.declare_double("sigma_pseudo", 0.5);
   params_.declare_double("sigma_diff", 4.0);
 
   // Low pass filter parameters
@@ -1122,7 +1115,7 @@ void EstimatorContinuousDiscrete::declare_parameters()
   params_.declare_double("gyro_process_noise", 0.13);
   params_.declare_double("accel_process_noise", 0.24525);
   params_.declare_double("pos_process_noise", 1000*powf(0.00003,2));
-  params_.declare_double("alt_process_noise", 1000*0.000001);
+  params_.declare_double("alt_process_noise", 1000*0.00001);
   params_.declare_double("vel_horizontal_process_noise", 1000*powf(0.0001,2)); 
   params_.declare_double("vel_y_process_noise", powf(0.0001,2)); 
   params_.declare_double("vel_vertical_process_noise", 1000*powf(0.0001,2));

@@ -114,6 +114,8 @@ protected:
 
   bool baro_init_ = false;
   bool new_baro_ = false;
+
+  float rho_;
   
   /**
    * @brief Indicates if the magnetometer magnetic field parameters have been initialized.

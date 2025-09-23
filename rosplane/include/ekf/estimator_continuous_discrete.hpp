@@ -359,7 +359,7 @@ private:
   /**
    * @brief There are 6 gnss measurements by default. Lat, lon, alt, v_n, v_e and v_d.
    */
-  static constexpr int num_gnss_measurements = 6;
+  static constexpr int num_gnss_measurements = 5;
 
   /**
    * @brief The sensor noises for the GNSS measurements. The first three rows are for the positional measurements.
