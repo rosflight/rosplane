@@ -6,6 +6,8 @@ build/
 install/
 log/
 
+rosplane/params/hotstart
+
 # IDE files
 .vscode/
 .cache/
