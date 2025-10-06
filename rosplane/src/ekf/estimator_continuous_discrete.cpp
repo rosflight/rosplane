@@ -101,6 +101,11 @@ void EstimatorContinuousDiscrete::estimate(const Input & input, Output & output)
 
   check_estimate(input);
   
+  if (new_diff_) {
+    lpf_va_ = alpha_va_ * lpf_va_ + (1 - alpha_va_) * sqrtf(2/rho_*input.diff_pres);
+    new_diff_ = false;
+  }
+  
   // Low pass filter gyros to estimate angular rates ASK: Should we lpf this?
   lpf_gyro_x_ = alpha_gyro_ * lpf_gyro_x_ + (1 - alpha_gyro_) * input.gyro_x;
   lpf_gyro_y_ = alpha_gyro_ * lpf_gyro_y_ + (1 - alpha_gyro_) * input.gyro_y;
@@ -312,7 +317,6 @@ void EstimatorContinuousDiscrete::gnss_measurement_update_step(const Input& inpu
 
       std::tie(P_, xhat_) = partial_measurement_update(xhat_, vel_info, pseudo_measurement_model, y_pseudo,
                                                pseudo_measurement_jacobian_model, pseudo_measurement_sensor_noise_model, P_, gammas);
-      new_diff_ = false;
     }
   }
 }

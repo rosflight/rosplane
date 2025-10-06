@@ -184,7 +184,7 @@ void EstimatorROS::update()
   msg.initial_alt = init_alt_;
   msg.initial_lat = init_lat_;
   msg.initial_lon = init_lon_;
-  msg.va = msg.u; // TODO: Should this be the inverted pitot measurement? Yes likely so.
+  msg.va = output.va;
   msg.beta = output.vx / output.va; // TODO: the ve should be compensated for wind.
   msg.alpha = 0.0; // TODO: Dr. McLain sent me a better way to calculate this.
   msg.chi = output.chi;
