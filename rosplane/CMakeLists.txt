@@ -138,7 +138,7 @@ add_library(estimator_lib
   include/ekf/estimator_continuous_discrete.hpp)
 target_link_libraries(estimator_lib param_manager)
 target_link_libraries(estimator estimator_lib)
-ament_target_dependencies(estimator_lib rclcpp geometry_msgs rosflight_msgs sensor_msgs Eigen3 rosplane_msgs)
+ament_target_dependencies(estimator_lib rclcpp rosflight_msgs sensor_msgs Eigen3 rosplane_msgs)
 
 #### END OF EXECUTABLES ###
 

@@ -12,6 +12,7 @@
 #define ESTIMATOR_ROS_H
 
 #include <chrono>
+#include <unordered_map>
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
@@ -35,6 +36,7 @@
 
 #define EARTH_RADIUS 6378145.0f
 #define NOT_IN_USE -1000000.f
+#define MILLIS_TO_NANOS 1000000
 
 using std::placeholders::_1;
 using namespace std::chrono_literals;
@@ -137,6 +139,10 @@ protected:
   double init_lon_ = 0.0;                 /**< Initial longitude in degrees */
   float init_alt_ = 0.0;                  /**< Initial altitude in meters above MSL  */
   float init_static_;                     /**< Initial static pressure (mbar)  */
+  
+  std::unordered_map<std::string, rclcpp::Time> time_since_last_sensor_update_;
+  void set_sensor_monitoring();
+  void check_sensors();
 private:
   void hotstart();
   void saveInitConditions();

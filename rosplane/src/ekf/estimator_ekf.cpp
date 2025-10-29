@@ -36,10 +36,6 @@ std::tuple<Eigen::MatrixXf, Eigen::VectorXf> EstimatorEKF::kalman_update(Eigen::
 
   x = x + L * (y - h);
 
-  if ((L * (y-h)).any() > 100.0) {
-    RCLCPP_INFO_STREAM(this->get_logger(), "CORRECTION LARGE");
-  }
-
   std::tuple<Eigen::MatrixXf, Eigen::VectorXf> result(P, x);
   
   return result;
@@ -56,14 +52,10 @@ std::tuple<Eigen::MatrixXf, Eigen::VectorXf> EstimatorEKF::measurement_update(Ei
   
   Eigen::VectorXf h = measurement_model(x, inputs);
   Eigen::MatrixXf C = measurement_jacobian(x, inputs);
-  Eigen::MatrixXf R = sensor_noise_model();
+  Eigen::MatrixXf R = sensor_noise_model(x, inputs);
   
   // Find the innovation covariance and it's inverse to find the Kalman gain.
   Eigen::MatrixXf S = (R + C * P * C.transpose());
-  
-  /*RCLCPP_INFO_STREAM(this->get_logger(), "P: " << P);*/
-  /*RCLCPP_INFO_STREAM(this->get_logger(), "S: " << S);*/
-  /*RCLCPP_INFO_STREAM(this->get_logger(), "R: " << R);*/
   
   return kalman_update(x, h, y, C, R, S, P);
 }
@@ -135,7 +127,7 @@ std::tuple<Eigen::MatrixXf, Eigen::VectorXf> EstimatorEKF::partial_measurement_u
   
   Eigen::VectorXf h = measurement_model(x, inputs);
   Eigen::MatrixXf C = measurement_jacobian(x, inputs);
-  Eigen::MatrixXf R = sensor_noise_model();
+  Eigen::MatrixXf R = sensor_noise_model(x, inputs);
   
   // Find the S_inv to find the Kalman gain.
   Eigen::MatrixXf S = (R + C * P * C.transpose());
