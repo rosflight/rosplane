@@ -127,19 +127,6 @@ install(TARGETS
   estimator
   DESTINATION lib/${PROJECT_NAME})
 
-add_library(estimator_lib
-  src/ekf/estimator_node.cpp
-  src/ekf/estimator_ros.cpp
-  src/ekf/estimator_ekf.cpp
-  src/ekf/estimator_continuous_discrete.cpp
-  src/utils/geomag.c
-  include/ekf/estimator_ros.hpp
-  include/ekf/estimator_ekf.hpp
-  include/ekf/estimator_continuous_discrete.hpp)
-target_link_libraries(estimator_lib param_manager)
-target_link_libraries(estimator estimator_lib)
-ament_target_dependencies(estimator_lib rclcpp rosflight_msgs sensor_msgs Eigen3 rosplane_msgs)
-
 #### END OF EXECUTABLES ###
 
 
