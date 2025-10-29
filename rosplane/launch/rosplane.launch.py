@@ -30,6 +30,12 @@ def generate_launch_description():
         'params',
         aircraft + '_autopilot_params.yaml'
     )
+    
+    estimator_params = os.path.join(
+        rosplane_dir,
+        'params',
+        'estimator.yaml'
+    )
 
     return LaunchDescription([
         launch.actions.DeclareLaunchArgument(
@@ -107,6 +113,7 @@ def generate_launch_description():
             name='estimator',
             output='screen',
             parameters=[
+                estimator_params,
                 {'use_sim_time': launch.substitutions.LaunchConfiguration('use_sim_time')},
             ],
         )

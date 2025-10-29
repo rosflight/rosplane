@@ -1,0 +1,73 @@
+/estimator:
+    ros__parameters:
+
+      # Node Params
+      estimator_update_frequency: 390.0
+      rho: 1.225
+      gravity: 9.81
+      gps_ground_speed_threshold: 0.3
+      baro_measurement_gate: 1.35
+      airspeed_measurement_gate: 5.0
+      baro_calibration_count: 100
+      min_gnss_fix_type: 3
+      baro_calibration_val: 0.0
+
+      # EKF params
+      num_propagation_steps: 1
+      
+      # Sensor uncertainties
+      sigma_n_gps: .01
+      sigma_e_gps: .01
+      sigma_h_gps: .03
+      sigma_vn_gps: .007
+      sigma_ve_gps: .007
+      sigma_vd_gps: .01
+      sigma_static_press: 10.0
+      sigma_mag: 0.004
+      sigma_tilt_mag: 0.0035
+      sigma_accel: .25
+
+      # Low pass filter parameters
+      gyro_cutoff_freq: 20.0
+      baro_cutoff_freq: 1.25
+      
+      # Proccess noises
+      roll_process_noise: 0.0001
+      pitch_process_noise: 0.0001
+      yaw_process_noise: 0.0001
+      gyro_process_noise: 0.13
+      accel_process_noise: 0.24525
+      pos_process_noise: 0.0000009
+      alt_process_noise: 0.001
+      vel_horizontal_process_noise: 1.0e-3 
+      vel_vertical_process_noise: 1.0e-3
+      bias_process_noise: 1.0e-12
+      
+      # Initial covariances
+      pos_n_initial_cov: .0001
+      pos_e_initial_cov: .0001
+      pos_d_initial_cov: .0001
+      vx_initial_cov: .0001
+      vy_initial_cov: .0001
+      vz_initial_cov: .0001
+      phi_initial_cov: 0.005
+      theta_initial_cov: 0.005
+      psi_initial_cov: 1.0
+      bias_x_initial_cov: 0.0001
+      bias_y_initial_cov: 0.0001
+      bias_z_initial_cov: 0.0001
+      
+      # Conversion flags
+      convert_to_gauss: true
+  
+      # Magnetic Field Parameters -- Set to -1000.0 to make estimator
+      # find values using the WMM given GPS. If a reasonable number 
+      # is given for the parameter: it will be used. 
+      inclination: -1000000.
+      declination: -1000000.
+
+      # Saturations limits
+      max_estimated_phi: 85.0 # Deg
+      max_estimated_theta: 80.0 # Deg
+      gps_n_lim: 10000.
+      gps_e_lim: 10000. 
