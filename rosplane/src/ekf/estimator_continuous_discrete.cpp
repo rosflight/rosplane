@@ -185,7 +185,13 @@ void EstimatorContinuousDiscrete::diff_measurement_update_step(const Input& inpu
     return;
   }
 
-  lpf_va_ = alpha_va_ * lpf_va_ + (1 - alpha_va_) * sqrtf(2/rho_*input.diff_pres);
+  float sign = std::copysign(1, input.diff_pres);
+
+  lpf_va_ = alpha_va_ * lpf_va_ + (1 - alpha_va_) * sign * sqrtf(2/rho_*fabs(input.diff_pres));
+  
+  if (lpf_va_ < params_.get_double("diff_pressure_minimum_airspeed")) { // If the aircraft isn't moving fast enough, don't use the pitot.
+    return;
+  }
   
   Eigen::Vector<float, num_baro_measurements> y_diff;
   y_diff << input.diff_pres;
@@ -484,26 +490,32 @@ Eigen::VectorXf EstimatorContinuousDiscrete::diff_pressure_measurement_predictio
 
 Eigen::MatrixXf EstimatorContinuousDiscrete::diff_pressure_measurement_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& input)
 {
-  Eigen::Vector3f vels = state.block<3,1>(3,0);
+
+  float u = state(3);
+
+  float theta = state(7);
+  float psi = state(8);
+
+  float w_n = state(12);
+  float w_e = state(13);
+
+  Eigen::Vector3f vels;
+  vels << state(3), 0.0, 0.0;
+
   Eigen::Vector3f Theta = state.block<3,1>(6,0);
+
   Eigen::Vector3f wind;
   wind << state(12), state(13), 0.0;
 
   Eigen::Matrix<float, num_diff_measurements, num_states> C = Eigen::Matrix<float, num_diff_measurements, num_states>::Zero();
-    
-  Eigen::Vector<float, num_diff_measurements> h_nominal = diff_pressure_measurement_prediction(state, input);
 
-  for (int i = 0; i < num_states; i++) {
-    float epsilon = 0.001;
-
-    Eigen::Vector<float, num_states> delta = Eigen::Vector<float, num_states>::Zero();
-
-    delta(i) += epsilon;
-
-    Eigen::Vector<float, num_diff_measurements> h_perturbed = diff_pressure_measurement_prediction(state + delta, input);
-
-    C(0,i) = (-h_nominal(0,0) + h_perturbed(0,0)) / epsilon;
-  } // TODO: Put in analytical Jacobian!
+  C << 0.0, 0.0, 0.0,
+    rho_*(u - w_e*sinf(psi)*cosf(theta) - w_n*cosf(psi)*cosf(theta)), 0.0, 0.0,
+    0.0, -rho_*sinf(theta)*(w_e*sinf(psi) + w_n*cosf(psi))*(-u + w_e*sinf(psi)*cosf(theta) + w_n*cosf(psi)*cosf(theta)),
+         rho_*cosf(theta)*(w_e*cosf(psi) + w_n*sinf(psi))*(-u + w_e*sinf(psi)*cosf(theta) + w_n*cosf(psi)*cosf(theta)),
+    0.0,0.0,0.0,
+    -rho_*cosf(psi)*cosf(theta)*(u - w_e*sinf(psi)*cosf(theta) - w_n*cosf(psi)*cosf(theta)), 
+         -rho_*sinf(psi)*cosf(theta)*(u - w_e*sinf(psi)*cosf(theta) - w_n*cosf(psi)*cosf(theta));
   
   return C;
 }
@@ -535,29 +547,22 @@ Eigen::VectorXf EstimatorContinuousDiscrete::beta_pseudo_measurement_prediction(
 
 Eigen::MatrixXf EstimatorContinuousDiscrete::beta_pseudo_measurement_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& input)
 {
-  Eigen::Vector3f vels = state.block<3,1>(3,0);
-  Eigen::Vector3f Theta = state.block<3,1>(6,0);
-  Eigen::Vector3f wind;
-  wind << state(12), state(13), 0.0;
+  float phi = state(6);
+  float theta = state(7);
+  float psi = state(8);
 
-  Eigen::Vector3f airspeed_vect = (vels - R(Theta).transpose()*wind);
-
+  float w_n = state(12);
+  float w_e = state(13);
 
   Eigen::Matrix<float, 1, num_states> C = Eigen::Matrix<float, 1, num_states>::Zero();
-  
-  Eigen::Vector<float, 1> h_nominal = beta_pseudo_measurement_prediction(state, input);
 
-  for (int i = 0; i < num_states; i++) {
-    float epsilon = 0.001;
-
-    Eigen::Vector<float, num_states> delta = Eigen::Vector<float, num_states>::Zero();
-
-    delta(i) += epsilon;
-
-    Eigen::Vector<float, 1> h_perturbed = beta_pseudo_measurement_prediction(state + delta, input);
-
-    C(0,i) = (-h_nominal(0,0) + h_perturbed(0,0)) / epsilon;
-  } // TODO: Implement the analytical Jacobian.
+  C << 0.0, 0.0, 0.0,
+       0.0, 1.0, 0.0,
+       w_e*(sinf(phi)*cosf(psi) - sinf(psi)*sinf(theta)*cosf(phi)) - w_n*(sinf(phi)*sinf(psi) - cosf(psi)*sinf(theta)*cosf(phi)),
+          -(w_e*sinf(psi) + w_n*cosf(psi))*cosf(theta)*sinf(phi),
+          -w_e*(sinf(phi)*sinf(theta)*cosf(psi) - sinf(psi)*cosf(phi)) + w_n*(sinf(phi)*sinf(psi)*sinf(theta) - cosf(psi)*cosf(phi)),
+       0.0,0.0,0.0,
+       -sinf(phi)*sinf(theta)*cosf(psi) + sinf(psi)*cosf(phi), -sinf(phi)*sinf(theta)*sinf(psi) - cosf(psi)*cosf(phi);
 
   return C;
 }
@@ -1011,7 +1016,7 @@ void EstimatorContinuousDiscrete::declare_parameters()
   params_.declare_double("vel_y_process_noise", powf(0.0001,2)); 
   params_.declare_double("vel_vertical_process_noise", 1000*powf(0.0001,2));
   params_.declare_double("bias_process_noise", 0.0000001*0.0000001);
-  params_.declare_double("wind_process_noise", 0.05*0.05);
+  params_.declare_double("wind_process_noise", 0.000025);
   
   // Initial covariances
   params_.declare_double("pos_n_initial_cov", .0001);
@@ -1041,6 +1046,7 @@ void EstimatorContinuousDiscrete::declare_parameters()
   // Saturations limits
   params_.declare_double("max_estimated_phi", 85.0); // Deg
   params_.declare_double("max_estimated_theta", 80.0); // Deg
+  params_.declare_double("diff_pressure_minimum_airspeed", 3.0); // m/s
   params_.declare_double("gps_n_lim", 10000.);
   params_.declare_double("gps_e_lim", 10000.); 
 }

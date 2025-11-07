@@ -106,7 +106,8 @@ void EstimatorROS::set_timer() {
   double frequency = params_.get_double("estimator_update_frequency");
 
   update_period_ = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1'000'000));
-  update_timer_ = this->create_wall_timer(update_period_, std::bind(&EstimatorROS::update, this));
+  update_timer_ = rclcpp::create_timer(this, this->get_clock(), update_period_,
+                                   std::bind(&EstimatorROS::update, this));
 }
 
 rcl_interfaces::msg::SetParametersResult 
@@ -350,10 +351,6 @@ void EstimatorROS::update_barometer_calibration(const rosflight_msgs::msg::Barom
 void EstimatorROS::airspeedCallback(const rosflight_msgs::msg::Airspeed::SharedPtr msg)
 {
   time_since_last_sensor_update_["diff"] = this->get_clock()->now();
-
-  if (msg->differential_pressure < 0.f) {
-    return;
-  }
 
   double gate_gain_constant = params_.get_double("airspeed_measurement_gate");
 

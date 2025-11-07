@@ -56,21 +56,3 @@ path_follower:
     k_orbit: 0.5
     k_path: 0.0175
     gravity: 9.81
-estimator:
-  ros__parameters:
-    rho: 1.225
-    gravity: 9.8
-    sigma_n_gps: 0.01
-    sigma_e_gps: 0.01
-    sigma_Vg_gps: 0.005
-    sigma_course_gps: 0.00025
-    sigma_accel: 0.024525
-    lpf_a: 50.0
-    lpf_a1: 8.0
-    gps_n_lim: 10000.
-    gps_e_lim: 10000.
-    frequency: 100
-    baro_calibration_val: 85271.15625
-    init_lat: 40.246377290528969
-    init_lon: -111.6474166337984
-    init_alt: 1387.218994140625
