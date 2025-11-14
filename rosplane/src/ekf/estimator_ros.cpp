@@ -178,7 +178,7 @@ void EstimatorROS::update()
   msg.initial_lat = init_lat_;
   msg.initial_lon = init_lon_;
   msg.va = output.va;
-  msg.beta = output.vx / output.va; // TODO: the ve should be compensated for wind.
+  msg.beta = output.vx / output.va; // TODO: the ve should be compensated for wind. MOVE THE DERICED STATES TO THE ESTIMATOR CONT DISC
   msg.alpha = 0.0; // TODO: Dr. McLain sent me a better way to calculate this.
   msg.chi = output.chi;
   msg.wn = output.wn;
@@ -201,8 +201,8 @@ void EstimatorROS::gnssCallback(const rosflight_msgs::msg::GNSS::SharedPtr msg)
   int min_fix_type = params_.get_int("min_gnss_fix_type");
 
   // Convert msg to standard DDS and m/s.
-  float msg_lat = msg->lat;
-  float msg_lon = msg->lon;
+  double msg_lat = msg->lat;
+  double msg_lon = msg->lon;
   float msg_height = msg->alt;
   
   float msg_vel_n = msg->vel_n;

@@ -957,6 +957,7 @@ void EstimatorContinuousDiscrete::update_measurement_model_parameters()
   double sigma_mag = params_.get_double("sigma_mag");
   double sigma_tilt = params_.get_double("sigma_tilt_mag");
   double sigma_diff = params_.get_double("sigma_diff");
+  double sigma_beta = params_.get_double("sigma_beta");
   double frequency = params_.get_double("estimator_update_frequency");
   double Ts = 1.0 / frequency;
   float gyro_cutoff_freq = params_.get_double("gyro_cutoff_freq");
@@ -977,6 +978,8 @@ void EstimatorContinuousDiscrete::update_measurement_model_parameters()
   R_tilt_(0,0) = powf(sigma_tilt,2);
   
   R_diff_(0,0) = powf(sigma_diff,2);
+
+  R_beta_(0,0) = powf(sigma_beta,2);
   
   // Calculate low pass filter alpha values.
   alpha_gyro_ = exp(-2.*M_PI*gyro_cutoff_freq * Ts);
@@ -999,6 +1002,7 @@ void EstimatorContinuousDiscrete::declare_parameters()
   params_.declare_double("sigma_tilt_mag", radians(0.02));
   params_.declare_double("sigma_accel", .025 * 9.81);
   params_.declare_double("sigma_diff", 4.0);
+  params_.declare_double("sigma_beta", 0.9);
 
   // Low pass filter parameters
   params_.declare_double("gyro_cutoff_freq", 20.0);
@@ -1015,8 +1019,8 @@ void EstimatorContinuousDiscrete::declare_parameters()
   params_.declare_double("vel_horizontal_process_noise", 1000*powf(0.0001,2)); 
   params_.declare_double("vel_y_process_noise", powf(0.0001,2)); 
   params_.declare_double("vel_vertical_process_noise", 1000*powf(0.0001,2));
-  params_.declare_double("bias_process_noise", 0.0000001*0.0000001);
-  params_.declare_double("wind_process_noise", 0.000025);
+  params_.declare_double("bias_process_noise", 0.000001*0.000001);
+  params_.declare_double("wind_process_noise", 0.25);
   
   // Initial covariances
   params_.declare_double("pos_n_initial_cov", .0001);

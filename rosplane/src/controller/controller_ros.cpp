@@ -244,7 +244,7 @@ int main(int argc, char * argv[])
       auto node = std::make_shared<rosplane::ControllerTotalEnergy>();
       RCLCPP_INFO_STREAM(node->get_logger(), "Using total energy control.");
       rclcpp::spin(node);
-    } else if (strcmp(argv[1], "default") == 0) {
+    } else {
       auto node = std::make_shared<rosplane::ControllerSucessiveLoop>();
       RCLCPP_INFO_STREAM(node->get_logger(), "Using default control.");
       rclcpp::spin(node);
