@@ -225,7 +225,6 @@ void ControllerROS::convert_to_pwm(Output & output)
   double pwm_rad_r = params_.get_double("pwm_rad_r");
 
   // Multiply each control effort (in radians) by a scaling factor to a pwm.
-  // TODO investigate why this is named "pwm". The actual scaling to pwm happens in rosflight_io.
   output.delta_e = output.delta_e * pwm_rad_e;
   output.delta_a = output.delta_a * pwm_rad_a;
   output.delta_r = output.delta_r * pwm_rad_r;

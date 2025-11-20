@@ -65,7 +65,7 @@ EstimatorContinuousDiscrete::EstimatorContinuousDiscrete()
 // ======== INIT STATE ========
 void EstimatorContinuousDiscrete::init_state(const Input & input)
 {
-  if (mag_init_ && new_mag_) { // TODO: put new_mag_ into input, or take gnss_new out of input.
+  if (mag_init_ && input.mag_new) {
     float heading = -atan2f(input.mag_y, input.mag_x);
     heading -= radians(declination_);
     xhat_(8) = heading;
@@ -135,15 +135,26 @@ void EstimatorContinuousDiscrete::estimate(const Input & input, Output & output)
 
   Eigen::Vector3f earth_vels = R(euler_angles)*body_vels;
 
-  if (earth_vels.norm() > 3.0) {
+  Eigen::Vector3f wind;
+  wind << xhat_(12), xhat_(13), 0.0;
+
+  Eigen::Vector3f body_wind = R(euler_angles).transpose()*wind;
+
+  Eigen::Vector3f wind_compensated_vels = body_vels - body_wind;
+
+  float min_airspeed = params_.get_double("min_airspeed_estimation");
+
+  if (earth_vels.norm() > min_airspeed) {
     output.chi = atan2f(earth_vels(1),earth_vels(0));
 
-    if (output.va > 0.0) { // TODO: this should be compensated for winds
-      output.beta = output.vy / output.va;
+    if (output.va > min_airspeed) {
+      output.beta = wind_compensated_vels(1) / wind_compensated_vels.norm();
+      output.alpha = atan2(wind_compensated_vels(2), wind_compensated_vels(0));
     }
   }
   else {
     output.beta = 0.0;
+    output.alpha = 0.0;
     output.chi = output.psi;
   }
 
@@ -181,7 +192,7 @@ void EstimatorContinuousDiscrete::prediction_step(const Input& input)
 
 void EstimatorContinuousDiscrete::diff_measurement_update_step(const Input& input)
 {
-  if (!new_diff_) {
+  if (!input.diff_new) {
     return;
   }
 
@@ -209,14 +220,13 @@ void EstimatorContinuousDiscrete::diff_measurement_update_step(const Input& inpu
   std::tie(P_, xhat_) = measurement_update(xhat_, _, beta_pseudo_measurement_model, y_beta,
                                              beta_pseudo_measurement_jacobian_model, beta_pseudo_measurement_sensor_noise_model, P_);
 
-  new_diff_ = false;
   return;
 }
 
 void EstimatorContinuousDiscrete::mag_measurement_update_step(const Input& input)
 {
   // Only update when have new mag and the magnetometer models have been found.
-  if (!new_mag_ || !mag_init_) {
+  if (!input.mag_new || !mag_init_) {
     return;
   }
 
@@ -244,13 +254,12 @@ void EstimatorContinuousDiscrete::mag_measurement_update_step(const Input& input
   mag_info << radians(declination_), radians(inclination_), y_mag;
 
   std::tie(P_, xhat_) = measurement_update(xhat_, mag_info, tilt_mag_measurement_model, y_heading, tilt_mag_measurement_jacobian_model, tilt_mag_measurement_sensor_noise_model, P_);
-  new_mag_ = false;
 }
 
 void EstimatorContinuousDiscrete::baro_measurement_update_step(const Input& input) {
   
   // Only update when have new baro.
-  if (!new_baro_) {
+  if (!input.baro_new) {
     return;
   }
 
@@ -262,7 +271,6 @@ void EstimatorContinuousDiscrete::baro_measurement_update_step(const Input& inpu
   std::tie(P_, xhat_) = measurement_update(xhat_, _, baro_measurement_model, y_baro,
                                              baro_measurement_jacobian_model, baro_measurement_sensor_noise_model, P_);
 
-  new_baro_ = false;
 }
 
 void EstimatorContinuousDiscrete::gnss_measurement_update_step(const Input& input)
@@ -383,7 +391,10 @@ Eigen::MatrixXf EstimatorContinuousDiscrete::tilt_mag_measurement_sensor_noise(c
 
   Eigen::Matrix<float, num_tilt_mag_measurements, num_mag_measurements> G_mag = del_tilt_mag_del_mag(input, state);
 
-  R = G_mag*R_mag_*G_mag.transpose() + G_state*P_*G_state.transpose() + R_tilt_;
+  Eigen::Matrix<float, num_tilt_mag_measurements, num_states> C = tilt_mag_measurement_jacobian(input, state);
+
+  R = G_mag*R_mag_*G_mag.transpose() + G_state*P_*G_state.transpose() - 2*G_state*P_*C.transpose() + R_tilt_;
+
 
   return R;
 }
@@ -777,14 +788,10 @@ void EstimatorContinuousDiscrete::calc_mag_field_properties(const Input& input)
   double total_intensity; // nanoTesla (unused)
   double grid_variation; // Only useful for arctic or antarctic navigation (unused).
   
-  // Take the current year and then add a decimal for the current day. USE GPS TIME.
-  // This is a rough interpolation for speed. This will be accurate +- 1 day which is a time decimal change of ~0.0027
-  // therefore this method isn't completely accurate. Other sources of error will be much larger.
-  // TODO: Change the gps day to pull out yday instead of the month and day
-  float decimal_month = input.gps_month + input.gps_day/31.0;
-  float decimal_year = input.gps_year + decimal_month/12.0;
+  // Take the current year and then add a decimal for the current day.
+  float decimal_year = input.gps_year + input.gps_yday/365.0f;
   
-  int mag_success = geomag_calc(input.gps_alt/1000.0,
+  int mag_success = geomag_calc(input.gps_alt/1000.0f,
                                 input.gps_lat,
                                 input.gps_lon,
                                 decimal_year,
@@ -1019,7 +1026,7 @@ void EstimatorContinuousDiscrete::declare_parameters()
   params_.declare_double("vel_horizontal_process_noise", 1000*powf(0.0001,2)); 
   params_.declare_double("vel_y_process_noise", powf(0.0001,2)); 
   params_.declare_double("vel_vertical_process_noise", 1000*powf(0.0001,2));
-  params_.declare_double("bias_process_noise", 0.000001*0.000001);
+  params_.declare_double("bias_process_noise", 0.000000001);
   params_.declare_double("wind_process_noise", 0.25);
   
   // Initial covariances
@@ -1059,7 +1066,6 @@ bool EstimatorContinuousDiscrete::is_parameter_changed()
 {
   if (parameter_changed) {
     parameter_changed = false;
-    // TODO: Check if the parameter changed was relavent. Will require structural changes. Like putting names in a dictionary.
     return true;
   }
   return false;

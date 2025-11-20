@@ -478,7 +478,6 @@ float ControllerSucessiveLoop::yaw_damper(float r)
 //    return 0;
 //}
 
-// TODO: Add some error handling here.
 float ControllerSucessiveLoop::sat(float value, float up_limit, float low_limit)
 {
   // Set to upper limit if larger than that limit.

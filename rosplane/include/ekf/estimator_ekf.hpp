@@ -16,8 +16,6 @@ using MeasurementModelFuncRef = std::function<Eigen::VectorXf(const Eigen::Vecto
 using JacobianFuncRef = std::function<Eigen::MatrixXf(const Eigen::VectorXf, const Eigen::VectorXf)>;
 using SensorNoiseFuncRef = std::function<Eigen::MatrixXf(const Eigen::VectorXf, const Eigen::VectorXf)>;
 
-// TODO: make sure this does not allocate mem on the heap.
-
 namespace rosplane
 {
 

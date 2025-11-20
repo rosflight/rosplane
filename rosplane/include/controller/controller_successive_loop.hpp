@@ -146,7 +146,7 @@ protected:
    * The control loop for moving to and holding a commanded course.
    * @param chi_c The commanded course angle.
    * @param chi The current course angle.
-   * @param phi_ff The roll angle feedforward term. This allows for faster convergence.   // TODO add reference to book?
+   * @param phi_ff The roll angle feedforward term. This allows for faster convergence.
    * @param r The yaw rate taken from the gyro.
    * @return The commanded roll angle, to achieve the course angle.
    */

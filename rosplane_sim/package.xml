@@ -3,8 +3,8 @@
 <package format="3">
   <name>rosplane_sim</name>
   <version>1.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="blayer@byu.edu">controls</maintainer>
+  <description>Simulation package for rosplane</description>
+  <maintainer email="ian.young.reid@gmail.com">controls</maintainer>
   <license>BSD</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>

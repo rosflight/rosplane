@@ -72,7 +72,7 @@ void PathManagerDubinsFillets::manage(const Input & input, Output & output)
     if (float(std::chrono::system_clock::to_time_t(now)
               - std::chrono::system_clock::to_time_t(start_time_))
         >= 10.0) {
-      // TODO: Add check to see if the aircraft has been armed. If not just send the warning once before flight then on the throttle after.
+      
       RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 5000,
                                   "No waypoints received, orbiting origin at " << default_altitude
                                                                                << " meters.");
@@ -113,7 +113,7 @@ void PathManagerDubinsFillets::manage(const Input & input, Output & output)
       manage_dubins(input, output);
     } else { // If the heading through the point does not matter use the default path following.
       /** Switch the following for flying directly to waypoints, or filleting corners */
-      //manage_line(input, output); // TODO add ROS param for just line following or filleting?
+      //manage_line(input, output);
       manage_fillet(input, output);
     }
   }
@@ -314,7 +314,7 @@ void PathManagerDubinsFillets::manage_fillet(const Input & input, Output & outpu
       output.lamda =
         ((q_im1(0) * q_i(1) - q_im1(1) * q_i(0)) > 0
            ? 1
-           : -1); // Find the direction to orbit the point. TODO change this to the orbit_direction.
+           : -1); // Find the direction to orbit the point.
       z = w_i
         + q_i
           * (R_min

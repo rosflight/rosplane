@@ -154,6 +154,9 @@ void EstimatorROS::update()
   }
 
   input_.gps_new = false;
+  input_.mag_new = false;
+  input_.baro_new = false;
+  input_.diff_new = false;
   
   // Create estimated state message and publish it.
   rosplane_msgs::msg::State msg = rosplane_msgs::msg::State();
@@ -178,8 +181,8 @@ void EstimatorROS::update()
   msg.initial_lat = init_lat_;
   msg.initial_lon = init_lon_;
   msg.va = output.va;
-  msg.beta = output.vx / output.va; // TODO: the ve should be compensated for wind. MOVE THE DERICED STATES TO THE ESTIMATOR CONT DISC
-  msg.alpha = 0.0; // TODO: Dr. McLain sent me a better way to calculate this.
+  msg.beta = output.beta;
+  msg.alpha = output.alpha;
   msg.chi = output.chi;
   msg.wn = output.wn;
   msg.we = output.we;
@@ -241,6 +244,7 @@ void EstimatorROS::gnssCallback(const rosflight_msgs::msg::GNSS::SharedPtr msg)
     // Convert UTC time into broken down format
     std::time_t time = msg->header.stamp.sec;
     const std::tm *broken_down_time = std::localtime(&time);
+    input_.gps_yday = broken_down_time->tm_yday;
     input_.gps_year = broken_down_time->tm_year + 1900;
     input_.gps_month = broken_down_time->tm_mon;
     input_.gps_day = broken_down_time->tm_mday;
@@ -291,7 +295,7 @@ void EstimatorROS::baroAltCallback(const rosflight_msgs::msg::Barometer::SharedP
   double gravity = params_.get_double("gravity");
   double gate_gain_constant = params_.get_double("baro_measurement_gate");
 
-  new_baro_ = true;
+  input_.baro_new = true;
 
   if (armed_first_time_ && !baro_init_) {
     update_barometer_calibration(msg);
@@ -364,14 +368,14 @@ void EstimatorROS::airspeedCallback(const rosflight_msgs::msg::Airspeed::SharedP
     input_.diff_pres = diff_pres_old + gate_gain;
   }
 
-  new_diff_ = true;
+  input_.diff_new = true;
 }
 
 void EstimatorROS::magnetometerCallback(const sensor_msgs::msg::MagneticField::SharedPtr msg)
 {
   time_since_last_sensor_update_["mag"] = this->get_clock()->now();
 
-  new_mag_ = true;
+  input_.mag_new = true;
 
   input_.mag_x = msg->magnetic_field.x;
   input_.mag_y = msg->magnetic_field.y;

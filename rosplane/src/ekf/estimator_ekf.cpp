@@ -14,7 +14,7 @@ EstimatorEKF::EstimatorEKF() : EstimatorROS()
   params_.set_parameters();
 }
 
-std::tuple<Eigen::MatrixXf, Eigen::VectorXf> EstimatorEKF::kalman_update(Eigen::VectorXf x, // TODO: make x and P const.
+std::tuple<Eigen::MatrixXf, Eigen::VectorXf> EstimatorEKF::kalman_update(Eigen::VectorXf x,
                                                                          Eigen::VectorXf h,
                                                                          Eigen::VectorXf y,
                                                                          Eigen::MatrixXf C,

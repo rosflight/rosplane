@@ -116,7 +116,7 @@ void PathPlannerWaypoints::publish_initial_waypoints()
 void PathPlannerWaypoints::state_callback(const rosplane_msgs::msg::State & msg)
 {
   // Make sure initial LLA is not zero before updating to avoid initialization errors
-  // TODO: What if we want to initialize it at (0,0,0)?
+  
   if (fabs(msg.initial_lat) > 0.0 || fabs(msg.initial_lon) > 0.0 || fabs(msg.initial_alt) > 0.0) {
     initial_lat_ = msg.initial_lat;
     initial_lon_ = msg.initial_lon;

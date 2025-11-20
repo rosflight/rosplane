@@ -139,6 +139,7 @@ float ControllerTotalEnergy::total_energy_throttle(float va_c, float va, float h
   double e_kd = params_.get_double("e_kd");
   double max_t = params_.get_double("max_t");   // Declared in controller_successive_loop
   double trim_t = params_.get_double("trim_t"); // Declared in controller_successive_loop
+  double minimum_alt = params_.get_double("minimum_alt_for_integration"); // Declared in controller_successive_loop
 
   // Update energies based off of most recent data.
   update_energies(va_c, va, h_c, h);
@@ -153,8 +154,7 @@ float ControllerTotalEnergy::total_energy_throttle(float va_c, float va, float h
 
   E_error_prev_ = E_error;
 
-  // TODO: Add this to params
-  if (h < .5) {
+  if (h < minimum_alt) {
     E_integrator_ = 0;
   }
 
@@ -221,5 +221,6 @@ void ControllerTotalEnergy::declare_parameters()
   params_.declare_double("mass", 2.28);
   params_.declare_double("gravity", 9.8);
   params_.declare_double("max_alt_error", 5.0);
+  params_.declare_double("minimum_alt_for_integration", 0.5);
 }
 } // namespace rosplane

@@ -129,7 +129,7 @@ protected:
   */
   struct Output
   {
-    bool flag;    /**< Inicates strait line or orbital path (true is line, false is orbit) */ // TODO: Swap this to an orbit type struct.
+    bool flag;    /**< Inicates strait line or orbital path (true is line, false is orbit) */
     float va_d;   /**< Desired airspeed (m/s) */
     float r[3];   /**< Vector to origin of straight line path (m) */
     float q[3];   /**< Unit vector, desired direction of travel for line path */
