@@ -202,9 +202,9 @@ void InputMapper::controller_commands_callback(
     set_pitch_override(true);
     mapped_controller_commands_msg_->theta_c =
       norm_elevator * params_.get_double("rc_pitch_angle_min_max");
-    mapped_controller_commands_msg_->h_c = -state_msg_->position[2];
+    mapped_controller_commands_msg_->h_c = -state_msg_->p_d;
   } else if (elevator_input == "rc_elevator") {
-    mapped_controller_commands_msg_->h_c = -state_msg_->position[2];
+    mapped_controller_commands_msg_->h_c = -state_msg_->p_d;
   } else {
     RCLCPP_ERROR(this->get_logger(),
                  "Invalid elevator input type: %s. Valid options are "

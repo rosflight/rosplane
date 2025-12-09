@@ -151,12 +151,12 @@ void PathManagerROS::new_waypoint_callback(const rosplane_msgs::msg::Waypoint & 
   if (waypoints_.size() == 0) {
     Waypoint temp_waypoint;
 
-    temp_waypoint.w[0] = vehicle_state_.position[0];
-    temp_waypoint.w[1] = vehicle_state_.position[1];
+    temp_waypoint.w[0] = vehicle_state_.p_n;
+    temp_waypoint.w[1] = vehicle_state_.p_e;
 
-    if (vehicle_state_.position[2] < -default_altitude) {
+    if (vehicle_state_.p_d < -default_altitude) {
 
-      temp_waypoint.w[2] = vehicle_state_.position[2];
+      temp_waypoint.w[2] = vehicle_state_.p_d;
     } else {
       temp_waypoint.w[2] = -default_altitude;
     }
@@ -204,9 +204,9 @@ void PathManagerROS::current_path_publish()
 {
 
   Input input;
-  input.pn = vehicle_state_.position[0]; // position north
-  input.pe = vehicle_state_.position[1]; // position east
-  input.h = -vehicle_state_.position[2]; // altitude
+  input.pn = vehicle_state_.p_n; // position north
+  input.pe = vehicle_state_.p_e; // position east
+  input.h = -vehicle_state_.p_d; // altitude
   input.chi = vehicle_state_.chi;
 
   Output output;

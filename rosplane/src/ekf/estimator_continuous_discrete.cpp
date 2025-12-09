@@ -167,7 +167,6 @@ void EstimatorContinuousDiscrete::estimate(const Input & input, Output & output)
   double qy = cosf(psi2)*sinf(theta2)*cosf(phi2) + sinf(psi2)*cosf(theta2)*sinf(phi2);
   double qz = sinf(psi2)*cosf(theta2)*cosf(phi2) - cosf(psi2)*sinf(theta2)*sinf(phi2);
   output.quat = Eigen::Quaternionf(qw, qx, qy, qz);
-  output.quat_valid = true;
 }
 
 // ======== ESTIMATION LOOP STEPS ========
@@ -1014,6 +1013,7 @@ void EstimatorContinuousDiscrete::declare_parameters()
   // Low pass filter parameters
   params_.declare_double("gyro_cutoff_freq", 20.0);
   params_.declare_double("airspeed_cutoff_freq", 10.0);
+  params_.declare_double("min_airspeed_estimation", 3.0);
   
   // Proccess noises
   params_.declare_double("roll_process_noise", 1000*powf(0.00001,2));

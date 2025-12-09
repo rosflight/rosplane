@@ -111,7 +111,6 @@ protected:
     float vg = 0.0f;
     float wn = 0.0f;
     float we = 0.0f;
-    bool quat_valid = true;
     Eigen::Quaternionf quat = Eigen::Quaternionf(1.0f, 0.0f, 0.0f, 0.0f);
   };
 

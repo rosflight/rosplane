@@ -110,9 +110,9 @@ void PathFollowerROS::update()
 
 void PathFollowerROS::vehicle_state_callback(const rosplane_msgs::msg::State::SharedPtr msg)
 {
-  input_.pn = msg->position[0]; /** position north */
-  input_.pe = msg->position[1]; /** position east */
-  input_.h = -msg->position[2]; /** altitude */
+  input_.pn = msg->p_n; /** position north */
+  input_.pe = msg->p_e; /** position east */
+  input_.h = -msg->p_d; /** altitude */
   input_.chi = msg->chi;
   input_.psi = msg->psi;
   input_.va = msg->va;

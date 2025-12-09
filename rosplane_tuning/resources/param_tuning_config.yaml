@@ -94,7 +94,7 @@ Altitude:
     Altitude Command:
       topic: '/controller_command/h_c'
     Altitude Estimate:
-      topic: '/estimated_state/position[2]'
+      topic: '/estimated_state/p_d'
       scale: -1.0
   plot_axis_label: 'Altitude (m)'
 

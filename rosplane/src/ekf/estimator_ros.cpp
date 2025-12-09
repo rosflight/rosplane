@@ -162,21 +162,21 @@ void EstimatorROS::update()
   rosplane_msgs::msg::State msg = rosplane_msgs::msg::State();
   msg.header.stamp = this->get_clock()->now();
 
-  msg.position[0] = output.pn;
-  msg.position[1] = output.pe;
-  msg.position[2] = output.pd;
-  msg.u = output.vx;
-  msg.v = output.vy;
-  msg.w = output.vz;
+  msg.p_n = output.pn;
+  msg.p_e = output.pe;
+  msg.p_d = output.pd;
+  msg.v_x = output.vx;
+  msg.v_y = output.vy;
+  msg.v_z = output.vz;
   msg.phi = output.phi;
   msg.theta = output.theta;
   msg.psi = output.psi;
   msg.p = output.p;
   msg.q = output.q;
   msg.r = output.r;
-  msg.bx = output.bx;
-  msg.by = output.by;
-  msg.bz = output.bz;
+  msg.b_x = output.bx;
+  msg.b_y = output.by;
+  msg.b_z = output.bz;
   msg.initial_alt = init_alt_;
   msg.initial_lat = init_lat_;
   msg.initial_lon = init_lon_;
@@ -188,11 +188,10 @@ void EstimatorROS::update()
   msg.we = output.we;
 
   // Fill in the quaternion
-  msg.quat[0] = output.quat.w();
-  msg.quat[1] = output.quat.x();
-  msg.quat[2] = output.quat.y();
-  msg.quat[3] = output.quat.z();
-  msg.quat_valid = true;
+  msg.quat.w = output.quat.w();
+  msg.quat.x = output.quat.x();
+  msg.quat.y = output.quat.y();
+  msg.quat.z = output.quat.z();
 
   vehicle_state_pub_->publish(msg);
 }
