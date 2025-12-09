@@ -9,8 +9,8 @@ controller:
     r_kp: 0.55
     r_kd: 0.20
     r_ki: 0.0
-    p_kp: -4.25
-    p_kd: -0.6
+    p_kp: 4.25
+    p_kd: 0.6
     p_ki: 0.0
     p_ff: 0.0
     a_t_kp: 0.1
