@@ -20,7 +20,7 @@ float32 b_x             # Gyro bias x (rad/s)
 float32 b_y             # Gyro bias y (rad/s)
 float32 b_z             # Gyro bias z (rad/s)
 
-geometry_msgs/Quaternion quat		# Quaternion (wxyz, NED)
+geometry_msgs/Quaternion quat		# Quaternion (wxyz, NED) body to inertial
 
 float64 initial_lat 	  # Initial/origin latitude (lat. deg)
 float64 initial_lon 	  # Initial/origin longitude (lon. deg) 
