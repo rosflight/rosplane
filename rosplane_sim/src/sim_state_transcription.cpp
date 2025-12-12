@@ -161,9 +161,9 @@ private:
     state.initial_alt = init_alt_;
 
     // Inertial NED frame
-    state.position[0] = msg.pose.position.x;
-    state.position[1] = msg.pose.position.y;
-    state.position[2] = msg.pose.position.z;
+    state.p_n = msg.pose.position.x;
+    state.p_e = msg.pose.position.y;
+    state.p_d = msg.pose.position.z;
 
     // Quaternion is from body to inertial
     Eigen::Quaternionf q;
@@ -180,15 +180,13 @@ private:
                      pow(q.w(), 2) + pow(q.x(), 2) - pow(q.y(), 2) - pow(q.z(), 2));
 
     // Inertial linear velocities in the body frame
-    double u = msg.twist.linear.x;
-    double v = msg.twist.linear.y;
-    double w = msg.twist.linear.z;
+    double v_x = msg.twist.linear.x;
+    double v_y = msg.twist.linear.y;
+    double v_z = msg.twist.linear.z;
 
-    state.u = u;
-    state.v = v;
-    state.w = w;
-
-    state.vg = std::sqrt(pow(u, 2) + pow(v, 2));
+    state.v_x = v_x;
+    state.v_y = v_y;
+    state.v_z = v_z;
 
     // Inertial angular velocities in the body frame
     state.p = msg.twist.angular.x;
@@ -196,16 +194,16 @@ private:
     state.r = msg.twist.angular.z;
     
     // Gyro biases
-    state.bx = bx_;
-    state.by = by_;
-    state.bz = bz_;
+    state.b_x = bx_;
+    state.b_y = by_;
+    state.b_z = bz_;
 
     // Wind in the inertial frame
     state.wn = wn_;
     state.we = we_;
 
     // Components of the airspeed in the body frame
-    Eigen::Vector3f v_i_b(u, v, w);
+    Eigen::Vector3f v_i_b(v_x, v_y, v_z);
     Eigen::Vector3f v_w_i(wn_, we_, wd_);
     Eigen::Vector3f va = v_i_b - q.inverse() * v_w_i; // Rotate wind from inertial to body frame
 
@@ -216,15 +214,10 @@ private:
     state.alpha = atan2(va(2), va(0));
     state.beta = asin(va(1) / state.va);
 
-    state.quat_valid = true;
-
-    state.quat[0] = msg.pose.orientation.w;
-    state.quat[1] = msg.pose.orientation.x;
-    state.quat[2] = msg.pose.orientation.y;
-    state.quat[3] = msg.pose.orientation.z;
-
-    state.chi_deg = RAD_2_DEG * state.chi;
-    state.psi_deg = RAD_2_DEG * state.psi;
+    state.quat.w = msg.pose.orientation.w;
+    state.quat.x = msg.pose.orientation.x;
+    state.quat.y = msg.pose.orientation.y;
+    state.quat.z = msg.pose.orientation.z;
 
     rosplane_state_publisher_->publish(state);
   }

@@ -59,7 +59,7 @@ def generate_launch_description():
         Node(
             package='rosplane',
             executable='controller',
-            name='autopilot',
+            name='controller',
             parameters=[
                 autopilot_params,
                 {'use_sim_time': launch.substitutions.LaunchConfiguration('use_sim_time')},

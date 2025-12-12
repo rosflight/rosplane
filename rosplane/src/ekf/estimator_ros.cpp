@@ -77,7 +77,6 @@ void EstimatorROS::declare_parameters()
   params_.declare_int("max_diff_sensor_silence_duration_ms", 110); // actual publish rate is 10 Hz, measured max period of 105ms
   params_.declare_int("min_gnss_fix_type", 3); // Fix must be of type float.
   params_.declare_bool("hotstart_estimator", false); // Whether the estimator should use preset hotstart values.
-  params_.declare_bool("use_gnss", true);
 }
 
 void EstimatorROS::hotstart()
@@ -162,21 +161,21 @@ void EstimatorROS::update()
   rosplane_msgs::msg::State msg = rosplane_msgs::msg::State();
   msg.header.stamp = this->get_clock()->now();
 
-  msg.position[0] = output.pn;
-  msg.position[1] = output.pe;
-  msg.position[2] = output.pd;
-  msg.u = output.vx;
-  msg.v = output.vy;
-  msg.w = output.vz;
+  msg.p_n = output.pn;
+  msg.p_e = output.pe;
+  msg.p_d = output.pd;
+  msg.v_x = output.vx;
+  msg.v_y = output.vy;
+  msg.v_z = output.vz;
   msg.phi = output.phi;
   msg.theta = output.theta;
   msg.psi = output.psi;
   msg.p = output.p;
   msg.q = output.q;
   msg.r = output.r;
-  msg.bx = output.bx;
-  msg.by = output.by;
-  msg.bz = output.bz;
+  msg.b_x = output.bx;
+  msg.b_y = output.by;
+  msg.b_z = output.bz;
   msg.initial_alt = init_alt_;
   msg.initial_lat = init_lat_;
   msg.initial_lon = init_lon_;
@@ -188,11 +187,10 @@ void EstimatorROS::update()
   msg.we = output.we;
 
   // Fill in the quaternion
-  msg.quat[0] = output.quat.w();
-  msg.quat[1] = output.quat.x();
-  msg.quat[2] = output.quat.y();
-  msg.quat[3] = output.quat.z();
-  msg.quat_valid = true;
+  msg.quat.w = output.quat.w();
+  msg.quat.x = output.quat.x();
+  msg.quat.y = output.quat.y();
+  msg.quat.z = output.quat.z();
 
   vehicle_state_pub_->publish(msg);
 }
@@ -267,10 +265,6 @@ void EstimatorROS::gnssCallback(const rosflight_msgs::msg::GNSS::SharedPtr msg)
 
     if (ground_speed > vg_when_course_valid)
       input_.gps_course = course;
-  }
-
-  if (!params_.get_bool("use_gnss")) {
-    input_.gps_new = false;
   }
 }
 

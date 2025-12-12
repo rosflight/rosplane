@@ -110,7 +110,7 @@ void ControllerROS::actuator_controls_publish()
 
   // Assemble inputs for the control algorithm.
   Input input;
-  input.h = -vehicle_state_.position[2];
+  input.h = -vehicle_state_.p_d;
   input.va = vehicle_state_.va;
   input.phi = vehicle_state_.phi;
   input.theta = vehicle_state_.theta;

@@ -229,23 +229,23 @@ void RvizWaypointPublisher::update_mesh()
   t.header.stamp = now;
   t.header.frame_id = "NED";
   t.child_frame_id = "aircraft_body";
-  t.transform.translation.x = vehicle_state_.position[0];
-  t.transform.translation.y = vehicle_state_.position[1];
-  t.transform.translation.z = vehicle_state_.position[2];
+  t.transform.translation.x = vehicle_state_.p_n;
+  t.transform.translation.y = vehicle_state_.p_e;
+  t.transform.translation.z = vehicle_state_.p_d;
 
   tf2::Quaternion q;
   q.setRPY(vehicle_state_.phi, vehicle_state_.theta, vehicle_state_.chi);
-  t.transform.rotation.x = q.x(); //0.0; //vehicle_state_.quat[0];
-  t.transform.rotation.y = q.y(); //0.0; //vehicle_state_.quat[1];
-  t.transform.rotation.z = q.z(); //0.0; //vehicle_state_.quat[2];
-  t.transform.rotation.w = q.w(); //1.0; //vehicle_state_.quat[3];
+  t.transform.rotation.x = q.x(); //0.0;
+  t.transform.rotation.y = q.y(); //0.0;
+  t.transform.rotation.z = q.z(); //0.0;
+  t.transform.rotation.w = q.w(); //1.0;
 
   // Update aircraft history
   if (i_ % PATH_PUBLISH_MOD == 0) {
     geometry_msgs::msg::Point new_p;
-    new_p.x = vehicle_state_.position[0];
-    new_p.y = vehicle_state_.position[1];
-    new_p.z = vehicle_state_.position[2];
+    new_p.x = vehicle_state_.p_n;
+    new_p.y = vehicle_state_.p_e;
+    new_p.z = vehicle_state_.p_d;
     aircraft_history_points_.push_back(new_p);
     update_aircraft_history();
 
