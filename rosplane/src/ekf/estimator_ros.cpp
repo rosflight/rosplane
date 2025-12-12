@@ -77,7 +77,6 @@ void EstimatorROS::declare_parameters()
   params_.declare_int("max_diff_sensor_silence_duration_ms", 110); // actual publish rate is 10 Hz, measured max period of 105ms
   params_.declare_int("min_gnss_fix_type", 3); // Fix must be of type float.
   params_.declare_bool("hotstart_estimator", false); // Whether the estimator should use preset hotstart values.
-  params_.declare_bool("use_gnss", true);
 }
 
 void EstimatorROS::hotstart()
@@ -266,10 +265,6 @@ void EstimatorROS::gnssCallback(const rosflight_msgs::msg::GNSS::SharedPtr msg)
 
     if (ground_speed > vg_when_course_valid)
       input_.gps_course = course;
-  }
-
-  if (!params_.get_bool("use_gnss")) {
-    input_.gps_new = false;
   }
 }
 
