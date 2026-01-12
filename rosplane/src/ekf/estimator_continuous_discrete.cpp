@@ -67,7 +67,7 @@ void EstimatorContinuousDiscrete::init_state(const Input & input)
 {
   if (mag_init_ && input.mag_new) {
     float heading = -atan2f(input.mag_y, input.mag_x);
-    heading -= radians(declination_);
+    heading += radians(declination_);
     xhat_(8) = heading;
     state_init_ = true;
     return;
@@ -245,7 +245,7 @@ void EstimatorContinuousDiscrete::mag_measurement_update_step(const Input& input
   y_mag = R(Theta)*y_mag;
   
   Eigen::Vector<float, num_tilt_mag_measurements> y_heading;
-  y_heading << -atan2f(y_mag(1), y_mag(0)) - radians(declination_);
+  y_heading << -atan2f(y_mag(1), y_mag(0)) + radians(declination_);
 
   y_heading(0) = wrap_within_180(xhat_(8), y_heading(0));
 
