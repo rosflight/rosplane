@@ -249,16 +249,16 @@ void InputMapper::command_callback(const rosflight_msgs::msg::Command::SharedPtr
 {
   u_int8_t ignore = rosflight_msgs::msg::Command::IGNORE_NONE;
   if (params_.get_string("aileron_input") == "rc_aileron") {
-    ignore |= rosflight_msgs::msg::Command::IGNORE_QX;
+    ignore |= rosflight_msgs::msg::Command::IGNORE_VALUE3;
   }
   if (params_.get_string("elevator_input") == "rc_elevator") {
-    ignore |= rosflight_msgs::msg::Command::IGNORE_QY;
+    ignore |= rosflight_msgs::msg::Command::IGNORE_VALUE4;
   }
   if (params_.get_string("rudder_input") == "rc_rudder") {
-    ignore |= rosflight_msgs::msg::Command::IGNORE_QZ;
+    ignore |= rosflight_msgs::msg::Command::IGNORE_VALUE5;
   }
   if (params_.get_string("throttle_input") == "rc_throttle") {
-    ignore |= rosflight_msgs::msg::Command::IGNORE_FX;
+    ignore |= rosflight_msgs::msg::Command::IGNORE_VALUE0;
   }
   msg->ignore = ignore;
   mapped_command_pub_->publish(*msg);
