@@ -150,10 +150,10 @@ void ControllerROS::actuator_controls_publish()
     actuators.mode = rosflight_msgs::msg::Command::MODE_PASS_THROUGH;
 
     // Package control efforts. If the output is infinite replace with 0.
-    actuators.qx = (std::isfinite(output.delta_a)) ? output.delta_a : 0.0f;
-    actuators.qy = (std::isfinite(output.delta_e)) ? output.delta_e : 0.0f;
-    actuators.qz = (std::isfinite(output.delta_r)) ? output.delta_r : 0.0f;
-    actuators.fx = (std::isfinite(output.delta_t)) ? output.delta_t : 0.0f;
+    actuators.u[3] = (std::isfinite(output.delta_a)) ? output.delta_a : 0.0f;
+    actuators.u[4] = (std::isfinite(output.delta_e)) ? output.delta_e : 0.0f;
+    actuators.u[5] = (std::isfinite(output.delta_r)) ? output.delta_r : 0.0f;
+    actuators.u[0] = (std::isfinite(output.delta_t)) ? output.delta_t : 0.0f;
 
     // Publish actuators.
     actuators_pub_->publish(actuators);
