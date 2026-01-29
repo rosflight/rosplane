@@ -11,53 +11,53 @@ env:
 
 jobs:
   build:
-    name: Build on ROS2 ${{ matrix.ros_distro }} and ${{ matrix.os }}
+    name: Build on ros2 ${{ matrix.ros_distro }} and ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    container:
+      image: ${{ matrix.container }}
     strategy:
       fail-fast: false
       matrix:
-        ros_distro: [ humble, iron ]
+        ros_distro: [ humble, jazzy ]
         include:
           - ros_distro: 'humble'
-            os: ubuntu-22.04
-          - ros_distro: 'iron'
-            os: ubuntu-22.04
+            os: ubuntu-latest
+            container: osrf/ros:humble-desktop
+          - ros_distro: 'jazzy'
+            os: ubuntu-latest
+            container: osrf/ros:jazzy-desktop
+    defaults:
+      run:
+        shell: bash
 
     steps:
-      - name: Setup ROS
-        uses: ros-tooling/setup-ros@v0.7
-        with:
-          required-ros-distributions: ${{ matrix.ros_distro }}
-
-      - name: Setup ROS2 workspace
-        run: |
-          source /opt/ros/${{ matrix.ros_distro }}/setup.bash
-          mkdir -p ${{github.workspace}}/ros2_ws/src
-          cd ${{github.workspace}}/ros2_ws
-          colcon build
-
       - name: Checkout ROSplane
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           path: 'ros2_ws/src/rosplane'
 
       - name: Checkout rosflight_msgs
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
-          repository: rosflight/rosflight
+          repository: rosflight/rosflight_ros_pkgs
           path: 'ros2_ws/src/rosflight'
           sparse-checkout: |
             rosflight_msgs
           sparse-checkout-cone-mode: false
 
+      - name: Update system
+        run: |
+          sudo apt update
+          sudo apt upgrade -y
+
       - name: Install dependencies
         run: |
-          cd ${{github.workspace}}/ros2_ws
+          cd ros2_ws
           rosdep update
           rosdep install --from-paths ./ -i -y -r --rosdistro ${{ matrix.ros_distro }}
 
       - name: Build ROSplane
         run: |
           source /opt/ros/${{ matrix.ros_distro }}/setup.bash
-          cd ${{github.workspace}}/ros2_ws
+          cd ros2_ws
           colcon build --event-handlers console_direct+
