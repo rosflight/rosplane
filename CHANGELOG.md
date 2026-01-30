@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.0-beta.3](https://github.com/rosflight/rosplane/compare/v2.0.0-beta.2...v2.0.0-beta.3) (2026-01-30)
+
+
+### Features
+
+* update firmware command message objects to new vector representation ([#91](https://github.com/rosflight/rosplane/issues/91)) ([0700d87](https://github.com/rosflight/rosplane/commit/0700d87b1d0c64e454c44cb7eb71fc4f850a3853))
+
 ## [2.0.0-beta.2](https://github.com/rosflight/rosplane/compare/v2.0.0-beta.1...v2.0.0-beta.2) (2025-12-15)
 
 
