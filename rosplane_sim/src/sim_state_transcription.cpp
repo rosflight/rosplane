@@ -199,8 +199,8 @@ private:
     state.b_z = bz_;
 
     // Wind in the inertial frame
-    state.wn = wn_;
-    state.we = we_;
+    state.w_n = wn_;
+    state.w_e = we_;
 
     // Components of the airspeed in the body frame
     Eigen::Vector3f v_i_b(v_x, v_y, v_z);
