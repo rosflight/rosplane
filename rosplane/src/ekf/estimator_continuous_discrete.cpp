@@ -490,10 +490,10 @@ Eigen::VectorXf EstimatorContinuousDiscrete::diff_pressure_measurement_predictio
 
   Eigen::Vector3f airspeed_vect = (vels - R(Theta).transpose()*wind);
 
-  float v_a_squared = airspeed_vect(0)*airspeed_vect(0);
+  float va_squared = airspeed_vect(0)*airspeed_vect(0);
 
   // Predicted diff pressure measurement
-  h(0) = 0.5f*rho_*v_a_squared;
+  h(0) = 0.5f*rho_*va_squared;
 
   return h;
 }

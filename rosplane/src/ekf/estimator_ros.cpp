@@ -183,8 +183,8 @@ void EstimatorROS::update()
   msg.beta = output.beta;
   msg.alpha = output.alpha;
   msg.chi = output.chi;
-  msg.wn = output.wn;
-  msg.we = output.we;
+  msg.w_n = output.wn;
+  msg.w_e = output.we;
 
   // Fill in the quaternion
   msg.quat.w = output.quat.w();
