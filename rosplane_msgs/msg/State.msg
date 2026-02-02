@@ -26,8 +26,8 @@ float64 initial_lat 	  # Initial/origin latitude (lat. deg)
 float64 initial_lon 	  # Initial/origin longitude (lon. deg) 
 float64 initial_alt 	  # Initial/origin altitude (m) 
 
-float32 wn		# Wind north component (m/s)
-float32 we		# Wind east component (m/s)
+float32 w_n		# Wind north component (m/s)
+float32 w_e		# Wind east component (m/s)
 
 float32 va		# Airspeed (m/s)
 float32 alpha	# Angle of attack (rad)
