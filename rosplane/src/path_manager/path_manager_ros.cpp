@@ -146,6 +146,8 @@ void PathManagerROS::new_waypoint_callback(const rosplane_msgs::msg::Waypoint & 
     return;
   }
 
+  warned_no_waypoints_ = false;
+
   // If there are currently no waypoints in the list, then add a temporary waypoint as
   // the current state of the aircraft. This is necessary to define a line for line following.
   if (waypoints_.size() == 0) {
