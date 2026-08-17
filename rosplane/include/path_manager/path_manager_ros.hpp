@@ -98,6 +98,12 @@ protected:
    */
   int num_waypoints_;
 
+  /**
+   * @brief Indicates if the "no waypoints" message has already been shown after 
+   * the way point list was non-empty, so it is not repeated after every control-loop tick
+  */
+  bool warned_no_waypoints_ = false;
+
  /**
   * @brief Index to the waypoint that was most recently achieved.
   */
