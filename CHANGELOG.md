@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.1](https://github.com/rosflight/rosplane/compare/v2.0.0...v2.0.1) (2026-08-17)
+
+
+### Bug Fixes
+
+* compute quartile indices dynamically instead of hardcoding 25/75 ([c792da8](https://github.com/rosflight/rosplane/commit/c792da865053dab0637f12e8b604219cdb93a9ea))
+* compute quartile indices dynamically instead of hardcoding 25/75 ([67938a7](https://github.com/rosflight/rosplane/commit/67938a73f0ed3868b5da35e89e837c8eda7d0d80))
+
 ## [2.0.0](https://github.com/rosflight/rosplane/compare/v2.0.0-beta.2...v2.0.0) (2026-02-04)
 
 
