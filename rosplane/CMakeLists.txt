@@ -31,6 +31,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(rosplane_msgs REQUIRED)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(rosflight_msgs REQUIRED)
+find_package(rosflight_compat REQUIRED)
 pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
 
 include_directories(
@@ -119,6 +120,7 @@ add_executable(estimator
               src/utils/geomag.c)
 target_link_libraries(estimator
   ${YAML_CPP_LIBRARIES}
+  rosflight_compat::compat_headers
 )
 ament_target_dependencies(estimator rosplane_msgs rosflight_msgs sensor_msgs rclcpp Eigen3 ament_index_cpp)
 target_link_libraries(estimator param_manager)

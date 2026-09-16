@@ -1,6 +1,9 @@
 #include "ekf/estimator_ros.hpp"
 #include <fstream>
 
+// #include <ament_index_cpp/get_package_share_path.hpp> // FIXME: use when Humble is dropped
+#include <rosflight_compat/get_package_share_path.hpp>
+
 namespace rosplane
 {
 
@@ -38,16 +41,14 @@ EstimatorROS::EstimatorROS()
   params_.set_parameters();
 
   params_initialized_ = true;
-  
-  std::filesystem::path workspace_dir = ament_index_cpp::get_package_share_directory("rosplane");
-  std::filesystem::path params_dir = "params";
-  std::filesystem::path hotstart_file = "hotstart";
 
-  std::filesystem::path install_hotstart_dir = workspace_dir / params_dir / hotstart_file;
+  // FIXME: use ament_index_cpp::get_package_share_path when Humble support is dropped
+  std::filesystem::path workspace_path = rosflight_compat::get_package_share_path("rosplane");
+  std::filesystem::path install_hotstart_path = workspace_path / "params" / "hotstart";
  
   // Remove the install and share directories from the path so the hotstart file goes into
   // the main directory so it is easily found.
-  for (auto dir : install_hotstart_dir) {
+  for (auto dir : install_hotstart_path) {
     if (dir.string() == "install") continue;
     if (dir.string() == "share") continue;
     hotstart_path_ /= dir;

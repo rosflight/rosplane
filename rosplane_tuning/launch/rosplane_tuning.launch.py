@@ -1,13 +1,12 @@
-import os
 import sys
 from launch import LaunchDescription
-from launch.descriptions import executable
 from launch_ros.actions import Node
-from ament_index_python.packages import get_package_share_directory
+from launch_ros.substitutions import FindPackageShare
+from launch.substitutions import PathJoinSubstitution
 
 def generate_launch_description():
     # Create the package directory
-    rosplane_dir = get_package_share_directory('rosplane')
+    rosplane_share = FindPackageShare('rosplane')
 
     # Determine the appropriate control scheme.
     control_type = "default"
@@ -20,17 +19,17 @@ def generate_launch_description():
         if arg.startswith("aircraft:="):
             aircraft = arg.split(":=")[1]
 
-    autopilot_params = os.path.join(
-        rosplane_dir,
+    autopilot_params = PathJoinSubstitution([
+        rosplane_share,
         'params',
         aircraft + '_autopilot_params.yaml'
-    )
+    ])
 
 
     return LaunchDescription([
         Node(
             package='rosplane',
-            executable='rosplane_controller',
+            executable='controller',
             name='autopilot',
             parameters = [autopilot_params,
                           {'pitch_tuning_debug_override': False},
@@ -40,7 +39,7 @@ def generate_launch_description():
         ),
         Node(
             package='rosplane',
-            executable='rosplane_estimator_node',
+            executable='estimator',
             name='estimator'
         ),
         Node(

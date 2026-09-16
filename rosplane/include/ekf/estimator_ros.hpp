@@ -14,7 +14,6 @@
 #include <chrono>
 #include <unordered_map>
 
-#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <Eigen/Geometry>
 #include <rclcpp/rclcpp.hpp>

@@ -24,6 +24,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rosflight_msgs REQUIRED)
+find_package(rosflight_compat REQUIRED)
 find_package(rosplane_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 
@@ -49,6 +50,9 @@ ament_target_dependencies(sim_state_transcriber rosplane_msgs rosflight_msgs rcl
 install(TARGETS
         sim_state_transcriber
         DESTINATION lib/${PROJECT_NAME})
+target_link_libraries(sim_state_transcriber PRIVATE
+  rosflight_compat::compat_headers
+)
 
 
 if(BUILD_TESTING)

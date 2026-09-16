@@ -3,16 +3,14 @@
 #include <memory>
 
 #include <Eigen/Geometry>
+#include <rclcpp/rclcpp.hpp>
+#include <rosflight_compat/service_client.hpp>
+
 #include <geometry_msgs/msg/vector3_stamped.hpp>
 #include <sensor_msgs/msg/imu.hpp>
-
+#include <rosplane_msgs/msg/state.hpp>
+#include <rosflight_msgs/msg/sim_state.hpp>
 #include <rosflight_msgs/srv/param_get.hpp>
-#include <rclcpp/rclcpp.hpp>
-
-#include "rosplane_msgs/msg/state.hpp"
-#include "rosflight_msgs/msg/sim_state.hpp"
-
-#define RAD_2_DEG 180.0 / M_PI
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
@@ -37,7 +35,12 @@ public:
 
     rosplane_state_publisher_ = this->create_publisher<rosplane_msgs::msg::State>("sim/rosplane/state", 10);
 
-    firmware_param_get_client_ = this->create_client<rosflight_msgs::srv::ParamGet>("param_get", rmw_qos_profile_default, cb_group_clients_);
+    // FIXME: revert back to this after Humble is no longer supported an compat isn't needed
+    // firmware_param_get_client_ = this->create_client<rosflight_msgs::srv::ParamGet>(
+    //   "param_get", rclcpp::ServicesQoS(), cb_group_clients_);
+    firmware_param_get_client_ =
+      rosflight_compat::create_service_client<rosflight_msgs::srv::ParamGet>(*this, "param_get",
+                                                                             cb_group_clients_);
   }
 
 private:

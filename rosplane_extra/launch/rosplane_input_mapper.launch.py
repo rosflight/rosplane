@@ -1,9 +1,9 @@
-import os
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from ament_index_python.packages import get_package_share_directory
+from launch_ros.substitutions import FindPackageShare
+from launch.substitutions import PathJoinSubstitution
 
 def generate_launch_description():
     input_controller_command_remap = '/path_follower_out_controller_command'
@@ -26,10 +26,10 @@ def generate_launch_description():
         ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                os.path.join(
-                    get_package_share_directory('rosplane'),
+                PathJoinSubstitution([
+                    FindPackageShare('rosplane'),
                     'launch/rosplane.launch.py'
-                )
+                ])
             ),
             launch_arguments={
                 'controller_command_publisher_remap': input_controller_command_remap,
