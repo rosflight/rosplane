@@ -22,37 +22,37 @@ private:
   /**
    * @brief The low pass filter alpha value used on the gyro.
    */
-  float alpha_gyro_;
+  double alpha_gyro_;
   
   /**
    * @brief The low pass filter alpha value used on the barometer.
    */
-  float alpha_baro_;
+  double alpha_baro_;
 
   /**
    * @brief The value of the low pass filtered gyroscope measurement.
    */
-  float lpf_gyro_x_;
+  double lpf_gyro_x_;
 
   /**
    * @brief The value of the low pass filtered gyroscope measurement.
    */
-  float lpf_gyro_y_;
+  double lpf_gyro_y_;
 
   /**
    * @brief The value of the low pass filtered gyroscope measurement.
    */
-  float lpf_gyro_z_;
+  double lpf_gyro_z_;
 
   /**
    * @brief The low pass filter alpha value used on the airspeed.
    */
-  float alpha_va_;
+  double alpha_va_;
   
   /**
    * @brief The lowpass filtered airspeed measurement.
    */
-  float lpf_va_;
+  double lpf_va_;
   
   /**
    * @brief This function calculates the derivatives of the state. This is dictated by the dynamics of
@@ -61,7 +61,7 @@ private:
    * @param state The state of the system. 
    * @param inputs The inputs to the estimator. Can be something like IMU measurements.
    */
-  Eigen::VectorXf dynamics(const Eigen::VectorXf& state, const Eigen::VectorXf& inputs);
+  Eigen::VectorXd dynamics(const Eigen::VectorXd& state, const Eigen::VectorXd& inputs);
 
   /**
    * @brief This is a reference to the dynamics function, this is created by the std::bind.
@@ -75,7 +75,7 @@ private:
    * @param state The state of the system.
    * @param inputs The inputs to the estimator, something like IMU measurements.
    */
-  Eigen::MatrixXf jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& inputs);
+  Eigen::MatrixXd jacobian(const Eigen::VectorXd& state, const Eigen::VectorXd& inputs);
 
   /**
    * @brief This is a reference to the jacobian function, this is created by the std::bind.
@@ -89,7 +89,7 @@ private:
    * @param state The state of the dynamic system.
    * @param inputs Inputs to the estimator.
    */
-  Eigen::MatrixXf input_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& inputs);
+  Eigen::MatrixXd input_jacobian(const Eigen::VectorXd& state, const Eigen::VectorXd& inputs);
 
   /**
    * @brief This is a reference to the input_jacobian function. This incurs minimum time cost
@@ -104,7 +104,7 @@ private:
    * @param input Inputs to the measurement prediction. Essentially information necessary to the prediction,
    * but is not contained in the state.
    */
-  Eigen::VectorXf gnss_measurement_prediction(const Eigen::VectorXf& state, const Eigen::VectorXf& input);
+  Eigen::VectorXd gnss_measurement_prediction(const Eigen::VectorXd& state, const Eigen::VectorXd& input);
   /**
    * @brief This is a reference to the measurement_prediction function. This incurs minimum time cost
    * when passing into a function.
@@ -117,7 +117,7 @@ private:
    * @param state State of the system.
    * @param input Any necessary inputs not included in the state.
    */
-  Eigen::MatrixXf gnss_measurement_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& input);
+  Eigen::MatrixXd gnss_measurement_jacobian(const Eigen::VectorXd& state, const Eigen::VectorXd& input);
 
   /**
    * @brief This is a reference to the measurement_jacobian function. This incurs minimum time cost
@@ -128,17 +128,17 @@ private:
   /**
    * @brief This function returns the GNSS measurement noise.
    */
-  Eigen::MatrixXf gnss_measurement_sensor_noise(const Eigen::VectorXf& state, const Eigen::VectorXf& input);
+  Eigen::MatrixXd gnss_measurement_sensor_noise(const Eigen::VectorXd& state, const Eigen::VectorXd& input);
 
   /**
    * @brief Calculates the partial of gravity in the body frame with respect to the Euler angles.
    */
-  Eigen::Matrix<float, 3,3> del_R_Theta_T_g_del_Theta(const Eigen::Vector3f& Theta, const double& gravity);
+  Eigen::Matrix<double, 3,3> del_R_Theta_T_g_del_Theta(const Eigen::Vector3d& Theta, const double& gravity);
 
   /**
    * @brief Calculates the partial the inertial velocities with respect to the Euler angles.
    */
-  Eigen::Matrix<float, 3,3> del_R_Theta_v_del_Theta(const Eigen::Vector3f& Theta, const Eigen::Vector3f& vels);
+  Eigen::Matrix<double, 3,3> del_R_Theta_v_del_Theta(const Eigen::Vector3d& Theta, const Eigen::Vector3d& vels);
 
   /**
    * @brief Acceleration due to gravity in m/s^2.
@@ -157,7 +157,7 @@ private:
    * @param input Inputs to the measurement prediction. Essentially information necessary to the prediction,
    * but is not contained in the state.
    */
-  Eigen::VectorXf tilt_mag_measurement_prediction(const Eigen::VectorXf& state, const Eigen::VectorXf& input);
+  Eigen::VectorXd tilt_mag_measurement_prediction(const Eigen::VectorXd& state, const Eigen::VectorXd& input);
 
   /**
    * @brief This is a reference to the mag_measurement_prediction function. This incurs minimum time cost
@@ -171,7 +171,7 @@ private:
    * @param state State of the system.
    * @param input Any inputs not in the state needed for the system.
    */
-  Eigen::MatrixXf tilt_mag_measurement_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& input);
+  Eigen::MatrixXd tilt_mag_measurement_jacobian(const Eigen::VectorXd& state, const Eigen::VectorXd& input);
   
   /**
    * @brief This is a reference to the mag_measurement_jacobian function. This incurs minimum time cost
@@ -182,7 +182,7 @@ private:
   /**
    * @brief Calculates the sensor noise of the magnetometer.
    */
-  Eigen::MatrixXf tilt_mag_measurement_sensor_noise(const Eigen::VectorXf& state, const Eigen::VectorXf& input);
+  Eigen::MatrixXd tilt_mag_measurement_sensor_noise(const Eigen::VectorXd& state, const Eigen::VectorXd& input);
   
   /**
    * @brief Reference to the magnetometer sensor noise calculation.
@@ -196,7 +196,7 @@ private:
    * @param input Inputs to the measurement prediction. Essentially information necessary to the prediction,
    * but is not contained in the state.
    */
-  Eigen::VectorXf baro_measurement_prediction(const Eigen::VectorXf& state, const Eigen::VectorXf& input);
+  Eigen::VectorXd baro_measurement_prediction(const Eigen::VectorXd& state, const Eigen::VectorXd& input);
   /**
    * @brief This is a reference to the baro_measurement_prediction function. This incurs minimum time cost
    * when passing into a function.
@@ -209,7 +209,7 @@ private:
    * @param state State of the system.
    * @param input Any inputs not in the state needed for the system.
    */
-  Eigen::MatrixXf baro_measurement_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& input);
+  Eigen::MatrixXd baro_measurement_jacobian(const Eigen::VectorXd& state, const Eigen::VectorXd& input);
   /**
    * @brief This is a reference to the baro_measurement_jacobian function. This incurs minimum time cost
    * when passing into a function.
@@ -219,7 +219,7 @@ private:
   /**
    * @brief Calculates the barometer sensor noise.
    */
-  Eigen::MatrixXf baro_measurement_sensor_noise(const Eigen::VectorXf& state, const Eigen::VectorXf& input);
+  Eigen::MatrixXd baro_measurement_sensor_noise(const Eigen::VectorXd& state, const Eigen::VectorXd& input);
   
   /**
    * @brief Reference to the calculation of the barometer sensor noise.
@@ -233,7 +233,7 @@ private:
    * @param input Inputs to the measurement prediction. Essentially information necessary to the prediction,
    * but is not contained in the state.
    */
-  Eigen::VectorXf beta_pseudo_measurement_prediction(const Eigen::VectorXf& state, const Eigen::VectorXf& input);
+  Eigen::VectorXd beta_pseudo_measurement_prediction(const Eigen::VectorXd& state, const Eigen::VectorXd& input);
   /**
    * @brief This is a reference to the baro_measurement_prediction function. This incurs minimum time cost
    * when passing into a function.
@@ -246,7 +246,7 @@ private:
    * @param state State of the system.
    * @param input Any inputs not in the state needed for the system.
    */
-  Eigen::MatrixXf beta_pseudo_measurement_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& input);
+  Eigen::MatrixXd beta_pseudo_measurement_jacobian(const Eigen::VectorXd& state, const Eigen::VectorXd& input);
   /**
    * @brief This is a reference to the baro_measurement_jacobian function. This incurs minimum time cost
    * when passing into a function.
@@ -256,7 +256,7 @@ private:
   /**
    * @brief Calculates the barometer sensor noise.
    */
-  Eigen::MatrixXf beta_pseudo_measurement_sensor_noise(const Eigen::VectorXf& state, const Eigen::VectorXf& input);
+  Eigen::MatrixXd beta_pseudo_measurement_sensor_noise(const Eigen::VectorXd& state, const Eigen::VectorXd& input);
   
   /**
    * @brief Reference to the calculation of the barometer sensor noise.
@@ -271,16 +271,16 @@ private:
   /**
    * @brief The state of the system.
    */
-  Eigen::Vector<float, num_states> xhat_;
+  Eigen::Vector<double, num_states> xhat_;
   /**
    * @brief The covariance of the estimate.
    */
-  Eigen::Matrix<float, num_states, num_states> P_;
+  Eigen::Matrix<double, num_states, num_states> P_;
 
   /**
    * @brief The process noise for state propagation.
    */
-  Eigen::Matrix<float, num_states, num_states> Q_;
+  Eigen::Matrix<double, num_states, num_states> Q_;
   
   /**
    * @brief There are 6 estimator inputs by default. accel_x, accel_y, accel_z, omega_x, omega_y and omega_z.
@@ -291,7 +291,7 @@ private:
    * @brief The process noise from the inputs to the estimator, accelerations (3) and angular velocities (3).
    * The first 3 rows are for the accels, and the second 3 for the angular velocities.
    */
-  Eigen::Matrix<float, num_estimator_inputs, num_estimator_inputs> Q_inputs_;
+  Eigen::Matrix<double, num_estimator_inputs, num_estimator_inputs> Q_inputs_;
 
   /**
    * @brief There are 6 gnss measurements by default. Lat, lon, alt, v_n, v_e and v_d.
@@ -302,7 +302,7 @@ private:
    * @brief The sensor noises for the GNSS measurements. The first three rows are for the positional measurements.
    * The last three rows are for the velocity measurements.
    */
-  Eigen::Matrix<float, num_gnss_measurements, num_gnss_measurements> R_gnss_;
+  Eigen::Matrix<double, num_gnss_measurements, num_gnss_measurements> R_gnss_;
   
   /**
    * @brief There is just one value that calculates to tilt mag heading.
@@ -312,7 +312,7 @@ private:
   /**
    * @brief The sensor noise not due to the mag or state in the tilt mag measurement.
    */
-  Eigen::Matrix<float, num_tilt_mag_measurements, num_tilt_mag_measurements> R_tilt_;
+  Eigen::Matrix<double, num_tilt_mag_measurements, num_tilt_mag_measurements> R_tilt_;
   
   /**
    * @brief There are 3 mag measurements by default. m_x, m_y and m_z.
@@ -322,7 +322,7 @@ private:
   /**
    * @brief The sensor noises for the magnetometer.
    */
-  Eigen::Matrix<float, num_mag_measurements, num_mag_measurements> R_mag_;
+  Eigen::Matrix<double, num_mag_measurements, num_mag_measurements> R_mag_;
   
   /**
    * @brief There is one barometer measurement by default. P (pressure).
@@ -332,7 +332,7 @@ private:
   /**
    * @brief The sensor noises for the barometer.
    */
-  Eigen::Matrix<float, num_baro_measurements, num_baro_measurements> R_baro_;
+  Eigen::Matrix<double, num_baro_measurements, num_baro_measurements> R_baro_;
 
   /**
    * @brief There is are 2 pseudo measurements for wind.
@@ -342,7 +342,7 @@ private:
   /**
    * @brief The sensor noises for the beta pseudo measurement.
    */
-  Eigen::Matrix<float, num_beta_measurements, num_beta_measurements> R_beta_;
+  Eigen::Matrix<double, num_beta_measurements, num_beta_measurements> R_beta_;
   
   /**
    * @brief There is one differential pressure measurement P (pressure).
@@ -352,7 +352,7 @@ private:
   /**
    * @brief The sensor noises for the barometer.
    */
-  Eigen::Matrix<float, num_diff_measurements, num_diff_measurements> R_diff_;
+  Eigen::Matrix<double, num_diff_measurements, num_diff_measurements> R_diff_;
 
   /**
    * @brief Calculates measurement prediction for the wind pseudo measurement.
@@ -361,7 +361,7 @@ private:
    * @param input Inputs to the measurement prediction. Essentially information necessary to the prediction,
    * but is not contained in the state.
    */
-  Eigen::VectorXf diff_pressure_measurement_prediction(const Eigen::VectorXf& state, const Eigen::VectorXf& input);
+  Eigen::VectorXd diff_pressure_measurement_prediction(const Eigen::VectorXd& state, const Eigen::VectorXd& input);
   /**
    * @brief This is a reference to the baro_measurement_prediction function. This incurs minimum time cost
    * when passing into a function.
@@ -374,7 +374,7 @@ private:
    * @param state State of the system.
    * @param input Any inputs not in the state needed for the system.
    */
-  Eigen::MatrixXf diff_pressure_measurement_jacobian(const Eigen::VectorXf& state, const Eigen::VectorXf& input);
+  Eigen::MatrixXd diff_pressure_measurement_jacobian(const Eigen::VectorXd& state, const Eigen::VectorXd& input);
   /**
    * @brief This is a reference to the baro_measurement_jacobian function. This incurs minimum time cost
    * when passing into a function.
@@ -384,7 +384,7 @@ private:
   /**
    * @brief Calculates the barometer sensor noise.
    */
-  Eigen::MatrixXf diff_pressure_measurement_sensor_noise(const Eigen::VectorXf& state, const Eigen::VectorXf& input);
+  Eigen::MatrixXd diff_pressure_measurement_sensor_noise(const Eigen::VectorXd& state, const Eigen::VectorXd& input);
   
   /**
    * @brief Reference to the calculation of the barometer sensor noise.
@@ -444,32 +444,32 @@ private:
   /**
    * @brief Calculates the inertial magnetic field.
    */
-  Eigen::Vector3f calculate_inertial_magnetic_field(const float& declination, const float& inclination);
+  Eigen::Vector3d calculate_inertial_magnetic_field(const double& declination, const double& inclination);
   
   /**
    * @brief Calculates the body to inertial rotation matrix.
    */
-  Eigen::Matrix3f R(const Eigen::Vector3f& Theta);
+  Eigen::Matrix3d R(const Eigen::Vector3d& Theta);
   
   /**
    * @brief Calculates the matrix that integrates gyro measurements into Euler angles.
    */
-  Eigen::Matrix3f S(const Eigen::Vector3f& Theta);
+  Eigen::Matrix3d S(const Eigen::Vector3d& Theta);
   
   /**
    * @brief Calculates the partial of the gyro integration matrix with respect to the Euler angles.
    */
-  Eigen::Matrix3f del_S_Theta_del_Theta(const Eigen::Vector3f& Theta, const Eigen::Vector3f& biases, const Eigen::Vector3f& gyro);
+  Eigen::Matrix3d del_S_Theta_del_Theta(const Eigen::Vector3d& Theta, const Eigen::Vector3d& biases, const Eigen::Vector3d& gyro);
   
   /**
    * @brief Calculates the partial of tilt compensated mag measurement with respect to the states.
    */
-  Eigen::MatrixXf del_tilt_mag_del_states(const Eigen::VectorXf& state, const Eigen::VectorXf& info);
+  Eigen::MatrixXd del_tilt_mag_del_states(const Eigen::VectorXd& state, const Eigen::VectorXd& info);
 
   /**
    * @brief Calculates the partial of tilt compensated mag measurement with respect to the magnetometer measurements.
    */
-  Eigen::MatrixXf del_tilt_mag_del_mag(const Eigen::VectorXf& state, const Eigen::VectorXf& info);
+  Eigen::MatrixXd del_tilt_mag_del_mag(const Eigen::VectorXd& state, const Eigen::VectorXd& info);
   
 /**
    * @brief This function binds references to the functions used in the ekf.

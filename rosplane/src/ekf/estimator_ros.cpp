@@ -79,7 +79,7 @@ void EstimatorROS::declare_parameters()
   params_.declare_int("max_baro_sensor_silence_duration_ms", 15); // actual publish rate is 100 Hz, measured max period of 11ms
   params_.declare_int("max_gnss_sensor_silence_duration_ms", 110); // actual publish rate is 10 Hz, measured max period of 105ms
   params_.declare_int("max_diff_sensor_silence_duration_ms", 110); // actual publish rate is 10 Hz, measured max period of 105ms
-  params_.declare_int("min_gnss_fix_type", 3); // Fix must be of type float.
+  params_.declare_int("min_gnss_fix_type", 3); // Fix must be of type double.
   params_.declare_bool("hotstart_estimator", false); // Whether the estimator should use preset hotstart values.
 }
 
@@ -208,11 +208,11 @@ void EstimatorROS::gnssCallback(const rosflight_msgs::msg::GNSS::SharedPtr msg)
   // Convert msg to standard DDS and m/s.
   double msg_lat = msg->lat;
   double msg_lon = msg->lon;
-  float msg_height = msg->alt;
+  double msg_height = msg->alt;
   
-  float msg_vel_n = msg->vel_n;
-  float msg_vel_e = msg->vel_e;
-  float msg_vel_d = msg->vel_d;
+  double msg_vel_n = msg->vel_n;
+  double msg_vel_e = msg->vel_e;
+  double msg_vel_d = msg->vel_d;
 
   has_fix_ = msg->fix_type >= min_fix_type; 
   
@@ -229,11 +229,11 @@ void EstimatorROS::gnssCallback(const rosflight_msgs::msg::GNSS::SharedPtr msg)
       init_lon_ = msg_lon;
 
       // Calculate the air density using the standard atmospheric model.
-      double pressure_at_alt = 101325.0f * (float) pow((1 - 2.25694e-5 * init_alt_), 5.2553);
+      double pressure_at_alt = 101325.0 * pow((1 - 2.25694e-5 * init_alt_), 5.2553);
       rho_ = 1.225 * pow(pressure_at_alt / 101325.0, 0.809736894596450);
       
       // If the parameter is in use override the pressure at altitude calculation.
-      float rho = params_.get_double("rho");
+      double rho = params_.get_double("rho");
       if (rho > 0) {
         rho_ = rho;
       }
@@ -299,10 +299,10 @@ void EstimatorROS::baroAltCallback(const rosflight_msgs::msg::Barometer::SharedP
     update_barometer_calibration(msg);
   } else {
     // Save the barometer pressure, cap the maximum change registered.
-    float static_pres_old = input_.static_pres;
+    double static_pres_old = input_.static_pres;
     input_.static_pres = -msg->pressure + init_static_;
 
-    float gate_gain = gate_gain_constant * rho_ * gravity;
+    double gate_gain = gate_gain_constant * rho_ * gravity;
     if (input_.static_pres < static_pres_old - gate_gain) {
       input_.static_pres = static_pres_old - gate_gain;
     } else if (input_.static_pres > static_pres_old + gate_gain) {
@@ -333,12 +333,12 @@ void EstimatorROS::update_barometer_calibration(const rosflight_msgs::msg::Barom
     int q1_index = n / 4 - 1;       // equivalent to 25 when n=100 (since 100/4 - 1 = 24)
     int q3_index = (3 * n) / 4 - 1; // equivalent to 74 when n=100 (since 300/4 - 1 = 74)
 
-    float q1 = (init_static_vector_[q1_index] + init_static_vector_[q1_index+1]) / 2.0;
-    float q3 = (init_static_vector_[q3_index] + init_static_vector_[q3_index+1]) / 2.0;
+    double q1 = (init_static_vector_[q1_index] + init_static_vector_[q1_index+1]) / 2.0;
+    double q3 = (init_static_vector_[q3_index] + init_static_vector_[q3_index+1]) / 2.0;
 
-    float IQR = q3 - q1;
-    float upper_bound = q3 + 2.0 * IQR;
-    float lower_bound = q1 - 2.0 * IQR;
+    double IQR = q3 - q1;
+    double upper_bound = q3 + 2.0 * IQR;
+    double lower_bound = q1 - 2.0 * IQR;
     for (int i = 0; i < baro_calib_count; i++) {
       if (init_static_vector_[i] > upper_bound) {
         baro_init_ = false;
@@ -363,10 +363,10 @@ void EstimatorROS::airspeedCallback(const rosflight_msgs::msg::Airspeed::SharedP
 
   double gate_gain_constant = params_.get_double("airspeed_measurement_gate");
 
-  float diff_pres_old = input_.diff_pres;
+  double diff_pres_old = input_.diff_pres;
   input_.diff_pres = msg->differential_pressure;
 
-  float gate_gain = pow(gate_gain_constant, 2) * rho_ / 2.0;
+  double gate_gain = pow(gate_gain_constant, 2) * rho_ / 2.0;
   if (input_.diff_pres < diff_pres_old - gate_gain) {
     input_.diff_pres = diff_pres_old - gate_gain;
   } else if (input_.diff_pres > diff_pres_old + gate_gain) {

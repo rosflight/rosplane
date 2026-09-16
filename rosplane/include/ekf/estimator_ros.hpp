@@ -29,8 +29,8 @@
 
 #include "param_manager/param_manager.hpp"
 
-#define EARTH_RADIUS 6378145.0f
-#define NOT_IN_USE -1000000.f
+#define EARTH_RADIUS 6378145.0
+#define NOT_IN_USE -1000000.0
 #define MILLIS_TO_NANOS 1000000
 
 namespace rosplane
@@ -44,16 +44,16 @@ public:
 protected:
   struct Input // FIXME: there are inputs that are not in this struct.
   {
-    float gyro_x;
-    float gyro_y;
-    float gyro_z;
-    float accel_x;
-    float accel_y;
-    float accel_z;
+    double gyro_x;
+    double gyro_y;
+    double gyro_z;
+    double accel_x;
+    double accel_y;
+    double accel_z;
     bool baro_new;
-    float static_pres;
+    double static_pres;
     bool diff_new;
-    float diff_pres;
+    double diff_pres;
     bool gps_new;
     int gps_yday;
     int gps_year;
@@ -62,48 +62,48 @@ protected:
     double gps_lat;
     double gps_lon;
     double gps_alt;
-    float gps_n;
-    float gps_e;
-    float gps_h;
-    float gps_vg;
-    float gps_vn;
-    float gps_ve;
-    float gps_vd;
-    float gps_course;
+    double gps_n;
+    double gps_e;
+    double gps_h;
+    double gps_vg;
+    double gps_vn;
+    double gps_ve;
+    double gps_vd;
+    double gps_course;
     bool status_armed;
     bool armed_init;
     bool mag_new;
-    float mag_x;
-    float mag_y;
-    float mag_z;
+    double mag_x;
+    double mag_y;
+    double mag_z;
   };
 
   struct Output
   {
-    float pn = 0.0f;
-    float pe = 0.0f;
-    float pd = 0.0f;
-    float vx = 0.0f;
-    float vy = 0.0f;
-    float vz = 0.0f;
-    float h = 0.0f;
-    float va = 0.0f;
-    float alpha = 0.0f;
-    float beta = 0.0f;
-    float phi = 0.0f;
-    float theta = 0.0f;
-    float psi = 0.0f;
-    float bx = 0.0f;
-    float by = 0.0f;
-    float bz = 0.0f;
-    float chi = 0.0f;
-    float p = 0.0f;
-    float q = 0.0f;
-    float r = 0.0f;
-    float vg = 0.0f;
-    float wn = 0.0f;
-    float we = 0.0f;
-    Eigen::Quaternionf quat = Eigen::Quaternionf(1.0f, 0.0f, 0.0f, 0.0f);
+    double pn = 0.0;
+    double pe = 0.0;
+    double pd = 0.0;
+    double vx = 0.0;
+    double vy = 0.0;
+    double vz = 0.0;
+    double h = 0.0;
+    double va = 0.0;
+    double alpha = 0.0;
+    double beta = 0.0;
+    double phi = 0.0;
+    double theta = 0.0;
+    double psi = 0.0;
+    double bx = 0.0;
+    double by = 0.0;
+    double bz = 0.0;
+    double chi = 0.0;
+    double p = 0.0;
+    double q = 0.0;
+    double r = 0.0;
+    double vg = 0.0;
+    double wn = 0.0;
+    double we = 0.0;
+    Eigen::Quaterniond quat = Eigen::Quaterniond(1.0, 0.0, 0.0, 0.0);
   };
 
   bool init_conds_saved_ = false;
@@ -111,7 +111,7 @@ protected:
 
   bool baro_init_ = false;
 
-  float rho_;
+  double rho_;
   
   /**
    * @brief Indicates if the magnetometer magnetic field parameters have been initialized.
@@ -128,8 +128,8 @@ protected:
   bool has_fix_ = false;
   double init_lat_ = 0.0;                 /**< Initial latitude in degrees */
   double init_lon_ = 0.0;                 /**< Initial longitude in degrees */
-  float init_alt_ = 0.0;                  /**< Initial altitude in meters above MSL  */
-  float init_static_;                     /**< Initial static pressure (mbar)  */
+  double init_alt_ = 0.0;                  /**< Initial altitude in meters above MSL  */
+  double init_static_;                     /**< Initial static pressure (mbar)  */
   
   std::unordered_map<std::string, rclcpp::Time> time_since_last_sensor_update_;
   void set_sensor_monitoring();
@@ -168,7 +168,7 @@ private:
   bool gps_new_;
   bool armed_first_time_;                 /**< Arm before starting estimation  */
   int baro_count_;                        /**< Used to grab the first set of baro measurements */
-  std::vector<float> init_static_vector_; /**< Used to grab the first set of baro measurements */
+  std::vector<double> init_static_vector_; /**< Used to grab the first set of baro measurements */
 
   /**
    * This declares each parameter as a parameter so that the ROS2 parameter system can recognize each parameter.

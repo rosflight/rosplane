@@ -169,7 +169,7 @@ private:
     state.p_d = msg.pose.position.z;
 
     // Quaternion is from body to inertial
-    Eigen::Quaternionf q;
+    Eigen::Quaterniond q;
     q.w() = msg.pose.orientation.w;
     q.x() = msg.pose.orientation.x;
     q.y() = msg.pose.orientation.y;
@@ -206,13 +206,13 @@ private:
     state.w_e = we_;
 
     // Components of the airspeed in the body frame
-    Eigen::Vector3f v_i_b(v_x, v_y, v_z);
-    Eigen::Vector3f v_w_i(wn_, we_, wd_);
-    Eigen::Vector3f va = v_i_b - q.inverse() * v_w_i; // Rotate wind from inertial to body frame
+    Eigen::Vector3d v_i_b(v_x, v_y, v_z);
+    Eigen::Vector3d v_w_i(wn_, we_, wd_);
+    Eigen::Vector3d va = v_i_b - q.inverse() * v_w_i; // Rotate wind from inertial to body frame
 
     state.va = va.norm();
 
-    Eigen::Vector3f v_i_i = q * v_i_b; // rotate body frame velocities into inertial frame
+    Eigen::Vector3d v_i_i = q * v_i_b; // rotate body frame velocities into inertial frame
     state.chi = atan2(v_i_i(1), v_i_i(0));
     state.alpha = atan2(va(2), va(0));
     state.beta = asin(va(1) / state.va);
