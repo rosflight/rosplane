@@ -275,7 +275,7 @@ void InputMapper::state_callback(const rosplane_msgs::msg::State::SharedPtr msg)
 }
 
 void InputMapper::path_follower_mode_callback(
-  const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
   std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
   params_.set_string("aileron_input", "path_follower");
@@ -286,7 +286,7 @@ void InputMapper::path_follower_mode_callback(
 }
 
 void InputMapper::altitude_course_airspeed_control_mode_callback(
-  const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
   std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
   params_.set_string("aileron_input", "rc_course");
@@ -297,7 +297,7 @@ void InputMapper::altitude_course_airspeed_control_mode_callback(
 }
 
 void InputMapper::angle_control_mode_callback(
-  const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
   std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
   params_.set_string("aileron_input", "rc_roll_angle");
@@ -308,7 +308,7 @@ void InputMapper::angle_control_mode_callback(
 }
 
 void InputMapper::rc_passthrough_mode_callback(
-  const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
   std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
   params_.set_string("aileron_input", "rc_aileron");

@@ -124,8 +124,9 @@ void PathPlannerWaypoints::state_callback(const rosplane_msgs::msg::State & msg)
   }
 }
 
-bool PathPlannerWaypoints::publish_next_waypoint(const std_srvs::srv::Trigger::Request::SharedPtr & req,
-                                        const std_srvs::srv::Trigger::Response::SharedPtr & res)
+bool PathPlannerWaypoints::publish_next_waypoint(
+  [[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr & req,
+  const std_srvs::srv::Trigger::Response::SharedPtr & res)
 {
   // Publish the next waypoint, if available
   if (num_waypoints_published_ < (int) wps.size()) {
@@ -201,8 +202,9 @@ bool PathPlannerWaypoints::update_path(const rosplane_msgs::srv::AddWaypoint::Re
   return true;
 }
 
-bool PathPlannerWaypoints::clear_path_callback(const std_srvs::srv::Trigger::Request::SharedPtr & req,
-                                      const std_srvs::srv::Trigger::Response::SharedPtr & res)
+bool PathPlannerWaypoints::clear_path_callback(
+  [[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr & req,
+  const std_srvs::srv::Trigger::Response::SharedPtr & res)
 {
   clear_path();
 
@@ -223,8 +225,9 @@ void PathPlannerWaypoints::clear_path()
   num_waypoints_published_ = 0;
 }
 
-bool PathPlannerWaypoints::print_path(const std_srvs::srv::Trigger::Request::SharedPtr & req,
-                             const std_srvs::srv::Trigger::Response::SharedPtr & res)
+bool PathPlannerWaypoints::print_path(
+  [[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr & req,
+  const std_srvs::srv::Trigger::Response::SharedPtr & res)
 {
   std::stringstream output;
 
