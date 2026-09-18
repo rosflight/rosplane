@@ -43,14 +43,11 @@
 #ifndef PATH_MANAGER_DUBINS_H
 #define PATH_MANAGER_DUBINS_H
 
-#include <Eigen/Eigen>
 #include <chrono>
-#include <cmath>
+
+#include <Eigen/Eigen>
 
 #include "path_manager_ros.hpp"
-
-#define M_PI_F 3.14159265358979323846f
-#define M_PI_2_F 1.57079632679489661923f
 
 namespace rosplane
 {

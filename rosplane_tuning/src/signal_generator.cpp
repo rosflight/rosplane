@@ -37,11 +37,12 @@
  * @author Brandon Sutherland <brandonsutherland2@gmail.com>
  */
 
+#include "signal_generator.hpp"
+
 #include <chrono>
 #include <cmath>
+#include <functional>
 #include <string>
-
-#include "signal_generator.hpp"
 
 namespace rosplane
 {

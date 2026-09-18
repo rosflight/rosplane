@@ -35,9 +35,17 @@
  * @file controller_ros.cpp
  * @author Ian Reid <ian.young.reid@gmail.com>
  */
+
+#include "controller/controller_ros.hpp"
+
+#include <functional>
+
 #include "controller/controller_successive_loop.hpp"
 #include "controller/controller_total_energy.hpp"
-#include "controller/controller_ros.hpp"
+#include "rosplane_msgs/msg/controller_commands.hpp"
+
+using std::placeholders::_1;
+using namespace std::chrono_literals;
 
 namespace rosplane
 {

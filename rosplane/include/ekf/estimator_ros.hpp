@@ -12,6 +12,7 @@
 #define ESTIMATOR_ROS_H
 
 #include <chrono>
+#include <filesystem>
 #include <unordered_map>
 
 #include <geometry_msgs/msg/twist_stamped.hpp>
@@ -26,16 +27,11 @@
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/magnetic_field.hpp>
 
-#include <filesystem>
-
 #include "param_manager/param_manager.hpp"
 
 #define EARTH_RADIUS 6378145.0f
 #define NOT_IN_USE -1000000.f
 #define MILLIS_TO_NANOS 1000000
-
-using std::placeholders::_1;
-using namespace std::chrono_literals;
 
 namespace rosplane
 {

@@ -39,8 +39,12 @@
  * @author Ian Reid <ian.young.reid@gmail.com>
 */
 
-#include "path_follower/path_follower_lines_orbits.hpp"
 #include "path_follower/path_follower_ros.hpp"
+
+#include <chrono>
+#include <functional>
+
+#include "path_follower/path_follower_lines_orbits.hpp"
 
 namespace rosplane
 {

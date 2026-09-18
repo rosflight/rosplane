@@ -1,9 +1,4 @@
-#include <functional>
-#include <rclcpp/logging.hpp>
-#include <tuple>
-
 #include "ekf/estimator_ekf.hpp"
-#include "ekf/estimator_ros.hpp"
 
 namespace rosplane
 {

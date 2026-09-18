@@ -42,6 +42,7 @@
 #ifndef BUILD_CONTROLLER_TOTAL_ENERGY_H
 #define BUILD_CONTROLLER_TOTAL_ENERGY_H
 
+#include "controller_ros.hpp"
 #include "controller_successive_loop.hpp"
 
 namespace rosplane

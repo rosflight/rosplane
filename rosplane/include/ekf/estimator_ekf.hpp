@@ -1,8 +1,6 @@
 #ifndef ESTIMATOR_EKF_H
 #define ESTIMATOR_EKF_H
 
-#include <cassert>
-#include <math.h>
 #include <tuple>
 
 #include <Eigen/Geometry>

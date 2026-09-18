@@ -1,7 +1,9 @@
 #include "ekf/estimator_continuous_discrete.hpp"
+
+#include <cmath>
+
 #include "ekf/estimator_ros.hpp"
 #include "ekf/geomag.h"
-#include <cmath>
 
 namespace rosplane
 {

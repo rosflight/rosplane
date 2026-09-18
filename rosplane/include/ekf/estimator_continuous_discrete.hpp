@@ -1,7 +1,6 @@
 #ifndef ESTIMATOR_CONTINUOUS_DISCRETE_H // FIXME: redefine the header guards when you rename the ekf.
 #define ESTIMATOR_CONTINUOUS_DISCRETE_H
 
-#include <math.h>
 #include <Eigen/Geometry>
 
 #include "ekf/estimator_ekf.hpp"

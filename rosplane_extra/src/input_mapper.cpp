@@ -1,5 +1,8 @@
 #include "input_mapper.hpp"
 
+#include <chrono>
+#include <functional>
+
 using std::placeholders::_1;
 using std::placeholders::_2;
 

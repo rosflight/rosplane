@@ -42,7 +42,7 @@
 #ifndef CONTROLLER_SUCCESSIVE_H
 #define CONTROLLER_SUCCESSIVE_H
 
-#include <cmath>
+#include "controller_ros.hpp"
 #include "controller_state_machine.hpp"
 
 namespace rosplane

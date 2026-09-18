@@ -44,18 +44,15 @@
 #define CONTROLLER_ROS_H
 
 #include <chrono>
-#include <functional>
+#include <vector>
 
 #include <rclcpp/rclcpp.hpp>
 #include <rosflight_msgs/msg/command.hpp>
+#include <rosplane_msgs/msg/controller_commands.hpp>
+#include <rosplane_msgs/msg/controller_internals.hpp>
+#include <rosplane_msgs/msg/state.hpp>
 
 #include "param_manager/param_manager.hpp"
-#include "rosplane_msgs/msg/controller_commands.hpp"
-#include "rosplane_msgs/msg/controller_internals.hpp"
-#include "rosplane_msgs/msg/state.hpp"
-
-using std::placeholders::_1;
-using namespace std::chrono_literals;
 
 namespace rosplane
 {

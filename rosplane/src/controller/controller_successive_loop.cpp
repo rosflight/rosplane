@@ -39,8 +39,9 @@
  * @author Ian Reid <ian.young.reid@gmail.com>
  */
 
-
 #include "controller/controller_successive_loop.hpp"
+
+#include <cmath>
 
 namespace rosplane
 {

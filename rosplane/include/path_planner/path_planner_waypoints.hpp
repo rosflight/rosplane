@@ -1,4 +1,3 @@
-
 /*
  * Software License Agreement (BSD-3 License)
  *
@@ -41,21 +40,16 @@
  * @author Ian Reid <jacobmoor2@gmail.com>
  */
 
-#include <cmath>
-#include <yaml-cpp/yaml.h>
-
 #include <rclcpp/executors.hpp>
 #include <rclcpp/service.hpp>
 #include <rclcpp/utilities.hpp>
+#include <rosflight_msgs/srv/param_file.hpp>
+#include <rosplane_msgs/msg/state.hpp>
+#include <rosplane_msgs/msg/waypoint.hpp>
+#include <rosplane_msgs/srv/add_waypoint.hpp>
 #include <std_srvs/srv/trigger.hpp>
 
-#include <rosflight_msgs/srv/param_file.hpp>
-
 #include "param_manager/param_manager.hpp"
-
-#include "rosplane_msgs/msg/state.hpp"
-#include "rosplane_msgs/msg/waypoint.hpp"
-#include "rosplane_msgs/srv/add_waypoint.hpp"
 
 #define EARTH_RADIUS 6378145.0f
 
@@ -224,7 +218,7 @@ private:
   /**
    * @brief Parameter change callback, propagates parameter changes to where they should be.
    * 
-   * @param parameters: Vector of rclcpp::Parameter that have been changed. 
+   * @param parameters: Vector of rclcpp::Parameter that have been changed.
    */
   rcl_interfaces::msg::SetParametersResult
   parametersCallback(const std::vector<rclcpp::Parameter> & parameters);

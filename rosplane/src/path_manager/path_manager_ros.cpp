@@ -42,9 +42,14 @@
  * @author Ian Reid <ian.young.reid@gmail.com>
  */
 
+#include "path_manager/path_manager_ros.hpp"
+
+#include <functional>
+#include <limits>
+
 #include "path_manager/path_manager_dubins_fillets.hpp"
 
-#include "path_manager/path_manager_ros.hpp"
+using std::placeholders::_1;
 
 namespace rosplane
 {
@@ -62,7 +67,7 @@ PathManagerROS::PathManagerROS()
 
   // Set the parameter callback, for when parameters are changed.
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
-    std::bind(&PathManagerROS::parametersCallback, this, std::placeholders::_1));
+    std::bind(&PathManagerROS::parametersCallback, this, _1));
 
   // Declare parameters maintained by this node with ROS2. Required for all ROS2 parameters associated with this node
   declare_parameters();

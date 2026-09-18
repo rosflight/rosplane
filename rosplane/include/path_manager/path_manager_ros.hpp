@@ -48,16 +48,14 @@
 #ifndef PATH_MANAGER_ROS_H
 #define PATH_MANAGER_ROS_H
 
+#include <chrono>
+
 #include <rclcpp/rclcpp.hpp>
-#include <limits>
+#include <rosplane_msgs/msg/current_path.hpp>
+#include <rosplane_msgs/msg/state.hpp>
+#include <rosplane_msgs/msg/waypoint.hpp>
 
 #include "param_manager/param_manager.hpp"
-#include "rosplane_msgs/msg/current_path.hpp"
-#include "rosplane_msgs/msg/state.hpp"
-#include "rosplane_msgs/msg/waypoint.hpp"
-
-using std::placeholders::_1;
-using namespace std::chrono_literals;
 
 namespace rosplane
 {
