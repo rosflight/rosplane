@@ -1,11 +1,19 @@
 #include "ekf/estimator_ros.hpp"
+
 #include <fstream>
+
+// #include <ament_index_cpp/get_package_share_path.hpp> // FIXME: use when Humble is dropped
+#include <rosflight_compat/get_package_share_path.hpp>
+
+using namespace std::chrono_literals;
 
 namespace rosplane
 {
 
 EstimatorROS::EstimatorROS()
-    : Node("estimator"), params_(this), params_initialized_(false)
+    : Node("estimator")
+    , params_(this)
+    , params_initialized_(false)
 {
   vehicle_state_pub_ = this->create_publisher<rosplane_msgs::msg::State>("estimated_state", 10);
 
@@ -20,7 +28,8 @@ EstimatorROS::EstimatorROS()
   status_sub_ = this->create_subscription<rosflight_msgs::msg::Status>(
     status_topic_, 10, std::bind(&EstimatorROS::statusCallback, this, std::placeholders::_1));
   magnetometer_sub_ = this->create_subscription<sensor_msgs::msg::MagneticField>(
-    magnetometer_topic_, 10, std::bind(&EstimatorROS::magnetometerCallback, this, std::placeholders::_1));
+    magnetometer_topic_, 10,
+    std::bind(&EstimatorROS::magnetometerCallback, this, std::placeholders::_1));
 
   init_static_ = 0;
   baro_count_ = 0;
@@ -38,18 +47,18 @@ EstimatorROS::EstimatorROS()
   params_.set_parameters();
 
   params_initialized_ = true;
-  
-  std::filesystem::path workspace_dir = ament_index_cpp::get_package_share_directory("rosplane");
-  std::filesystem::path params_dir = "params";
-  std::filesystem::path hotstart_file = "hotstart";
 
-  std::filesystem::path install_hotstart_dir = workspace_dir / params_dir / hotstart_file;
- 
+  // FIXME: use ament_index_cpp::get_package_share_path when Humble support is dropped
+  std::filesystem::path workspace_path = rosflight_compat::get_package_share_path("rosplane");
+  std::filesystem::path install_hotstart_path = workspace_path / "params" / "hotstart";
+
   // Remove the install and share directories from the path so the hotstart file goes into
   // the main directory so it is easily found.
-  for (auto dir : install_hotstart_dir) {
-    if (dir.string() == "install") continue;
-    if (dir.string() == "share") continue;
+  for (auto dir : install_hotstart_path) {
+    if (dir.string() == "install")
+      continue;
+    if (dir.string() == "share")
+      continue;
     hotstart_path_ /= dir;
   }
 
@@ -64,19 +73,29 @@ EstimatorROS::EstimatorROS()
 void EstimatorROS::declare_parameters()
 {
   params_.declare_double("estimator_update_frequency", 390.0); // Update frequency of the estimator.
-  params_.declare_double("rho", NOT_IN_USE); // The density that should be used.
+  params_.declare_double("rho", NOT_IN_USE);                   // The density that should be used.
   params_.declare_double("gravity", 9.81); // The acceleration due to gravity in m/s^2
-  params_.declare_double("gps_ground_speed_threshold", 0.3);  // Minimum velocity to consider course calculation to be valid.
-  params_.declare_double("baro_measurement_gate", 1.35); // Maximum altitude that can be added in a single barometer update.
-  params_.declare_double("airspeed_measurement_gate", 5.0);  // Maximum jump in pascal difference we can tolerate.
-  params_.declare_int("baro_calibration_count", 100); // Num samples to use in calibration calculation.
-  params_.declare_int("max_imu_sensor_silence_duration_ms", 4); // actual publish rate is 400 Hz, measured max period of 3ms
-  params_.declare_int("max_mag_sensor_silence_duration_ms", 25); // actual publish rate is 50 Hz, measured max period of 22ms
-  params_.declare_int("max_baro_sensor_silence_duration_ms", 15); // actual publish rate is 100 Hz, measured max period of 11ms
-  params_.declare_int("max_gnss_sensor_silence_duration_ms", 110); // actual publish rate is 10 Hz, measured max period of 105ms
-  params_.declare_int("max_diff_sensor_silence_duration_ms", 110); // actual publish rate is 10 Hz, measured max period of 105ms
-  params_.declare_int("min_gnss_fix_type", 3); // Fix must be of type float.
-  params_.declare_bool("hotstart_estimator", false); // Whether the estimator should use preset hotstart values.
+  params_.declare_double("gps_ground_speed_threshold",
+                         0.3); // Minimum velocity to consider course calculation to be valid.
+  params_.declare_double("baro_measurement_gate",
+                         1.35); // Maximum altitude that can be added in a single barometer update.
+  params_.declare_double("airspeed_measurement_gate",
+                         5.0); // Maximum jump in pascal difference we can tolerate.
+  params_.declare_int("baro_calibration_count",
+                      100); // Num samples to use in calibration calculation.
+  params_.declare_int("max_imu_sensor_silence_duration_ms",
+                      4); // actual publish rate is 400 Hz, measured max period of 3ms
+  params_.declare_int("max_mag_sensor_silence_duration_ms",
+                      25); // actual publish rate is 50 Hz, measured max period of 22ms
+  params_.declare_int("max_baro_sensor_silence_duration_ms",
+                      15); // actual publish rate is 100 Hz, measured max period of 11ms
+  params_.declare_int("max_gnss_sensor_silence_duration_ms",
+                      110); // actual publish rate is 10 Hz, measured max period of 105ms
+  params_.declare_int("max_diff_sensor_silence_duration_ms",
+                      110); // actual publish rate is 10 Hz, measured max period of 105ms
+  params_.declare_int("min_gnss_fix_type", 3); // Fix must be of type double.
+  params_.declare_bool("hotstart_estimator",
+                       false); // Whether the estimator should use preset hotstart values.
 }
 
 void EstimatorROS::hotstart()
@@ -101,15 +120,16 @@ void EstimatorROS::saveInitConditions()
   out << rho_;
 }
 
-void EstimatorROS::set_timer() {
+void EstimatorROS::set_timer()
+{
   double frequency = params_.get_double("estimator_update_frequency");
 
   update_period_ = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1'000'000));
   update_timer_ = rclcpp::create_timer(this, this->get_clock(), update_period_,
-                                   std::bind(&EstimatorROS::update, this));
+                                       std::bind(&EstimatorROS::update, this));
 }
 
-rcl_interfaces::msg::SetParametersResult 
+rcl_interfaces::msg::SetParametersResult
 EstimatorROS::parametersCallback(const std::vector<rclcpp::Parameter> & parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;
@@ -119,26 +139,24 @@ EstimatorROS::parametersCallback(const std::vector<rclcpp::Parameter> & paramete
   bool success = params_.set_parameters_callback(parameters);
   if (!success) {
     result.successful = false;
-    result.reason =
-      "One of the parameters given is not a parameter of the estimator node.";
-  }
-  else {
+    result.reason = "One of the parameters given is not a parameter of the estimator node.";
+  } else {
     parameter_changed = true;
   }
 
   // Check to see if the timer period was changed. If it was, recreate the timer with the new period
   if (params_initialized_ && success) {
-    std::chrono::microseconds curr_period = std::chrono::microseconds(static_cast<long long>(1.0 / params_.get_double("estimator_update_frequency") * 1'000'000));
+    std::chrono::microseconds curr_period = std::chrono::microseconds(
+      static_cast<long long>(1.0 / params_.get_double("estimator_update_frequency") * 1'000'000));
     if (update_period_ != curr_period) {
       update_timer_->cancel();
       set_timer();
     }
-
   }
 
   return result;
 }
-  
+
 void EstimatorROS::update()
 {
   Output output;
@@ -156,7 +174,7 @@ void EstimatorROS::update()
   input_.mag_new = false;
   input_.baro_new = false;
   input_.diff_new = false;
-  
+
   // Create estimated state message and publish it.
   rosplane_msgs::msg::State msg = rosplane_msgs::msg::State();
   msg.header.stamp = this->get_clock()->now();
@@ -204,14 +222,14 @@ void EstimatorROS::gnssCallback(const rosflight_msgs::msg::GNSS::SharedPtr msg)
   // Convert msg to standard DDS and m/s.
   double msg_lat = msg->lat;
   double msg_lon = msg->lon;
-  float msg_height = msg->alt;
-  
-  float msg_vel_n = msg->vel_n;
-  float msg_vel_e = msg->vel_e;
-  float msg_vel_d = msg->vel_d;
+  double msg_height = msg->alt;
 
-  has_fix_ = msg->fix_type >= min_fix_type; 
-  
+  double msg_vel_n = msg->vel_n;
+  double msg_vel_e = msg->vel_e;
+  double msg_vel_d = msg->vel_d;
+
+  has_fix_ = msg->fix_type >= min_fix_type;
+
   if (!has_fix_ || !std::isfinite(msg->lat)) {
     input_.gps_new = false;
     return;
@@ -225,11 +243,11 @@ void EstimatorROS::gnssCallback(const rosflight_msgs::msg::GNSS::SharedPtr msg)
       init_lon_ = msg_lon;
 
       // Calculate the air density using the standard atmospheric model.
-      double pressure_at_alt = 101325.0f * (float) pow((1 - 2.25694e-5 * init_alt_), 5.2553);
+      double pressure_at_alt = 101325.0 * pow((1 - 2.25694e-5 * init_alt_), 5.2553);
       rho_ = 1.225 * pow(pressure_at_alt / 101325.0, 0.809736894596450);
-      
+
       // If the parameter is in use override the pressure at altitude calculation.
-      float rho = params_.get_double("rho");
+      double rho = params_.get_double("rho");
       if (rho > 0) {
         rho_ = rho;
       }
@@ -241,7 +259,7 @@ void EstimatorROS::gnssCallback(const rosflight_msgs::msg::GNSS::SharedPtr msg)
 
     // Convert UTC time into broken down format
     std::time_t time = msg->header.stamp.sec;
-    const std::tm *broken_down_time = std::localtime(&time);
+    const std::tm * broken_down_time = std::localtime(&time);
     input_.gps_yday = broken_down_time->tm_yday;
     input_.gps_year = broken_down_time->tm_year + 1900;
     input_.gps_month = broken_down_time->tm_mon;
@@ -256,7 +274,7 @@ void EstimatorROS::gnssCallback(const rosflight_msgs::msg::GNSS::SharedPtr msg)
     double vg_when_course_valid = params_.get_double("gps_ground_speed_threshold");
 
     double ground_speed = sqrt(msg_vel_n * msg_vel_n + msg_vel_e * msg_vel_e);
-    double course = atan2(msg_vel_e, msg_vel_n); 
+    double course = atan2(msg_vel_e, msg_vel_n);
 
     input_.gps_vg = ground_speed;
     input_.gps_vn = msg_vel_n;
@@ -295,10 +313,10 @@ void EstimatorROS::baroAltCallback(const rosflight_msgs::msg::Barometer::SharedP
     update_barometer_calibration(msg);
   } else {
     // Save the barometer pressure, cap the maximum change registered.
-    float static_pres_old = input_.static_pres;
+    double static_pres_old = input_.static_pres;
     input_.static_pres = -msg->pressure + init_static_;
 
-    float gate_gain = gate_gain_constant * rho_ * gravity;
+    double gate_gain = gate_gain_constant * rho_ * gravity;
     if (input_.static_pres < static_pres_old - gate_gain) {
       input_.static_pres = static_pres_old - gate_gain;
     } else if (input_.static_pres > static_pres_old + gate_gain) {
@@ -325,16 +343,16 @@ void EstimatorROS::update_barometer_calibration(const rosflight_msgs::msg::Barom
     std::sort(init_static_vector_.begin(), init_static_vector_.end());
 
     int n = init_static_vector_.size();
-    
+
     int q1_index = n / 4 - 1;       // equivalent to 25 when n=100 (since 100/4 - 1 = 24)
     int q3_index = (3 * n) / 4 - 1; // equivalent to 74 when n=100 (since 300/4 - 1 = 74)
 
-    float q1 = (init_static_vector_[q1_index] + init_static_vector_[q1_index+1]) / 2.0;
-    float q3 = (init_static_vector_[q3_index] + init_static_vector_[q3_index+1]) / 2.0;
+    double q1 = (init_static_vector_[q1_index] + init_static_vector_[q1_index + 1]) / 2.0;
+    double q3 = (init_static_vector_[q3_index] + init_static_vector_[q3_index + 1]) / 2.0;
 
-    float IQR = q3 - q1;
-    float upper_bound = q3 + 2.0 * IQR;
-    float lower_bound = q1 - 2.0 * IQR;
+    double IQR = q3 - q1;
+    double upper_bound = q3 + 2.0 * IQR;
+    double lower_bound = q1 - 2.0 * IQR;
     for (int i = 0; i < baro_calib_count; i++) {
       if (init_static_vector_[i] > upper_bound) {
         baro_init_ = false;
@@ -359,10 +377,10 @@ void EstimatorROS::airspeedCallback(const rosflight_msgs::msg::Airspeed::SharedP
 
   double gate_gain_constant = params_.get_double("airspeed_measurement_gate");
 
-  float diff_pres_old = input_.diff_pres;
+  double diff_pres_old = input_.diff_pres;
   input_.diff_pres = msg->differential_pressure;
 
-  float gate_gain = pow(gate_gain_constant, 2) * rho_ / 2.0;
+  double gate_gain = pow(gate_gain_constant, 2) * rho_ / 2.0;
   if (input_.diff_pres < diff_pres_old - gate_gain) {
     input_.diff_pres = diff_pres_old - gate_gain;
   } else if (input_.diff_pres > diff_pres_old + gate_gain) {
@@ -385,7 +403,8 @@ void EstimatorROS::magnetometerCallback(const sensor_msgs::msg::MagneticField::S
 
 void EstimatorROS::statusCallback(const rosflight_msgs::msg::Status::SharedPtr msg)
 {
-  if (!armed_first_time_ && msg->armed) armed_first_time_ = true;
+  if (!armed_first_time_ && msg->armed)
+    armed_first_time_ = true;
 }
 
 void EstimatorROS::set_sensor_monitoring()
@@ -402,22 +421,23 @@ void EstimatorROS::check_sensors()
 {
   rclcpp::Time curr_time = this->get_clock()->now();
 
-  for (std::pair<std::string, rclcpp::Time> sensor_time_info
-       : time_since_last_sensor_update_) {
+  for (std::pair<std::string, rclcpp::Time> sensor_time_info : time_since_last_sensor_update_) {
     std::string sensor_name = sensor_time_info.first;
     rclcpp::Time time_sensor_collected = sensor_time_info.second;
     std::string param_name = "max_" + sensor_name + "_sensor_silence_duration_ms";
-    rclcpp::Duration expected_update_period(std::chrono::nanoseconds(params_.get_int(param_name)*MILLIS_TO_NANOS));
+    rclcpp::Duration expected_update_period(
+      std::chrono::nanoseconds(params_.get_int(param_name) * MILLIS_TO_NANOS));
 
     rclcpp::Duration update_period = curr_time - time_sensor_collected;
-    
+
     if (update_period > expected_update_period) {
-      RCLCPP_WARN_STREAM(this->get_logger(), sensor_name << " sensor not received for "
-                         << update_period.nanoseconds() / MILLIS_TO_NANOS << " ms. Expected at "
-                         << expected_update_period.nanoseconds() / MILLIS_TO_NANOS << " ms.");
+      RCLCPP_WARN_STREAM(this->get_logger(),
+                         sensor_name
+                           << " sensor not received for "
+                           << update_period.nanoseconds() / MILLIS_TO_NANOS << " ms. Expected at "
+                           << expected_update_period.nanoseconds() / MILLIS_TO_NANOS << " ms.");
     }
   }
-  
 }
 
 } // namespace rosplane

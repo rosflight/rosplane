@@ -39,8 +39,9 @@
  * @author Ian Reid <ian.young.reid@gmail.com>
  */
 
-
 #include "controller/controller_successive_loop.hpp"
+
+#include <cmath>
 
 namespace rosplane
 {
@@ -186,7 +187,8 @@ void ControllerSucessiveLoop::take_off_longitudinal_control(const Input & input,
   double takeoff_airspeed = params_.get_double("takeoff_airspeed");
 
   // Set throttle to not overshoot altitude.
-  output.delta_t = sat(airspeed_with_throttle_hold(takeoff_airspeed, input.va), max_takeoff_throttle, 0);
+  output.delta_t =
+    sat(airspeed_with_throttle_hold(takeoff_airspeed, input.va), max_takeoff_throttle, 0);
 
   // Command a shallow pitch angle to gain altitude.
   output.theta_c = cmd_takeoff_pitch * M_PI / 180.0;
@@ -290,18 +292,18 @@ float ControllerSucessiveLoop::roll_hold(float phi_c, float phi, float p)
   float up = r_kp * error;
   float ui = r_ki * r_integrator;
   float ud = r_kd * p;
-  
+
   if (std::isnan(up)) {
     up = 0.0;
     RCLCPP_WARN(this->get_logger(), "Proportional control on the roll loop is NAN");
   }
-  
+
   if (std::isnan(ui)) {
     r_integrator = 0.0;
     ui = 0.0;
     RCLCPP_WARN(this->get_logger(), "Integral control on the roll loop is NAN");
   }
-  
+
   if (std::isnan(ud)) {
     ud = 0.0;
     RCLCPP_WARN(this->get_logger(), "Derivative control on the roll loop is NAN");
@@ -340,7 +342,7 @@ float ControllerSucessiveLoop::pitch_hold(float theta_c, float theta, float q)
   float up = p_kp * error;
   float ui = p_ki * p_integrator_;
   float ud = p_kd * q;
-  
+
   if (std::isnan(up)) {
     up = 0.0;
     RCLCPP_WARN(this->get_logger(), "Proportional control on the roll loop is NAN");
@@ -351,7 +353,7 @@ float ControllerSucessiveLoop::pitch_hold(float theta_c, float theta, float q)
     ui = 0.0;
     RCLCPP_WARN(this->get_logger(), "Integral control on the roll loop is NAN");
   }
-  
+
   if (std::isnan(ud)) {
     ud = 0.0;
     RCLCPP_WARN(this->get_logger(), "Derivative control on the roll loop is NAN");

@@ -43,14 +43,11 @@
 #ifndef PATH_MANAGER_DUBINS_H
 #define PATH_MANAGER_DUBINS_H
 
-#include <Eigen/Eigen>
 #include <chrono>
-#include <cmath>
+
+#include <Eigen/Eigen>
 
 #include "path_manager_ros.hpp"
-
-#define M_PI_F 3.14159265358979323846f
-#define M_PI_2_F 1.57079632679489661923f
 
 namespace rosplane
 {
@@ -60,9 +57,9 @@ namespace rosplane
  */
 enum class FilletState
 {
-  STRAIGHT, /**< On the straight portion.*/
+  STRAIGHT,   /**< On the straight portion.*/
   TRANSITION, /**< Transitioning from orbit to straight or vice versa*/
-  ORBIT /**< On the orbit portion.*/
+  ORBIT       /**< On the orbit portion.*/
 };
 
 /**
@@ -90,7 +87,6 @@ public:
   PathManagerDubinsFillets();
 
 private:
-
   /**
    * @brief The start time of the node.
    */
@@ -163,7 +159,7 @@ private:
    * @brief The current state of the Dubins path.
    */
   DubinState dub_state_;
-  
+
   /**
    * Describes all of the releveant parameters for a Dubins path.
    */

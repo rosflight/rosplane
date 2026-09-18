@@ -1,55 +1,54 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.20...3.28)
 project(rosplane_sim)
-
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
-# Default to C++17
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
-endif()
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
-endif(NOT CMAKE_BUILD_TYPE)
-
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(rclpy REQUIRED)
-find_package(geometry_msgs REQUIRED)
+find_package(rosflight_compat REQUIRED) # FIXME: remove when Humble is dropped
 find_package(rosflight_msgs REQUIRED)
 find_package(rosplane_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-ament_export_dependencies(
-  rclcpp
-  geometry_msgs
-  Eigen3
+###################
+### Executables ###
+###################
+
+add_executable(sim_state_transcriber src/sim_state_transcription.cpp)
+target_compile_features(sim_state_transcriber PRIVATE cxx_std_17)
+target_compile_options(sim_state_transcriber PRIVATE -Wall -Wextra -Wpedantic)
+target_link_libraries(sim_state_transcriber PRIVATE
+  rclcpp::rclcpp
+  rosflight_compat::compat_headers # FIXME: remove when Humble is dropped
+  rosflight_msgs::rosflight_msgs
+  rosplane_msgs::rosplane_msgs
+  Eigen3::Eigen
 )
-ament_export_include_directories(include)
 
-include_directories(  #use this if you need .h files for include statements.  The include will need to have the directories where each .h is respectively.
-        include
-        ${EIGEN3_INCLUDE_DIRS}
-        )
+###############
+### Install ###
+###############
 
+# C++ nodes/executables
+install(
+  TARGETS
+    sim_state_transcriber
+  DESTINATION lib/${PROJECT_NAME}
+)
 
-install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
+# Resources
+install(
+  DIRECTORY
+    launch
+  DESTINATION share/${PROJECT_NAME}
+)
 
-
-add_executable(sim_state_transcriber
-        src/sim_state_transcription.cpp)
-ament_target_dependencies(sim_state_transcriber rosplane_msgs rosflight_msgs rclcpp rclpy)
-install(TARGETS
-        sim_state_transcriber
-        DESTINATION lib/${PROJECT_NAME})
-
+########################
+### ROS Finalization ###
+########################
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

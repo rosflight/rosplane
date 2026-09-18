@@ -10,10 +10,9 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
-  <depend>rclpy</depend>
-  <depend>std_msgs</depend>
   <depend>rosplane_msgs</depend>
   <depend>rosflight_msgs</depend>
+  <depend>rosflight_compat</depend> <!-- FIXME: remove when Humble is dropped -->
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

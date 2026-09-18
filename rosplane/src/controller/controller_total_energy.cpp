@@ -136,10 +136,11 @@ float ControllerTotalEnergy::total_energy_throttle(float va_c, float va, float h
   double frequency = params_.get_double("controller_output_frequency");
   double e_kp = params_.get_double("e_kp");
   double e_ki = params_.get_double("e_ki");
-  double e_kd = params_.get_double("e_kd");
+  [[maybe_unused]] double e_kd = params_.get_double("e_kd");
   double max_t = params_.get_double("max_t");   // Declared in controller_successive_loop
   double trim_t = params_.get_double("trim_t"); // Declared in controller_successive_loop
-  double minimum_alt = params_.get_double("minimum_alt_for_integration"); // Declared in controller_successive_loop
+  double minimum_alt =
+    params_.get_double("minimum_alt_for_integration"); // Declared in controller_successive_loop
 
   // Update energies based off of most recent data.
   update_energies(va_c, va, h_c, h);
@@ -168,7 +169,7 @@ float ControllerTotalEnergy::total_energy_pitch(float va_c, float va, float h_c,
   double frequency = params_.get_double("controller_output_frequency");
   double l_kp = params_.get_double("l_kp");
   double l_ki = params_.get_double("l_ki");
-  double l_kd = params_.get_double("l_kd");
+  [[maybe_unused]] double l_kd = params_.get_double("l_kd");
   double max_roll = params_.get_double("max_roll"); // Declared in controller_successive_loop
 
   // Update energies based off of most recent data.

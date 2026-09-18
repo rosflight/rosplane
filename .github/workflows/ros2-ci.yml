@@ -26,6 +26,9 @@ jobs:
           - ros_distro: 'jazzy'
             os: ubuntu-latest
             container: osrf/ros:jazzy-desktop
+          - ros_distro: 'lyrical'
+            os: ubuntu-26.04
+            container: osrf/ros:lyrical-desktop
     defaults:
       run:
         shell: bash
@@ -43,6 +46,7 @@ jobs:
           path: 'ros2_ws/src/rosflight'
           sparse-checkout: |
             rosflight_msgs
+            rosflight_compat
           sparse-checkout-cone-mode: false
 
       - name: Update system

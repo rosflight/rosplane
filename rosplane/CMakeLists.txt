@@ -1,134 +1,182 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.20...3.28)
 project(rosplane)
-
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
-# Default to C++17
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
-endif()
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
-endif(NOT CMAKE_BUILD_TYPE)
-
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
+find_package(ament_index_cpp REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(rclpy REQUIRED)
-find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(nav_msgs REQUIRED)
-find_package(geometry_msgs REQUIRED)
 find_package(rosplane_msgs REQUIRED)
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(rosflight_msgs REQUIRED)
-pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
+find_package(rosflight_compat REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
-include_directories(
-  include
-  include/param_manager
-  ${EIGEN3_INCLUDE_DIRS}
-  ${GAZEBO_INCLUDE_DIRS}
-  ${YAML_CPP_INCLUDEDIR}
+# FIXME: Legacy yaml-cpp support for Ubuntu 22.04
+if(NOT TARGET yaml-cpp::yaml-cpp)
+  add_library(yaml-cpp::yaml-cpp INTERFACE IMPORTED)
+  set_target_properties(yaml-cpp::yaml-cpp PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${YAML_CPP_INCLUDE_DIR}"
+    INTERFACE_LINK_LIBRARIES "${YAML_CPP_LIBRARIES}"
+  )
+endif()
+
+#################
+### Libraries ###
+#################
+
+# Param Manager (exported)
+add_library(rosplane_param_manager src/param_manager/param_manager.cpp)
+add_library(rosplane::param_manager ALIAS rosplane_param_manager)
+set_target_properties(rosplane_param_manager PROPERTIES
+  EXPORT_NAME param_manager
 )
-
-### EXTRA FILES TO INSTALL ###
-
-install(DIRECTORY launch params DESTINATION share/${PROJECT_NAME}/)
-
-### LIBRARIES ###
-
-# Param Manager
-add_library(param_manager
-  include/param_manager/param_manager.hpp
-  src/param_manager/param_manager.cpp
+target_compile_features(rosplane_param_manager PUBLIC cxx_std_17)
+target_compile_options(rosplane_param_manager PRIVATE -Wall -Wextra -Wpedantic)
+target_include_directories(rosplane_param_manager PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
 )
-ament_target_dependencies(param_manager rclcpp)
-ament_export_targets(param_manager HAS_LIBRARY_TARGET)
-install(DIRECTORY include/param_manager DESTINATION include)
-install(TARGETS param_manager
-  EXPORT param_manager
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-  INCLUDES DESTINATION include
-)
+target_link_libraries(rosplane_param_manager PRIVATE rclcpp::rclcpp)
 
-### START OF EXECUTABLES ###
+###################
+### Executables ###
+###################
 
 # Controller
 add_executable(controller
   src/controller/controller_ros.cpp
   src/controller/controller_state_machine.cpp
   src/controller/controller_successive_loop.cpp
-  src/controller/controller_total_energy.cpp)
-ament_target_dependencies(controller rosplane_msgs rosflight_msgs rclcpp rclpy Eigen3)
-target_link_libraries(controller param_manager)
-install(TARGETS
-  controller
-  DESTINATION lib/${PROJECT_NAME})
+  src/controller/controller_total_energy.cpp
+)
+target_compile_features(controller PRIVATE cxx_std_17)
+target_compile_options(controller PRIVATE -Wall -Wextra -Wpedantic)
+target_include_directories(controller PRIVATE include)
+target_link_libraries(controller PRIVATE
+  rosplane::param_manager
+  rclcpp::rclcpp
+  rosplane_msgs::rosplane_msgs
+  rosflight_msgs::rosflight_msgs
+  Eigen3::Eigen
+)
 
-# Follower
+# Path Follower
 add_executable(path_follower
   src/path_follower/path_follower_lines_orbits.cpp
-  src/path_follower/path_follower_ros.cpp)
-ament_target_dependencies(path_follower rosplane_msgs rclcpp rclpy Eigen3)
-target_link_libraries(path_follower param_manager)
-install(TARGETS
-  path_follower
-  DESTINATION lib/${PROJECT_NAME})
+  src/path_follower/path_follower_ros.cpp
+)
+target_compile_features(path_follower PRIVATE cxx_std_17)
+target_compile_options(path_follower PRIVATE -Wall -Wextra -Wpedantic)
+target_include_directories(path_follower PRIVATE include)
+target_link_libraries(path_follower PRIVATE
+  rosplane::param_manager
+  rclcpp::rclcpp
+  rosplane_msgs::rosplane_msgs
+  Eigen3::Eigen
+)
 
-# Manager
+# Path Manager
 add_executable(path_manager
   src/path_manager/path_manager_ros.cpp
-  src/path_manager/path_manager_dubins_fillets.cpp)
-ament_target_dependencies(path_manager rosplane_msgs rclcpp rclpy Eigen3)
-target_link_libraries(path_manager param_manager)
-install(TARGETS
-  path_manager
-  DESTINATION lib/${PROJECT_NAME})
-
-# Planner
-add_executable(path_planner
-  src/path_planner/path_planner_waypoints.cpp)
-target_link_libraries(path_planner
-  param_manager
-  ${YAML_CPP_LIBRARIES}
+  src/path_manager/path_manager_dubins_fillets.cpp
 )
-ament_target_dependencies(path_planner rosplane_msgs rosflight_msgs std_srvs rclcpp rclpy Eigen3)
-install(TARGETS
-  path_planner
-  DESTINATION lib/${PROJECT_NAME})
+target_compile_features(path_manager PRIVATE cxx_std_17)
+target_compile_options(path_manager PRIVATE -Wall -Wextra -Wpedantic)
+target_include_directories(path_manager PRIVATE include)
+target_link_libraries(path_manager PRIVATE
+  rosplane::param_manager
+  rclcpp::rclcpp
+  rosplane_msgs::rosplane_msgs
+  Eigen3::Eigen
+)
+
+# Path Planner
+add_executable(path_planner src/path_planner/path_planner_waypoints.cpp)
+target_compile_features(path_planner PRIVATE cxx_std_17)
+target_compile_options(path_planner PRIVATE -Wall -Wextra -Wpedantic)
+target_include_directories(path_planner PRIVATE include)
+target_link_libraries(path_planner PRIVATE
+  rosplane::param_manager
+  rclcpp::rclcpp
+  std_srvs::std_srvs
+  rosflight_msgs::rosflight_msgs
+  rosplane_msgs::rosplane_msgs
+  Eigen3::Eigen
+  yaml-cpp::yaml-cpp
+)
 
 # Estimator
 set_source_files_properties(geomag.c PROPERTIES LANGUAGE C)
 add_executable(estimator
-              src/ekf/estimator_node.cpp
-              src/ekf/estimator_ros.cpp
-              src/ekf/estimator_ekf.cpp
-              src/ekf/estimator_continuous_discrete.cpp
-              src/utils/geomag.c)
-target_link_libraries(estimator
-  ${YAML_CPP_LIBRARIES}
+  src/ekf/estimator_node.cpp
+  src/ekf/estimator_ros.cpp
+  src/ekf/estimator_ekf.cpp
+  src/ekf/estimator_continuous_discrete.cpp
+  src/utils/geomag.c
 )
-ament_target_dependencies(estimator rosplane_msgs rosflight_msgs sensor_msgs rclcpp Eigen3 ament_index_cpp)
-target_link_libraries(estimator param_manager)
-target_include_directories(estimator PUBLIC include)
-install(TARGETS
-  estimator
-  DESTINATION lib/${PROJECT_NAME})
+target_compile_features(estimator PRIVATE cxx_std_17)
+target_compile_options(estimator PRIVATE -Wall -Wextra -Wpedantic)
+target_include_directories(estimator PRIVATE include)
+target_link_libraries(estimator PRIVATE
+  rosplane::param_manager
+  rclcpp::rclcpp
+  ament_index_cpp::ament_index_cpp
+  rosflight_compat::compat_headers # FIXME: remove when Humble is dropped
+  sensor_msgs::sensor_msgs
+  rosflight_msgs::rosflight_msgs
+  rosplane_msgs::rosplane_msgs
+  Eigen3::Eigen
+)
 
-#### END OF EXECUTABLES ###
+###############
+### Install ###
+###############
 
+# Headers for exported/public libraries
+install(
+  DIRECTORY
+    include/param_manager
+  DESTINATION include/${PROJECT_NAME}
+)
+
+# Exported/public libraries
+install(
+  TARGETS
+    rosplane_param_manager
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+# C++ nodes/executables
+install(
+  TARGETS
+    controller
+    path_follower
+    path_manager
+    path_planner
+    estimator
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+# Resources
+install(
+  DIRECTORY
+    launch
+    params
+  DESTINATION share/${PROJECT_NAME}
+)
+
+########################
+### ROS Finalization ###
+########################
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -141,5 +189,13 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+# Export custom libraries
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+
+# Export public CMake package dependencies (not targets)
+ament_export_dependencies(
+  rclcpp
+)
 
 ament_package()
