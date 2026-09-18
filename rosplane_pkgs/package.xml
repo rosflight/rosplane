@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>rosplane_pkgs</name>
+  <version>0.1.3</version>
+  <description>A fully-featured fixedwing autopilot for ROS.</description>
+  <maintainer email="ian.young.reid@gmail.com">controls</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>rosplane</exec_depend>
+  <exec_depend>rosplane_extra</exec_depend>
+  <exec_depend>rosplane_gcs</exec_depend>
+  <exec_depend>rosplane_msgs</exec_depend>
+  <exec_depend>rosplane_sim</exec_depend>
+  <exec_depend>rosplane_tuning</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
