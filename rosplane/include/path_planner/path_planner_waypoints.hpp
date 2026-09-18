@@ -63,7 +63,7 @@ public:
    * The constructor of the waypoint path planner.
    */
   PathPlannerWaypoints();
-  
+
   /**
    * The destructor of the waypoint path planner.
    */
@@ -209,7 +209,6 @@ private:
    */
   void declare_parameters();
 
-
   /**
    * @brief Handle for parameter callback.
    */
@@ -227,12 +226,12 @@ private:
    * @brief The number of waypoints that have been published.
    */
   int num_waypoints_published_;
-  
+
   /**
    * @brief The initial lat of the aircraft so that GPS waypoints can be sent appropiately.
    */
   double initial_lat_;
-  
+
   /**
    * @brief The initial lon of the aircraft so that GPS waypoints can be sent appropiately.
    */

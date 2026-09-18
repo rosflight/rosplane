@@ -81,19 +81,20 @@ protected:
    */
   struct Input
   {
-    PathType p_type;  /**< Type of path (indicates if orbit or straight line related values are valid). */
+    PathType
+      p_type;   /**< Type of path (indicates if orbit or straight line related values are valid). */
     float va_d; /**< Desired airspeed along this section of path. */
-    float r_path[3]; /**< The position of the tail of q (where the straight path starts). */
-    float q_path[3]; /**< Unit vector direction of the straight path. */
+    float r_path[3];  /**< The position of the tail of q (where the straight path starts). */
+    float q_path[3];  /**< Unit vector direction of the straight path. */
     float c_orbit[3]; /**< Center of the orbit in NED. */
-    float rho_orbit; /**< Radius of the orbit. */
-    int lam_orbit; /**< The direction the orbit will go CW (1) or CCW (-1). */
-    float pn;  /**< Position north  of the aircraft*/
-    float pe;  /**< Position east  of the aircraft*/
-    float h;   /**< Altitude  of the aircraft*/
-    float va;  /**< Airspeed of the aircraft*/
-    float chi; /**< Course angle of the aircraft (rad)*/
-    float psi; /**< Heading angle of the aircraft (rad)*/
+    float rho_orbit;  /**< Radius of the orbit. */
+    int lam_orbit;    /**< The direction the orbit will go CW (1) or CCW (-1). */
+    float pn;         /**< Position north  of the aircraft*/
+    float pe;         /**< Position east  of the aircraft*/
+    float h;          /**< Altitude  of the aircraft*/
+    float va;         /**< Airspeed of the aircraft*/
+    float chi;        /**< Course angle of the aircraft (rad)*/
+    float psi;        /**< Heading angle of the aircraft (rad)*/
   };
 
   /**
@@ -137,7 +138,7 @@ private:
    * The period of the timer in microseconds.
    */
   std::chrono::microseconds timer_period_;
-  
+
   /**
    * The timer that indicates how often the commands should be updated.
    */
@@ -152,7 +153,7 @@ private:
    * Indicates if the state has been initialized.
    */
   bool state_init_;
-  
+
   /**
    * Indicates if the current path has been initialized.
    */
@@ -163,12 +164,12 @@ private:
    * member variables and functions.
    */
   OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
-  
+
   /**
    * The controller commands that will be sent to the controller.
    */
   rosplane_msgs::msg::ControllerCommands controller_commands_;
-  
+
   /**
    * Current input to the follower.
    */

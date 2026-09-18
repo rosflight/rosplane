@@ -75,12 +75,13 @@ void PathManagerDubinsFillets::manage(const Input & input, Output & output)
     if (float(std::chrono::system_clock::to_time_t(now)
               - std::chrono::system_clock::to_time_t(start_time_))
         >= 10.0) {
-      
+
       if (!warned_no_waypoints_) {
         RCLCPP_WARN_STREAM(this->get_logger(),
-                            "No waypoints received, orbiting origin at " << default_altitude
-                                                                         << " meters.");
-        warned_no_waypoints_ = true; // Indicate that the 'no waypoints' warning has already been displayed.
+                           "No waypoints received, orbiting origin at " << default_altitude
+                                                                        << " meters.");
+        warned_no_waypoints_ =
+          true; // Indicate that the 'no waypoints' warning has already been displayed.
       }
       output.flag = false;            // Indicate that the path is an orbit.
       output.va_d = default_airspeed; // Set to the default_airspeed.
@@ -317,10 +318,9 @@ void PathManagerDubinsFillets::manage_fillet(const Input & input, Output & outpu
       output.c[1] = c(1);
       output.c[2] = c(2);
       output.rho = R_min; // Command the orbit radius to be the minimum acheivable.
-      output.lamda =
-        ((q_im1(0) * q_i(1) - q_im1(1) * q_i(0)) > 0
-           ? 1
-           : -1); // Find the direction to orbit the point.
+      output.lamda = ((q_im1(0) * q_i(1) - q_im1(1) * q_i(0)) > 0
+                        ? 1
+                        : -1); // Find the direction to orbit the point.
       z = w_i
         + q_i
           * (R_min
@@ -499,7 +499,7 @@ float PathManagerDubinsFillets::mo(float in)
 }
 
 void PathManagerDubinsFillets::dubins_parameters(const Waypoint start_node, const Waypoint end_node,
-                                           float R)
+                                                 float R)
 {
   float ell = sqrtf((start_node.w[0] - end_node.w[0]) * (start_node.w[0] - end_node.w[0])
                     + (start_node.w[1] - end_node.w[1]) * (start_node.w[1] - end_node.w[1]));
@@ -676,7 +676,7 @@ int PathManagerDubinsFillets::orbit_direction(float pn, float pe, float chi, flo
 }
 
 void PathManagerDubinsFillets::increment_indices(int & idx_a, int & idx_b, int & idx_c,
-                                           const Input & input, Output & output)
+                                                 const Input & input, Output & output)
 {
 
   bool orbit_last = params_.get_bool("orbit_last");

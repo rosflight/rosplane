@@ -86,8 +86,8 @@ void PathFollowerROS::set_timer()
   double frequency = params_.get_double("controller_commands_pub_frequency");
   timer_period_ = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1e6));
 
-  update_timer_ =
-    rclcpp::create_timer(this, this->get_clock(), timer_period_, std::bind(&PathFollowerROS::update, this));
+  update_timer_ = rclcpp::create_timer(this, this->get_clock(), timer_period_,
+                                       std::bind(&PathFollowerROS::update, this));
 }
 
 void PathFollowerROS::update()

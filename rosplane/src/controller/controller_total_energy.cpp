@@ -139,7 +139,8 @@ float ControllerTotalEnergy::total_energy_throttle(float va_c, float va, float h
   [[maybe_unused]] double e_kd = params_.get_double("e_kd");
   double max_t = params_.get_double("max_t");   // Declared in controller_successive_loop
   double trim_t = params_.get_double("trim_t"); // Declared in controller_successive_loop
-  double minimum_alt = params_.get_double("minimum_alt_for_integration"); // Declared in controller_successive_loop
+  double minimum_alt =
+    params_.get_double("minimum_alt_for_integration"); // Declared in controller_successive_loop
 
   // Update energies based off of most recent data.
   update_energies(va_c, va, h_c, h);

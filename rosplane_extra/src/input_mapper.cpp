@@ -30,10 +30,10 @@ InputMapper::InputMapper()
   state_sub_ = this->create_subscription<rosplane_msgs::msg::State>(
     "estimated_state", 10, std::bind(&InputMapper::state_callback, this, _1));
 
-  set_param_client_ = this->create_client<rcl_interfaces::srv::SetParameters>(
-    "/autopilot/set_parameters");
-  set_param_timer_ = rclcpp::create_timer(this, this->get_clock(),
-    std::chrono::milliseconds(100), std::bind(&InputMapper::set_param_timer_callback, this));
+  set_param_client_ =
+    this->create_client<rcl_interfaces::srv::SetParameters>("/autopilot/set_parameters");
+  set_param_timer_ = rclcpp::create_timer(this, this->get_clock(), std::chrono::milliseconds(100),
+                                          std::bind(&InputMapper::set_param_timer_callback, this));
   set_param_timer_->cancel();
 
   path_follower_mode_service_ = this->create_service<std_srvs::srv::Trigger>(

@@ -120,7 +120,7 @@ void PathPlannerWaypoints::publish_initial_waypoints()
 void PathPlannerWaypoints::state_callback(const rosplane_msgs::msg::State & msg)
 {
   // Make sure initial LLA is not zero before updating to avoid initialization errors
-  
+
   if (fabs(msg.initial_lat) > 0.0 || fabs(msg.initial_lon) > 0.0 || fabs(msg.initial_alt) > 0.0) {
     initial_lat_ = msg.initial_lat;
     initial_lon_ = msg.initial_lon;
@@ -159,8 +159,9 @@ void PathPlannerWaypoints::waypoint_publish()
   num_waypoints_published_++;
 }
 
-bool PathPlannerWaypoints::update_path(const rosplane_msgs::srv::AddWaypoint::Request::SharedPtr & req,
-                              const rosplane_msgs::srv::AddWaypoint::Response::SharedPtr & res)
+bool PathPlannerWaypoints::update_path(
+  const rosplane_msgs::srv::AddWaypoint::Request::SharedPtr & req,
+  const rosplane_msgs::srv::AddWaypoint::Response::SharedPtr & res)
 {
 
   rosplane_msgs::msg::Waypoint new_waypoint;
@@ -261,8 +262,9 @@ bool PathPlannerWaypoints::print_path(
   return true;
 }
 
-bool PathPlannerWaypoints::load_mission(const rosflight_msgs::srv::ParamFile::Request::SharedPtr & req,
-                               const rosflight_msgs::srv::ParamFile::Response::SharedPtr & res)
+bool PathPlannerWaypoints::load_mission(
+  const rosflight_msgs::srv::ParamFile::Request::SharedPtr & req,
+  const rosflight_msgs::srv::ParamFile::Response::SharedPtr & res)
 {
   clear_path();
   res->success = load_mission_from_file(req->filename);

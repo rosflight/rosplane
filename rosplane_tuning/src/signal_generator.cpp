@@ -75,9 +75,9 @@ TuningSignalGenerator::TuningSignalGenerator()
   command_publisher_ =
     this->create_publisher<rosplane_msgs::msg::ControllerCommands>("/controller_command", 1);
 
-  publish_timer_ =
-    rclcpp::create_timer(this, this->get_clock(), std::chrono::milliseconds(static_cast<long>(1000 / publish_rate_hz_)),
-                            std::bind(&TuningSignalGenerator::publish_timer_callback, this));
+  publish_timer_ = rclcpp::create_timer(
+    this, this->get_clock(), std::chrono::milliseconds(static_cast<long>(1000 / publish_rate_hz_)),
+    std::bind(&TuningSignalGenerator::publish_timer_callback, this));
 
   param_callback_handle_ = this->add_on_set_parameters_callback(
     std::bind(&TuningSignalGenerator::param_callback, this, std::placeholders::_1));
@@ -372,9 +372,10 @@ void TuningSignalGenerator::update_params()
     // Parameter has changed, create new timer with updated value
     if (publish_rate_hz_ != publish_rate_hz_value) {
       publish_rate_hz_ = publish_rate_hz_value;
-      publish_timer_ = rclcpp::create_timer(this, this->get_clock(),
-        std::chrono::milliseconds(static_cast<long>(1000 / publish_rate_hz_)),
-        std::bind(&TuningSignalGenerator::publish_timer_callback, this));
+      publish_timer_ =
+        rclcpp::create_timer(this, this->get_clock(),
+                             std::chrono::milliseconds(static_cast<long>(1000 / publish_rate_hz_)),
+                             std::bind(&TuningSignalGenerator::publish_timer_callback, this));
     }
   }
 

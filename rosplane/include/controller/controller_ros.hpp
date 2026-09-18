@@ -74,7 +74,6 @@ enum class AltZones
 class ControllerROS : public rclcpp::Node
 {
 public:
-
   /**
    * Constructor for ROS2 setup and parameter initialization.
    */
@@ -97,7 +96,6 @@ public:
   float get_theta_c() { return controller_commands_.theta_c; };
 
 protected:
-
   /**
    * This struct holds all of the inputs to the control algorithm.
    */
@@ -194,7 +192,7 @@ private:
    * Flag to indicate if the first command has been received.
    */
   bool command_recieved_;
-  
+
   /**
    * Flag to indicate if a state has been received since the last iteration.
    */

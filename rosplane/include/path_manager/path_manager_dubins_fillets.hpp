@@ -57,9 +57,9 @@ namespace rosplane
  */
 enum class FilletState
 {
-  STRAIGHT, /**< On the straight portion.*/
+  STRAIGHT,   /**< On the straight portion.*/
   TRANSITION, /**< Transitioning from orbit to straight or vice versa*/
-  ORBIT /**< On the orbit portion.*/
+  ORBIT       /**< On the orbit portion.*/
 };
 
 /**
@@ -87,7 +87,6 @@ public:
   PathManagerDubinsFillets();
 
 private:
-
   /**
    * @brief The start time of the node.
    */
@@ -160,7 +159,7 @@ private:
    * @brief The current state of the Dubins path.
    */
   DubinState dub_state_;
-  
+
   /**
    * Describes all of the releveant parameters for a Dubins path.
    */

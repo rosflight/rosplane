@@ -221,7 +221,7 @@ void ControllerROS::set_timer()
 
   // Set timer to trigger bound callback (actuator_controls_publish) at the given periodicity.
   timer_ = rclcpp::create_timer(this, this->get_clock(), timer_period_,
-                                   std::bind(&ControllerROS::actuator_controls_publish, this));
+                                std::bind(&ControllerROS::actuator_controls_publish, this));
 }
 
 void ControllerROS::convert_to_pwm(Output & output)
@@ -258,7 +258,8 @@ int main(int argc, char * argv[])
     }
   } else {
     auto node = std::make_shared<rosplane::ControllerSucessiveLoop>();
-    RCLCPP_INFO_STREAM(node->get_logger(), "Invalid control type or no type given, using default control.");
+    RCLCPP_INFO_STREAM(node->get_logger(),
+                       "Invalid control type or no type given, using default control.");
     rclcpp::spin(node);
   }
 

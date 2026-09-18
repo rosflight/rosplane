@@ -42,8 +42,8 @@
 #ifndef TUNING_SIGNAL_GENERATOR_HPP
 #define TUNING_SIGNAL_GENERATOR_HPP
 
-#include <rclcpp/rclcpp.hpp>
 #include <rcl_interfaces/msg/set_parameters_result.hpp>
+#include <rclcpp/rclcpp.hpp>
 #include <rosplane_msgs/msg/controller_commands.hpp>
 #include <std_srvs/srv/trigger.hpp>
 

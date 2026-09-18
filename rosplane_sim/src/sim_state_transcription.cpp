@@ -7,9 +7,9 @@
 #include <rosflight_compat/service_client.hpp>
 
 #include <geometry_msgs/msg/vector3_stamped.hpp>
-#include <rosplane_msgs/msg/state.hpp>
 #include <rosflight_msgs/msg/sim_state.hpp>
 #include <rosflight_msgs/srv/param_get.hpp>
+#include <rosplane_msgs/msg/state.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 
 using namespace std::chrono_literals;
@@ -31,9 +31,11 @@ public:
     wind_truth_subscription_ = this->create_subscription<geometry_msgs::msg::Vector3Stamped>(
       "sim/truth_wind", 10, std::bind(&SimStateTranscription::wind_callback, this, _1), options);
     gyro_bias_truth_subscription_ = this->create_subscription<sensor_msgs::msg::Imu>(
-      "sim/truth_imu_bias", 10, std::bind(&SimStateTranscription::bias_callback, this, _1), options);
+      "sim/truth_imu_bias", 10, std::bind(&SimStateTranscription::bias_callback, this, _1),
+      options);
 
-    rosplane_state_publisher_ = this->create_publisher<rosplane_msgs::msg::State>("sim/rosplane/state", 10);
+    rosplane_state_publisher_ =
+      this->create_publisher<rosplane_msgs::msg::State>("sim/rosplane/state", 10);
 
     // FIXME: revert back to this after Humble is no longer supported an compat isn't needed
     // firmware_param_get_client_ = this->create_client<rosflight_msgs::srv::ParamGet>(
@@ -58,15 +60,15 @@ private:
   double wn_ = 0.0;
   double we_ = 0.0;
   double wd_ = 0.0;
-  
+
   double bx_ = 0.0;
   double by_ = 0.0;
   double bz_ = 0.0;
-  
+
   double firmware_bias_x_ = 0.0;
   double firmware_bias_y_ = 0.0;
   double firmware_bias_z_ = 0.0;
-  
+
   double init_lat_ = 0.0;
   double init_lon_ = 0.0;
   double init_alt_ = 0.0;
@@ -74,22 +76,25 @@ private:
   bool firmware_biases_set_ = false;
   bool init_lat_lon_alt_set_ = false;
 
-  void wind_callback(const geometry_msgs::msg::Vector3Stamped & msg) {
+  void wind_callback(const geometry_msgs::msg::Vector3Stamped & msg)
+  {
     // Wind velocities in the inertial frame
     wn_ = msg.vector.x;
     we_ = msg.vector.y;
     wd_ = msg.vector.z;
   }
-  
-  void bias_callback(const sensor_msgs::msg::Imu & msg) {
+
+  void bias_callback(const sensor_msgs::msg::Imu & msg)
+  {
     if (!firmware_biases_set_) {
       firmware_param_get_client_->wait_for_service(std::chrono::milliseconds(1000));
       auto req = std::make_shared<rosflight_msgs::srv::ParamGet::Request>();
       std::string param_name = "GYRO_X_BIAS";
       req->name = param_name;
       auto gyro_x_bias_future = firmware_param_get_client_->async_send_request(req);
-      std::future_status status = gyro_x_bias_future.wait_for(std::chrono::milliseconds(1000)); // This times out!
-      
+      std::future_status status =
+        gyro_x_bias_future.wait_for(std::chrono::milliseconds(1000)); // This times out!
+
       if (status == std::future_status::timeout) {
         RCLCPP_WARN_STREAM(this->get_logger(), "Timed out.");
         return;
@@ -136,11 +141,12 @@ private:
 
     state.header.stamp = msg.header.stamp;
     state.header.frame_id = 1; // Denotes global frame.
-    
+
     if (!init_lat_lon_alt_set_) {
 
-      auto parameters_client = std::make_shared<rclcpp::AsyncParametersClient>(this, "/standalone_sensors");
-      
+      auto parameters_client =
+        std::make_shared<rclcpp::AsyncParametersClient>(this, "/standalone_sensors");
+
       while (!parameters_client->wait_for_service(std::chrono::milliseconds(1000))) {
         if (!rclcpp::ok()) {
           RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the service. Exiting.");
@@ -149,14 +155,16 @@ private:
         RCLCPP_INFO(this->get_logger(), "service not available, waiting again...");
       }
 
-      auto gnss_origin = parameters_client->get_parameters({"origin_altitude", "origin_latitude", "origin_longitude"}).get();
+      auto gnss_origin =
+        parameters_client
+          ->get_parameters({"origin_altitude", "origin_latitude", "origin_longitude"})
+          .get();
 
       init_alt_ = gnss_origin.at(0).as_double();
       init_lat_ = gnss_origin.at(1).as_double();
       init_lon_ = gnss_origin.at(2).as_double();
 
       init_lat_lon_alt_set_ = true;
-
     }
 
     state.initial_lat = init_lat_;
@@ -177,10 +185,10 @@ private:
 
     // Equation B.1 in Small Unmanned Aircraft
     state.phi = atan2(2.0 * (q.w() * q.x() + q.y() * q.z()),
-                     pow(q.w(), 2) + pow(q.z(), 2) - pow(q.x(), 2) - pow(q.y(), 2));
+                      pow(q.w(), 2) + pow(q.z(), 2) - pow(q.x(), 2) - pow(q.y(), 2));
     state.theta = asin(2.0 * (q.w() * q.y() - q.x() * q.z()));
     state.psi = atan2(2.0 * (q.w() * q.z() + q.x() * q.y()),
-                     pow(q.w(), 2) + pow(q.x(), 2) - pow(q.y(), 2) - pow(q.z(), 2));
+                      pow(q.w(), 2) + pow(q.x(), 2) - pow(q.y(), 2) - pow(q.z(), 2));
 
     // Inertial linear velocities in the body frame
     double v_x = msg.twist.linear.x;
@@ -195,7 +203,7 @@ private:
     state.p = msg.twist.angular.x;
     state.q = msg.twist.angular.y;
     state.r = msg.twist.angular.z;
-    
+
     // Gyro biases
     state.b_x = bx_;
     state.b_y = by_;
@@ -230,7 +238,7 @@ int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
   rclcpp::executors::MultiThreadedExecutor executor;
-  auto node =  std::make_shared<SimStateTranscription>();
+  auto node = std::make_shared<SimStateTranscription>();
   executor.add_node(node);
   executor.spin();
   rclcpp::shutdown();
