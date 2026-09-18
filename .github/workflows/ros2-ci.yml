@@ -46,6 +46,7 @@ jobs:
           path: 'ros2_ws/src/rosflight'
           sparse-checkout: |
             rosflight_msgs
+            rosflight_compat
           sparse-checkout-cone-mode: false
 
       - name: Update system
