@@ -68,8 +68,6 @@
 // elsewhere). Foreign copyrights may apply.
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <math.h>
 #include <time.h>
 #include "ekf/geomag.h"

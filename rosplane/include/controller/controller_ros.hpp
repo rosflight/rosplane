@@ -49,7 +49,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rosflight_msgs/msg/command.hpp>
 
-#include "param_manager.hpp"
+#include "param_manager/param_manager.hpp"
 #include "rosplane_msgs/msg/controller_commands.hpp"
 #include "rosplane_msgs/msg/controller_internals.hpp"
 #include "rosplane_msgs/msg/state.hpp"

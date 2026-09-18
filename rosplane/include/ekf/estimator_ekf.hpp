@@ -6,7 +6,6 @@
 #include <tuple>
 
 #include <Eigen/Geometry>
-#include <yaml-cpp/yaml.h>
 
 #include "estimator_ros.hpp"
 
