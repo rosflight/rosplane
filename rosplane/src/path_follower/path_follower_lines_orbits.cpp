@@ -41,6 +41,8 @@
 
 #include "path_follower/path_follower_lines_orbits.hpp"
 
+#include <cmath>
+
 namespace rosplane
 {
 

@@ -5,10 +5,13 @@ SCRIPT=$(readlink -f $0)
 SCRIPTPATH=`dirname $SCRIPT`
 cd $SCRIPTPATH
 
-# Find all files with ".hpp" or ".cpp" extensions in the current directory and subdirectories,
-# excluding certain paths (./.git)
-find . -iname "*.hpp" -o -iname "*.cpp" | \
-grep -Ev "^(./.git)" | \
+# format c/c++ code
+find . \( -path "./.git" \) -prune \
+  -o \( -iname "*.h" -o -iname "*.hpp" -o -iname "*.cpp" -o -iname "*.c" \) -print \
+  | xargs clang-format -i --verbose -style=file
 
-# Format the files according to the rules specified in .clang-format
-xargs clang-format -i
+# organize python imports
+ruff check . --select I --fix
+
+# format python code
+ruff format

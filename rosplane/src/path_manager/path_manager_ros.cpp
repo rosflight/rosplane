@@ -42,9 +42,14 @@
  * @author Ian Reid <ian.young.reid@gmail.com>
  */
 
+#include "path_manager/path_manager_ros.hpp"
+
+#include <functional>
+#include <limits>
+
 #include "path_manager/path_manager_dubins_fillets.hpp"
 
-#include "path_manager/path_manager_ros.hpp"
+using std::placeholders::_1;
 
 namespace rosplane
 {
@@ -61,8 +66,8 @@ PathManagerROS::PathManagerROS()
   current_path_pub_ = this->create_publisher<rosplane_msgs::msg::CurrentPath>("current_path", 10);
 
   // Set the parameter callback, for when parameters are changed.
-  parameter_callback_handle_ = this->add_on_set_parameters_callback(
-    std::bind(&PathManagerROS::parametersCallback, this, std::placeholders::_1));
+  parameter_callback_handle_ =
+    this->add_on_set_parameters_callback(std::bind(&PathManagerROS::parametersCallback, this, _1));
 
   // Declare parameters maintained by this node with ROS2. Required for all ROS2 parameters associated with this node
   declare_parameters();
@@ -92,8 +97,8 @@ void PathManagerROS::set_timer()
   double frequency = params_.get_double("current_path_pub_frequency");
   timer_period_ = std::chrono::microseconds(static_cast<long long>(1.0 / frequency * 1e6));
 
-  update_timer_ =
-    rclcpp::create_timer(this, this->get_clock(), timer_period_, std::bind(&PathManagerROS::current_path_publish, this));
+  update_timer_ = rclcpp::create_timer(this, this->get_clock(), timer_period_,
+                                       std::bind(&PathManagerROS::current_path_publish, this));
 }
 
 rcl_interfaces::msg::SetParametersResult

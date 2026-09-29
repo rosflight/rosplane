@@ -35,9 +35,17 @@
  * @file controller_ros.cpp
  * @author Ian Reid <ian.young.reid@gmail.com>
  */
+
+#include "controller/controller_ros.hpp"
+
+#include <functional>
+
 #include "controller/controller_successive_loop.hpp"
 #include "controller/controller_total_energy.hpp"
-#include "controller/controller_ros.hpp"
+#include "rosplane_msgs/msg/controller_commands.hpp"
+
+using std::placeholders::_1;
+using namespace std::chrono_literals;
 
 namespace rosplane
 {
@@ -213,7 +221,7 @@ void ControllerROS::set_timer()
 
   // Set timer to trigger bound callback (actuator_controls_publish) at the given periodicity.
   timer_ = rclcpp::create_timer(this, this->get_clock(), timer_period_,
-                                   std::bind(&ControllerROS::actuator_controls_publish, this));
+                                std::bind(&ControllerROS::actuator_controls_publish, this));
 }
 
 void ControllerROS::convert_to_pwm(Output & output)
@@ -250,7 +258,8 @@ int main(int argc, char * argv[])
     }
   } else {
     auto node = std::make_shared<rosplane::ControllerSucessiveLoop>();
-    RCLCPP_INFO_STREAM(node->get_logger(), "Invalid control type or no type given, using default control.");
+    RCLCPP_INFO_STREAM(node->get_logger(),
+                       "Invalid control type or no type given, using default control.");
     rclcpp::spin(node);
   }
 

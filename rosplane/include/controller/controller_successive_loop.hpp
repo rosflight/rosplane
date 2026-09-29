@@ -42,7 +42,7 @@
 #ifndef CONTROLLER_SUCCESSIVE_H
 #define CONTROLLER_SUCCESSIVE_H
 
-#include <cmath>
+#include "controller_ros.hpp"
 #include "controller_state_machine.hpp"
 
 namespace rosplane
@@ -245,13 +245,13 @@ protected:
    * The derivative of the error in altitude.
    */
   float a_differentiator_;
-  
+
   // These are not implemented here, though they are described in the UAV book.
-  //    float cooridinated_turn_hold(float v, const struct params_s &params, float Ts); 
+  //    float cooridinated_turn_hold(float v, const struct params_s &params, float Ts);
   //    float ct_error_;
   //    float ct_integrator_;
   //    float ct_differentiator_;
-  
+
   /**
    *
    * This damps the adverse yaw by only allowing low frequency yaw movements.
@@ -261,7 +261,7 @@ protected:
    * @return The commanded ruddeer command.
    */
   float yaw_damper(float r);
-  
+
   /**
    * The previous commanded rudder. This is used in the yaw damper.
    */
@@ -292,7 +292,6 @@ protected:
   float adjust_h_c(float h_c, float h, float max_diff);
 
 private:
-
   /**
    * Declares the parameters associated to this controller, controller_successive_loop, so that ROS2 can see them.
    * Also declares default values before they are set to the values set in the launch script.

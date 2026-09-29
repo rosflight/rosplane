@@ -44,18 +44,15 @@
 #define CONTROLLER_ROS_H
 
 #include <chrono>
-#include <functional>
+#include <vector>
 
 #include <rclcpp/rclcpp.hpp>
 #include <rosflight_msgs/msg/command.hpp>
+#include <rosplane_msgs/msg/controller_commands.hpp>
+#include <rosplane_msgs/msg/controller_internals.hpp>
+#include <rosplane_msgs/msg/state.hpp>
 
-#include "param_manager.hpp"
-#include "rosplane_msgs/msg/controller_commands.hpp"
-#include "rosplane_msgs/msg/controller_internals.hpp"
-#include "rosplane_msgs/msg/state.hpp"
-
-using std::placeholders::_1;
-using namespace std::chrono_literals;
+#include "param_manager/param_manager.hpp"
 
 namespace rosplane
 {
@@ -77,7 +74,6 @@ enum class AltZones
 class ControllerROS : public rclcpp::Node
 {
 public:
-
   /**
    * Constructor for ROS2 setup and parameter initialization.
    */
@@ -100,7 +96,6 @@ public:
   float get_theta_c() { return controller_commands_.theta_c; };
 
 protected:
-
   /**
    * This struct holds all of the inputs to the control algorithm.
    */
@@ -197,7 +192,7 @@ private:
    * Flag to indicate if the first command has been received.
    */
   bool command_recieved_;
-  
+
   /**
    * Flag to indicate if a state has been received since the last iteration.
    */

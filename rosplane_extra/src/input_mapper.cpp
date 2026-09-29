@@ -1,5 +1,8 @@
 #include "input_mapper.hpp"
 
+#include <chrono>
+#include <functional>
+
 using std::placeholders::_1;
 using std::placeholders::_2;
 
@@ -27,10 +30,10 @@ InputMapper::InputMapper()
   state_sub_ = this->create_subscription<rosplane_msgs::msg::State>(
     "estimated_state", 10, std::bind(&InputMapper::state_callback, this, _1));
 
-  set_param_client_ = this->create_client<rcl_interfaces::srv::SetParameters>(
-    "/autopilot/set_parameters", rmw_qos_profile_services_default);
-  set_param_timer_ = rclcpp::create_timer(this, this->get_clock(),
-    std::chrono::milliseconds(100), std::bind(&InputMapper::set_param_timer_callback, this));
+  set_param_client_ =
+    this->create_client<rcl_interfaces::srv::SetParameters>("/autopilot/set_parameters");
+  set_param_timer_ = rclcpp::create_timer(this, this->get_clock(), std::chrono::milliseconds(100),
+                                          std::bind(&InputMapper::set_param_timer_callback, this));
   set_param_timer_->cancel();
 
   path_follower_mode_service_ = this->create_service<std_srvs::srv::Trigger>(
@@ -275,7 +278,7 @@ void InputMapper::state_callback(const rosplane_msgs::msg::State::SharedPtr msg)
 }
 
 void InputMapper::path_follower_mode_callback(
-  const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
   std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
   params_.set_string("aileron_input", "path_follower");
@@ -286,7 +289,7 @@ void InputMapper::path_follower_mode_callback(
 }
 
 void InputMapper::altitude_course_airspeed_control_mode_callback(
-  const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
   std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
   params_.set_string("aileron_input", "rc_course");
@@ -297,7 +300,7 @@ void InputMapper::altitude_course_airspeed_control_mode_callback(
 }
 
 void InputMapper::angle_control_mode_callback(
-  const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
   std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
   params_.set_string("aileron_input", "rc_roll_angle");
@@ -308,7 +311,7 @@ void InputMapper::angle_control_mode_callback(
 }
 
 void InputMapper::rc_passthrough_mode_callback(
-  const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
   std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
   params_.set_string("aileron_input", "rc_aileron");

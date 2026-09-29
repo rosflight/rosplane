@@ -25,7 +25,8 @@ extern "C" {
 #define GEOMAG_H
 
 int load_magnetic_model();
-int geomag_calc(double alt, double lat, double lon, double decimal_year, double *dec, double *dip, double *ti, double *gv);
+int geomag_calc(double alt, double lat, double lon, double decimal_year, double * dec, double * dip,
+                double * ti, double * gv);
 
 #endif /* GEOMAG_H */
 

@@ -54,14 +54,12 @@ namespace rosplane
 class PathFollowerLinesOrbits : public PathFollowerROS
 {
 public:
-
   /**
    * The constructor for the path follower.
    */
   PathFollowerLinesOrbits();
 
 private:
-
   /**
   * This implements the following of the path described in the input. The output
   * is the controller commands needed to follow the given path.

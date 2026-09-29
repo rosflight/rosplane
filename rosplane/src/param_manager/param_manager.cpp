@@ -39,7 +39,7 @@
  * @author Jacob Moore <jacobmoor2@gmail.com>
 */
 
-#include "param_manager.hpp"
+#include "param_manager/param_manager.hpp"
 
 namespace rosplane
 {

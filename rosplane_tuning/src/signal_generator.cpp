@@ -37,11 +37,12 @@
  * @author Brandon Sutherland <brandonsutherland2@gmail.com>
  */
 
+#include "signal_generator.hpp"
+
 #include <chrono>
 #include <cmath>
+#include <functional>
 #include <string>
-
-#include "signal_generator.hpp"
 
 namespace rosplane
 {
@@ -74,9 +75,9 @@ TuningSignalGenerator::TuningSignalGenerator()
   command_publisher_ =
     this->create_publisher<rosplane_msgs::msg::ControllerCommands>("/controller_command", 1);
 
-  publish_timer_ =
-    rclcpp::create_timer(this, this->get_clock(), std::chrono::milliseconds(static_cast<long>(1000 / publish_rate_hz_)),
-                            std::bind(&TuningSignalGenerator::publish_timer_callback, this));
+  publish_timer_ = rclcpp::create_timer(
+    this, this->get_clock(), std::chrono::milliseconds(static_cast<long>(1000 / publish_rate_hz_)),
+    std::bind(&TuningSignalGenerator::publish_timer_callback, this));
 
   param_callback_handle_ = this->add_on_set_parameters_callback(
     std::bind(&TuningSignalGenerator::param_callback, this, std::placeholders::_1));
@@ -211,7 +212,7 @@ TuningSignalGenerator::param_callback(const std::vector<rclcpp::Parameter> & par
 }
 
 bool TuningSignalGenerator::step_toggle_service_callback(
-  const std_srvs::srv::Trigger::Request::SharedPtr & req,
+  [[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr & req,
   const std_srvs::srv::Trigger::Response::SharedPtr & res)
 {
   if (signal_type_ != SignalType::STEP) {
@@ -231,7 +232,7 @@ bool TuningSignalGenerator::step_toggle_service_callback(
 }
 
 bool TuningSignalGenerator::reset_service_callback(
-  const std_srvs::srv::Trigger::Request::SharedPtr & req,
+  [[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr & req,
   const std_srvs::srv::Trigger::Response::SharedPtr & res)
 {
   reset();
@@ -240,7 +241,7 @@ bool TuningSignalGenerator::reset_service_callback(
 }
 
 bool TuningSignalGenerator::pause_service_callback(
-  const std_srvs::srv::Trigger::Request::SharedPtr & req,
+  [[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr & req,
   const std_srvs::srv::Trigger::Response::SharedPtr & res)
 {
   if (signal_type_ == SignalType::STEP) {
@@ -257,7 +258,7 @@ bool TuningSignalGenerator::pause_service_callback(
 }
 
 bool TuningSignalGenerator::start_continuous_service_callback(
-  const std_srvs::srv::Trigger::Request::SharedPtr & req,
+  [[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr & req,
   const std_srvs::srv::Trigger::Response::SharedPtr & res)
 {
   if (signal_type_ == SignalType::STEP) {
@@ -274,7 +275,7 @@ bool TuningSignalGenerator::start_continuous_service_callback(
 }
 
 bool TuningSignalGenerator::start_single_service_callback(
-  const std_srvs::srv::Trigger::Request::SharedPtr & req,
+  [[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr & req,
   const std_srvs::srv::Trigger::Response::SharedPtr & res)
 {
   if (signal_type_ == SignalType::STEP) {
@@ -371,9 +372,10 @@ void TuningSignalGenerator::update_params()
     // Parameter has changed, create new timer with updated value
     if (publish_rate_hz_ != publish_rate_hz_value) {
       publish_rate_hz_ = publish_rate_hz_value;
-      publish_timer_ = rclcpp::create_timer(this, this->get_clock(),
-        std::chrono::milliseconds(static_cast<long>(1000 / publish_rate_hz_)),
-        std::bind(&TuningSignalGenerator::publish_timer_callback, this));
+      publish_timer_ =
+        rclcpp::create_timer(this, this->get_clock(),
+                             std::chrono::milliseconds(static_cast<long>(1000 / publish_rate_hz_)),
+                             std::bind(&TuningSignalGenerator::publish_timer_callback, this));
     }
   }
 
