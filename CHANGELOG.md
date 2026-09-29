@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.1.0](https://github.com/rosflight/rosplane/compare/v2.0.0...v2.1.0) (2026-09-29)
+
+
+### Features
+
+* add rosplane_pkgs as easy way to build all rosplane pkgs ([dc8cc74](https://github.com/rosflight/rosplane/commit/dc8cc74217a7e4076ff74882bd137264fe61b41c))
+* update format script to also format Python code with ruff ([84503db](https://github.com/rosflight/rosplane/commit/84503dbb64b740fca9f6a91f2b8651447ad19a7b))
+
+
+### Bug Fixes
+
+* add rosflight_compat as build dep to workflow ([6742eed](https://github.com/rosflight/rosplane/commit/6742eedf2d9092df1b02dbc0b99dc5d31293ba0f))
+* compute quartile indices dynamically instead of hardcoding 25/75 ([c792da8](https://github.com/rosflight/rosplane/commit/c792da865053dab0637f12e8b604219cdb93a9ea))
+* compute quartile indices dynamically instead of hardcoding 25/75 ([67938a7](https://github.com/rosflight/rosplane/commit/67938a73f0ed3868b5da35e89e837c8eda7d0d80))
+* convert floats to doubles ([7dd5cc7](https://github.com/rosflight/rosplane/commit/7dd5cc70cafa969e4c77a594e69e167ba38021ae))
+* mark unused variables ([cd855d5](https://github.com/rosflight/rosplane/commit/cd855d5fd467cf75512c5d3888249d1cb2b169b8))
+* update deprecated ROS features ([8edd181](https://github.com/rosflight/rosplane/commit/8edd18125637b797839dec2acc719b5298d24875))
+
 ## [2.0.0](https://github.com/rosflight/rosplane/compare/v2.0.0-beta.2...v2.0.0) (2026-02-04)
 
 
